@@ -12,6 +12,8 @@ from ctypes.util import find_library
 # /b/b7/Bristle_inthebag_01
 # /9/9d/Undying_gummy_vit_01
 # /b/b5/Undying_gummy_vit_03
+# /a/af/Spir_move_26
+# /4/43/Beas_ability_animalsound_05
 
 discord.opus.load_opus(find_library('opus'))
 
@@ -31,14 +33,14 @@ async def on_ready():
 
 @bot.command(pass_context=True)
 async def ping(ctx, count : int):
-    """Pings a number of times."""
+    """Pings a number of times.(within reason)"""
     ping_string = ""
     for i in range(0, count):
         ping_string += "Ping "
     await bot.send_message(ctx.message.channel, ping_string, tts=True)
 
 @bot.command(pass_context=True)
-async def play(ctx, dota_response):
+async def dota(ctx, dota_response):
     """Plays a dota response."""
     global voice
 
@@ -76,6 +78,25 @@ async def hello(ctx):
     except Exception as e:
         print(str(e))
         await bot.send_message(ctx.message.channel, "error occured")
+
+@bot.command(pass_context=True)
+async def play(ctx, filename):
+    """Plays a local mp3."""
+    global voice
+
+    if voice is None:
+        voice_channel = ctx.message.channel
+        for c in list(ctx.message.channel.server.channels):
+            if(c.name == 'General'):
+                voice_channel = c
+        voice = await bot.join_voice_channel(voice_channel)
+
+    try:
+        player = voice.create_ffmpeg_player('resource/' + filename + '.mp3')
+        player.start()
+    except Exception as e:
+        print(str(e))
+        await bot.send_message(ctx.message.channel, "invalid input")
     
 
 f = open('token.txt', 'r')
