@@ -33,14 +33,17 @@ class MangoCog:
 
 
 	# try to say an mp3, and if we arent in a voice channel, join the default one
-	async def try_talking(self, mp3name, channel, volume=1.0):
+	async def try_talking(self, mp3name, author, volume=1.0):
 		if(self.voice is None):
-			if(channel is None):
+			if not isinstance(author, discord.Member):
+				await bot.say("You gotta start me from a server man.")
+				return
+			if author.voice_channel is None:
 				print("attempted to join channel None")
 				bot.say("Plz join a voice channel so I know were to go")
 				return
 			try:
-				self.voice = await self.bot.join_voice_channel(channel)
+				self.voice = await self.bot.join_voice_channel(author.voice_channel)
 			except discord.ClientException:
 				print('already in a voice channel, but voice was null')
 				return
@@ -48,8 +51,8 @@ class MangoCog:
 				print('default channel was not a valid voice channel')
 				return
 			else:
-				print('joined channel ' + channel.name)
-				self.voice_channel = channel
+				print('joined channel ' + author.voice_channel.name)
+				self.voice_channel = author.voice_channel
 
 		if await self.is_talking():
 			# we have a player and its playing something
@@ -100,22 +103,22 @@ class MangoCog:
 		?dota /a/af/Spir_move_26
 		?dota /4/43/Beas_ability_animalsound_05
 
-		Note: This command will eventually be improved substantially"""
-		await self.try_talking('http://hydra-media.cursecdn.com/dota2.gamepedia.com' + dota_response + '.mp3', ctx.message.author.voice_channel, volume=0.3)
+		Note: This command will eventually be improved substantial"""
+		await self.try_talking('http://hydra-media.cursecdn.com/dota2.gamepedia.com' + dota_response + '.mp3', ctx.message.author, volume=0.3)
 
 	@commands.command(pass_context=True)
 	async def hello(self, ctx):
 		"""Says hello
 
 		WHAT MORE DO YOU NEED TO KNOW!?!?!? IS 'SAYS HELLO' NOT CLEAR ENOUGH FOR YOU!?!!11?!!?11!!?!??"""
-		await self.try_talking('resource/hello.mp3', ctx.message.author.voice_channel)
+		await self.try_talking('resource/hello.mp3', ctx.message.author)
 
 	@commands.command(pass_context=True)
 	async def play(self, ctx, filename : str):
 		"""Plays a local mp3
 
 		There will be a new command called playlist soon, which will list all of the available clips"""
-		await self.try_talking('resource/' + filename + '.mp3', ctx.message.author.voice_channel)
+		await self.try_talking('resource/' + filename + '.mp3', ctx.message.author)
 
 	@commands.command(pass_context=True)
 	async def playurl(self, ctx, url : str):
@@ -125,7 +128,7 @@ class MangoCog:
 		One way to use this is to go to:
 		http://people.oregonstate.edu/~dillerm/ResponsePlayer/
 		Once there, find a good audio clip, right click on it, select copy url address, and do the thing."""
-		await self.try_talking(url, ctx.message.author.voice_channel)
+		await self.try_talking(url, ctx.message.author)
 
 	@commands.command(pass_context=True)
 	async def echo(self, ctx, *, message : str):
@@ -141,7 +144,7 @@ class MangoCog:
 			return
 		if after.voice_channel.id == self.voice_channel.id:
 			await asyncio.sleep(3)
-			await self.try_talking('resource/hello.mp3', after.voice_channel)
+			await self.try_talking('resource/hello.mp3', after)
 
 
 
