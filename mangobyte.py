@@ -4,19 +4,7 @@ import string
 from discord.ext import commands
 from ctypes.util import find_library
 
-# /1/17/Treant_move_20
-# /3/3b/Troll_lose_03
-# /1/10/Timb_rare_01
-# /f/f1/Slark_rare_02
-# /e/e0/Drag_inthebag_01
-# /b/b7/Bristle_inthebag_01
-# /9/9d/Undying_gummy_vit_01
-# /b/b5/Undying_gummy_vit_03
-# /a/af/Spir_move_26
-# /4/43/Beas_ability_animalsound_05
-
 discord.opus.load_opus(find_library('opus'))
-
 
 class MangoCog:
 	"""MangoByte: like a normal byte, but jucier"""
@@ -31,12 +19,11 @@ class MangoCog:
 	async def is_talking(self):
 		return (self.player is not None) and (not self.player.is_done())
 
-
 	# try to say an mp3, and if we arent in a voice channel, join the default one
 	async def try_talking(self, mp3name, author, volume=1.0):
 		if(self.voice is None):
 			if not isinstance(author, discord.Member):
-				await bot.say("You gotta start me from a server man.")
+				await bot.say("You gotta start me from a server")
 				return
 			if author.voice_channel is None:
 				print("attempted to join channel None")
@@ -103,14 +90,14 @@ class MangoCog:
 		?dota /a/af/Spir_move_26
 		?dota /4/43/Beas_ability_animalsound_05
 
-		Note: This command will eventually be improved substantial"""
+		Note: This command will eventually be improved substantially"""
 		await self.try_talking('http://hydra-media.cursecdn.com/dota2.gamepedia.com' + dota_response + '.mp3', ctx.message.author, volume=0.3)
 
 	@commands.command(pass_context=True)
 	async def hello(self, ctx):
 		"""Says hello
 
-		WHAT MORE DO YOU NEED TO KNOW!?!?!? IS 'SAYS HELLO' NOT CLEAR ENOUGH FOR YOU!?!!11?!!?11!!?!??"""
+		WHAT MORE DO YOU NEED TO KNOW!?!?!? IS 'Says hello' REALLY NOT CLEAR ENOUGH FOR YOU!?!!11?!!?11!!?!??"""
 		await self.try_talking('resource/hello.mp3', ctx.message.author)
 
 	@commands.command(pass_context=True)
@@ -148,7 +135,7 @@ class MangoCog:
 
 
 
-bot = commands.Bot(command_prefix='?', description="""a bot that does stuff n things""")
+bot = commands.Bot(command_prefix='?', description="""a bot that does stuff 'n things""")
 cog = MangoCog(bot)
 bot.add_cog(cog)
 
