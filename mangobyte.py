@@ -175,6 +175,14 @@ async def on_ready():
 async def on_voice_state_update(before, after):
 	await cog.on_voice_state_update(before, after)
 
+@bot.event
+async def on_command_error(error, ctx):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await bot.send_message(ctx.message.channel,
+                "need moar arguments on command ?{0} try doin ?help {0} to see how its done.".format(ctx.command))
+    elif isinstance(error, commands.BadArgument):
+        await bot.send_message(ctx.message.channel,
+                "need better arguments on command ?{0} try doin ?help {0} to see how its done.".format(ctx.command))
 
 
 
