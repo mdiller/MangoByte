@@ -4,6 +4,7 @@ import string
 import os
 import sys
 import json
+from gtts import gTTS
 from discord.ext import commands
 from ctypes.util import find_library
 
@@ -16,6 +17,11 @@ def get_playlist():
 		if file.endswith(".mp3"):
 			clips.append(os.path.splitext(file)[0])
 	return clips
+
+# tts an audio clip from a word
+def make_temp_mp3(word):
+	tts = gTTS(text=word, lang='en')
+	tts.save("resource/temp/temp.mp3")
 
 class MangoCog:
 	"""MangoByte: like a normal byte, but jucier"""
@@ -160,6 +166,13 @@ class MangoCog:
 		if after.voice_channel.id == self.voice_channel.id:
 			await asyncio.sleep(3)
 			await self.try_talking('resource/hello.mp3', after)
+			tts = gTTS(text=after.name, lang='en-au')
+			tts.save("resource/temp/temp.mp3")
+			while self.is_talking():
+				await asyncio.sleep(0.1)
+
+			await self.try_talking("resource/temp/temp.mp3", after)
+			
 
 
 
@@ -183,7 +196,6 @@ async def on_command_error(error, ctx):
     elif isinstance(error, commands.BadArgument):
         await bot.send_message(ctx.message.channel,
                 "need better arguments on command ?{0} try doin ?help {0} to see how its done.".format(ctx.command))
-
 
 
 with open('settings.json') as settings_file:
