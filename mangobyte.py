@@ -1,10 +1,21 @@
 import discord
 import asyncio
 import string
+import os
+import sys
+import json
 from discord.ext import commands
 from ctypes.util import find_library
 
 discord.opus.load_opus(find_library('opus'))
+
+# gets a list of all the mp3s in the root resource directory
+def get_playlist():
+	clips = []
+	for file in os.listdir("resource/"):
+		if file.endswith(".mp3"):
+			clips.append(os.path.splitext(file)[0])
+	return clips
 
 class MangoCog:
 	"""MangoByte: like a normal byte, but jucier"""
@@ -15,8 +26,9 @@ class MangoCog:
 		self.player = None
 		self.voice_channel = None
 
+
 	# whether or not the bot is currently talking
-	async def is_talking(self):
+	def is_talking(self):
 		return (self.player is not None) and (not self.player.is_done())
 
 	# try to say an mp3, and if we arent in a voice channel, join the default one
@@ -41,7 +53,7 @@ class MangoCog:
 				print('joined channel ' + author.voice_channel.name)
 				self.voice_channel = author.voice_channel
 
-		if await self.is_talking():
+		if self.is_talking():
 			# we have a player and its playing something
 			print("interruption")
 			await self.bot.say("I'm already talking, don't interrupt. rude.")
@@ -89,6 +101,7 @@ class MangoCog:
 		?dota /b/b5/Undying_gummy_vit_03
 		?dota /a/af/Spir_move_26
 		?dota /4/43/Beas_ability_animalsound_05
+		?dota /3/31/Gyro_move_13
 
 		Note: This command will eventually be improved substantially"""
 		await self.try_talking('http://hydra-media.cursecdn.com/dota2.gamepedia.com' + dota_response + '.mp3', ctx.message.author, volume=0.3)
@@ -101,11 +114,26 @@ class MangoCog:
 		await self.try_talking('resource/hello.mp3', ctx.message.author)
 
 	@commands.command(pass_context=True)
-	async def play(self, ctx, filename : str):
-		"""Plays a local mp3
+	async def play(self, ctx, clip : str):
+		"""Plays an audio clip
 
-		There will be a new command called playlist soon, which will list all of the available clips"""
-		await self.try_talking('resource/' + filename + '.mp3', ctx.message.author)
+		example:
+		?play hello
+
+		for a complete list of the available clips, try ?playlist"""
+		if clip in get_playlist():
+			await self.try_talking('resource/' + clip + '.mp3', ctx.message.author)
+		else:
+			await self.bot.say("'" + clip + "' is not a valid clip. try ?playlist.")
+
+	@commands.command(pass_context=True)
+	async def playlist(self, ctx):
+		"""Lists the audio clips available for the play command"""
+		clips = get_playlist()
+		message = ""
+		for clip in clips:
+			message += clip + "\n"
+		await self.bot.say(message)
 
 	@commands.command(pass_context=True)
 	async def playurl(self, ctx, url : str):
@@ -146,9 +174,16 @@ async def on_ready():
 @bot.event
 async def on_voice_state_update(before, after):
 	await cog.on_voice_state_update(before, after)
-	
 
-f = open('token.txt', 'r')
-token = f.read()
+
+
+
+with open('settings.json') as settings_file:
+    settings = json.load(settings_file)
+
+if '-dev' in sys.argv:
+    token = settings['devtoken']
+else:
+    token = settings['token']
 
 bot.run(token)
