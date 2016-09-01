@@ -55,7 +55,8 @@ class MangoCog:
 				await self.bot.say("I'm already talking, don't interrupt. rude.")
 			except Exception as e:
 				print("couldnt report interruption")
-			return
+			finally:
+				return
 
 		try:
 			self.player = self.voice.create_ffmpeg_player(mp3name)
@@ -157,7 +158,7 @@ class MangoCog:
 		if self.voice_channel is None or after.voice_channel is None or before.voice_channel == after.voice_channel:
 			# if the bot or the member are not in a voice channel, don't worry about checking that theyre equal
 			return
-		if after.voice_channel.id == self.voice_channel.id:
+		if after.voice_channel.id == self.voice_channel.id and before.voice_channel != after.voice_channel:
 			print(after.name + " joined the channel")
 			await asyncio.sleep(3)
 			await self.try_talking(settings["resourcedir"] + 'helloits.mp3')
