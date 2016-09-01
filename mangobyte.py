@@ -42,7 +42,7 @@ class MangoCog:
 		return (self.player is not None) and (not self.player.is_done())
 
 	# try to say an mp3, and if we arent in a voice channel, join the default one
-	async def try_talking(self, mp3name, author, volume=0.6):
+	async def try_talking(self, mp3name, volume=0.6):
 		if(self.voice is None):
 			print("tried to talk while not in voice channel")
 			await self.bot.say("not in voice channel m8")
@@ -51,7 +51,10 @@ class MangoCog:
 		if self.is_talking():
 			# we have a player and its playing something
 			print("interruption")
-			await self.bot.say("I'm already talking, don't interrupt. rude.")
+			try:
+				await self.bot.say("I'm already talking, don't interrupt. rude.")
+			except Exception as e:
+				print("couldnt report interruption")
 			return
 
 		try:
@@ -100,14 +103,14 @@ class MangoCog:
 		?dota /3/31/Gyro_move_13
 
 		Note: This command will eventually be improved substantially"""
-		await self.try_talking('http://hydra-media.cursecdn.com/dota2.gamepedia.com' + dota_response + '.mp3', ctx.message.author, volume=0.3)
+		await self.try_talking('http://hydra-media.cursecdn.com/dota2.gamepedia.com' + dota_response + '.mp3', volume=0.3)
 
 	@commands.command(pass_context=True)
 	async def hello(self, ctx):
 		"""Says hello
 
 		WHAT MORE DO YOU NEED TO KNOW!?!?!? IS 'Says hello' REALLY NOT CLEAR ENOUGH FOR YOU!?!!11?!!?11!!?!??"""
-		await self.try_talking(settings["resourcedir"] + 'hello.mp3', ctx.message.author)
+		await self.try_talking(settings["resourcedir"] + 'hello.mp3')
 
 	@commands.command(pass_context=True)
 	async def play(self, ctx, clip : str):
@@ -118,7 +121,7 @@ class MangoCog:
 
 		for a complete list of the available clips, try ?playlist"""
 		if clip in get_playlist():
-			await self.try_talking(settings["resourcedir"] +  clip + '.mp3', ctx.message.author)
+			await self.try_talking(settings["resourcedir"] +  clip + '.mp3')
 		else:
 			await self.bot.say("'" + clip + "' is not a valid clip. try ?playlist.")
 
@@ -140,7 +143,7 @@ class MangoCog:
 		One way to use this is to go to:
 		http://people.oregonstate.edu/~dillerm/ResponsePlayer/
 		Once there, find a good audio clip, right click on it, select copy url address, and do the thing."""
-		await self.try_talking(url, ctx.message.author)
+		await self.try_talking(url)
 
 	@commands.command(pass_context=True)
 	async def echo(self, ctx, *, message : str):
@@ -151,18 +154,19 @@ class MangoCog:
 
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
-		if self.voice_channel is None or after.voice_channel is None or before.voice_channel is not None:
+		if self.voice_channel is None or after.voice_channel is None or before.voice_channel == after.voice_channel:
 			# if the bot or the member are not in a voice channel, don't worry about checking that theyre equal
 			return
 		if after.voice_channel.id == self.voice_channel.id:
+			print(after.name + " joined the channel")
 			await asyncio.sleep(3)
-			await self.try_talking(settings["resourcedir"] + 'hello.mp3', after)
+			await self.try_talking(settings["resourcedir"] + 'helloits.mp3')
 			tts = gTTS(text=after.name, lang='en-au')
 			tts.save(settings["resourcedir"] + "temp/temp.mp3")
 			while self.is_talking():
 				await asyncio.sleep(0.1)
 
-			await self.try_talking(settings["resourcedir"] + "temp/temp.mp3", after)
+			await self.try_talking(settings["resourcedir"] + "temp/temp.mp3")
 			
 
 
@@ -176,6 +180,7 @@ async def on_ready():
 	print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
 	print('Automatically connecting to default channel via ID...')
 	cog.voice = await bot.join_voice_channel(bot.get_channel(settings['voicechannel']))
+	cog.voice_channel = cog.voice.channel
 
 
 @bot.event
