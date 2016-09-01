@@ -10,10 +10,14 @@ from ctypes.util import find_library
 
 discord.opus.load_opus(find_library('opus'))
 
+with open('settings.json') as settings_file:
+    settings = json.load(settings_file)
+
+
 # gets a list of all the mp3s in the root resource directory
 def get_playlist():
 	clips = []
-	for file in os.listdir("resource/"):
+	for file in os.listdir(settings["resourcedir"]):
 		if file.endswith(".mp3"):
 			clips.append(os.path.splitext(file)[0])
 	return clips
@@ -21,7 +25,7 @@ def get_playlist():
 # tts an audio clip from a word
 def make_temp_mp3(word):
 	tts = gTTS(text=word, lang='en')
-	tts.save("resource/temp/temp.mp3")
+	tts.save(settings["resourcedir"] + "temp/temp.mp3")
 
 class MangoCog:
 	"""MangoByte: like a normal byte, but jucier"""
@@ -38,26 +42,11 @@ class MangoCog:
 		return (self.player is not None) and (not self.player.is_done())
 
 	# try to say an mp3, and if we arent in a voice channel, join the default one
-	async def try_talking(self, mp3name, author, volume=1.0):
+	async def try_talking(self, mp3name, author, volume=0.6):
 		if(self.voice is None):
-			if not isinstance(author, discord.Member):
-				await bot.say("You gotta start me from a server")
-				return
-			if author.voice_channel is None:
-				print("attempted to join channel None")
-				bot.say("Plz join a voice channel so I know were to go")
-				return
-			try:
-				self.voice = await self.bot.join_voice_channel(author.voice_channel)
-			except discord.ClientException:
-				print('already in a voice channel, but voice was null')
-				return
-			except discord.InvalidArgument:
-				print('default channel was not a valid voice channel')
-				return
-			else:
-				print('joined channel ' + author.voice_channel.name)
-				self.voice_channel = author.voice_channel
+			print("tried to talk while not in voice channel")
+			await self.bot.say("not in voice channel m8")
+			return
 
 		if self.is_talking():
 			# we have a player and its playing something
@@ -69,6 +58,7 @@ class MangoCog:
 			self.player = self.voice.create_ffmpeg_player(mp3name)
 			self.player.volume = volume
 			self.player.start()
+			print("playing: " + mp3name)
 		except Exception as e:
 			print(str(e))
 			await self.bot.say("thats not valid input, silly.")
@@ -117,7 +107,7 @@ class MangoCog:
 		"""Says hello
 
 		WHAT MORE DO YOU NEED TO KNOW!?!?!? IS 'Says hello' REALLY NOT CLEAR ENOUGH FOR YOU!?!!11?!!?11!!?!??"""
-		await self.try_talking('resource/hello.mp3', ctx.message.author)
+		await self.try_talking(settings["resourcedir"] + 'hello.mp3', ctx.message.author)
 
 	@commands.command(pass_context=True)
 	async def play(self, ctx, clip : str):
@@ -128,7 +118,7 @@ class MangoCog:
 
 		for a complete list of the available clips, try ?playlist"""
 		if clip in get_playlist():
-			await self.try_talking('resource/' + clip + '.mp3', ctx.message.author)
+			await self.try_talking(settings["resourcedir"] +  clip + '.mp3', ctx.message.author)
 		else:
 			await self.bot.say("'" + clip + "' is not a valid clip. try ?playlist.")
 
@@ -136,9 +126,10 @@ class MangoCog:
 	async def playlist(self, ctx):
 		"""Lists the audio clips available for the play command"""
 		clips = get_playlist()
-		message = ""
+		message = "```"
 		for clip in clips:
 			message += clip + "\n"
+		message += "```"
 		await self.bot.say(message)
 
 	@commands.command(pass_context=True)
@@ -165,13 +156,13 @@ class MangoCog:
 			return
 		if after.voice_channel.id == self.voice_channel.id:
 			await asyncio.sleep(3)
-			await self.try_talking('resource/hello.mp3', after)
+			await self.try_talking(settings["resourcedir"] + 'hello.mp3', after)
 			tts = gTTS(text=after.name, lang='en-au')
-			tts.save("resource/temp/temp.mp3")
+			tts.save(settings["resourcedir"] + "temp/temp.mp3")
 			while self.is_talking():
 				await asyncio.sleep(0.1)
 
-			await self.try_talking("resource/temp/temp.mp3", after)
+			await self.try_talking(settings["resourcedir"] + "temp/temp.mp3", after)
 			
 
 
@@ -183,6 +174,9 @@ bot.add_cog(cog)
 @bot.event
 async def on_ready():
 	print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
+	print('Automatically connecting to default channel via ID...')
+	cog.voice = await bot.join_voice_channel(bot.get_channel(settings['voicechannel']))
+
 
 @bot.event
 async def on_voice_state_update(before, after):
@@ -197,13 +191,6 @@ async def on_command_error(error, ctx):
         await bot.send_message(ctx.message.channel,
                 "need better arguments on command ?{0} try doin ?help {0} to see how its done.".format(ctx.command))
 
-
-with open('settings.json') as settings_file:
-    settings = json.load(settings_file)
-
-if '-dev' in sys.argv:
-    token = settings['devtoken']
-else:
-    token = settings['token']
+token = settings['token']
 
 bot.run(token)
