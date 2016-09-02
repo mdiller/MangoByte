@@ -160,6 +160,7 @@ class MangoCog:
 			return
 		if after.voice_channel.id == self.voice_channel.id and before.voice_channel != after.voice_channel:
 			print(after.name + " joined the channel")
+
 			await asyncio.sleep(3)
 			await self.try_talking(settings["resourcedir"] + 'helloits.mp3')
 			tts = gTTS(text=after.name, lang='en-au')
@@ -182,11 +183,6 @@ async def on_ready():
 	print('Automatically connecting to default channel via ID...')
 	cog.voice = await bot.join_voice_channel(bot.get_channel(settings['voicechannel']))
 	cog.voice_channel = cog.voice.channel
-
-
-@bot.event
-async def on_voice_state_update(before, after):
-	await cog.on_voice_state_update(before, after)
 
 @bot.event
 async def on_command_error(error, ctx):
