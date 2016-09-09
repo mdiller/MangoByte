@@ -151,7 +151,22 @@ class MangoCog:
 		"""Echo...
 
 		I would hurl words into this darkness and wait for an echo, and if an echo sounded, no matter how faintly, I would send other words to tell, to march, to fight, to create a sense of the hunger for life that gnaws in us all"""
-		await bot.say(message)
+		await self.bot.say(message)
+
+	@commands.command(pass_context=True, hidden=True)
+	async def join(self, ctx, channel_id : str):
+		appinfo = await self.bot.application_info()
+		if(appinfo.owner.id == ctx.message.author.id):
+			new_channel = self.bot.get_channel(channel_id)
+			if(new_channel == None):
+				print("attempted to join invalid channel: " + channel_id)
+				return
+
+			await self.voice.move_to(new_channel)
+			print("joined channel: " + channel_id)
+			self.voice_channel = self.bot.get_channel(channel_id)
+		else:
+			print("non-owner tried to use owner command")
 
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
