@@ -89,5 +89,4 @@ ENV/
 .ropeproject
 
 settings.json
-ffmpeg/
 resource/
