@@ -14,14 +14,10 @@ with open('settings.json') as settings_file:
 	settings = json.load(settings_file)
 
 def findfile(name, path):
-	print("finding file " + name + " in path " + path)
 	for root, dirs, files in os.walk(path):
 		if name in files:
 			return os.path.join(root, name)
 	return None
-
-def get_dota_response(name):
-	return findfile(name + ".mp3", settings["dotavpk"] + "sounds/vo/")
 
 # gets a list of all the mp3s in the root resource directory
 def get_playlist():
@@ -85,7 +81,7 @@ class MangoCog:
 		if count < 1:
 			await self.bot.say("thats not enough pings. stahp trying to break me.")
 			return
-		if count > 99:
+		if count > 21:
 			await self.bot.say("thats too many pings. stahp trying to break me.")
 			return
 
@@ -113,7 +109,7 @@ class MangoCog:
 		?dota gyro_move_13
 
 		Note: This command will eventually be improved substantially"""
-		response_file = get_dota_response(dota_response)
+		response_file = findfile(dota_response + ".mp3", settings["dotavpk"] + "sounds/vo/")
 		if(response_file != None):
 			await self.try_talking(response_file, volume=0.3)
 		else:
@@ -221,6 +217,8 @@ async def on_command_error(error, ctx):
 	elif isinstance(error, commands.BadArgument):
 		await bot.send_message(ctx.message.channel,
 				"need better arguments on command ?{0} try doin ?help {0} to see how its done.".format(ctx.command))
+	else:
+		print("error executing command [" + ctx.command + "]: " + error)
 
 token = settings['token']
 
