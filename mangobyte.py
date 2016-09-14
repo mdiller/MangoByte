@@ -11,8 +11,17 @@ from ctypes.util import find_library
 discord.opus.load_opus(find_library('opus'))
 
 with open('settings.json') as settings_file:
-    settings = json.load(settings_file)
+	settings = json.load(settings_file)
 
+def findfile(name, path):
+	print("finding file " + name + " in path " + path)
+	for root, dirs, files in os.walk(path):
+		if name in files:
+			return os.path.join(root, name)
+	return None
+
+def get_dota_response(name):
+	return findfile(name + ".mp3", settings["dotavpk"] + "sounds/vo/")
 
 # gets a list of all the mp3s in the root resource directory
 def get_playlist():
@@ -89,22 +98,26 @@ class MangoCog:
 	async def dota(self, ctx, dota_response : str):
 		"""Plays a dota response
 
-		The format for input is the end of a dota2 gamepedia url.
+		The format for input is the name of the sound.
 		Some gooduns:
-		?dota /1/17/Treant_move_20
-		?dota /3/3b/Troll_lose_03
-		?dota /1/10/Timb_rare_01
-		?dota /f/f1/Slark_rare_02
-		?dota /e/e0/Drag_inthebag_01
-		?dota /b/b7/Bristle_inthebag_01
-		?dota /9/9d/Undying_gummy_vit_01
-		?dota /b/b5/Undying_gummy_vit_03
-		?dota /a/af/Spir_move_26
-		?dota /4/43/Beas_ability_animalsound_05
-		?dota /3/31/Gyro_move_13
+		?dota treant_move_20
+		?dota troll_lose_03
+		?dota timb_rare_01
+		?dota slark_rare_02
+		?dota drag_inthebag_01
+		?dota bristle_inthebag_01
+		?dota undying_gummy_vit_01
+		?dota undying_gummy_vit_03
+		?dota spir_move_26
+		?dota beas_ability_animalsound_05
+		?dota gyro_move_13
 
 		Note: This command will eventually be improved substantially"""
-		await self.try_talking('http://hydra-media.cursecdn.com/dota2.gamepedia.com' + dota_response + '.mp3', volume=0.3)
+		response_file = get_dota_response(dota_response)
+		if(response_file != None):
+			await self.try_talking(response_file, volume=0.3)
+		else:
+			await self.bot.say("Not a valid dota response");
 
 	@commands.command(pass_context=True)
 	async def hello(self, ctx):
@@ -198,15 +211,16 @@ async def on_ready():
 	print('Automatically connecting to default channel via ID...')
 	cog.voice = await bot.join_voice_channel(bot.get_channel(settings['voicechannel']))
 	cog.voice_channel = cog.voice.channel
+	await cog.try_talking(settings["resourcedir"] + "bothello.mp3", volume=0.3)
 
 @bot.event
 async def on_command_error(error, ctx):
-    if isinstance(error, commands.MissingRequiredArgument):
-        await bot.send_message(ctx.message.channel,
-                "need moar arguments on command ?{0} try doin ?help {0} to see how its done.".format(ctx.command))
-    elif isinstance(error, commands.BadArgument):
-        await bot.send_message(ctx.message.channel,
-                "need better arguments on command ?{0} try doin ?help {0} to see how its done.".format(ctx.command))
+	if isinstance(error, commands.MissingRequiredArgument):
+		await bot.send_message(ctx.message.channel,
+				"need moar arguments on command ?{0} try doin ?help {0} to see how its done.".format(ctx.command))
+	elif isinstance(error, commands.BadArgument):
+		await bot.send_message(ctx.message.channel,
+				"need better arguments on command ?{0} try doin ?help {0} to see how its done.".format(ctx.command))
 
 token = settings['token']
 
