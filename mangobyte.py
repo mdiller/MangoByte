@@ -4,6 +4,8 @@ import string
 import os
 import sys
 import json
+import dota2api
+import csv
 from gtts import gTTS
 from discord.ext import commands
 from ctypes.util import find_library
@@ -72,6 +74,37 @@ class MangoCog:
 			print(str(e))
 			await self.bot.say("thats not valid input, silly.")
 
+	async def dota_stats(self):
+		d2api = dota2api.Initialise(settings['steamapikey'])
+		match = d2api.get_match_details(match_id=1000193456)
+		while True:
+			player_file = open('players.csv', 'rt')
+			reader = csv.reader(player_file)
+			for row in reader:
+				print(row)
+			await asyncio.sleep(1)
+			player_file.close()
+
+	@commands.command(pass_context=True)
+	async def stats(self, ctx, player : int):
+		"""Adds a player to the stat tracker
+
+         	Just provide your Steam ID:
+	 	?stats <steam_id>
+		"""
+		player_val = {str(ctx.message.author):player}
+		player_list = open('players.csv', 'r')
+		reader = csv.reader(player_list)
+		for row in reader:
+			if (row[0] == str(ctx.message.author)):
+				await self.bot.say("Already here!")
+				player_list.close()
+				return
+		player_list.close()	
+		player_file = open('players.csv', 'a')
+		writer = csv.writer(player_file)
+		writer.writerow( (str(ctx.message.author), player) )
+		player_file.close()
 
 	@commands.command(pass_context=True)
 	async def ping(self, ctx, count : int):
@@ -208,6 +241,7 @@ async def on_ready():
 	cog.voice = await bot.join_voice_channel(bot.get_channel(settings['voicechannel']))
 	cog.voice_channel = cog.voice.channel
 	await cog.try_talking(settings["resourcedir"] + "bothello.mp3", volume=0.3)
+	await cog.dota_stats()
 
 @bot.event
 async def on_command_error(error, ctx):
