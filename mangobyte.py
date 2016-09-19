@@ -97,7 +97,7 @@ class MangoCog:
 		reader = csv.reader(player_list)
 		for row in reader:
 			if (row[0] == str(ctx.message.author)):
-				await self.bot.say("Already here!")
+				await self.bot.say( str(ctx.message.author) + " is already here! I don't need more of you!")
 				player_list.close()
 				return
 		player_list.close()	
@@ -105,6 +105,7 @@ class MangoCog:
 		writer = csv.writer(player_file)
 		writer.writerow( (str(ctx.message.author), player) )
 		player_file.close()
+		await self.bot.say( "I added " + str(ctx.message.author) + " to the list of players. NOW I'M WATCHING YOU")
 
 	@commands.command(pass_context=True)
 	async def ping(self, ctx, count : int):
