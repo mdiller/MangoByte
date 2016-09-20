@@ -15,6 +15,8 @@ discord.opus.load_opus(find_library('opus'))
 with open('settings.json') as settings_file:
 	settings = json.load(settings_file)
 
+d2api = dota2api.Initialise(settings['steamapikey'])
+
 def findfile(name, path):
 	for root, dirs, files in os.walk(path):
 		if name in files:
@@ -75,15 +77,49 @@ class MangoCog:
 			await self.bot.say("thats not valid input, silly.")
 
 	async def dota_stats(self):
-		d2api = dota2api.Initialise(settings['steamapikey'])
-		match = d2api.get_match_details(match_id=1000193456)
 		while True:
-			player_file = open('players.csv', 'rt')
-			reader = csv.reader(player_file)
-			for row in reader:
-				print(row)
-			await asyncio.sleep(1)
-			player_file.close()
+			tmp_file = open("tmpfile", "w")
+			writer = csv.writer(tmp_file)
+			if (os.stat("players.csv").st_size != 0):
+				player_file = open('players.csv', 'rt')
+				reader = csv.reader(player_file)	
+				for row in reader:
+					hist = d2api.get_match_history(account_id=row[1])
+					if(int(hist['matches'][0]['match_id']) == int(row[2])):
+						# It's the latest match already
+						if(int(row[3]) == 0):
+							# Latest match, but we haven't written it out yet
+							await self.write_stats(row[2],row[1])
+							row[3] = 1
+					else:
+						# 100% brand new match!
+						await self.write_stats(hist['matches'][0]['match_id'],row[1])
+						row[2] = hist['matches'][0]['match_id']
+						row[3] = 1
+					await asyncio.sleep(3)
+					writer.writerow(row)	
+				player_file.close()
+				os.remove('players.csv')
+				os.rename("tmpfile",'players.csv')
+				tmp_file.close()
+				
+			else:
+				# Player file is currently empty!
+				player_file.close()
+				tmp_file.close()
+				await asyncio.sleep(5)
+
+	async def write_stats(self,match : int, player : int):
+		game = d2api.get_match_details(int(match))
+		match_result = game['radiant_win']
+		true_ID = int(player) - 76561197960265728 
+		for count in range(0,len(game['players'])):
+			if(int(game['players'][count]['account_id']) == true_ID):
+				if (count < 5 and match_result is True) or (count >= 5 and match_result is False):
+					print("WIN")
+				else:
+					print("LOSE")
+				#print(game['players'][count])
 
 	@commands.command(pass_context=True)
 	async def stats(self, ctx, player : int):
@@ -103,7 +139,8 @@ class MangoCog:
 		player_list.close()	
 		player_file = open('players.csv', 'a')
 		writer = csv.writer(player_file)
-		writer.writerow( (str(ctx.message.author), player) )
+		hist = d2api.get_match_history(player)
+		writer.writerow( (str(ctx.message.author), player,hist['matches'][0]['match_id'], 0) )
 		player_file.close()
 		await self.bot.say( "I added " + str(ctx.message.author) + " to the list of players. NOW I'M WATCHING YOU")
 
