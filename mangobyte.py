@@ -75,7 +75,7 @@ class MangoCog:
 		except Exception as e:
 			print(str(e))
 			await self.bot.say("thats not valid input, silly.")
-
+	
 	async def dota_stats(self):
 		while True:
 			tmp_file = open("tmpfile", "w")
@@ -89,19 +89,17 @@ class MangoCog:
 						# It's the latest match already
 						if(int(row[3]) == 0):
 							# Latest match, but we haven't written it out yet
-							await self.write_stats(row[2],row[1])
 							row[3] = 1
 					else:
 						# 100% brand new match!
-						await self.write_stats(hist['matches'][0]['match_id'],row[1])
 						row[2] = hist['matches'][0]['match_id']
 						row[3] = 1
-					await asyncio.sleep(3)
 					writer.writerow(row)	
 				player_file.close()
 				os.remove('players.csv')
 				os.rename("tmpfile",'players.csv')
 				tmp_file.close()
+				await asyncio.sleep(5)
 				
 			else:
 				# Player file is currently empty!
@@ -109,20 +107,24 @@ class MangoCog:
 				tmp_file.close()
 				await asyncio.sleep(5)
 
-	async def write_stats(self,match : int, player : int):
-		game = d2api.get_match_details(int(match))
-		match_result = game['radiant_win']
-		true_ID = int(player) - 76561197960265728 
-		for count in range(0,len(game['players'])):
-			if(int(game['players'][count]['account_id']) == true_ID):
-				if (count < 5 and match_result is True) or (count >= 5 and match_result is False):
-					print("WIN")
-				else:
-					print("LOSE")
-				#print(game['players'][count])
+	async def write_stats(self, player : str):
+		player_file = open('players.csv', 'rt')
+		reader = csv.reader(player_file)
+		for row in reader:
+			if (row[0] == str(player)):
+				game = d2api.get_match_details(int(row[2]))
+				match_result = game['radiant_win']
+				true_ID = int(row[1]) - 76561197960265728 
+				my_name = d2api.get_player_summaries(int(row[1]))
+				for count in range(0,len(game['players'])):
+					if(int(game['players'][count]['account_id']) == true_ID):
+						if (count < 5 and match_result is True) or (count >= 5 and match_result is False):
+							await self.bot.say(str(my_name['players'][0]['personaname']) + " won a game as " + str(game['players'][count]['hero_name']))
+						else:
+							await self.bot.say(str(my_name['players'][0]['personaname']) + " lost a game as " + str(game['players'][count]['hero_name']))
 
 	@commands.command(pass_context=True)
-	async def stats(self, ctx, player : int):
+	async def add_stats(self, ctx, player : int):
 		"""Adds a player to the stat tracker
 
          	Just provide your Steam ID:
@@ -143,6 +145,16 @@ class MangoCog:
 		writer.writerow( (str(ctx.message.author), player,hist['matches'][0]['match_id'], 0) )
 		player_file.close()
 		await self.bot.say( "I added " + str(ctx.message.author) + " to the list of players. NOW I'M WATCHING YOU")
+		
+
+	@commands.command(pass_context=True)
+	async def stats(self, ctx):
+		""" Get your latest stats
+
+		Just run:
+		?stats
+		"""
+		await self.write_stats(str(ctx.message.author))	
 
 	@commands.command(pass_context=True)
 	async def ping(self, ctx, count : int):
