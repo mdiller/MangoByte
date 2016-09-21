@@ -86,15 +86,8 @@ class MangoCog:
 				reader = csv.reader(player_file)	
 				for row in reader:
 					hist = d2api.get_match_history(account_id=row[1])
-					if(int(hist['matches'][0]['match_id']) == int(row[2])):
-						# It's the latest match already
-						if(int(row[3]) == 0):
-							# Latest match, but we haven't written it out yet
-							row[3] = 1
-					else:
-						# 100% brand new match!
+					if(int(hist['matches'][0]['match_id']) != int(row[2])):
 						row[2] = hist['matches'][0]['match_id']
-						row[3] = 1
 					writer.writerow(row)	
 				player_file.close()
 				os.remove('players.csv')
@@ -165,7 +158,7 @@ class MangoCog:
 		player_file = open('players.csv', 'a')
 		writer = csv.writer(player_file)
 		hist = d2api.get_match_history(player)
-		writer.writerow( (str(ctx.message.author), player,hist['matches'][0]['match_id'], 0) )
+		writer.writerow( (str(ctx.message.author), player,hist['matches'][0]['match_id'],) )
 		player_file.close()
 		await self.bot.say( "I added " + str(ctx.message.author) + " to the list of players. NOW I'M WATCHING YOU")
 		
