@@ -100,12 +100,12 @@ class MangoCog:
 				os.remove('players.csv')
 				os.rename("tmpfile",'players.csv')
 				tmp_file.close()
-				await asyncio.sleep(5)
+				await asyncio.sleep(60)
 				player_file.close()
 			else:
 				# Player file is currently empty!
 				tmp_file.close()
-				await asyncio.sleep(5)
+				await asyncio.sleep(60)
 
 	async def write_stats(self, player : str):
 		player_file = open('players.csv', 'rt')
