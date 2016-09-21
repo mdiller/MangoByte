@@ -6,6 +6,7 @@ import sys
 import json
 import dota2api
 import csv
+import datetime
 from gtts import gTTS
 from discord.ext import commands
 from ctypes.util import find_library
@@ -100,10 +101,9 @@ class MangoCog:
 				os.rename("tmpfile",'players.csv')
 				tmp_file.close()
 				await asyncio.sleep(5)
-				
+				player_file.close()
 			else:
 				# Player file is currently empty!
-				player_file.close()
 				tmp_file.close()
 				await asyncio.sleep(5)
 
@@ -119,12 +119,35 @@ class MangoCog:
 				for count in range(0,len(game['players'])):
 					if(int(game['players'][count]['account_id']) == true_ID):
 						if (count < 5 and match_result is True) or (count >= 5 and match_result is False):
-							await self.bot.say(str(my_name['players'][0]['personaname']) + " won a game as " + str(game['players'][count]['hero_name']))
+							await self.bot.say(str(my_name['players'][0]['personaname']) + " won a game as " + str(game['players'][count]['hero_name']) + " in " + str(datetime.timedelta(seconds=game['duration'])))
+							await self.format_stats(game['players'][count])
 						else:
-							await self.bot.say(str(my_name['players'][0]['personaname']) + " lost a game as " + str(game['players'][count]['hero_name']))
+							await self.bot.say(str(my_name['players'][0]['personaname']) + " lost a game as " + str(game['players'][count]['hero_name']) + " in " + str(datetime.timedelta(seconds=game['duration'])))
+							await self.format_stats(game['players'][count])
+
+	async def format_stats(self, game : str):
+		kills = game['kills']
+		deaths = game['deaths']
+		assists= game['assists']
+		gpm = game['gold_per_min']
+		deny = game['denies']
+		damage = game['hero_damage']
+		lh = game['last_hits']
+		xpm = game['xp_per_min']
+		spent = int(game['gold_spent']) + int(game['gold'])
+		level = game['level']
+		await self.bot.say("""
+		```
+		------------------------------------------------------------
+		| KILLS: """ + str(kills) + """ | DEATHS: """ + str(deaths) + """ | ASSISTS: """ + str(assists) + """ | GPM: """ + str(gpm) + """ | XPM: """ + str(xpm) + """ |
+		--------------------------------------------------------------------------------
+		| NET WORTH: """ + str(spent) + """ | LAST HITS: """ + str(lh) + """ | DENIES: """ + str(deny) + """ | HERO DAMAGE: """ + str(damage) + """ | LEVEL: """ + str(level) + """ |
+		--------------------------------------------------------------------------------
+		```
+		""")
 
 	@commands.command(pass_context=True)
-	async def add_stats(self, ctx, player : int):
+	async def addstats(self, ctx, player : int):
 		"""Adds a player to the stat tracker
 
          	Just provide your Steam ID:
@@ -154,7 +177,13 @@ class MangoCog:
 		Just run:
 		?stats
 		"""
-		await self.write_stats(str(ctx.message.author))	
+		player_list = open('players.csv','r')
+		reader = csv.reader(player_list)
+		for row in reader:
+			if (row[0] == str(ctx.message.author)):
+				await self.write_stats(str(ctx.message.author))
+				return
+		await self.bot.say("You need to add your Steam ID! Use the ?addtats <steam_ID> command")
 
 	@commands.command(pass_context=True)
 	async def ping(self, ctx, count : int):
