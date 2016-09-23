@@ -156,8 +156,14 @@ class MangoCog:
 				return
 		player_list.close()	
 		player_file = open('players.csv', 'a')
-		writer = csv.writer(player_file)
-		hist = d2api.get_match_history(player)
+		writer = csv.writer(player_file)	
+		print("READY")
+		try:
+			hist = d2api.get_match_history(player)
+		except:
+			await self.bot.say("You must enable Expose Public Match Data in your DotA 2 client")
+			return
+		print("READY")
 		writer.writerow( (str(ctx.message.author), player,hist['matches'][0]['match_id'],) )
 		player_file.close()
 		await self.bot.say( "I added " + str(ctx.message.author) + " to the list of players. NOW I'M WATCHING YOU")
