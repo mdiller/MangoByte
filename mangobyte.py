@@ -4,6 +4,9 @@ import string
 import os
 import sys
 import json
+import dota2api
+import csv
+import datetime
 from gtts import gTTS
 from discord.ext import commands
 from ctypes.util import find_library
@@ -12,6 +15,8 @@ discord.opus.load_opus(find_library('opus'))
 
 with open('settings.json') as settings_file:
 	settings = json.load(settings_file)
+
+d2api = dota2api.Initialise(settings['steamapikey'])
 
 def findfile(name, path):
 	for root, dirs, files in os.walk(path):
@@ -71,7 +76,111 @@ class MangoCog:
 		except Exception as e:
 			print(str(e))
 			await self.bot.say("thats not valid input, silly.")
+	
+	async def dota_stats(self):
+		while True:
+			tmp_file = open("tmpfile", "w")
+			writer = csv.writer(tmp_file)
+			if (os.stat("players.csv").st_size != 0):
+				player_file = open('players.csv', 'rt')
+				reader = csv.reader(player_file)	
+				for row in reader:
+					hist = d2api.get_match_history(account_id=row[1])
+					if(int(hist['matches'][0]['match_id']) != int(row[2])):
+						row[2] = hist['matches'][0]['match_id']
+					writer.writerow(row)	
+				player_file.close()
+				os.remove('players.csv')
+				os.rename("tmpfile",'players.csv')
+				tmp_file.close()
+				await asyncio.sleep(60)
+				player_file.close()
+			else:
+				# Player file is currently empty!
+				tmp_file.close()
+				await asyncio.sleep(60)
 
+	async def write_stats(self, player : str):
+		player_file = open('players.csv', 'rt')
+		reader = csv.reader(player_file)
+		for row in reader:
+			if (row[0] == str(player)):
+				game = d2api.get_match_details(int(row[2]))
+				match_result = game['radiant_win']
+				true_ID = int(row[1]) - 76561197960265728 
+				my_name = d2api.get_player_summaries(int(row[1]))
+				for count in range(0,len(game['players'])):
+					if(int(game['players'][count]['account_id']) == true_ID):
+						if (count < 5 and match_result is True) or (count >= 5 and match_result is False):
+							await self.bot.say(str(my_name['players'][0]['personaname']) + " won a game as " + str(game['players'][count]['hero_name']) + " in " + str(datetime.timedelta(seconds=game['duration'])))
+							await self.format_stats(game['players'][count])
+						else:
+							await self.bot.say(str(my_name['players'][0]['personaname']) + " lost a game as " + str(game['players'][count]['hero_name']) + " in " + str(datetime.timedelta(seconds=game['duration'])))
+							await self.format_stats(game['players'][count])
+
+	async def format_stats(self, game : str):
+		kills = game['kills']
+		deaths = game['deaths']
+		assists= game['assists']
+		gpm = game['gold_per_min']
+		deny = game['denies']
+		damage = game['hero_damage']
+		lh = game['last_hits']
+		xpm = game['xp_per_min']
+		spent = int(game['gold_spent']) + int(game['gold'])
+		level = game['level']
+		await self.bot.say("""
+		```
+		------------------------------------------------------------
+		| KILLS: """ + str(kills) + """ | DEATHS: """ + str(deaths) + """ | ASSISTS: """ + str(assists) + """ | GPM: """ + str(gpm) + """ | XPM: """ + str(xpm) + """ |
+		--------------------------------------------------------------------------------
+		| NET WORTH: """ + str(spent) + """ | LAST HITS: """ + str(lh) + """ | DENIES: """ + str(deny) + """ | HERO DAMAGE: """ + str(damage) + """ | LEVEL: """ + str(level) + """ |
+		--------------------------------------------------------------------------------
+		```
+		""")
+
+	@commands.command(pass_context=True)
+	async def addstats(self, ctx, player : int):
+		"""Adds a player to the stat tracker
+
+         	Just provide your Steam ID:
+	 	?stats <steam_id>
+		"""
+		player_val = {str(ctx.message.author):player}
+		player_list = open('players.csv', 'r')
+		reader = csv.reader(player_list)
+		for row in reader:
+			if (row[0] == str(ctx.message.author)):
+				await self.bot.say( str(ctx.message.author) + " is already here! I don't need more of you!")
+				player_list.close()
+				return
+		player_list.close()	
+		player_file = open('players.csv', 'a')
+		writer = csv.writer(player_file)	
+		try:
+			hist = d2api.get_match_history(player)
+		except:
+			await self.bot.say("You must enable Expose Public Match Data in your DotA 2 client")
+			return
+		writer.writerow( (str(ctx.message.author), player,hist['matches'][0]['match_id'],) )
+		player_file.close()
+		await self.bot.say( "I added " + str(ctx.message.author) + " to the list of players. NOW I'M WATCHING YOU")
+		
+
+	@commands.command(pass_context=True)
+	async def stats(self, ctx):
+		""" Get your latest stats
+
+		Just run:
+		?stats
+		"""
+		player_list = open('players.csv','r')
+		reader = csv.reader(player_list)
+		for row in reader:
+			if (row[0] == str(ctx.message.author)):
+				await self.write_stats(str(ctx.message.author))
+				return
+		await self.bot.say("You need to add your Steam ID! Use the ?addtats <steam_ID> command")
 
 	@commands.command(pass_context=True)
 	async def ping(self, ctx, count : int):
@@ -208,6 +317,7 @@ async def on_ready():
 	cog.voice = await bot.join_voice_channel(bot.get_channel(settings['voicechannel']))
 	cog.voice_channel = cog.voice.channel
 	await cog.try_talking(settings["resourcedir"] + "bothello.mp3", volume=0.3)
+	await cog.dota_stats()
 
 @bot.event
 async def on_command_error(error, ctx):
