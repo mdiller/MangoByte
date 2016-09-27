@@ -13,8 +13,7 @@ from collections import OrderedDict
 # 	"userinfo": [
 # 		{
 # 			"discord": "<discord id combination goes here>",
-# 			"steam": "<steam id goes here>",
-# 			"dota": "<dota id goes here>"
+# 			"steam": "<steam id goes here>"
 # 		}
 # 	]
 # }
