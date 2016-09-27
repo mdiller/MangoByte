@@ -6,8 +6,8 @@ import os
 import sys
 import json
 import dota2api
-import csv
 import datetime
+import random
 from gtts import gTTS
 from discord.ext import commands
 from ctypes.util import find_library
@@ -204,7 +204,19 @@ class MangoCog:
 		"""Says hello
 
 		WHAT MORE DO YOU NEED TO KNOW!?!?!? IS 'Says hello' REALLY NOT CLEAR ENOUGH FOR YOU!?!!11?!!?11!!?!??"""
-		await self.try_talking(settings.resourcedir + 'hello.mp3')
+		dota_hellos = [
+			"slark_attack_11",
+			"kunk_thanks_02",
+			"ratt_ability_hook_03",
+			"anti_brother_06",
+			"meepo_scepter_06",
+			"puck_ability_orb_03",
+			"tink_spawn_07",
+			"treant_ally_08",
+			"wraith_lasthit_02",
+			"timb_deny_08"
+		]
+		await self.try_talking(findfile(random.choice(dota_hellos) + ".mp3", settings.dotavpk + "sounds/vo/"))
 
 	@commands.command(pass_context=True)
 	async def play(self, ctx, clip : str):
