@@ -1,5 +1,5 @@
 import discord
-import settings
+from settings import *
 import asyncio
 import string
 import os
@@ -143,26 +143,23 @@ class MangoCog:
 		"""Adds a player to the stat tracker
 
          	Just provide your Steam ID:
-	 	?stats <steam_id>
+	 	?addstats <steam_id>
 		"""
-		player_val = {str(ctx.message.author):player}
-		player_list = open('players.csv', 'r')
-		reader = csv.reader(player_list)
-		for row in reader:
-			if (row[0] == str(ctx.message.author)):
+		global settings
+		for user in settings.userinfo:
+			if (user.discord == str(ctx.message.author)):
 				await self.bot.say( str(ctx.message.author) + " is already here! I don't need more of you!")
-				player_list.close()
 				return
-		player_list.close()	
-		player_file = open('players.csv', 'a')
-		writer = csv.writer(player_file)	
+
 		try:
 			hist = d2api.get_match_history(player)
-		except:
-			await self.bot.say("You must enable Expose Public Match Data in your DotA 2 client")
+		except Exception as e:
+			print(e.message)
+			await self.bot.say("Either you must enable Expose Public Match Data in your DotA 2 client, or that is an invalid ID")
 			return
-		writer.writerow( (str(ctx.message.author), player,hist['matches'][0]['match_id'],) )
-		player_file.close()
+		add_user(str(ctx.message.author), player, hist['matches'][0]['match_id'])
+		settings = Settings()
+
 		await self.bot.say( "I added " + str(ctx.message.author) + " to the list of players. NOW I'M WATCHING YOU")
 		
 
@@ -327,6 +324,6 @@ async def on_command_error(error, ctx):
 		await bot.send_message(ctx.message.channel,
 				"need better arguments on command ?{0} try doin ?help {0} to see how its done.".format(ctx.command))
 	else:
-		print("error executing command [" + ctx.command + "]: " + error)
+		print("error executing command {0}: {1}".format(ctx.command, error))
 
 bot.run(settings.token)
