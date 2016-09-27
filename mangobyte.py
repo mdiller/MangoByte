@@ -207,16 +207,20 @@ class MangoCog:
 		dota_hellos = [
 			"slark_attack_11",
 			"kunk_thanks_02",
-			"ratt_ability_hook_03",
-			"anti_brother_06",
 			"meepo_scepter_06",
 			"puck_ability_orb_03",
 			"tink_spawn_07",
 			"treant_ally_08",
 			"wraith_lasthit_02",
-			"timb_deny_08"
+			"timb_deny_08",
+			"tech_pain_39",
+			"meepo_attack_08",
+			"slark_lasthit_02",
+			"gyro_move_26"
 		]
-		await self.try_talking(findfile(random.choice(dota_hellos) + ".mp3", settings.dotavpk + "sounds/vo/"))
+		response = random.choice(dota_hellos)
+		print("hello: " + response)
+		await self.try_talking(findfile(response + ".mp3", settings.dotavpk + "sounds/vo/"))
 
 	@commands.command(pass_context=True)
 	async def play(self, ctx, clip : str):
