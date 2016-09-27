@@ -1,4 +1,5 @@
 import discord
+import settings
 import asyncio
 import string
 import os
@@ -13,10 +14,8 @@ from ctypes.util import find_library
 
 discord.opus.load_opus(find_library('opus'))
 
-with open('settings.json') as settings_file:
-	settings = json.load(settings_file)
 
-d2api = dota2api.Initialise(settings['steamapikey'])
+d2api = dota2api.Initialise(settings.steamapikey)
 
 def findfile(name, path):
 	for root, dirs, files in os.walk(path):
@@ -27,7 +26,7 @@ def findfile(name, path):
 # gets a list of all the mp3s in the root resource directory
 def get_playlist():
 	clips = []
-	for file in os.listdir(settings["resourcedir"]):
+	for file in os.listdir(settings.resourcedir):
 		if file.endswith(".mp3"):
 			clips.append(os.path.splitext(file)[0])
 	return clips
@@ -35,7 +34,7 @@ def get_playlist():
 # tts an audio clip from a word
 def make_temp_mp3(word):
 	tts = gTTS(text=word, lang='en')
-	tts.save(settings["resourcedir"] + "temp/temp.mp3")
+	tts.save(settings.resourcedir + "temp/temp.mp3")
 
 class MangoCog:
 	"""MangoByte: like a normal byte, but jucier"""
@@ -218,7 +217,7 @@ class MangoCog:
 		?dota gyro_move_13
 
 		Note: This command will eventually be improved substantially"""
-		response_file = findfile(dota_response + ".mp3", settings["dotavpk"] + "sounds/vo/")
+		response_file = findfile(dota_response + ".mp3", settings.dotavpk + "sounds/vo/")
 		if(response_file != None):
 			await self.try_talking(response_file, volume=0.3)
 		else:
@@ -229,7 +228,7 @@ class MangoCog:
 		"""Says hello
 
 		WHAT MORE DO YOU NEED TO KNOW!?!?!? IS 'Says hello' REALLY NOT CLEAR ENOUGH FOR YOU!?!!11?!!?11!!?!??"""
-		await self.try_talking(settings["resourcedir"] + 'hello.mp3')
+		await self.try_talking(settings.resourcedir + 'hello.mp3')
 
 	@commands.command(pass_context=True)
 	async def play(self, ctx, clip : str):
@@ -240,7 +239,7 @@ class MangoCog:
 
 		for a complete list of the available clips, try ?playlist"""
 		if clip in get_playlist():
-			await self.try_talking(settings["resourcedir"] +  clip + '.mp3')
+			await self.try_talking(settings.resourcedir +  clip + '.mp3')
 		else:
 			await self.bot.say("'" + clip + "' is not a valid clip. try ?playlist.")
 
@@ -295,13 +294,13 @@ class MangoCog:
 			print(after.name + " joined the channel")
 
 			await asyncio.sleep(3)
-			await self.try_talking(settings["resourcedir"] + 'helloits.mp3')
+			await self.try_talking(settings.resourcedir + 'helloits.mp3')
 			tts = gTTS(text=after.name, lang='en-au')
-			tts.save(settings["resourcedir"] + "temp/temp.mp3")
+			tts.save(settings.resourcedir + "temp/temp.mp3")
 			while self.is_talking():
 				await asyncio.sleep(0.1)
 
-			await self.try_talking(settings["resourcedir"] + "temp/temp.mp3")
+			await self.try_talking(settings.resourcedir + "temp/temp.mp3")
 			
 
 
@@ -314,9 +313,9 @@ bot.add_cog(cog)
 async def on_ready():
 	print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
 	print('Automatically connecting to default channel via ID...')
-	cog.voice = await bot.join_voice_channel(bot.get_channel(settings['voicechannel']))
+	cog.voice = await bot.join_voice_channel(bot.get_channel(settings.defaultvoice))
 	cog.voice_channel = cog.voice.channel
-	await cog.try_talking(settings["resourcedir"] + "bothello.mp3", volume=0.3)
+	await cog.try_talking(settings.resourcedir + "bothello.mp3", volume=0.3)
 	await cog.dota_stats()
 
 @bot.event
@@ -330,6 +329,4 @@ async def on_command_error(error, ctx):
 	else:
 		print("error executing command [" + ctx.command + "]: " + error)
 
-token = settings['token']
-
-bot.run(token)
+bot.run(settings.token)
