@@ -36,6 +36,11 @@ def make_temp_mp3(word):
 	tts = gTTS(text=word, lang='en')
 	tts.save(settings.resourcedir + "temp/temp.mp3")
 
+# returns the latest dota game played by the user
+def dota_latest_game(userinfo):
+	hist = d2api.get_match_history(account_id=userinfo.steam)
+	return d2api.get_match_details(hist['matches'][0]['match_id'])
+
 class MangoCog:
 	"""MangoByte: like a normal byte, but jucier"""
 
@@ -75,48 +80,24 @@ class MangoCog:
 		except Exception as e:
 			print(str(e))
 			await self.bot.say("thats not valid input, silly.")
-	
-	async def dota_stats(self):
-		while True:
-			tmp_file = open("tmpfile", "w")
-			writer = csv.writer(tmp_file)
-			if (os.stat("players.csv").st_size != 0):
-				player_file = open('players.csv', 'rt')
-				reader = csv.reader(player_file)	
-				for row in reader:
-					hist = d2api.get_match_history(account_id=row[1])
-					if(int(hist['matches'][0]['match_id']) != int(row[2])):
-						row[2] = hist['matches'][0]['match_id']
-					writer.writerow(row)	
-				player_file.close()
-				os.remove('players.csv')
-				os.rename("tmpfile",'players.csv')
-				tmp_file.close()
-				await asyncio.sleep(60)
-				player_file.close()
-			else:
-				# Player file is currently empty!
-				tmp_file.close()
-				await asyncio.sleep(60)
 
-	async def write_stats(self, player : str):
-		player_file = open('players.csv', 'rt')
-		reader = csv.reader(player_file)
-		for row in reader:
-			if (row[0] == str(player)):
-				game = d2api.get_match_details(int(row[2]))
-				match_result = game['radiant_win']
-				true_ID = int(row[1]) - 76561197960265728 
-				my_name = d2api.get_player_summaries(int(row[1]))
-				for count in range(0,len(game['players'])):
-					if(int(game['players'][count]['account_id']) == true_ID):
-						if (count < 5 and match_result is True) or (count >= 5 and match_result is False):
-							await self.bot.say(str(my_name['players'][0]['personaname']) + " won a game as " + str(game['players'][count]['hero_name']) + " in " + str(datetime.timedelta(seconds=game['duration'])))
-							await self.format_stats(game['players'][count])
-						else:
-							await self.bot.say(str(my_name['players'][0]['personaname']) + " lost a game as " + str(game['players'][count]['hero_name']) + " in " + str(datetime.timedelta(seconds=game['duration'])))
-							await self.format_stats(game['players'][count])
+	# prints the stats for the given player's latest game
+	async def write_stats(self, userinfo):
+		game = dota_latest_game(userinfo)
+		match_result = game['radiant_win']
+		true_ID = userinfo.steam - 76561197960265728 
+		my_name = str(d2api.get_player_summaries(userinfo.steam)['players'][0]['personaname'])
+		
+		for player in game['players']:
+			if(int(player['account_id']) == true_ID):
+				if (player['player_slot'] < 5 and match_result is True) or (player['player_slot'] >= 5 and match_result is False):
+					await self.bot.say(my_name + " won a game as " + str(player['hero_name']) + " in " + str(datetime.timedelta(seconds=game['duration'])))
+					await self.format_stats(player)
+				else:
+					await self.bot.say(my_name + " lost a game as " + str(player['hero_name']) + " in " + str(datetime.timedelta(seconds=game['duration'])))
+					await self.format_stats(player)
 
+	# prints the stats for the given player's game in a readable format
 	async def format_stats(self, game : str):
 		kills = game['kills']
 		deaths = game['deaths']
@@ -170,11 +151,9 @@ class MangoCog:
 		Just run:
 		?stats
 		"""
-		player_list = open('players.csv','r')
-		reader = csv.reader(player_list)
-		for row in reader:
-			if (row[0] == str(ctx.message.author)):
-				await self.write_stats(str(ctx.message.author))
+		for user in settings.userinfo:
+			if (user.discord == str(ctx.message.author)):
+				await self.write_stats(user)
 				return
 		await self.bot.say("You need to add your Steam ID! Use the ?addtats <steam_ID> command")
 
@@ -313,7 +292,6 @@ async def on_ready():
 	cog.voice = await bot.join_voice_channel(bot.get_channel(settings.defaultvoice))
 	cog.voice_channel = cog.voice.channel
 	await cog.try_talking(settings.resourcedir + "bothello.mp3", volume=0.3)
-	await cog.dota_stats()
 
 @bot.event
 async def on_command_error(error, ctx):

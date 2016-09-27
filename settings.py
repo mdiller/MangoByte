@@ -36,8 +36,7 @@ class Settings:
 class UserInfo:
 	def __init__(self, user_json):
 		self.discord = user_json["discord"]
-		self.steam = user_json["steam"]
-		self.dota = user_json["dota"]
+		self.steam = int(user_json["steam"])
 
 # Adds a user to the settings.json file
 # settings will need to be reloaded after this
@@ -46,8 +45,7 @@ def add_user(discord, steam, dota):
 		data = settings.json_data
 		data["userinfo"].append(OrderedDict([
 			("discord", discord),
-			("steam", str(steam)),
-			("dota", str(dota))
+			("steam", str(steam))
 		]))
 		json.dump(data, settings_file, indent=4)
 	
