@@ -192,10 +192,12 @@ class MangoCog:
 		?dota beas_ability_animalsound_05
 		?dota gyro_move_13
 
-		Note: This command will eventually be improved substantially"""
+		To search for a response, try using the web tool at:
+		http://people.oregonstate.edu/~dillerm/ResponsePlayer/index.php
+		ProTip: If you click the discord button next to the response, it will copy to your clipboard in the format needed to play using the bot."""
 		response_file = findfile(dota_response + ".mp3", settings.dotavpk + "sounds/vo/")
 		if(response_file != None):
-			await self.try_talking(response_file, volume=0.3)
+			await self.try_talking(response_file, volume=0.4)
 		else:
 			await self.bot.say("Not a valid dota response");
 
@@ -220,7 +222,7 @@ class MangoCog:
 		]
 		response = random.choice(dota_hellos)
 		print("hello: " + response)
-		await self.try_talking(findfile(response + ".mp3", settings.dotavpk + "sounds/vo/"))
+		await self.try_talking(findfile(response + ".mp3", settings.dotavpk + "sounds/vo/"), volume=0.4)
 
 	@commands.command(pass_context=True)
 	async def play(self, ctx, clip : str):
@@ -246,14 +248,14 @@ class MangoCog:
 		await self.bot.say(message)
 
 	@commands.command(pass_context=True)
-	async def playurl(self, ctx, url : str):
+	async def playurl(self, ctx, mp3url : str):
 		"""Plays an mp3 file at a url
 
 		Make sure to use http, not https.
 		One way to use this is to go to:
 		http://people.oregonstate.edu/~dillerm/ResponsePlayer/
 		Once there, find a good audio clip, right click on it, select copy url address, and do the thing."""
-		await self.try_talking(url)
+		await self.try_talking(mp3url)
 
 	@commands.command(pass_context=True)
 	async def echo(self, ctx, *, message : str):
