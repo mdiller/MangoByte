@@ -42,7 +42,9 @@ def dota_latest_game(userinfo):
 	return d2api.get_match_details(hist['matches'][0]['match_id'])
 
 class MangoCog:
-	"""MangoByte: like a normal byte, but jucier"""
+	"""MangoByte: like a normal byte, but jucier
+	Also checkout http://dotabase.me/
+	"""
 
 	def __init__(self, bot):
 		self.bot = bot
@@ -193,7 +195,7 @@ class MangoCog:
 		?dota gyro_move_13
 
 		To search for a response, try using the web tool at:
-		http://people.oregonstate.edu/~dillerm/ResponsePlayer/index.php
+		http://dotabase.me/responses/
 		ProTip: If you click the discord button next to the response, it will copy to your clipboard in the format needed to play using the bot."""
 		response_file = findfile(dota_response + ".mp3", settings.dotavpk + "sounds/vo/")
 		if(response_file != None):
@@ -253,7 +255,7 @@ class MangoCog:
 
 		Make sure to use http, not https.
 		One way to use this is to go to:
-		http://people.oregonstate.edu/~dillerm/ResponsePlayer/
+		http://dotabase.me/responses/
 		Once there, find a good audio clip, right click on it, select copy url address, and do the thing."""
 		await self.try_talking(mp3url)
 
