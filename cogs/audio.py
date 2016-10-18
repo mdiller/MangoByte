@@ -2,14 +2,12 @@ import discord
 from discord.ext import commands
 from .utils.settings import *
 import asyncio
+import os
 import string
 from gtts import gTTS
 from ctypes.util import find_library
 
 discord.opus.load_opus(find_library('opus'))
-
-async def playaudio(bot, ctx, mp3name, volume=0.6):
-	bot.get_cog("Audio").try_talking(mp3name, volume)
 
 # tts an audio clip from a word
 def make_temp_mp3(word):
@@ -22,6 +20,7 @@ def get_playlist():
 	for file in os.listdir(settings.resourcedir):
 		if file.endswith(".mp3"):
 			clips.append(os.path.splitext(file)[0])
+	clips.sort()
 	return clips
 
 class Audio:
@@ -98,6 +97,12 @@ class Audio:
 		Once there, find a good audio clip, right click on it, select copy url address, and do the thing."""
 		await self.try_talking(mp3url)
 
+	@commands.command(pass_context=True)
+	async def stop(self, ctx):
+		"""Stops the currently playing audio
+		"""
+		self.player.stop();
+
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
 		if self.voice_channel is None or after.voice_channel is None or before.voice_channel == after.voice_channel:
@@ -117,7 +122,5 @@ class Audio:
 
 
 def setup(bot):
-	n = Audio(bot)
-	bot.add_listener(n.on_voice_state_update, "on_voice_state_update")
-	bot.add_cog(n)
+	bot.add_cog(Audio(bot))
 

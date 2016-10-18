@@ -1,19 +1,27 @@
 import discord
 from discord.ext import commands
 from .utils.settings import *
-from audio import playaudio
+import random
+import os
 import asyncio
 import string
+from dotabase import *
 
+session = dotabase_session()
 
-class DotabaseCog:
-	"""Commands for interfacing with Dotabase. See dotabase.me for a website that interfaces with Dotabase.
+class Dotabase:
+	"""Commands for interfacing with Dotabase. See http://dotabase.me for a website that interfaces with Dotabase.
 	"""
 	def __init__(self, bot):
 		self.bot = bot
 
+	async def play_response(self, response):
+		response_file = settings.dotavpk + response.mp3
+		audio = self.bot.get_cog("Audio")
+		await audio.try_talking(response_file, volume=0.4)
+
 	@commands.command(pass_context=True)
-	async def dota(self, ctx, dota_response : str):
+	async def dota(self, ctx, *, dota_response : str):
 		"""Plays a dota response
 
 		The format for input is the name of the sound.
@@ -30,12 +38,18 @@ class DotabaseCog:
 		?dota beas_ability_animalsound_05
 		?dota gyro_move_13
 
+		If there is no response matching the input string, searches for any response that has the input string as part of its text
+
 		To search for a response, try using the web tool at:
 		http://dotabase.me/responses/
 		ProTip: If you click the discord button next to the response, it will copy to your clipboard in the format needed to play using the bot."""
-		response_file = findfile(dota_response + ".mp3", settings.dotavpk + "sounds/vo/")
-		if(response_file != None):
-			await playaudio(self.bot, ctx, response_file, volume=0.4)
+		response1 = session.query(Response).filter(Response.name == dota_response).first()
+		response2 = session.query(Response).filter(Response.text.like("%" + dota_response + "%")).order_by(Response.text).first()
+
+		if(response1 != None):
+			await self.play_response(response1)
+		elif(response2 != None):
+			await self.play_response(response2)
 		else:
 			await self.bot.say("Not a valid dota response");
 
@@ -58,6 +72,10 @@ class DotabaseCog:
 			"slark_lasthit_02",
 			"gyro_move_26"
 		]
-		response = random.choice(dota_hellos)
-		print("hello: " + response)
-		await playaudio(self.bot, ctx, findfile(response + ".mp3", settings.dotavpk + "sounds/vo/"), volume=0.4)
+		dota_response = random.choice(dota_hellos)
+		response = session.query(Response).filter(Response.name == dota_response).first()
+		print("hello: " + response.name)
+		await self.play_response(response)
+
+def setup(bot):
+	bot.add_cog(Dotabase(bot))

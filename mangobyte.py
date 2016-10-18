@@ -17,7 +17,7 @@ async def on_ready():
 	cog = bot.get_cog("Audio")
 	cog.voice = await bot.join_voice_channel(bot.get_channel(settings.defaultvoice))
 	cog.voice_channel = cog.voice.channel
-	await cog.try_talking(settings.resourcedir + "bothello.mp3", volume=0.3)
+	await cog.try_talking(settings.resourcedir + "bothello.mp3", volume=0.1)
 
 @bot.event
 async def on_command_error(error, ctx):
@@ -34,5 +34,5 @@ if __name__ == '__main__':
 	bot.load_extension("cogs.general")
 	bot.load_extension("cogs.audio")
 	bot.load_extension("cogs.dotastats")
-	bot.load_extension("cogs.dotabasecog")
+	bot.load_extension("cogs.dotabase")
 	bot.run(settings.token)
