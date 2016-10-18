@@ -12,7 +12,7 @@ class General:
 		self.bot = bot
 
 	@commands.command(pass_context=True)
-	async def ping(self, ctx, count : int):
+	async def ping(self, ctx, count : int=1):
 		"""Pings a number of times(within reason)
 
 		Pings... a number of times.... within reason. *glares at blanedale*"""
@@ -26,7 +26,7 @@ class General:
 		ping_string = ""
 		for i in range(0, count):
 			ping_string += "Ping "
-		await self.bot.say(ping_string, tts=True)
+		await self.bot.say(ping_string)
 
 	@commands.command(pass_context=True)
 	async def echo(self, ctx, *, message : str):

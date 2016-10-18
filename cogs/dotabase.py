@@ -21,7 +21,7 @@ class Dotabase:
 		await audio.try_talking(response_file, volume=0.4)
 
 	@commands.command(pass_context=True)
-	async def dota(self, ctx, *, dota_response : str):
+	async def dota(self, ctx, *, dota_response : str=None):
 		"""Plays a dota response
 
 		The format for input is the name of the sound.
@@ -43,6 +43,11 @@ class Dotabase:
 		To search for a response, try using the web tool at:
 		http://dotabase.me/responses/
 		ProTip: If you click the discord button next to the response, it will copy to your clipboard in the format needed to play using the bot."""
+		if(dota_response == None):
+			response = random.choice(session.query(Response).all())
+			await self.play_response(response)
+			return
+
 		response1 = session.query(Response).filter(Response.name == dota_response).first()
 		response2 = session.query(Response).filter(Response.text.like("%" + dota_response + "%")).order_by(Response.text).first()
 
