@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from sqlalchemy.sql.expression import func
 from .utils.settings import *
 import random
 import os
@@ -44,7 +45,7 @@ class Dotabase:
 		http://dotabase.me/responses/
 		ProTip: If you click the discord button next to the response, it will copy to your clipboard in the format needed to play using the bot."""
 		if(dota_response == None):
-			response = random.choice(session.query(Response).all())
+			response = session.query(Response).order_by(func.random()).first()
 			await self.play_response(response)
 			return
 
@@ -81,6 +82,13 @@ class Dotabase:
 		response = session.query(Response).filter(Response.name == dota_response).first()
 		print("hello: " + response.name)
 		await self.play_response(response)
+
+	@commands.command(pass_context=True)
+	async def no(self, ctx):
+		"""Nopes."""
+		dota_response = session.query(Response).filter(Response.text.like("no!")).order_by(func.random()).first()
+
+		await self.play_response(dota_response)
 
 def setup(bot):
 	bot.add_cog(Dotabase(bot))
