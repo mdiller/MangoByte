@@ -50,7 +50,7 @@ class Dotabase:
 			return
 
 		response1 = session.query(Response).filter(Response.name == dota_response).first()
-		response2 = session.query(Response).filter(Response.text.like("%" + dota_response + "%")).order_by(Response.text).first()
+		response2 = session.query(Response).filter(Response.text_simple.like("% " + dota_response + " %")).order_by(func.char_length(Response.text)).first()
 
 		if(response1 != None):
 			await self.play_response(response1)
