@@ -6,6 +6,7 @@ import random
 import os
 import asyncio
 import string
+import re
 from dotabase import *
 
 session = dotabase_session()
@@ -50,7 +51,8 @@ class Dotabase:
 			return
 
 		response1 = session.query(Response).filter(Response.name == dota_response).first()
-		response2 = session.query(Response).filter(Response.text_simple.like("% " + dota_response + " %")).order_by(func.char_length(Response.text)).first()
+		simple_input = "% " + re.sub(r'[^a-z^0-9^A-Z^\s]', r'', dota_response).lower() + " %"
+		response2 = session.query(Response).filter(Response.text_simple.like(simple_input)).order_by(func.char_length(Response.text)).first()
 
 		if(response1 != None):
 			await self.play_response(response1)
