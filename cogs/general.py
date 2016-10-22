@@ -44,9 +44,10 @@ class General:
 				print("attempted to join invalid channel: " + channel_id)
 				return
 
-			await self.voice.move_to(new_channel)
+			audio = self.bot.get_cog("Audio")
+			await audio.voice.move_to(new_channel)
 			print("joined channel: " + channel_id)
-			self.voice_channel = self.bot.get_channel(channel_id)
+			audio.voice_channel = self.bot.get_channel(channel_id)
 		else:
 			print("non-owner tried to use owner command")
 
