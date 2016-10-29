@@ -9,6 +9,7 @@ from ctypes.util import find_library
 
 discord.opus.load_opus(find_library('opus'))
 
+
 # tts an audio clip from a word
 def make_temp_mp3(word):
 	tts = gTTS(text=word, lang='en')
@@ -32,6 +33,8 @@ class Audio:
 		self.voice = None
 		self.player = None
 		self.voice_channel = None
+		self.last_clip = ""
+		self.last_clip_volume = 0.0
 
 
 	# whether or not the bot is currently talking
@@ -60,6 +63,8 @@ class Audio:
 			self.player.volume = volume
 			self.player.start()
 			print("playing: " + mp3name)
+			self.last_clip = mp3name
+			self.last_clip_volume = volume
 		except Exception as e:
 			print(str(e))
 			await self.bot.say("thats not valid input, silly.")
@@ -102,6 +107,15 @@ class Audio:
 		"""Stops the currently playing audio
 		"""
 		self.player.stop();
+
+	@commands.command(pass_context=True)
+	async def replay(self, ctx):
+		"""Replays the last played clip
+		"""
+		if self.last_clip == "":
+			await self.bot.say("Nobody said anythin' yet")
+			return
+		await self.try_talking(self.last_clip, self.last_clip_volume)
 
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
