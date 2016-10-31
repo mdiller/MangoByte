@@ -1,5 +1,6 @@
 import discord
 from cogs.utils.settings import *
+from cogs.utils.helpers import *
 import asyncio
 import string
 from discord.ext import commands
@@ -17,6 +18,7 @@ async def on_ready():
 	cog = bot.get_cog("Audio")
 	cog.voice = await bot.join_voice_channel(bot.get_channel(settings.defaultvoice))
 	cog.voice_channel = cog.voice.channel
+	await bot.change_nickname(cog.voice.channel.server.me, bot.user.name + " v" + get_version())
 	await cog.try_talking(settings.resourcedir + "bothello.mp3", volume=0.1)
 
 @bot.event
