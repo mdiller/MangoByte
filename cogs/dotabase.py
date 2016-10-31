@@ -61,7 +61,7 @@ class Dotabase:
 		else:
 			await self.bot.say("Not a valid dota response");
 
-	@commands.command(pass_context=True)
+	@commands.command(pass_context=True, aliases=["hi"])
 	async def hello(self, ctx):
 		"""Says hello
 
@@ -85,10 +85,19 @@ class Dotabase:
 		print("hello: " + response.name)
 		await self.play_response(response)
 
-	@commands.command(pass_context=True)
+	@commands.command(pass_context=True, aliases=["nope"])
 	async def no(self, ctx):
 		"""Nopes."""
 		dota_response = session.query(Response).filter(Response.text.like("no!")).order_by(func.random()).first()
+
+		await self.play_response(dota_response)
+
+	@commands.command(pass_context=True, aliases=["laugh", "haha", "lerl"])
+	async def lol(self, ctx):
+		"""WOW I WONDER WAT THIS DOES
+
+		Laughs using dota. Thats what it does."""
+		dota_response = session.query(Response).filter(Response.name.like("%laugh%")).order_by(func.random()).first()
 
 		await self.play_response(dota_response)
 
