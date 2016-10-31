@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from sqlalchemy.sql.expression import func
+from sqlalchemy import and_
 from .utils.settings import *
 import random
 import os
@@ -40,7 +41,7 @@ class Dotabase:
 		?dota beas_ability_animalsound_05
 		?dota gyro_move_13
 
-		If there is no response matching the input string, searches for any response that has the input string as part of its text
+		If there is no response matching the input string, searches for any response that has the input string as part of its text 
 
 		To search for a response, try using the web tool at:
 		http://dotabase.me/responses/
@@ -97,9 +98,26 @@ class Dotabase:
 		"""WOW I WONDER WAT THIS DOES
 
 		Laughs using dota. Thats what it does."""
-		dota_response = session.query(Response).filter(Response.name.like("%laugh%")).order_by(func.random()).first()
+		dota_response = session.query(Response).filter(Response.criteria.like("Emote%")).order_by(func.random()).first()
 
 		await self.play_response(dota_response)
+
+	@commands.command(pass_context=True, aliases=["ty"])
+	async def thanks(self, ctx):
+		"""Gives thanks
+
+		Thanks are given by a random dota hero in their own special way"""
+		dota_response = session.query(Response).filter(Response.criteria.like("Thanks%")).order_by(func.random()).first()
+
+		await self.play_response(dota_response)
+
+	@commands.command(pass_context=True)
+	async def inthebag(self, ctx):
+		"""Proclaims that 'IT' (whatever it is) is in the bag"""
+		dota_response = session.query(Response).filter(and_(Response.criteria.like("InTheBag%"),Response.text != "It's in the bag!")).order_by(func.random()).first()
+
+		await self.play_response(dota_response)
+
 
 def setup(bot):
 	bot.add_cog(Dotabase(bot))
