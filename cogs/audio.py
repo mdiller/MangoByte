@@ -127,11 +127,17 @@ class Audio:
 
 			await asyncio.sleep(3)
 			await self.try_talking(settings.resourcedir + 'helloits.mp3')
-			tts = gTTS(text=after.name, lang='en-au')
-			tts.save(settings.resourcedir + "temp/temp.mp3")
+
+			# This could be done (much) better... but lazy
 			while self.is_talking():
 				await asyncio.sleep(0.1)
 
+			text = after.name
+			if(self.last_clip == (settings.resourcedir + "temp/temp.mp3")):
+				text = "and " + after.name
+
+			tts = gTTS(text=text, lang='en-au')
+			tts.save(settings.resourcedir + "temp/temp.mp3")
 			await self.try_talking(settings.resourcedir + "temp/temp.mp3")
 
 
