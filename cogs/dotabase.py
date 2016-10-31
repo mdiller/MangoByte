@@ -18,7 +18,7 @@ class Dotabase:
 		self.bot = bot
 
 	async def play_response(self, response):
-		response_file = settings.dotavpk + response.mp3
+		response_file = "http://dotabase.me/dota-vpk" + response.mp3
 		audio = self.bot.get_cog("Audio")
 		await audio.try_talking(response_file, volume=0.4)
 

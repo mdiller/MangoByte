@@ -58,11 +58,10 @@ class DotaStats:
 		""")
 
 	@commands.command(pass_context=True)
-	async def addstats(self, ctx, player : int):
-		"""Adds a player to the stat tracker
-
-         	Just provide your Steam ID:
-	 	?addstats <steam_id>
+	async def addstats(self, ctx, steam_id : int):
+		"""Adds a dota player to the dota stat tracker, vie their steam id
+		
+	 	To get your steam_id, an easy way is to go to your profile page in steam, right click anywhere, and select 'Copy Page URL.' Then paste that somewhere, and get the number at the end of the url. It should start with a 7 and be like 16 characters or something. Thats your steam_id. Now just do ?addstats <thenumber>.
 		"""
 		global settings
 		for user in settings.userinfo:
@@ -71,12 +70,12 @@ class DotaStats:
 				return
 
 		try:
-			hist = d2api.get_match_history(player)
+			hist = d2api.get_match_history(steam_id)
 		except Exception as e:
 			print(e.message)
 			await self.bot.say("Either you must enable Expose Public Match Data in your DotA 2 client, or that is an invalid ID")
 			return
-		add_user(str(ctx.message.author), player, hist['matches'][0]['match_id'])
+		add_user(str(ctx.message.author), steam_id, hist['matches'][0]['match_id'])
 		settings = Settings()
 
 		await self.bot.say( "I added " + str(ctx.message.author) + " to the list of players. NOW I'M WATCHING YOU")
