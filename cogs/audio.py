@@ -32,7 +32,6 @@ class Audio:
 		self.bot = bot
 		self.voice = None
 		self.player = None
-		self.voice_channel = None
 		self.last_clip = ""
 		self.last_clip_volume = 0.0
 
@@ -119,10 +118,10 @@ class Audio:
 
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
-		if self.voice_channel is None or after.voice_channel is None or before.voice_channel == after.voice_channel:
-			# if the bot or the member are not in a voice channel, don't worry about checking that theyre equal
+		if self.voice is None or after.voice_channel is None or before.voice_channel == after.voice_channel or before.voice_channel == after.voice_channel:
+			# if the bot or the member are not in a voice channel, or if the member's channel didnt change, don't worry about checking that theyre equal
 			return
-		if after.voice_channel.id == self.voice_channel.id and before.voice_channel != after.voice_channel:
+		if after.voice_channel.id == self.voice.channel.id:
 			print(after.name + " joined the channel")
 
 			await asyncio.sleep(3)
