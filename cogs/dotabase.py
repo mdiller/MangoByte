@@ -118,6 +118,22 @@ class Dotabase:
 
 		await self.play_response(dota_response)
 
+	@commands.command(pass_context=True)
+	async def ask(self, ctx, *, question : str=""):
+		"""Answers any question you might have"""
+		answers = [
+			"orac_purifyingflames_09", #yes
+			"orac_fatesedict_17", #why not
+			"orac_move_26", #always
+			"orac_notyet_01", #not yet
+			"orac_lose_01", #no
+			"orac_falsepromise_11" #no gaurentees
+		]
+		random.seed(question)
+		dota_response = random.choice(answers)
+		response = session.query(Response).filter(Response.name == dota_response).first()
+		await self.bot.say(response.text)
+		await self.play_response(response)
 
 def setup(bot):
 	bot.add_cog(Dotabase(bot))

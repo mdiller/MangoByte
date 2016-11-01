@@ -9,7 +9,6 @@ from ctypes.util import find_library
 
 discord.opus.load_opus(find_library('opus'))
 
-
 # tts an audio clip from a word
 def make_temp_mp3(word):
 	tts = gTTS(text=word, lang='en')
@@ -40,6 +39,9 @@ class Audio:
 	def is_talking(self):
 		return (self.player is not None) and (not self.player.is_done())
 
+	def done_talking(self):
+		self.player = None
+
 	# try to say an mp3, and if we arent in a voice channel, join the default one
 	async def try_talking(self, mp3name, volume=0.6):
 		if(self.voice is None):
@@ -58,7 +60,7 @@ class Audio:
 				return
 
 		try:
-			self.player = self.voice.create_ffmpeg_player(mp3name)
+			self.player = self.voice.create_ffmpeg_player(mp3name, after=self.done_talking)
 			self.player.volume = volume
 			self.player.start()
 			print("playing: " + mp3name)

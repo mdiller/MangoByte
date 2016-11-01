@@ -53,5 +53,6 @@ class General:
 			print("non-owner tried to use owner command")
 
 
+
 def setup(bot):
 	bot.add_cog(General(bot))
