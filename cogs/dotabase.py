@@ -123,11 +123,16 @@ class Dotabase:
 		"""Answers any question you might have"""
 		answers = [
 			"orac_purifyingflames_09", #yes
+			"orac_falsepromise_02", #outcome unclear
+			"orac_kill_08", #ask again later
+			"orac_falsepromise_14", #yes, as forseen
 			"orac_fatesedict_17", #why not
 			"orac_move_26", #always
 			"orac_notyet_01", #not yet
 			"orac_lose_01", #no
-			"orac_falsepromise_11" #no gaurentees
+			"orac_falsepromise_11", #no gaurentees
+			"orac_move_15", #oh endlessly
+			"orac_attack_01" #could go either way
 		]
 		random.seed(question)
 		dota_response = random.choice(answers)
