@@ -93,6 +93,13 @@ class Dotabase:
 
 		await self.play_response(dota_response)
 
+	@commands.command(pass_context=True)
+	async def yes(self, ctx):
+		"""Ooooo ya."""
+		dota_response = session.query(Response).filter(Response.text_simple == " yes ").order_by(func.random()).first()
+
+		await self.play_response(dota_response)
+
 	@commands.command(pass_context=True, aliases=["laugh", "haha", "lerl"])
 	async def lol(self, ctx):
 		"""WOW I WONDER WAT THIS DOES
