@@ -18,7 +18,7 @@ async def on_ready():
 	cog = bot.get_cog("Audio")
 	cog.voice = await bot.join_voice_channel(bot.get_channel(settings.defaultvoice))
 	await bot.change_nickname(cog.voice.channel.server.me, bot.user.name + " v" + get_version())
-	await cog.try_talking(settings.resourcedir + "bothello.mp3", volume=0.1)
+	await cog.try_talking(settings.resourcedir + "clips/dota/bothello.mp3", volume=0.1)
 
 @bot.event
 async def on_command_error(error, ctx):

@@ -14,12 +14,28 @@ def make_temp_mp3(word):
 	tts = gTTS(text=word, lang='en')
 	tts.save(settings.resourcedir + "temp/temp.mp3")
 
-# gets a list of all the mp3s in the root resource directory
-def get_playlist():
+def get_clipdirs():
+	result = []
+	for root, dirs, files in os.walk(settings.resourcedir + "clips/"):
+		for d in dirs:
+			result.append(d)
+	result.sort()
+	return result
+
+def get_clipfile(clipname):
+	for root, dirs, files in os.walk(settings.resourcedir + "clips/"):
+		for file in files:
+			if(file == clipname + ".mp3"):
+				return os.path.join(root, file)
+	return None
+
+# gets a list of all the mp3s in the indicated clipdir
+def get_playlist(clipdir):
 	clips = []
-	for file in os.listdir(settings.resourcedir):
-		if file.endswith(".mp3"):
-			clips.append(os.path.splitext(file)[0])
+	for root, dirs, files in os.walk(settings.resourcedir + "clips/" + clipdir):
+		for file in files:
+			if file.endswith(".mp3"):
+				clips.append(file[:-4])
 	clips.sort()
 	return clips
 
@@ -71,26 +87,44 @@ class Audio:
 			await self.bot.say("thats not valid input, silly.")
 
 	@commands.command(pass_context=True)
-	async def play(self, ctx, clip : str):
+	async def play(self, ctx, clip : str=""):
 		"""Plays an audio clip
 
 		example:
 		?play hello
 
 		for a complete list of the available clips, try ?playlist"""
-		if clip in get_playlist():
-			await self.try_talking(settings.resourcedir +  clip + '.mp3')
-		else:
+		clipfile = get_clipfile(clip)
+		if clipfile == None:
 			await self.bot.say("'" + clip + "' is not a valid clip. try ?playlist.")
+		else:
+			await self.try_talking(clipfile)
+			
 
 	@commands.command(pass_context=True)
-	async def playlist(self, ctx):
-		"""Lists the audio clips available for the play command"""
-		clips = get_playlist()
-		message = "```"
-		for clip in clips:
-			message += clip + "\n"
-		message += "```"
+	async def playlist(self, ctx, section : str=""):
+		"""Lists the audio clips available for the play command in the indicated section
+
+		There were beginning to be too many clips so I made a sections system"""
+		dirs = get_clipdirs()
+
+		message = ""
+
+		if ((not section in dirs) and section != ""):
+			message +=("Thats not a valid section...\n")
+			section = ""
+
+		clips = get_playlist(section)
+		if section == "":
+			message += "Pick a section and do ?playlist <section>\n"
+			message += "Sections:\n"
+			for d in dirs:
+				message += " - " + d + "\n"
+		else:
+			message += "```\n"
+			for clip in clips:
+				message += clip + "\n"
+			message += "```"
 		await self.bot.say(message)
 
 	@commands.command(pass_context=True)
@@ -127,7 +161,7 @@ class Audio:
 			print(after.name + " joined the channel")
 
 			await asyncio.sleep(3)
-			await self.try_talking(settings.resourcedir + 'helloits.mp3')
+			await self.try_talking(settings.resourcedir + 'clips/helloits.mp3')
 
 			# This could be done (much) better... but lazy
 			while self.is_talking():
