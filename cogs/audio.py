@@ -177,4 +177,4 @@ class Audio:
 
 
 def setup(bot):
-	bot.add_cog(Audio(b
+	bot.add_cog(Audio(bot))
