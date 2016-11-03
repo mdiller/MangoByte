@@ -161,7 +161,7 @@ class Audio:
 			print(after.name + " joined the channel")
 
 			await asyncio.sleep(3)
-			await self.try_talking(settings.resourcedir + 'clips/helloits.mp3')
+			await self.try_talking(settings.resourcedir + 'clips/songs/helloits.mp3')
 
 			# This could be done (much) better... but lazy
 			while self.is_talking():
@@ -177,5 +177,4 @@ class Audio:
 
 
 def setup(bot):
-	bot.add_cog(Audio(bot))
-
+	bot.add_cog(Audio(b
