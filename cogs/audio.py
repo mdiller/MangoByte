@@ -174,6 +174,16 @@ class Audio:
 			return
 		await self.try_talking(self.last_clip.mp3name, self.last_clip.volume)
 
+	# @commands.command(pass_context=True)
+	# async def setintro(self, ctx, clipname : str):
+	# 	"""Sets your intro clip
+
+	# 	The argument is the name of the clip that will introduce you, for example:
+	# 	?setintro math
+	# 	Note: your intro clip cannot be longer than 3 seconds
+	# 	"""
+	# 	bot.say()
+
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
 		if self.voice is None or after.voice_channel is None or before.voice_channel == after.voice_channel or before.voice_channel == after.voice_channel:
