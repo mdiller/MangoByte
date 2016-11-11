@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from cogs.utils.helpers import *
 from __main__ import settings, botdata
 import asyncio
 import os
@@ -174,15 +175,28 @@ class Audio:
 			return
 		await self.try_talking(self.last_clip.mp3name, self.last_clip.volume)
 
-	# @commands.command(pass_context=True)
-	# async def setintro(self, ctx, clipname : str):
-	# 	"""Sets your intro clip
+	@commands.command(pass_context=True)
+	async def setintro(self, ctx, clipname : str):
+		"""Sets your intro clip
 
-	# 	The argument is the name of the clip that will introduce you, for example:
-	# 	?setintro math
-	# 	Note: your intro clip cannot be longer than 3 seconds
-	# 	"""
-	# 	bot.say()
+		The argument is the name of the clip that will introduce you, for example:
+		?setintro math
+		Note: your intro clip cannot be longer than 4 seconds
+		"""
+		clipfile = get_clipfile(clipname)
+		if clipfile is None:
+			await self.bot.say("Dats not a real clipfile, silly. Try ?playlist")
+			return
+
+		audiolength = audio_length(clipfile)
+
+		if audiolength > 4.0:
+			await self.bot.say("Dat clip is " + str(audiolength) + " seconds long, and intros gotta be less than 3.")
+			return
+
+		botdata.userinfo(ctx.message.author.id).intro = clipname
+
+		await self.bot.say("Yer intro is now " + clipname)
 
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):

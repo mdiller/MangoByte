@@ -19,7 +19,7 @@ def get_version():
 	return run_command(["git", "rev-list", "--count", "master"])
 
 def audio_length(filename):
-	return float(run_command('ffprobe', '-i', filename, '-show_entries', 'format=duration', '-v', 'quiet', '-of', 'csv="p=0"'))
+	return float(run_command(["ffprobe", "-i", filename, "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0"]))
 
 def write_json(filename, data):
 	with open(filename, "w+") as f:
