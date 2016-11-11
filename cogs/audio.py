@@ -1,9 +1,10 @@
 import discord
 from discord.ext import commands
-from __main__ import settings
+from __main__ import settings, botdata
 import asyncio
 import os
 import string
+import queue
 from gtts import gTTS
 from ctypes.util import find_library
 
@@ -39,6 +40,11 @@ def get_playlist(clipdir):
 	clips.sort()
 	return clips
 
+class Clip:
+	def __init__(self, mp3name, volume):
+		self.mp3name = mp3name
+		self.volume = volume
+
 class Audio:
 	"""Commands used to play audio
 	"""
@@ -47,8 +53,8 @@ class Audio:
 		self.bot = bot
 		self.voice = None
 		self.player = None
-		self.last_clip = ""
-		self.last_clip_volume = 0.0
+		self.clipqueue = queue.Queue()
+		self.last_clip = None
 
 
 	# whether or not the bot is currently talking
@@ -57,6 +63,30 @@ class Audio:
 
 	def done_talking(self):
 		self.player = None
+		if not self.clipqueue.empty():
+			self.play_next_clip()
+
+	# gets the next clip from the clip queue
+	def next_clip(self):
+		if not self.clipqueue.empty():
+			return self.clipqueue.get()
+		raise ValueError("clip queue was empty when we tried to get the next one")
+
+	# puts a clip on the clipqueue
+	async def queue_clip(self, clip):
+		self.clipqueue.put(clip)
+
+	# plays the next clip in the queue
+	def play_next_clip(self):
+		try:
+			clip = self.next_clip()
+			self.player = self.voice.create_ffmpeg_player(clip.mp3name, after=self.done_talking)
+			self.player.volume = clip.volume
+			self.player.start()
+			print("playing: " + clip.mp3name)
+			self.last_clip = clip
+		except Exception as e:
+			print(str(e))
 
 	# try to say an mp3, and if we arent in a voice channel, join the default one
 	async def try_talking(self, mp3name, volume=0.6):
@@ -65,26 +95,10 @@ class Audio:
 			await self.bot.say("not in voice channel m8")
 			return
 
-		if self.is_talking():
-			# we have a player and its playing something
-			print("interruption")
-			try:
-				await self.bot.say("I'm already talking, don't interrupt. rude.")
-			except Exception as e:
-				print("couldnt report interruption")
-			finally:
-				return
+		await self.queue_clip(Clip(mp3name, volume))
 
-		try:
-			self.player = self.voice.create_ffmpeg_player(mp3name, after=self.done_talking)
-			self.player.volume = volume
-			self.player.start()
-			print("playing: " + mp3name)
-			self.last_clip = mp3name
-			self.last_clip_volume = volume
-		except Exception as e:
-			print(str(e))
-			await self.bot.say("thats not valid input, silly.")
+		if not self.is_talking():
+			self.play_next_clip()
 
 	@commands.command(pass_context=True)
 	async def play(self, ctx, clip : str=""):
@@ -140,17 +154,25 @@ class Audio:
 	@commands.command(pass_context=True)
 	async def stop(self, ctx):
 		"""Stops the currently playing audio
+
+		Also empties the clip queue
 		"""
-		self.player.stop();
+		while not self.clipqueue.empty():
+			try:
+				self.clipqueue.get()
+			except Empty:
+				continue
+		if not self.player is None:
+			self.player.stop();
 
 	@commands.command(pass_context=True)
 	async def replay(self, ctx):
 		"""Replays the last played clip
 		"""
-		if self.last_clip == "":
+		if self.last_clip == None:
 			await self.bot.say("Nobody said anythin' yet")
 			return
-		await self.try_talking(self.last_clip, self.last_clip_volume)
+		await self.try_talking(self.last_clip.mp3name, self.last_clip.volume)
 
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
@@ -160,20 +182,23 @@ class Audio:
 		if after.voice_channel.id == self.voice.channel.id:
 			print(after.name + " joined the channel")
 
-			await asyncio.sleep(3)
-			await self.try_talking(settings.resourcedir + 'clips/songs/helloits.mp3')
-
-			# This could be done (much) better... but lazy
-			while self.is_talking():
-				await asyncio.sleep(0.1)
+			# id used because it doesnt contain strange characters like name does, and is unique to this user
+			tempfilename = settings.resourcedir + "temp/nameof_" + after.id + ".mp3"
 
 			text = after.name
-			if(self.last_clip == (settings.resourcedir + "temp/temp.mp3")):
-				text = "and " + after.name
+			clipname = "helloits"
+
+			userinfo = botdata.userinfo(after.id)
+			if userinfo.intro != "":
+				clipname = userinfo.intro
+				text = "its " + after.name
 
 			tts = gTTS(text=text, lang='en-au')
-			tts.save(settings.resourcedir + "temp/temp.mp3")
-			await self.try_talking(settings.resourcedir + "temp/temp.mp3")
+			tts.save(tempfilename)
+
+			await asyncio.sleep(3)
+			await self.try_talking(get_clipfile(clipname))
+			await self.try_talking(tempfilename)
 
 
 def setup(bot):
