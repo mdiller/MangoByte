@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from .utils.settings import *
+from __main__ import settings
 import asyncio
 import os
 import string

@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
-from .utils.settings import *
-from .utils.helpers import *
+from __main__ import settings
+from cogs.utils.helpers import *
+from cogs.utils import checks
 import asyncio
 import string
 
@@ -36,21 +37,18 @@ class General:
 		I would hurl words into this darkness and wait for an echo, and if an echo sounded, no matter how faintly, I would send other words to tell, to march, to fight, to create a sense of the hunger for life that gnaws in us all"""
 		await self.bot.say(message)
 
+	@checks.is_owner()
 	@commands.command(pass_context=True, hidden=True)
 	async def join(self, ctx, channel_id : str):
-		appinfo = await self.bot.application_info()
-		if(appinfo.owner.id == ctx.message.author.id):
-			new_channel = self.bot.get_channel(channel_id)
-			if(new_channel == None):
-				print("attempted to join invalid channel: " + channel_id)
-				return
+		new_channel = self.bot.get_channel(channel_id)
+		if(new_channel == None):
+			print("attempted to join invalid channel: " + channel_id)
+			return
 
-			audio = self.bot.get_cog("Audio")
-			await audio.voice.move_to(new_channel)
-			print("joined channel: " + channel_id)
-			audio.voice_channel = self.bot.get_channel(channel_id)
-		else:
-			print("non-owner tried to use owner command")
+		audio = self.bot.get_cog("Audio")
+		await audio.voice.move_to(new_channel)
+		print("joined channel: " + channel_id)
+		audio.voice_channel = self.bot.get_channel(channel_id)
 
 
 

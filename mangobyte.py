@@ -1,13 +1,14 @@
 import discord
-from cogs.utils.settings import *
+from cogs.utils.botdata import BotData
+from cogs.utils.settings import Settings
 from cogs.utils.helpers import *
 import asyncio
 import string
 from discord.ext import commands
 
 
-
-
+botdata = BotData()
+settings = Settings()
 bot = commands.Bot(command_prefix='?', description="""MangoByte - Like a normal mango, but jucier""")
 
 

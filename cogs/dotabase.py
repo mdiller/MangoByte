@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from sqlalchemy.sql.expression import func
 from sqlalchemy import and_
-from .utils.settings import *
+from __main__ import settings
 import random
 import os
 import asyncio

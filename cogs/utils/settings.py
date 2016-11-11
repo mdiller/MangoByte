@@ -1,52 +1,50 @@
-import json
+from .helpers import *
+import os
 from collections import OrderedDict
-# This module provides a simple way to interface with the settings.json file.
-# it reads the file when the module loads and stores the variables in variables that are globally visible
+
 #
-# Example of what a settings.json file should look like:
-# {
-# 	"token": "<bot token goes here>",
-# 	"resourcedir": "<resource directory goes here>",
-# 	"dotavpk": "<extracted vpkdirectory goes here",
-# 	"defaultvoice": "<ID of the default voice channel to connect to goes here>",
-# 	"steamapikey": "<steam api key goes here>",
-# 	"userinfo": [
-# 		{
-# 			"discord": "<discord id combination goes here>",
-# 			"steam": "<steam id goes here>"
-# 		}
-# 	]
-# }
+# loosely based off of the red discord bot's settings
+# to import from mangobyte.py, use:
+# from __main__ import settings
+#
 
 class Settings:
 	def __init__(self):
-		with open('settings.json') as settings_file:
-			data = json.load(settings_file, object_pairs_hook=OrderedDict)
-		self.json_data = data
-		self.token = data["token"]
-		self.resourcedir = data["resourcedir"]
-		self.dotavpk = data["dotavpk"]
-		self.defaultvoice = data["defaultvoice"]
-		self.steamapikey = data["steamapikey"]
-		self.userinfo = []
-		for user in data["userinfo"]:
-			self.userinfo.append(UserInfo(user))
+		self.path = "settings.json"
+		self.defaults = OrderedDict([  ("token", ""), ("resourcedir", "resource/"), ("dotavpk", ""), ("defaultvoice", ""), ("steamapikey", "") ])
+		if not os.path.exists(self.path):
+			self.json_data = self.defaults
+			self.save_settings()
+		else:
+			current = read_json(self.path)
+			if current.keys() != self.defaults.keys():
+				for key in self.defaults.keys():
+					if key not in current.keys():
+						current[key] = self.defaults[key]
+						print("Adding " + str(key) + " field to settings.json")
+				write_json(self.path, current)
+			self.json_data = read_json(self.path)
 
-class UserInfo:
-	def __init__(self, user_json):
-		self.discord = user_json["discord"]
-		self.steam = int(user_json["steam"])
+	def save_settings(self):
+		write_json(self.path, self.json_data)
 
-# Adds a user to the settings.json file
-# settings will need to be reloaded after this
-def add_user(discord, steam, dota):
-	with open('settings.json', 'w+') as settings_file:
-		data = settings.json_data
-		data["userinfo"].append(OrderedDict([
-			("discord", discord),
-			("steam", str(steam))
-		]))
-		json.dump(data, settings_file, indent=4)
-	
+	@property
+	def token(self):
+		return self.json_data["token"]
 
-settings = Settings()
+	@property
+	def resourcedir(self):
+		return self.json_data["resourcedir"]
+
+	@property
+	def dotavpk(self):
+		return self.json_data["dotavpk"]
+
+	@property
+	def defaultvoice(self):
+		return self.json_data["defaultvoice"]
+
+	@property
+	def steamapikey(self):
+		return self.json_data["steamapikey"]
+
