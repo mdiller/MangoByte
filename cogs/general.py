@@ -5,6 +5,7 @@ from cogs.utils.helpers import *
 from cogs.utils import checks
 import asyncio
 import string
+import random
 
 
 class General:
@@ -19,10 +20,10 @@ class General:
 
 		Pings... a number of times.... within reason. *glares at blanedale*"""
 		if count < 1:
-			await self.bot.say("thats not enough pings. stahp trying to break me.")
+			await self.bot.say("thats not enough pings. stahp trying to break me.😠")
 			return
-		if count > 21:
-			await self.bot.say("thats too many pings. stahp trying to break me.")
+		if count > 20:
+			await self.bot.say("thats too many pings. stahp trying to break me.😠")
 			return
 
 		ping_string = ""
@@ -49,6 +50,16 @@ class General:
 		await audio.voice.move_to(new_channel)
 		print("joined channel: " + channel_id)
 		audio.voice_channel = self.bot.get_channel(channel_id)
+
+	async def on_message(self, message):
+		if any(word in message.content for word in [ "sleep", "tired", "bye", "gnight", "goodnight" ]):
+			await self.bot.add_reaction(message, "💤")
+		elif any(word in message.content for word in [ "pizza", "food" ]):
+			await self.bot.add_reaction(message, "🍕")
+		elif "!" in message.content and random.random() < 0.2:
+			await self.bot.add_reaction(message, random.choice([ "😱", "‼" ]))
+		elif random.random() < 0.05:
+			await self.bot.add_reaction(message, "😉")
 
 
 

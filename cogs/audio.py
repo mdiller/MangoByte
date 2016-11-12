@@ -111,7 +111,7 @@ class Audio:
 		for a complete list of the available clips, try ?playlist"""
 		clipfile = get_clipfile(clip)
 		if clipfile == None:
-			await self.bot.say("'" + clip + "' is not a valid clip. try ?playlist.")
+			await self.bot.say("'" + clip + "' is not a valid clip. 🤦 Try ?playlist. ")
 		else:
 			await self.try_talking(clipfile)
 			

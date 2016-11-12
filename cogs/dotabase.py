@@ -60,7 +60,7 @@ class Dotabase:
 		elif(response2 != None):
 			await self.play_response(response2)
 		else:
-			await self.bot.say("Not a valid dota response");
+			await self.bot.say("Not a valid dota response, and no responses found with matching text 😱");
 
 	@commands.command(pass_context=True, aliases=["hi"])
 	async def hello(self, ctx):

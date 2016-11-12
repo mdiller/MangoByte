@@ -9,7 +9,7 @@ from discord.ext import commands
 
 botdata = BotData()
 settings = Settings()
-bot = commands.Bot(command_prefix='?', description="""MangoByte - Like a normal mango, but jucier""")
+bot = commands.Bot(command_prefix='?', description="""MangoByte - The juiciest unsigned 8 bit integer you evah gonna see""")
 
 
 @bot.event
