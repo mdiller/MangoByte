@@ -56,8 +56,10 @@ class General:
 			await self.bot.add_reaction(message, "💤")
 		elif any(word in message.content for word in [ "pizza", "food" ]):
 			await self.bot.add_reaction(message, "🍕")
-		elif "!" in message.content and random.random() < 0.2:
+		elif ("!" in message.content) and (random.random() < 0.2):
 			await self.bot.add_reaction(message, random.choice([ "😱", "‼" ]))
+		elif ("?" in message.content) and (random.random() < 0.2):
+			await self.bot.add_reaction(message, random.choice([ "🤔", "⁉" ]))
 		elif random.random() < 0.05:
 			await self.bot.add_reaction(message, "😉")
 
