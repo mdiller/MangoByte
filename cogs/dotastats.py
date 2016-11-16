@@ -88,6 +88,7 @@ class DotaStats:
 		if(userinfo.steam == ""):
 			await self.bot.say("You need to add your Steam ID! Use the ?addtats <steam_ID> command")
 		else:
+			await self.bot.send_typing(ctx.message.channel)
 			await self.write_stats(userinfo)
 
 
