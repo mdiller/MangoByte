@@ -38,6 +38,26 @@ class General:
 		I would hurl words into this darkness and wait for an echo, and if an echo sounded, no matter how faintly, I would send other words to tell, to march, to fight, to create a sense of the hunger for life that gnaws in us all"""
 		await self.bot.say(message)
 
+	@commands.command(pass_context=True)
+	async def changelog(self, ctx, count : int=5):
+		"""Gets a rough changelog for mangobyte
+
+		Count is how many versions to go back and give a log of. This is limited to 20 because of discord message size restrictions, and also to limit the amount of text that gets spammed in a channel.
+
+		Note that this is a very rough changelog built from git commit messages and so will sometimes not relate directly to your perspective.
+
+		For more commit versions or better detailed information, check out the source on GitHub: https://github.com/mdiller/MangoByte/commits/master
+		"""
+		if (count <= 0) or (count > int(get_version())):
+			await self.bot.add_reaction(ctx.message, "😒")
+			return
+		elif count > 20:
+			await self.bot.say("Count is limited to 20 versions.\nFor more versions or better detailed information, check out the source on GitHub: https://github.com/mdiller/MangoByte/commits/master")
+			return
+		else:
+			await self.bot.say(get_changelog(count))
+			return
+
 	@checks.is_owner()
 	@commands.command(pass_context=True, hidden=True)
 	async def join(self, ctx, channel_id : str):
