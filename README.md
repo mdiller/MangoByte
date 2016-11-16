@@ -5,6 +5,7 @@ Mangobyte also reacts to text messages with reactions sometimes
 
 ## Commands
 The following is a list of most of the commands that mangobyte has to offer
+
   Command|Description
 ---------|---
 replay   |Replays the last played clip
