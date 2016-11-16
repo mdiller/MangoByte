@@ -72,6 +72,9 @@ class General:
 		audio.voice_channel = self.bot.get_channel(channel_id)
 
 	async def on_message(self, message):
+		if (message.author == self.bot.user) or message.content.startswith("?"):
+			return
+
 		if any(word in message.content for word in [ "sleep", "tired", "bye", "gnight", "goodnight" ]):
 			await self.bot.add_reaction(message, "💤")
 		elif any(word in message.content for word in [ "pizza", "food" ]):

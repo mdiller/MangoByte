@@ -6,10 +6,12 @@ import asyncio
 import string
 from discord.ext import commands
 
+helpdoc = """MangoByte - The juiciest unsigned 8 bit integer ever to be hosted on github: https://github.com/mdiller/MangoByte"""
+
 
 botdata = BotData()
 settings = Settings()
-bot = commands.Bot(command_prefix='?', description="""MangoByte - The juiciest unsigned 8 bit integer you evah gonna see""")
+bot = commands.Bot(command_prefix='?', description=helpdoc)
 
 
 @bot.event
