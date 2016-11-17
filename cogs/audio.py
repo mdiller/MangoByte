@@ -6,6 +6,7 @@ import asyncio
 import os
 import string
 import queue
+import random
 from gtts import gTTS
 from ctypes.util import find_library
 
@@ -40,6 +41,12 @@ def get_playlist(clipdir):
 				clips.append(file[:-4])
 	clips.sort()
 	return clips
+
+def remove_if_temp(mp3name):
+	if os.path.isfile(mp3name):
+		if os.path.dirname(mp3name) == os.path.join(settings.resourcedir, "temp"):
+			os.remove(mp3name)
+			print("removed temp file " + mp3name)
 
 class Clip:
 	def __init__(self, mp3name, volume):
@@ -85,11 +92,13 @@ class Audio:
 			self.player.volume = clip.volume
 			self.player.start()
 			print("playing: " + clip.mp3name)
+			if self.last_clip != None and clip.mp3name != self.last_clip.mp3name:
+				remove_if_temp(self.last_clip.mp3name)
 			self.last_clip = clip
 		except Exception as e:
 			print(str(e))
 
-	# try to say an mp3, and if we arent in a voice channel, join the default one
+	# try queueing an mp3 to play
 	async def try_talking(self, mp3name, volume=0.6):
 		if(self.voice is None):
 			print("tried to talk while not in voice channel")
@@ -100,6 +109,14 @@ class Audio:
 
 		if not self.is_talking():
 			self.play_next_clip()
+
+	# try queueing text to play with gtts
+	async def try_talking_tts(self, text):
+		tempfile = settings.resourcedir + "temp/" + str(int(random.random() * 1000000000)) + ".mp3"
+		print(tempfile)
+		tts = gTTS(text=text, lang=settings.ttslang)
+		tts.save(tempfile)
+		await self.try_talking(tempfile)
 
 	@commands.command(pass_context=True)
 	async def play(self, ctx, clip : str=""):
@@ -198,6 +215,14 @@ class Audio:
 
 		await self.bot.say("Yer intro is now " + clipname)
 
+	@commands.command(pass_context=True)
+	async def tts(self, ctx, *, message : str):
+		"""Says the given message to people who are in the voice channel
+
+		...what more could you possibly need to know...
+		"""
+		await self.try_talking_tts(message)
+
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
 		if self.voice is None or after.voice_channel is None or before.voice_channel == after.voice_channel or before.voice_channel == after.voice_channel:
@@ -205,9 +230,6 @@ class Audio:
 			return
 		if after.voice_channel.id == self.voice.channel.id:
 			print(after.name + " joined the channel")
-
-			# id used because it doesnt contain strange characters like name does, and is unique to this user
-			tempfilename = settings.resourcedir + "temp/nameof_" + after.id + ".mp3"
 
 			text = after.name
 			clipname = "helloits"
@@ -217,12 +239,9 @@ class Audio:
 				clipname = userinfo.intro
 				text = "its " + after.name
 
-			tts = gTTS(text=text, lang='en-au')
-			tts.save(tempfilename)
-
 			await asyncio.sleep(3)
 			await self.try_talking(get_clipfile(clipname))
-			await self.try_talking(tempfilename)
+			await self.try_talking_tts(text)
 
 
 def setup(bot):
