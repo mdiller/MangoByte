@@ -75,6 +75,8 @@ class General:
 		if (message.author == self.bot.user) or message.content.startswith("?"):
 			return
 
+		random.seed(message.content)
+
 		if any(word in message.content for word in [ "sleep", "tired", "bye", "gnight", "goodnight" ]):
 			await self.bot.add_reaction(message, "💤")
 		elif any(word in message.content for word in [ "pizza", "food" ]):
