@@ -31,6 +31,12 @@ class Dotabase:
 
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name
+		self.criteria_aliases["laugh"] = "Emote"
+		self.criteria_aliases["haha"] = "Emote"
+		self.criteria_aliases["rosh"] = "Immortality"
+		self.criteria_aliases["aegis"] = "Immortality"
+		self.criteria_aliases["roshan"] = "Immortality"
+
 
 
 	async def play_response(self, response):
