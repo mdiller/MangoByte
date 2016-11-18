@@ -193,7 +193,7 @@ class Audio:
 
 		# If its not a temp file
 		if (not os.path.isfile(self.last_clip.mp3name)) or (os.path.dirname(self.last_clip.mp3name) != os.path.join(settings.resourcedir, "temp")):
-			await self.bot.say("Replaying ```" + os.path.splitext(os.path.basename(self.last_clip.mp3name))[0] + "```")
+			await self.bot.say("Replaying " + os.path.splitext(os.path.basename(self.last_clip.mp3name))[0])
 
 		await self.try_talking(self.last_clip.mp3name, self.last_clip.volume)
 
