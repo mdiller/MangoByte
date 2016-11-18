@@ -23,8 +23,12 @@ class Dotabase:
 		audio = self.bot.get_cog("Audio")
 		await audio.try_talking(response_file, volume=0.4)
 
+	# Plays a random response from a query
+	async def play_response_query(self, query):
+		await self.play_response(query.order_by(func.random()).first())
+
 	@commands.command(pass_context=True)
-	async def dota(self, ctx, *, dota_response : str=None):
+	async def dota(self, ctx, *, query : str=None):
 		"""Plays a dota response
 
 		The format for input is the name of the sound.
@@ -46,21 +50,28 @@ class Dotabase:
 		To search for a response, try using the web tool at:
 		http://dotabase.me/responses/
 		ProTip: If you click the discord button next to the response, it will copy to your clipboard in the format needed to play using the bot."""
-		if(dota_response == None):
-			response = session.query(Response).order_by(func.random()).first()
+		if(query == None):
+			await self.play_response_query(session.query(Response))
+			return
+
+		response = session.query(Response).filter(Response.name == query).first()
+		if not response is None:
 			await self.play_response(response)
 			return
 
-		response1 = session.query(Response).filter(Response.name == dota_response).first()
-		simple_input = "% " + re.sub(r'[^a-z^0-9^A-Z^\s]', r'', dota_response).lower() + " %"
-		response2 = session.query(Response).filter(Response.text_simple.like(simple_input)).order_by(func.char_length(Response.text)).first()
+		simple_input = " " + re.sub(r'[^a-z^0-9^A-Z^\s]', r'', query).lower() + " "
 
-		if(response1 != None):
-			await self.play_response(response1)
-		elif(response2 != None):
-			await self.play_response(response2)
-		else:
-			await self.bot.say("Not a valid dota response, and no responses found with matching text 😱");
+		query = session.query(Response).filter(Response.text_simple == simple_input)
+		if query.count() > 0:
+			await self.play_response_query(query)
+			return
+
+		query = session.query(Response).filter(Response.text_simple.like("%" + simple_input + "%"))
+		if query.count() > 0:
+			await self.play_response_query(query)
+			return
+
+		await self.bot.say("Not a valid dota response, and no responses found with matching text 😱");
 
 	@commands.command(pass_context=True, aliases=["hi"])
 	async def hello(self, ctx):
@@ -89,41 +100,31 @@ class Dotabase:
 	@commands.command(pass_context=True, aliases=["nope"])
 	async def no(self, ctx):
 		"""Nopes."""
-		dota_response = session.query(Response).filter(Response.text.like("no!")).order_by(func.random()).first()
-
-		await self.play_response(dota_response)
+		await self.play_response_query(session.query(Response).filter(Response.text.like("no!")))
 
 	@commands.command(pass_context=True)
 	async def yes(self, ctx):
 		"""Ooooo ya."""
-		dota_response = session.query(Response).filter(Response.text_simple == " yes ").order_by(func.random()).first()
-
-		await self.play_response(dota_response)
+		await self.play_response_query(session.query(Response).filter(Response.text_simple == " yes "))
 
 	@commands.command(pass_context=True, aliases=["laugh", "haha", "lerl"])
 	async def lol(self, ctx):
 		"""WOW I WONDER WAT THIS DOES
 
 		Laughs using dota. Thats what it does."""
-		dota_response = session.query(Response).filter(Response.criteria.like("Emote%")).order_by(func.random()).first()
-
-		await self.play_response(dota_response)
+		await self.play_response_query(session.query(Response).filter(Response.criteria.like("Emote%")))
 
 	@commands.command(pass_context=True, aliases=["ty"])
 	async def thanks(self, ctx):
 		"""Gives thanks
 
 		Thanks are given by a random dota hero in their own special way"""
-		dota_response = session.query(Response).filter(Response.criteria.like("Thanks%")).order_by(func.random()).first()
-
-		await self.play_response(dota_response)
+		await self.play_response_query(session.query(Response).filter(Response.criteria.like("Thanks%")))
 
 	@commands.command(pass_context=True)
 	async def inthebag(self, ctx):
 		"""Proclaims that 'IT' (whatever it is) is in the bag"""
-		dota_response = session.query(Response).filter(and_(Response.criteria.like("InTheBag%"),Response.text != "It's in the bag!")).order_by(func.random()).first()
-
-		await self.play_response(dota_response)
+		await self.play_response_query(session.query(Response).filter(and_(Response.criteria.like("InTheBag%"),Response.text != "It's in the bag!")))
 
 	@commands.command(pass_context=True)
 	async def ask(self, ctx, *, question : str=""):
