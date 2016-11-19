@@ -12,6 +12,59 @@ from dotabase import *
 
 session = dotabase_session()
 
+class UserError(Exception):
+	def __init__(self, message):
+		self.message = message
+
+# A variable that can specify a filter on a query
+class QueryVariable():
+	def __init__(self, name, aliases, query_filter, prefix=";"):
+		self.name = name
+		self.aliases = aliases
+		self.query_filter = query_filter
+		self.prefix = prefix
+		self.value = None
+
+	def __repr__(self):
+		if self.value is None:
+			return self.name + " not set"
+		else:
+			return self.name + " = " + self.value
+
+	def apply_filter(self, query):
+		return self.query_filter(query, self.value)
+
+# extracts variables from the given words, removing them when extracted
+# extracts all words with the prefix, throwing a UserError if finding too many of a given variable or an invalid one
+def extract_var_prefix(words, variables):
+	for i in range(0, len(words)):
+		word = words[i]
+		prefix = None
+		for var in variables:
+			if word.startswith(var.prefix):
+				prefix = var.prefix
+				if word[len(prefix):] in var.aliases:
+					if var.value is not None:
+						raise UserError("Ya can't specify more than one " + var.name + ", ya doofus")
+					var.value = var.aliases[word[len(prefix):]]
+					words.remove(word)
+					extract_var_prefix(words, variables)
+					return
+		if prefix is not None: # The word has a prefix valid for one or more variables
+			raise UserError("No idea what a '" + word[len(prefix):] + "' is")
+
+# extracts the first word that matches any variable
+# returns true if a variable was found
+def extract_var(words, variables):
+	for i in range(0, len(words)):
+		word = words[i]
+		for var in variables:
+			if (var.value is None) and (word in var.aliases):
+				var.value = var.aliases[word]
+				words.remove(word)
+				return True
+	return False
+
 
 class Dotabase:
 	"""Commands for interfacing with Dotabase. See http://dotabase.me for a website that interfaces with Dotabase.
@@ -59,8 +112,8 @@ class Dotabase:
 		To specify a specific hero to search for responses for, use ';' before the hero's name like this:
 		?dota ;rubick
 
-		To specify a specific criteria to search for responses for, use '.' before the criteria name like this:
-		?dota ;rubick .defeat
+		To specify a specific criteria to search for responses for, use ';' before the criteria name like this:
+		?dota ;rubick ;defeat
 		There are some aliases for heroes, so the following will work:
 		?dota sf
 		?dota furion
@@ -75,6 +128,10 @@ class Dotabase:
 		To search for a response, try using the web tool at:
 		http://dotabase.me/responses/
 		ProTip: If you click the discord button next to the response, it will copy to your clipboard in the format needed to play using the bot."""
+		variables = [
+			QueryVariable("hero", self.hero_aliases, lambda query, value: query.filter(Response.hero_id == value)),
+			QueryVariable("criteria", self.criteria_aliases, lambda query, value: query.filter(Response.criteria.like(value + " %"))),
+		]
 
 		if keyphrase is None:
 			words = []
@@ -82,50 +139,26 @@ class Dotabase:
 			keyphrase = keyphrase.lower()
 			words = keyphrase.split(" ")
 
-		hero = await self.keyphrase_variable(words, self.hero_aliases, "hero", ";")
-		criteria = await self.keyphrase_variable(words, self.criteria_aliases, "criteria", ".")
+		extract_var_prefix(words, variables)
 
-		query = await self.smart_dota_query(" ".join(words), hero, criteria)
+		query = await self.smart_dota_query(words, variables)
 
-		if query is None and hero is None:
-			hero = await self.keyphrase_variable(words, self.hero_aliases, "hero")
-			if hero is not None:
-				query = await self.smart_dota_query(" ".join(words), hero, criteria)
-
-		if query is None and criteria is None:
-			criteria = await self.keyphrase_variable(words, self.criteria_aliases, "criteria")
-			if criteria is not None:
-				query = await self.smart_dota_query(" ".join(words), hero, criteria)
-
+		while query is None and extract_var(words, variables):
+			query = await self.smart_dota_query(words, variables)
 
 		if query is None:
 			await self.bot.say("No responses found! 😱");
 		else:
 			await self.play_response_query(query)
 
-	# Extracts the variable from the words if it finds it and removes it from the words
-	async def keyphrase_variable(self, words, aliases_dict, varname, prefix=""):
-		for i in range(0, len(words)):
-			word = words[i]
-			if prefix == "" or word.startswith(prefix):
-				# Get variable
-				var = aliases_dict.get(word[len(prefix):])
-				if var is not None:
-					# Remove word from keyphrase
-					words.remove(word)
-					return var
 
-				if prefix != "":
-					await self.bot.say("'" + word[len(prefix):] + "' isnt a " + varname)
-					return None
-		return None
-
-	async def smart_dota_query(self, keyphrase, hero, criteria):
+	async def smart_dota_query(self, words, variables):
 		basequery = session.query(Response)
-		if hero is not None:
-			basequery = basequery.filter(Response.hero_id == hero)
-		if criteria is not None:
-			basequery = basequery.filter(Response.criteria.like(criteria + " %"))
+		for var in variables:
+			if var.value is not None:
+				basequery = var.apply_filter(basequery)
+
+		keyphrase = " ".join(words)
 
 		if keyphrase == None or keyphrase == "" or keyphrase == " ":
 			return basequery
@@ -136,7 +169,7 @@ class Dotabase:
 
 		simple_input = " " + re.sub(r'[^a-z^0-9^A-Z^\s]', r'', keyphrase) + " "
 
-		query = basequery.filter(Response.text_simple == simple_input)
+		query = basequery.filter(Response.text_simple  == simple_input)
 		if query.count() > 0:
 			return query
 
