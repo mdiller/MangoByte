@@ -28,7 +28,6 @@ class AI:
 		"""Answers any question you might have"""
 		random.seed(question)
 		for check in self.questions:
-			print(check["regex"])
 			if re.search(check["regex"], question):
 				await self.play_dota_response(random.choice(check["responses"]))
 				return

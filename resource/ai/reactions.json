@@ -4,8 +4,20 @@
 		"reaction": "💤"
 	},
 	{
-		"regex": "pizza|food",
+		"regex": "dick|dicks",
+		"reaction": "🍆"
+	},
+	{
+		"regex": "potato",
+		"reaction": "🥔"
+	},
+	{
+		"regex": "pizza",
 		"reaction": "🍕"
+	},
+	{
+		"regex": "eat|food",
+		"reaction": "🍕🥔😋🍞🥖"
 	},
 	{
 		"regex": "!",

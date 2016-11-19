@@ -1,6 +1,73 @@
 [
 	{
-		"regex": ".*",
+		"regex": "(^who|^what) (are|is) (you|mangobyte|<@!215645351233716226>)",
+		"responses": [
+			"invo_level_05",
+			"enig_spawn_09",
+			"riki_ability_blink_01",
+			"vipe_spawn_05",
+			"naga_mirrorimage_03"
+		]
+	},
+	{
+		"regex": "^where",
+		"responses": [
+			"plance_move_17",
+			"bount_move_05",
+			"alch_move_17",
+			"earthspi_move_03",
+			"earthspi_geomagnetic_07",
+			"spec_move_05",
+			"keep_attack_06",
+			"keep_move_15",
+			"dis_move_06"
+		]
+	},
+	{
+		"regex": "^when|^time for|^is it time|now\\?$|yet\\?$",
+		"responses": [
+			"orac_respawn_04",
+			"appa_bottle_02",
+			"luna_bottle_04",
+			"magn_polarity_01",
+			"orac_notyet_03",
+			"orac_notyet_07",
+			"gyro_notyet_03",
+			"ogmag_notyet_09",
+			"bristle_notyet_09",
+			"bristle_notyet_07",
+			"timb_notyet_09"
+		]
+	},
+	{
+		"regex": "^how",
+		"responses": [
+			"tech_move_07",
+			"tech_lasthit_11"
+		]
+	},
+	{
+		"regex": "^why|^y",
+		"responses": [
+			"orac_move_25",
+			"plance_illus_03",
+			"orac_fatesedict_17",
+			"orac_fatesedict_12",
+			"winwyv_lasthit_11"
+		]
+	},
+	{
+		"regex": "^what is",
+		"responses": [
+			"luna_lasthit_08",
+			"dpro_lasthit_05",
+			"orac_move_04",
+			"dpro_lasthit_05",
+			"timb_move_06"
+		]
+	},
+	{
+		"regex": "^do|^does|^did|^is|^will|^are|^can|^should|^would",
 		"responses": [
 			"orac_purifyingflames_09", 
 			"orac_falsepromise_02",
@@ -9,7 +76,32 @@
 			"orac_fatesedict_17",
 			"orac_notyet_01",
 			"orac_lose_01", 
-			"orac_attack_01"
+			"orac_attack_01",
+			"orac_move_28",
+			"orac_move_02"
+		]
+	},
+	{
+		"regex": "^[^\\s]*$",
+		"responses": [
+			"orac_purifyingflames_09",
+			"orac_fatesedict_17",
+			"orac_lose_01",
+			"rubick_kill_08",
+			"lone_druid_deny_09"
+		]
+	},
+	{
+		"regex": ".*",
+		"responses": [
+			"orac_falsepromise_02",
+			"orac_kill_08",
+			"orac_fatesedict_17",
+			"orac_falsepromise_03",
+			"orac_attack_04",
+			"keep_notyet_01",
+			"keep_failure_03",
+			"timb_move_06"
 		]
 	}
 ]
