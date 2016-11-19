@@ -3,6 +3,7 @@ from discord.ext import commands
 from sqlalchemy.sql.expression import func
 from sqlalchemy import and_
 from __main__ import settings
+from cogs.utils.helpers import *
 import random
 import os
 import asyncio
@@ -71,7 +72,7 @@ class Dotabase:
 	"""
 	def __init__(self, bot):
 		self.bot = bot
-		self.criteria_aliases = {}
+		self.criteria_aliases = read_json(settings.resourcedir + "ai/criteria_aliases.json")
 		self.hero_aliases = {}
 		self.build_aliases()
 
@@ -84,11 +85,6 @@ class Dotabase:
 
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name
-		self.criteria_aliases["laugh"] = "Emote"
-		self.criteria_aliases["haha"] = "Emote"
-		self.criteria_aliases["rosh"] = "Immortality"
-		self.criteria_aliases["aegis"] = "Immortality"
-		self.criteria_aliases["roshan"] = "Immortality"
 
 
 
