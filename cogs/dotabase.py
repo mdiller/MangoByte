@@ -97,6 +97,9 @@ class Dotabase:
 		audio = self.bot.get_cog("Audio")
 		await audio.try_talking(response_file, volume=0.4)
 
+	async def get_response(self, responsename):
+		return session.query(Response).filter(Response.name == responsename).first()
+
 	# Plays a random response from a query
 	async def play_response_query(self, query):
 		await self.play_response(query.order_by(func.random()).first())
@@ -232,24 +235,6 @@ class Dotabase:
 		"""Proclaims that 'IT' (whatever it is) is in the bag"""
 		await self.play_response_query(session.query(Response).filter(and_(Response.criteria.like("InTheBag%"),Response.text != "It's in the bag!")))
 
-	@commands.command(pass_context=True)
-	async def ask(self, ctx, *, question : str=""):
-		"""Answers any question you might have"""
-		answers = [
-			"orac_purifyingflames_09", #yes
-			"orac_falsepromise_02", #outcome unclear
-			"orac_kill_08", #ask again later
-			"orac_falsepromise_14", #yes, as forseen
-			"orac_fatesedict_17", #why not
-			"orac_notyet_01", #not yet
-			"orac_lose_01", #no
-			"orac_attack_01" #could go either way
-		]
-		random.seed(question)
-		dota_response = random.choice(answers)
-		response = session.query(Response).filter(Response.name == dota_response).first()
-		await self.bot.say(response.text)
-		await self.play_response(response)
 
 def setup(bot):
 	bot.add_cog(Dotabase(bot))

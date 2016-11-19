@@ -1,0 +1,25 @@
+[
+	{
+		"regex": "sleep|tired|bye|gnight|goodnight",
+		"reaction": "💤"
+	},
+	{
+		"regex": "pizza|food",
+		"reaction": "🍕"
+	},
+	{
+		"regex": "!",
+		"chance": 0.2,
+		"reaction": "😱‼"
+	},
+	{
+		"regex": "\\?$",
+		"chance": 0.2,
+		"reaction": "🤔⁉"
+	},
+	{
+		"regex": ".*",
+		"chance": 0.05,
+		"reaction": "😉"
+	}
+]

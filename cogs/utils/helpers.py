@@ -26,7 +26,7 @@ def audio_length(filename):
 
 def write_json(filename, data):
 	with open(filename, "w+") as f:
-		json.dump(data, f, indent=4)
+		json.dump(data, f, indent="\t")
 
 def read_json(filename):
 	with open(filename) as f:

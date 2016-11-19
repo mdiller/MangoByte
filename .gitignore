@@ -92,5 +92,9 @@ ENV/
 
 botdata.json
 settings.json
-resource/
 tmpfile
+
+resource/temp
+
+resource/clips/*
+!resource/clips/dota/

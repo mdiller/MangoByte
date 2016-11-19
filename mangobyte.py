@@ -39,4 +39,5 @@ if __name__ == '__main__':
 	bot.load_extension("cogs.audio")
 	bot.load_extension("cogs.dotastats")
 	bot.load_extension("cogs.dotabase")
+	bot.load_extension("cogs.ai")
 	bot.run(settings.token)

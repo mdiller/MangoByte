@@ -1,0 +1,15 @@
+[
+	{
+		"regex": ".*",
+		"responses": [
+			"orac_purifyingflames_09", 
+			"orac_falsepromise_02",
+			"orac_kill_08",
+			"orac_falsepromise_14",
+			"orac_fatesedict_17",
+			"orac_notyet_01",
+			"orac_lose_01", 
+			"orac_attack_01"
+		]
+	}
+]
