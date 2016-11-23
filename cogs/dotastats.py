@@ -54,9 +54,6 @@ class DotaStats:
 			"Level: {}\n"
 			"Denies: {}\n".format(player['xp_per_min'], player['level'], player['denies'])))
 
-		embed.set_footer(text="Data extracted from the Dota2 REST API", icon_url="http://dotabase.me/resources/images/dota.png")
-
-
 		await self.bot.say(embed=embed)
 
 
