@@ -46,13 +46,13 @@ class DotaStats:
 
 		embed.add_field(name="Economy", value=(
 			"GPM: {}\n"
-			"Last Hits: {}\n"
-			"Net Worth: {}\n".format(player['gold_per_min'], player['last_hits'], int(player['gold_spent']) + int(player['gold']))))
+			"Net Worth: {}\n"
+			"Last Hits: {}\n".format(player['gold_per_min'], int(player['gold_spent']) + int(player['gold']), player['last_hits'])))
 
 		embed.add_field(name="Experience", value=(
-			"Level: {}\n"
 			"XPM: {}\n"
-			"Denies: {}\n".format(player['level'], player['xp_per_min'], player['denies'])))
+			"Level: {}\n"
+			"Denies: {}\n".format(player['xp_per_min'], player['level'], player['denies'])))
 
 		embed.set_footer(text="Data extracted from the Dota2 REST API", icon_url="http://dotabase.me/resources/images/dota.png")
 
