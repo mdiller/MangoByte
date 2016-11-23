@@ -37,31 +37,27 @@ class DotaStats:
 
 	# prints the stats for the given player's game in a readable format
 	async def format_stats(self, game : str):
-		kills = game['kills']
-		deaths = game['deaths']
-		assists= game['assists']
-		gpm = game['gold_per_min']
-		deny = game['denies']
-		damage = game['hero_damage']
-		lh = game['last_hits']
-		xpm = game['xp_per_min']
-		spent = int(game['gold_spent']) + int(game['gold'])
-		level = game['level']
-		await self.bot.say("""
-		```
-		------------------------------------------------------------
-		| KILLS: """ + str(kills) + """ | DEATHS: """ + str(deaths) + """ | ASSISTS: """ + str(assists) + """ | GPM: """ + str(gpm) + """ | XPM: """ + str(xpm) + """ |
-		--------------------------------------------------------------------------------
-		| NET WORTH: """ + str(spent) + """ | LAST HITS: """ + str(lh) + """ | DENIES: """ + str(deny) + """ | HERO DAMAGE: """ + str(damage) + """ | LEVEL: """ + str(level) + """ |
-		--------------------------------------------------------------------------------
-		```
-		""")
+		embed = discord.Embed()
+
+		embed.add_field(name="Kills", value=game['kills'])
+		embed.add_field(name="Deaths", value=game['deaths'])
+		embed.add_field(name="Assists", value=game['assists'])
+		embed.add_field(name="GPM", value=game['gold_per_min'])
+		embed.add_field(name="Denies", value=game['denies'])
+		embed.add_field(name="Hero Damage", value=game['hero_damage'])
+		embed.add_field(name="Last Hits", value=game['last_hits'])
+		embed.add_field(name="XPM", value=game['xp_per_min'])
+		embed.add_field(name="Net Worth", value=int(game['gold_spent']) + int(game['gold']))
+		embed.add_field(name="Level", value=game['level'])
+
+		await self.bot.say(embed=embed)
+
 
 	@commands.command(pass_context=True)
 	async def addstats(self, ctx, steam_id : int):
 		"""Adds a dota player to the dota stat tracker, vie their steam id
 		
-	 	To get your steam_id, an easy way is to go to your profile page in steam, right click anywhere, and select 'Copy Page URL.' Then paste that somewhere, and get the number at the end of the url. It should start with a 7 and be like 16 characters or something. Thats your steam_id. Now just do ?addstats <thenumber>.
+		To get your steam_id, an easy way is to go to your profile page in steam, right click anywhere, and select 'Copy Page URL.' Then paste that somewhere, and get the number at the end of the url. It should start with a 7 and be like 16 characters or something. Thats your steam_id. Now just do ?addstats <thenumber>.
 		"""
 		userinfo = botdata.userinfo(ctx.message.author.id)
 
