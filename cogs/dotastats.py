@@ -45,10 +45,10 @@ class DotaStats:
 
 
 	@commands.command(pass_context=True)
-	async def addstats(self, ctx, steam_id : int):
+	async def setsteam(self, ctx, steam_id : int):
 		"""Adds a dota player to the dota stat tracker, vie their steam id
 		
-		To get your steam_id, an easy way is to go to your profile page in steam, right click anywhere, and select 'Copy Page URL.' Then paste that somewhere, and get the number at the end of the url. It should start with a 7 and be like 16 characters or something. Thats your steam_id. Now just do ?addstats <thenumber>.
+		To get your steam_id, an easy way is to go to your profile page in steam, right click anywhere, and select 'Copy Page URL.' Then paste that somewhere, and get the number at the end of the url. It should start with a 7 and be like 16 characters or something. Thats your steam_id. Now just do ?addsteam <thenumber>.
 		"""
 		userinfo = botdata.userinfo(ctx.message.author.id)
 
@@ -62,18 +62,26 @@ class DotaStats:
 		userinfo.steam = str(steam_id)
 
 		await self.bot.say( "I added " + str(ctx.message.author) + " to the list of players. NOW I'M WATCHING YOU")
+
+	@commands.command(pass_context=True, hidden=True)
+	async def setsteam(self, ctx, steam_id : int):
+		await self.bot.say("?setsteam is deprecated, use ?setsteam instead")
+
+	@commands.command(pass_context=True, hidden=True)
+	async def stats(self, ctx):
+		await self.bot.say("?stats is deprecated, use ?lastgame instead")
 		
 
 	@commands.command(pass_context=True)
-	async def stats(self, ctx):
+	async def lastgame(self, ctx):
 		""" Get your latest stats
 
 		Just run:
-		?stats
+		?lastgame
 		"""
 		userinfo = botdata.userinfo(ctx.message.author.id)
 		if(userinfo.steam == ""):
-			await self.bot.say("You need to add your Steam ID! Use the ?addtats <steam_ID> command")
+			await self.bot.say("You need to add your Steam ID! Use the ?setsteam <steam_ID> command")
 		else:
 			await self.bot.send_typing(ctx.message.channel)
 			await self.write_stats(userinfo)
