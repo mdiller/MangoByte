@@ -31,6 +31,10 @@ class UserInfo:
 	def steam(self, value):
 		self.json_data["steam"] = value
 		self.botdata.save_data()
+
+	@property
+	def steam32(self):
+		return int(self.steam) - 76561197960265728
 		
 	@property
 	def intro(self):

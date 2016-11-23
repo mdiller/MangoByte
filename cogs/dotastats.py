@@ -6,12 +6,6 @@ import string
 import dota2api
 import datetime
 
-
-# returns the latest dota game played by the user
-def dota_latest_game(userinfo):
-	hist = d2api.get_match_history(account_id=int(userinfo.steam))
-	return d2api.get_match_details(hist['matches'][0]['match_id'])
-
 class DotaStats:
 	"""Commands used to access Dota 2 players' stats
 	"""
@@ -21,34 +15,31 @@ class DotaStats:
 
 	# prints the stats for the given player's latest game
 	async def write_stats(self, userinfo):
-		game = dota_latest_game(userinfo)
-		match_result = game['radiant_win']
-		true_ID = int(userinfo.steam) - 76561197960265728 
-		my_name = str(d2api.get_player_summaries(int(userinfo.steam))['players'][0]['personaname'])
-		
-		for player in game['players']:
-			if(int(player['account_id']) == true_ID):
-				if (player['player_slot'] < 5 and match_result is True) or (player['player_slot'] >= 5 and match_result is False):
-					await self.bot.say(my_name + " won a game as " + str(player['hero_name']) + " in " + str(datetime.timedelta(seconds=game['duration'])))
-					await self.format_stats(player)
-				else:
-					await self.bot.say(my_name + " lost a game as " + str(player['hero_name']) + " in " + str(datetime.timedelta(seconds=game['duration'])))
-					await self.format_stats(player)
+		hist = d2api.get_match_history(account_id=int(userinfo.steam))
+		game = d2api.get_match_details(hist['matches'][0]['match_id'])
+		playerinfo = d2api.get_player_summaries(int(userinfo.steam))['players'][0]
 
-	# prints the stats for the given player's game in a readable format
-	async def format_stats(self, game : str):
-		embed = discord.Embed()
+		# Finds the player in the game which has our matching steam32 id
+		player = next(p for p in game['players'] if int(p['account_id']) == userinfo.steam32)
 
-		embed.add_field(name="Kills", value=game['kills'])
-		embed.add_field(name="Deaths", value=game['deaths'])
-		embed.add_field(name="Assists", value=game['assists'])
-		embed.add_field(name="GPM", value=game['gold_per_min'])
-		embed.add_field(name="Denies", value=game['denies'])
-		embed.add_field(name="Hero Damage", value=game['hero_damage'])
-		embed.add_field(name="Last Hits", value=game['last_hits'])
-		embed.add_field(name="XPM", value=game['xp_per_min'])
-		embed.add_field(name="Net Worth", value=int(game['gold_spent']) + int(game['gold']))
-		embed.add_field(name="Level", value=game['level'])
+		if player is None:
+			raise ValueError("wtf hes not in is own game")
+
+		won_game = (player['player_slot'] < 5 and game['radiant_win'] is True) or (player['player_slot'] >= 5 and game['radiant_win'] is False)
+
+		embed = discord.Embed(description="{} a game as {} in {}".format(("Won" if won_game else "Lost"), player['hero_name'], datetime.timedelta(seconds=game['duration'])))
+
+		embed.set_author(name=playerinfo['personaname'], icon_url=playerinfo['avatar'])
+		embed.add_field(name="Kills", value=player['kills'], inline=True)
+		embed.add_field(name="Deaths", value=player['deaths'], inline=True)
+		embed.add_field(name="Assists", value=player['assists'])
+		embed.add_field(name="GPM", value=player['gold_per_min'])
+		embed.add_field(name="Denies", value=player['denies'])
+		embed.add_field(name="Hero Damage", value=player['hero_damage'])
+		embed.add_field(name="Last Hits", value=player['last_hits'])
+		embed.add_field(name="XPM", value=player['xp_per_min'])
+		embed.add_field(name="Net Worth", value=int(player['gold_spent']) + int(player['gold']))
+		embed.add_field(name="Level", value=player['level'])
 
 		await self.bot.say(embed=embed)
 
