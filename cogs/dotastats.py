@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from __main__ import settings, botdata
+from cogs.utils import checks
 import asyncio
 import string
 import dota2api
@@ -58,12 +59,22 @@ class DotaStats:
 
 
 	@commands.command(pass_context=True)
-	async def setsteam(self, ctx, steam_id : int):
+	async def setsteam(self, ctx, steam_id : int, user: discord.User=None):
 		"""Adds a dota player to the dota stat tracker, vie their steam id
+
+		The user parameter can only be specified by the bot owner
 		
 		To get your steam_id, an easy way is to go to your profile page in steam, right click anywhere, and select 'Copy Page URL.' Then paste that somewhere, and get the number at the end of the url. It should start with a 7 and be like 16 characters or something. Thats your steam_id. Now just do ?addsteam <thenumber>.
 		"""
-		userinfo = botdata.userinfo(ctx.message.author.id)
+
+		if user is None:
+			user = ctx.message.author
+		else:
+			if not await checks.is_owner_check(ctx):
+				await self.bot.say("You aint the boss of me 😠")
+				return
+
+		userinfo = botdata.userinfo(user.id)
 
 		try:
 			hist = d2api.get_match_history(steam_id)
@@ -74,11 +85,11 @@ class DotaStats:
 
 		userinfo.steam = str(steam_id)
 
-		await self.bot.say( "I added " + str(ctx.message.author) + " to the list of players. NOW I'M WATCHING YOU")
+		await self.bot.say( "I added " + str(user) + " to the list of players. NOW I'M WATCHING YOU")
 
 	@commands.command(pass_context=True, hidden=True)
-	async def setsteam(self, ctx, steam_id : int):
-		await self.bot.say("?setsteam is deprecated, use ?setsteam instead")
+	async def addstats(self, ctx, steam_id : int):
+		await self.bot.say("?addstats is deprecated, use ?setsteam instead")
 
 	@commands.command(pass_context=True, hidden=True)
 	async def stats(self, ctx):
@@ -106,6 +117,5 @@ def setup(bot):
 		import dota2api
 		d2api = dota2api.Initialise(settings.steamapikey)
 	except:
-		raise ModuleNotFound("Either dota2api isnt installed, or your steam api key is not valid")
+		raise ModuleNotFound("Either dota2api isnt installed, or yourur steam api key is not valid")
 	bot.add_cog(DotaStats(bot))
-	
