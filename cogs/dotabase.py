@@ -86,7 +86,9 @@ class Dotabase:
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name
 
-
+	async def get_hero_icon(self, heroid):
+		hero = session.query(Hero).filter(Hero.id == heroid).first()
+		return "http://dotabase.me/dota-vpk" + hero.icon
 
 	async def play_response(self, response):
 		response_file = "http://dotabase.me/dota-vpk" + response.mp3

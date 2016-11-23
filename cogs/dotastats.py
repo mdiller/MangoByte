@@ -15,9 +15,10 @@ class DotaStats:
 
 	# prints the stats for the given player's latest game
 	async def write_stats(self, userinfo):
-		hist = d2api.get_match_history(account_id=int(userinfo.steam))
-		game = d2api.get_match_details(hist['matches'][0]['match_id'])
+		match_id = d2api.get_match_history(account_id=int(userinfo.steam))['matches'][0]['match_id']
+		game = d2api.get_match_details(match_id)
 		playerinfo = d2api.get_player_summaries(int(userinfo.steam))['players'][0]
+		dotabase = self.bot.get_cog("Dotabase")
 
 		# Finds the player in the game which has our matching steam32 id
 		player = next(p for p in game['players'] if int(p['account_id']) == userinfo.steam32)
@@ -25,21 +26,36 @@ class DotaStats:
 		if player is None:
 			raise ValueError("wtf hes not in is own game")
 
-		won_game = (player['player_slot'] < 5 and game['radiant_win'] is True) or (player['player_slot'] >= 5 and game['radiant_win'] is False)
+		winstatus = "Won" if (player['player_slot'] < 5 and game['radiant_win'] is True) or (player['player_slot'] >= 5 and game['radiant_win'] is False) else "Lost"
 
-		embed = discord.Embed(description="{} a game as {} in {}".format(("Won" if won_game else "Lost"), player['hero_name'], datetime.timedelta(seconds=game['duration'])))
+		description = ("{0} a game as {1} in {2} \n"
+					"More info at [DotaBuff](https://www.dotabuff.com/matches/{3}) or [OpenDota](https://www.opendota.com/matches/{3}) "
+					.format(winstatus, player['hero_name'], datetime.timedelta(seconds=game['duration']), match_id))
 
-		embed.set_author(name=playerinfo['personaname'], icon_url=playerinfo['avatar'])
-		embed.add_field(name="Kills", value=player['kills'], inline=True)
-		embed.add_field(name="Deaths", value=player['deaths'], inline=True)
-		embed.add_field(name="Assists", value=player['assists'])
-		embed.add_field(name="GPM", value=player['gold_per_min'])
-		embed.add_field(name="Denies", value=player['denies'])
-		embed.add_field(name="Hero Damage", value=player['hero_damage'])
-		embed.add_field(name="Last Hits", value=player['last_hits'])
-		embed.add_field(name="XPM", value=player['xp_per_min'])
-		embed.add_field(name="Net Worth", value=int(player['gold_spent']) + int(player['gold']))
-		embed.add_field(name="Level", value=player['level'])
+		embed = discord.Embed(description=description)
+
+		heroicon = await dotabase.get_hero_icon(int(player['hero_id']))
+
+		embed.set_author(name=playerinfo['personaname'], icon_url=heroicon)
+
+		embed.add_field(name="General", value=(
+			"Kills: {}\n"
+			"Deaths: {}\n"
+			"Assists: {}\n"
+			"Hero Dmg: {}\n".format(player['kills'], player['deaths'], player['assists'], player['hero_damage'])))
+
+		embed.add_field(name="Economy", value=(
+			"GPM: {}\n"
+			"Last Hits: {}\n"
+			"Net Worth: {}\n".format(player['gold_per_min'], player['last_hits'], int(player['gold_spent']) + int(player['gold']))))
+
+		embed.add_field(name="Experience", value=(
+			"Level: {}\n"
+			"XPM: {}\n"
+			"Denies: {}\n".format(player['level'], player['xp_per_min'], player['denies'])))
+
+		embed.set_footer(text="Data extracted from the Dota2 REST API", icon_url="http://dotabase.me/resources/images/dota.png")
+
 
 		await self.bot.say(embed=embed)
 
