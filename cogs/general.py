@@ -86,6 +86,13 @@ class General:
 
 		await self.bot.say(embed=embed)
 
+	@commands.command(pass_context=True)
+	async def lasagna(self, ctx):
+		"""a baked Italian dish consisting of wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce."""
+		embed = discord.Embed()
+		embed.set_image(url="http://thechronicleherald.ca/sites/default/files/imagecache/ch_article_main_image/articles/B97120471Z.120121215172053000G7E1UPL3.11.jpg")
+		await self.bot.say(embed=embed)
+
 	@checks.is_owner()
 	@commands.command(pass_context=True, hidden=True)
 	async def join(self, ctx, channel_id : str):
