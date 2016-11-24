@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from __main__ import settings
+from __main__ import settings, helpdoc
 from cogs.utils.helpers import *
 from cogs.utils import checks
 import asyncio
@@ -57,6 +57,34 @@ class General:
 		else:
 			await self.bot.say(get_changelog(count))
 			return
+
+	@commands.command(pass_context=True)
+	async def info(self, ctx):
+		"""Prints info about MangoByte"""
+		github = "https://github.com/mdiller/MangoByte"
+		python_version = "[Python {}.{}.{}]({})".format(*os.sys.version_info[:3], "https://www.python.org/")
+		discordpy = "https://github.com/Rapptz/discord.py"
+
+		embed = discord.Embed(description=helpdoc)
+
+		embed.set_author(name=ctx.message.channel.server.me.nick, icon_url=self.bot.user.avatar_url, url=github)
+
+		embed.add_field(name="Development Info", value=(
+			"Developed as an open source project, hosted on [GitHub]({}). "
+			"Implemented using {} and a python discord api wrapper [discord.py]({})".format(github, python_version, discordpy)))
+
+		embed.add_field(name="Features", value=(
+			"- answers questions (?ask)\n"
+			"- plays audio clips (?play, ?dota)\n"
+			"- greets users joining a voice channel\n"
+			"- reacts to things people say 😉\n"
+			"- for a full list of commands, try ?help"))
+
+		owner = (await self.bot.application_info()).owner
+
+		embed.set_footer(text="This MangoByte managed by {}".format(owner.name), icon_url=owner.avatar_url)
+
+		await self.bot.say(embed=embed)
 
 	@checks.is_owner()
 	@commands.command(pass_context=True, hidden=True)
