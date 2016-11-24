@@ -133,7 +133,7 @@ class DotaStats:
 		playerwl = await opendota_query("/players/{}/wl".format(userinfo.steam32))
 		gamesplayed = playerwl["win"] + playerwl["lose"]
 		winrate = "{:.2%}".format(playerwl["win"] / gamesplayed)
-		if "solo_competitive_rank" in playerinfo:
+		if playerinfo["solo_competitive_rank"] is None:
 			solommr = "last displayed as {}".format(playerinfo["solo_competitive_rank"])
 		else:
 			solommr = "never publicly displayed"
