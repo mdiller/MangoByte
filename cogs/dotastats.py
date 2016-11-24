@@ -2,10 +2,19 @@ import discord
 from discord.ext import commands
 from __main__ import settings, botdata
 from cogs.utils import checks
+import aiohttp
 import asyncio
+import async_timeout
 import string
 import dota2api
 import datetime
+
+async def opendota_query(querystring):
+	async with aiohttp.get("https://api.opendota.com/api" + querystring) as r:
+		if r.status == 200:
+			return await r.json()
+		else:
+			raise ValueError("OpenDota bad response: " + r.status)
 
 class DotaStats:
 	"""Commands used to access Dota 2 players' stats
@@ -94,7 +103,6 @@ class DotaStats:
 	@commands.command(pass_context=True, hidden=True)
 	async def stats(self, ctx):
 		await self.bot.say("?stats is deprecated, use ?lastgame instead")
-		
 
 	@commands.command(pass_context=True)
 	async def lastgame(self, ctx):
@@ -109,6 +117,64 @@ class DotaStats:
 		else:
 			await self.bot.send_typing(ctx.message.channel)
 			await self.write_stats(userinfo)
+
+	@commands.command(pass_context=True)
+	async def whois(self, ctx, user : discord.User):
+		"""Displays information about the user's dota profile"""
+		userinfo = botdata.userinfo(user.id)
+
+		if userinfo.steam == "":
+			self.bot.say("I haven't the faintest")
+			return
+
+		await self.bot.send_typing(ctx.message.channel)
+
+		playerinfo = await opendota_query("/players/{}".format(userinfo.steam32))
+		playerwl = await opendota_query("/players/{}/wl".format(userinfo.steam32))
+		gamesplayed = playerwl["win"] + playerwl["lose"]
+		winrate = "{:.2%}".format(playerwl["win"] / gamesplayed)
+		if "solo_competitive_rank" in playerinfo:
+			solommr = "last displayed as {}".format(playerinfo["solo_competitive_rank"])
+		else:
+			solommr = "never publicly displayed"
+
+		hero_id_dict = await self.bot.get_cog("Dotabase").get_hero_id_dict()
+
+		heroes = await opendota_query("/players/{}/heroes".format(userinfo.steam32))
+		favs = ""
+		for i in range(0,3):
+			favs += hero_id_dict[int(heroes[i]["hero_id"])] + ", "
+		favs = favs[:-2]
+
+		heroes = await opendota_query("/players/{}/heroes?date=60".format(userinfo.steam32))
+		recent_favs = ""
+		for i in range(0,3):
+			recent_favs += hero_id_dict[int(heroes[i]["hero_id"])] + ", "
+		recent_favs = recent_favs[:-2]
+
+
+		embed = discord.Embed()
+
+		embed.set_author(
+			name=playerinfo["profile"]["personaname"], 
+			icon_url=playerinfo["profile"]["avatar"], 
+			url=playerinfo["profile"]["profileurl"])
+
+		embed.add_field(name="General", value=(
+			"Winrate of {} over {} games, "
+			"Solo MMR {}, and based on players in games played recently, "
+			"MMR estimated to be {}.".format(winrate, gamesplayed, solommr, playerinfo["mmr_estimate"]["estimate"])))
+
+		embed.add_field(name="Profiles", value=(
+			"[Steam]({0})\n"
+			"[OpenDota](https://www.opendota.com/players/{1})\n"
+			"[DotaBuff](https://www.dotabuff.com/players/{1})".format(playerinfo["profile"]["profileurl"], userinfo.steam32)))
+
+		embed.add_field(name="Heroes", inline=False, value=(
+			"[Recent Favs](https://www.opendota.com/players/{0}/heroes?date=60) {1}\n"
+			"[Overall Favs](https://www.opendota.com/players/{0}/heroes) {2}\n".format(userinfo.steam32, recent_favs, favs)))
+
+		await self.bot.say(embed=embed)
 
 
 def setup(bot):

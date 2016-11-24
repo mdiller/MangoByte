@@ -86,6 +86,12 @@ class Dotabase:
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name
 
+	async def get_hero_id_dict(self):
+		result = {}
+		for hero in session.query(Hero):
+			result[hero.id] = hero.localized_name
+		return result
+
 	async def get_hero_icon(self, heroid):
 		hero = session.query(Hero).filter(Hero.id == heroid).first()
 		return "http://dotabase.me/dota-vpk" + hero.icon
