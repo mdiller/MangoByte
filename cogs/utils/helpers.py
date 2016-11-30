@@ -31,3 +31,8 @@ def write_json(filename, data):
 def read_json(filename):
 	with open(filename) as f:
 		return json.load(f, object_pairs_hook=OrderedDict)
+
+
+class UserError(Exception):
+	def __init__(self, message):
+		self.message = message

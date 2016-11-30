@@ -13,9 +13,6 @@ from dotabase import *
 
 session = dotabase_session()
 
-class UserError(Exception):
-	def __init__(self, message):
-		self.message = message
 
 # A variable that can specify a filter on a query
 class QueryVariable():
@@ -78,10 +75,9 @@ class Dotabase:
 
 	def build_aliases(self):
 		for hero in session.query(Hero):
-			self.hero_aliases[re.sub(r'[^a-z^A-Z]', r'', hero.name).lower()] = hero.id
-			self.hero_aliases[re.sub(r'[^a-z^A-Z]', r'', hero.localized_name).lower()] = hero.id
-			if " " in hero.localized_name:
-				self.hero_aliases["".join(e[0] for e in hero.localized_name.lower().split())] = hero.id
+			aliases = hero.aliases.replace(" ", "").split("|")
+			for alias in aliases:
+				self.hero_aliases[alias] = hero.id
 
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name

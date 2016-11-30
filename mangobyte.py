@@ -31,8 +31,10 @@ async def on_command_error(error, ctx):
 	elif isinstance(error, commands.BadArgument):
 		await bot.send_message(ctx.message.channel,
 				"need better arguments on command ?{0} try doin ?help {0} to see how its done.".format(ctx.command))
+	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
+		await bot.send_message(ctx.message.channel, error.original.message)
 	else:
-		print("error executing command {0}: {1}".format(ctx.command, error))
+		print("errored executing command {0}: {1}".format(ctx.command, error))
 
 if __name__ == '__main__':
 	bot.load_extension("cogs.general")
