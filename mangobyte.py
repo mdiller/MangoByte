@@ -23,9 +23,9 @@ async def on_ready():
 	cog = bot.get_cog("Audio")
 	cog.voice = await bot.join_voice_channel(bot.get_channel(settings.defaultvoice))
 	await bot.change_nickname(cog.voice.channel.server.me, bot.user.name + " v" + get_version())
-	clip = await get_clip("local:bothello", bot)
+	clip = await cog.get_clip("local:bothello")
 	clip.volume = 0.1
-	await play_clip(clip, bot)
+	await cog.play_clip(clip)
 
 @bot.event
 async def on_command_error(error, ctx):

@@ -95,22 +95,3 @@ class DotaClip(Clip):
 	def type(cls):
 		return "dota"
 
-
-async def get_clip(clipid, bot):
-	cliptypes = Clip.types_dict()
-
-	match = re.search("^(" + "|".join(cliptypes) + "):(.*)$", clipid)
-
-	if not match:
-		raise MissingClipType(clipid)
-
-	return cliptypes[match.group(1)](match.group(2), bot)
-
-
-async def play_clip(clip, bot):
-	if isinstance(clip, str):
-		clip = await get_clip(clip, bot)
-
-	audio = bot.get_cog("Audio")
-	await audio.queue_clip(clip)
-

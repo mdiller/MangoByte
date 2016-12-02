@@ -10,6 +10,7 @@ import os
 import asyncio
 import string
 import re
+from .mangocog import *
 from dotabase import *
 
 session = dotabase_session()
@@ -66,11 +67,11 @@ def extract_var(words, variables):
 	return False
 
 
-class Dotabase:
+class Dotabase(MangoCog):
 	"""Commands for interfacing with Dotabase. See http://dotabase.me for a website that interfaces with Dotabase.
 	"""
 	def __init__(self, bot):
-		self.bot = bot
+		MangoCog.__init__(self, bot)
 		self.criteria_aliases = read_json(settings.resourcedir + "ai/criteria_aliases.json")
 		self.hero_aliases = {}
 		self.build_aliases()
@@ -96,7 +97,7 @@ class Dotabase:
 		return vpkurl + hero.icon
 
 	async def play_response(self, response):
-		await play_clip("dota:" + response.name, self.bot)
+		await self.play_clip("dota:" + response.name)
 
 	def get_response(self, responsename):
 		return session.query(Response).filter(Response.name == responsename).first()

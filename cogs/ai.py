@@ -4,24 +4,25 @@ from __main__ import settings
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
 from cogs.utils import checks
+from .mangocog import *
 import asyncio
 import string
 import random
 import re
 
 
-class AI:
+class AI(MangoCog):
 	"""AI Commands
 	"""
 	def __init__(self, bot):
-		self.bot = bot
+		MangoCog.__init__(self, bot)
 		self.reactions = read_json(settings.resourcedir + "ai/reactions.json")
 		self.questions = read_json(settings.resourcedir + "ai/questions.json")
 
 	async def play_say_clip(self, responsename):
-		clip = await get_clip("dota:" + responsename, self.bot)
+		clip = await self.get_clip("dota:" + responsename)
 		await self.bot.say(clip.text)
-		await play_clip(clip, self.bot)
+		await self.play_clip(clip)
 
 	@commands.command(pass_context=True)
 	async def ask(self, ctx, *, question : str=""):

@@ -8,6 +8,7 @@ import async_timeout
 import string
 import dota2api
 import datetime
+from .mangocog import *
 
 async def opendota_query(querystring):
 	async with aiohttp.get("https://api.opendota.com/api" + querystring) as r:
@@ -16,12 +17,12 @@ async def opendota_query(querystring):
 		else:
 			raise ValueError("OpenDota bad response: " + r.status)
 
-class DotaStats:
+class DotaStats(MangoCog):
 	"""Commands used to access Dota 2 players' stats
 	"""
 
 	def __init__(self, bot):
-		self.bot = bot
+		MangoCog.__init__(self, bot)
 
 	# prints the stats for the given player's latest game
 	async def write_stats(self, userinfo):

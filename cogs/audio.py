@@ -8,6 +8,7 @@ import os
 import string
 import queue
 import random
+from .mangocog import *
 from ctypes.util import find_library
 
 discord.opus.load_opus(find_library('opus'))
@@ -36,12 +37,12 @@ def remove_if_temp(mp3name):
 			os.remove(mp3name)
 			print("removed temp file " + mp3name)
 
-class Audio:
+class Audio(MangoCog):
 	"""Commands used to play audio
 	"""
 
 	def __init__(self, bot):
-		self.bot = bot
+		MangoCog.__init__(self, bot)
 		self.voice = None
 		self.player = None
 		self.clipqueue = queue.Queue()
@@ -98,7 +99,7 @@ class Audio:
 
 		for a complete list of the available clips, try ?playlist"""
 		try:
-			await play_clip("local:" + clip, self.bot)
+			await self.play_clip("local:" + clip)
 		except ClipNotFound:
 			await self.bot.say("'" + clip + "' is not a valid clip. 🤦 Try ?playlist. ")
 			
@@ -134,7 +135,7 @@ class Audio:
 		"""Plays an mp3 file at a url
 
 		Make sure to use http, not https"""
-		await play_clip("url:" + mp3url, self.bot)
+		await self.play_clip("url:" + mp3url)
 
 	@commands.command(pass_context=True)
 	async def stop(self, ctx):
@@ -173,9 +174,9 @@ class Audio:
 		Note: your intro clip cannot be longer than 4 seconds
 		"""
 		try:
-			clip = await get_clip(clipname, self.bot)
+			clip = await self.get_clip(clipname)
 		except MissingClipType:
-			clip = await get_clip("local:" + clipname, self.bot)
+			clip = await self.get_clip("local:" + clipname)
 
 		audiolength = clip.audiolength
 
@@ -193,7 +194,7 @@ class Audio:
 
 		...what more could you possibly need to know...
 		"""
-		await play_clip("tts:" + message, self.bot)
+		await self.play_clip("tts:" + message)
 
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
@@ -212,8 +213,8 @@ class Audio:
 				text = "its " + after.name
 
 			await asyncio.sleep(3)
-			await play_clip(introclip, self.bot)
-			await play_clip("tts:" + text, self.bot)
+			await self.play_clip(introclip)
+			await self.play_clip("tts:" + text)
 
 
 def setup(bot):

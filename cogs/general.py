@@ -6,13 +6,14 @@ from cogs.utils import checks
 import asyncio
 import string
 import random
+from .mangocog import *
 
 
-class General:
+class General(MangoCog):
 	"""General Commands
 	"""
 	def __init__(self, bot):
-		self.bot = bot
+		MangoCog.__init__(self, bot)
 
 	@commands.command(pass_context=True)
 	async def ping(self, ctx, count : int=1):
