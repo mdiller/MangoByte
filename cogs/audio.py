@@ -1,21 +1,16 @@
 import discord
 from discord.ext import commands
 from cogs.utils.helpers import *
+from cogs.utils.clip import *
 from __main__ import settings, botdata
 import asyncio
 import os
 import string
 import queue
 import random
-from gtts import gTTS
 from ctypes.util import find_library
 
 discord.opus.load_opus(find_library('opus'))
-
-# tts an audio clip from a word
-def make_temp_mp3(word):
-	tts = gTTS(text=word, lang='en')
-	tts.save(settings.resourcedir + "temp/temp.mp3")
 
 def get_clipdirs():
 	result = []
@@ -24,13 +19,6 @@ def get_clipdirs():
 			result.append(d)
 	result.sort()
 	return result
-
-def get_clipfile(clipname):
-	for root, dirs, files in os.walk(settings.resourcedir + "clips/"):
-		for file in files:
-			if(file == clipname + ".mp3"):
-				return os.path.join(root, file)
-	return None
 
 # gets a list of all the mp3s in the indicated clipdir
 def get_playlist(clipdir):
@@ -47,11 +35,6 @@ def remove_if_temp(mp3name):
 		if os.path.dirname(mp3name) == os.path.join(settings.resourcedir, "temp"):
 			os.remove(mp3name)
 			print("removed temp file " + mp3name)
-
-class Clip:
-	def __init__(self, mp3name, volume):
-		self.mp3name = mp3name
-		self.volume = volume
 
 class Audio:
 	"""Commands used to play audio
@@ -80,43 +63,31 @@ class Audio:
 			return self.clipqueue.get()
 		raise ValueError("clip queue was empty when we tried to get the next one")
 
-	# puts a clip on the clipqueue
-	async def queue_clip(self, clip):
-		self.clipqueue.put(clip)
-
 	# plays the next clip in the queue
 	def play_next_clip(self):
 		try:
 			clip = self.next_clip()
-			self.player = self.voice.create_ffmpeg_player(clip.mp3name, after=self.done_talking)
+			self.player = self.voice.create_ffmpeg_player(clip.audiopath, after=self.done_talking)
 			self.player.volume = clip.volume
 			self.player.start()
-			print("playing: " + clip.mp3name)
-			if self.last_clip != None and clip.mp3name != self.last_clip.mp3name:
-				remove_if_temp(self.last_clip.mp3name)
+			print("playing: " + clip.audiopath)
+			if self.last_clip != None and clip.audiopath != self.last_clip.audiopath:
+				remove_if_temp(self.last_clip.audiopath)
 			self.last_clip = clip
 		except Exception as e:
 			print(str(e))
 
 	# try queueing an mp3 to play
-	async def try_talking(self, mp3name, volume=0.6):
+	async def queue_clip(self, clip):
 		if(self.voice is None):
 			print("tried to talk while not in voice channel")
 			await self.bot.say("not in voice channel m8")
 			return
 
-		await self.queue_clip(Clip(mp3name, volume))
+		self.clipqueue.put(clip)
 
 		if not self.is_talking():
 			self.play_next_clip()
-
-	# try queueing text to play with gtts
-	async def try_talking_tts(self, text):
-		tempfile = settings.resourcedir + "temp/" + str(int(random.random() * 1000000000)) + ".mp3"
-		print(tempfile)
-		tts = gTTS(text=text, lang=settings.ttslang)
-		tts.save(tempfile)
-		await self.try_talking(tempfile)
 
 	@commands.command(pass_context=True)
 	async def play(self, ctx, clip : str=""):
@@ -126,11 +97,10 @@ class Audio:
 		?play hello
 
 		for a complete list of the available clips, try ?playlist"""
-		clipfile = get_clipfile(clip)
-		if clipfile == None:
+		try:
+			await play_clip("local:" + clip, self.bot)
+		except ClipNotFound:
 			await self.bot.say("'" + clip + "' is not a valid clip. 🤦 Try ?playlist. ")
-		else:
-			await self.try_talking(clipfile)
 			
 
 	@commands.command(pass_context=True)
@@ -163,11 +133,8 @@ class Audio:
 	async def playurl(self, ctx, mp3url : str):
 		"""Plays an mp3 file at a url
 
-		Make sure to use http, not https.
-		One way to use this is to go to:
-		http://dotabase.me/responses/
-		Once there, find a good audio clip, right click on it, select copy url address, and do the thing."""
-		await self.try_talking(mp3url)
+		Make sure to use http, not https"""
+		await play_clip("url:" + mp3url, self.bot)
 
 	@commands.command(pass_context=True)
 	async def stop(self, ctx):
@@ -192,10 +159,9 @@ class Audio:
 			return
 
 		# If its not a temp file
-		if (not os.path.isfile(self.last_clip.mp3name)) or (os.path.dirname(self.last_clip.mp3name) != os.path.join(settings.resourcedir, "temp")):
-			await self.bot.say("Replaying " + os.path.splitext(os.path.basename(self.last_clip.mp3name))[0])
+		await self.bot.say("Replaying " + self.last_clip.clipid)
 
-		await self.try_talking(self.last_clip.mp3name, self.last_clip.volume)
+		await self.queue_clip(self.last_clip)
 
 
 	@commands.command(pass_context=True)
@@ -206,20 +172,20 @@ class Audio:
 		?setintro math
 		Note: your intro clip cannot be longer than 4 seconds
 		"""
-		clipfile = get_clipfile(clipname)
-		if clipfile is None:
-			await self.bot.say("Dats not a real clipfile, silly. Try ?playlist")
-			return
+		try:
+			clip = await get_clip(clipname, self.bot)
+		except MissingClipType:
+			clip = await get_clip("local:" + clipname, self.bot)
 
-		audiolength = audio_length(clipfile)
+		audiolength = clip.audiolength
 
 		if audiolength > 4.0:
 			await self.bot.say("Dat clip is " + str(audiolength) + " seconds long, and intros gotta be less than 3.")
 			return
 
-		botdata.userinfo(ctx.message.author.id).intro = clipname
+		botdata.userinfo(ctx.message.author.id).intro = clip.clipid
 
-		await self.bot.say("Yer intro is now " + clipname)
+		await self.bot.say("Yer intro is now " + clip.clipid)
 
 	@commands.command(pass_context=True)
 	async def tts(self, ctx, *, message : str):
@@ -227,7 +193,7 @@ class Audio:
 
 		...what more could you possibly need to know...
 		"""
-		await self.try_talking_tts(message)
+		await play_clip("tts:" + message, self.bot)
 
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
@@ -238,16 +204,16 @@ class Audio:
 			print(after.name + " joined the channel")
 
 			text = after.name
-			clipname = "helloits"
+			introclip = "local:helloits"
 
 			userinfo = botdata.userinfo(after.id)
-			if userinfo.intro != "":
-				clipname = userinfo.intro
+			if userinfo.intro != "" and userinfo.intro != introclip:
+				introclip = userinfo.intro
 				text = "its " + after.name
 
 			await asyncio.sleep(3)
-			await self.try_talking(get_clipfile(clipname))
-			await self.try_talking_tts(text)
+			await play_clip(introclip, self.bot)
+			await play_clip("tts:" + text, self.bot)
 
 
 def setup(bot):

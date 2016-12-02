@@ -21,9 +21,6 @@ def get_version():
 def get_changelog(count):
 	return run_command(["git", "log", "-n", str(count), "--pretty=**%cd** %s", "--date=format:%b %d, %I:%M%p"])
 
-def audio_length(filename):
-	return float(run_command(["ffprobe", "-i", filename, "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0"]))
-
 def write_json(filename, data):
 	with open(filename, "w+") as f:
 		json.dump(data, f, indent="\t")

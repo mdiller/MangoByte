@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from __main__ import settings
 from cogs.utils.helpers import *
+from cogs.utils.clip import *
 from cogs.utils import checks
 import asyncio
 import string
@@ -17,11 +18,10 @@ class AI:
 		self.reactions = read_json(settings.resourcedir + "ai/reactions.json")
 		self.questions = read_json(settings.resourcedir + "ai/questions.json")
 
-	async def play_dota_response(self, responsename):
-		dotabase = self.bot.get_cog("Dotabase")
-		response = await dotabase.get_response(responsename)
-		await self.bot.say(response.text)
-		await dotabase.play_response(response)
+	async def play_say_clip(self, responsename):
+		clip = await get_clip("dota:" + responsename, self.bot)
+		await self.bot.say(clip.text)
+		await play_clip(clip, self.bot)
 
 	@commands.command(pass_context=True)
 	async def ask(self, ctx, *, question : str=""):
@@ -29,7 +29,7 @@ class AI:
 		random.seed(question)
 		for check in self.questions:
 			if re.search(check["regex"], question):
-				await self.play_dota_response(random.choice(check["responses"]))
+				await self.play_say_clip(random.choice(check["responses"]))
 				return
 		print("didnt match anything for ask")
 

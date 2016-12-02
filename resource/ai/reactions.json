@@ -16,6 +16,15 @@
 		"reaction": "🍕"
 	},
 	{
+		"regex": "i hate you|fuck (off|you)",
+		"reaction": "😱"
+	},
+	{
+		"regex": "^[A-Z0-9 ]*$",
+		"chance": 0.2,
+		"reaction": "😱"
+	},
+	{
 		"regex": "eat|food",
 		"reaction": "🍕🥔😋🍞🥖"
 	},

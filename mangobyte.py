@@ -11,6 +11,8 @@ helpdoc = """The juiciest unsigned 8 bit integer you eva gonna see"""
 
 botdata = BotData()
 settings = Settings()
+from cogs.utils.clip import *# This has to be done after loading settings
+
 bot = commands.Bot(command_prefix='?', description="MangoByte - " + helpdoc + "\n For more info about Mangobyte, try ?info")
 
 
@@ -21,7 +23,9 @@ async def on_ready():
 	cog = bot.get_cog("Audio")
 	cog.voice = await bot.join_voice_channel(bot.get_channel(settings.defaultvoice))
 	await bot.change_nickname(cog.voice.channel.server.me, bot.user.name + " v" + get_version())
-	await cog.try_talking(settings.resourcedir + "clips/dota/bothello.mp3", volume=0.1)
+	clip = await get_clip("local:bothello", bot)
+	clip.volume = 0.1
+	await play_clip(clip, bot)
 
 @bot.event
 async def on_command_error(error, ctx):

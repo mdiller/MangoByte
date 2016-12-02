@@ -4,6 +4,7 @@ from sqlalchemy.sql.expression import func
 from sqlalchemy import and_
 from __main__ import settings
 from cogs.utils.helpers import *
+from cogs.utils.clip import *
 import random
 import os
 import asyncio
@@ -12,6 +13,7 @@ import re
 from dotabase import *
 
 session = dotabase_session()
+
 
 
 # A variable that can specify a filter on a query
@@ -72,6 +74,7 @@ class Dotabase:
 		self.criteria_aliases = read_json(settings.resourcedir + "ai/criteria_aliases.json")
 		self.hero_aliases = {}
 		self.build_aliases()
+		self.vpkurl = "http://dotabase.me/dota-vpk"
 
 	def build_aliases(self):
 		for hero in session.query(Hero):
@@ -90,14 +93,12 @@ class Dotabase:
 
 	async def get_hero_icon(self, heroid):
 		hero = session.query(Hero).filter(Hero.id == heroid).first()
-		return "http://dotabase.me/dota-vpk" + hero.icon
+		return vpkurl + hero.icon
 
 	async def play_response(self, response):
-		response_file = "http://dotabase.me/dota-vpk" + response.mp3
-		audio = self.bot.get_cog("Audio")
-		await audio.try_talking(response_file, volume=0.4)
+		await play_clip("dota:" + response.name, self.bot)
 
-	async def get_response(self, responsename):
+	def get_response(self, responsename):
 		return session.query(Response).filter(Response.name == responsename).first()
 
 	# Plays a random response from a query
