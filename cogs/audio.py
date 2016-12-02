@@ -3,6 +3,7 @@ from discord.ext import commands
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
 from __main__ import settings, botdata
+from cogs.utils import checks
 import asyncio
 import os
 import string
@@ -166,13 +167,20 @@ class Audio(MangoCog):
 
 
 	@commands.command(pass_context=True)
-	async def setintro(self, ctx, clipname : str):
+	async def setintro(self, ctx, clipname : str, user: discord.User=None):
 		"""Sets your intro clip
 
 		The argument is the name of the clip that will introduce you, for example:
 		?setintro math
 		Note: your intro clip cannot be longer than 4 seconds
 		"""
+		if user is None:
+			user = ctx.message.author
+		else:
+			if not await checks.is_owner_check(ctx):
+				await self.bot.say("You aint the boss of me 😠")
+				return
+
 		try:
 			clip = await self.get_clip(clipname)
 		except MissingClipType:
@@ -184,7 +192,7 @@ class Audio(MangoCog):
 			await self.bot.say("Dat clip is " + str(audiolength) + " seconds long, and intros gotta be less than 3.")
 			return
 
-		botdata.userinfo(ctx.message.author.id).intro = clip.clipid
+		botdata.userinfo(user.id).intro = clip.clipid
 
 		await self.bot.say("Yer intro is now " + clip.clipid)
 
