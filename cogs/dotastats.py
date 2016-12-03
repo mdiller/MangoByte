@@ -125,7 +125,7 @@ class DotaStats(MangoCog):
 		userinfo = botdata.userinfo(user.id)
 
 		if userinfo.steam == "":
-			self.bot.say("I haven't the faintest")
+			await self.bot.say("I haven't the faintest")
 			return
 
 		await self.bot.send_typing(ctx.message.channel)
