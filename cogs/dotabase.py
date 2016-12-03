@@ -94,7 +94,7 @@ class Dotabase(MangoCog):
 
 	async def get_hero_icon(self, heroid):
 		hero = session.query(Hero).filter(Hero.id == heroid).first()
-		return vpkurl + hero.icon
+		return self.vpkurl + hero.icon
 
 	async def play_response(self, response):
 		await self.play_clip("dota:" + response.name)
