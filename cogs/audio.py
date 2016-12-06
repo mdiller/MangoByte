@@ -165,6 +165,26 @@ class Audio(MangoCog):
 
 		await self.queue_clip(self.last_clip)
 
+	@commands.command(pass_context=True)
+	async def clipinfo(self, ctx, clipid=None):
+		"""Gets info about the indicated clip
+
+		no clipid will print info about the last clip played
+
+		clipid is specified like this:
+		local:shitpickle
+		dota:timb_ally_01
+		"""
+		if clipid is None:
+			if self.last_clip == None:
+				await self.bot.say("Nobody said anythin' yet")
+				return
+			clipid = self.last_clip.clipid
+
+		clip = await self.get_clip(clipid)
+
+		await self.bot.say(embed=await clip.get_info_embed(self.bot))
+
 
 	@commands.command(pass_context=True)
 	async def setintro(self, ctx, clipname : str, user: discord.User=None):

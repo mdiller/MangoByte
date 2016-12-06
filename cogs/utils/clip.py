@@ -2,9 +2,11 @@ from abc import ABCMeta, abstractmethod
 from __main__ import settings
 from .helpers import *
 from gtts import gTTS
+import discord
 import re
 import os
 import random
+import html
 
 # Clip helper functions
 def get_clipfile(clipname):
@@ -48,6 +50,15 @@ class Clip(object):
 	def audiolength(self):
 		return float(run_command(["ffprobe", "-i", self.audiopath, "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0"]))
 
+	async def get_info_embed(self, bot):
+		description = ""
+		if self.text is not None and self.text != "":
+			description = self.text
+		embed = discord.Embed(description=description)
+		embed.set_author(name=self.clipid)
+		embed.add_field(name="Clip Length", value="{0:.2f} seconds".format(self.audiolength))
+		return embed
+
 
 class LocalClip(Clip):
 	def __init__(self, clipname, bot):
@@ -59,6 +70,11 @@ class LocalClip(Clip):
 	@classmethod
 	def type(cls):
 		return "local"
+
+	async def get_info_embed(self, bot):
+		embed = await Clip.get_info_embed(self, bot)
+		embed.add_field(name="Section", value=os.path.basename(os.path.dirname(self.audiopath)))
+		return embed
 
 
 class TtsClip(Clip):
@@ -82,16 +98,33 @@ class UrlClip(Clip):
 	def type(cls):
 		return "url"
 
+	async def get_info_embed(self, bot):
+		embed = await Clip.get_info_embed(self, bot)
+		embed.url = self.audiopath
+		return embed
+
 
 class DotaClip(Clip):
 	def __init__(self, responsename, bot):
 		dotabase = bot.get_cog("Dotabase")
-		response = dotabase.get_response(responsename)
-		if response == None:
+		self.response = dotabase.get_response(responsename)
+		if self.response == None:
 			raise ClipNotFound(self.type(), responsename)
-		Clip.__init__(self, responsename, dotabase.vpkurl + response.mp3, text=response.text, volume=0.4)
+		Clip.__init__(self, responsename, dotabase.vpkurl + self.response.mp3, text=self.response.text, volume=0.4)
 
 	@classmethod
 	def type(cls):
 		return "dota"
+
+	async def get_info_embed(self, bot):
+		dotabase = bot.get_cog("Dotabase")
+
+		embed = await Clip.get_info_embed(self, bot)
+		embed.set_author(name=self.name, icon_url=await dotabase.get_hero_icon(self.response.hero_id))
+		embed.url = self.audiopath
+		if self.response.criteria != "":
+			embed.add_field(inline=False, name="Criteria", value=self.response.criteria.replace("|", "\n"))
+
+		return embed
+
 

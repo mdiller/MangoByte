@@ -39,6 +39,7 @@ async def on_command_error(error, ctx):
 		await bot.send_message(ctx.message.channel, error.original.message)
 	else:
 		print("errored executing command {0}: {1}".format(ctx.command, error))
+		raise error.original
 
 if __name__ == '__main__':
 	bot.load_extension("cogs.general")
