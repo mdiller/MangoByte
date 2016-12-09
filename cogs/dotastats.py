@@ -87,20 +87,22 @@ class DotaStats(MangoCog):
 		if steam_id < 76561197960265728:
 			steam_id += 76561197960265728
 
-		try:
-			playerinfo = d2api.get_player_summaries(steam_id)['players'][0]
-		except dota2api.src.exceptions.APIError as e:
-			await self.bot.say("Either thats tha wrong id or you haven't enabled public match data.")
+		playerinfos = d2api.get_player_summaries(steam_id)['players']
+
+		if len(playerinfos) != 1:
+			await self.bot.say("Dat dont look liek a valid steam id")
 			return
-		except Exception as e:
-			print(e.message)
-			await self.bot.say("Somethin gone wrong 😱")
+
+		try:
+			hist = d2api.get_match_history(steam_id)
+		except dota2api.src.exceptions.APIError as e:
+			await self.bot.say("Looks like either ya don't play dota, or ya haven't enabled public match data.")
 			return
 
 		userinfo = botdata.userinfo(user.id)
 		userinfo.steam = str(steam_id)
 
-		await self.bot.say("You've been linked to {}".format(playerinfo['personaname']))
+		await self.bot.say("You've been linked to {}".format(playerinfos[0]['personaname']))
 
 	@commands.command(pass_context=True, hidden=True)
 	async def addstats(self, ctx, steam_id : int):
