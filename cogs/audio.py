@@ -9,6 +9,7 @@ import os
 import string
 import queue
 import random
+import urllib.request
 from .mangocog import *
 from ctypes.util import find_library
 
@@ -185,7 +186,23 @@ class Audio(MangoCog):
 
 		clip = await self.get_clip(clipid)
 
-		await self.bot.say(embed=await clip.get_info_embed(self.bot))
+		await self.bot.send_typing(ctx.message.channel)
+
+		filename = clip.name
+
+		if re.search(r"[^a-zA-Z0-9_]", filename):
+			filename = clip.type()
+
+		filename += os.path.splitext(clip.audiopath)[1]
+
+		try:
+			await self.bot.send_file(ctx.message.channel, clip.audiopath, filename=filename, content=await clip.get_info())
+		except FileNotFoundError as e:
+			# The file is probably actually a url
+			fp = urllib.request.urlopen(clip.audiopath)
+			await self.bot.send_file(ctx.message.channel, fp, filename=filename, content=await clip.get_info())
+			fp.close()
+
 
 
 	@commands.command(pass_context=True)

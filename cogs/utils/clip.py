@@ -50,14 +50,8 @@ class Clip(object):
 	def audiolength(self):
 		return float(run_command(["ffprobe", "-i", self.audiopath, "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0"]))
 
-	async def get_info_embed(self, bot):
-		description = ""
-		if self.text is not None and self.text != "":
-			description = self.text
-		embed = discord.Embed(description=description)
-		embed.set_author(name=self.clipid)
-		embed.add_field(name="Clip Length", value="{0:.2f} seconds".format(self.audiolength))
-		return embed
+	async def get_info(self):
+		return self.text if self.text is not None else ""
 
 
 class LocalClip(Clip):
@@ -71,10 +65,8 @@ class LocalClip(Clip):
 	def type(cls):
 		return "local"
 
-	async def get_info_embed(self, bot):
-		embed = await Clip.get_info_embed(self, bot)
-		embed.add_field(name="Section", value=os.path.basename(os.path.dirname(self.audiopath)))
-		return embed
+	async def get_info(self):
+		return "From the '{}'' section".format(os.path.basename(os.path.dirname(self.audiopath)))
 
 
 class TtsClip(Clip):
@@ -98,12 +90,6 @@ class UrlClip(Clip):
 	def type(cls):
 		return "url"
 
-	async def get_info_embed(self, bot):
-		embed = await Clip.get_info_embed(self, bot)
-		embed.url = self.audiopath
-		return embed
-
-
 class DotaClip(Clip):
 	def __init__(self, responsename, bot):
 		dotabase = bot.get_cog("Dotabase")
@@ -116,15 +102,11 @@ class DotaClip(Clip):
 	def type(cls):
 		return "dota"
 
-	async def get_info_embed(self, bot):
-		dotabase = bot.get_cog("Dotabase")
-
-		embed = await Clip.get_info_embed(self, bot)
-		embed.set_author(name=self.name, icon_url=await dotabase.get_hero_icon(self.response.hero_id))
-		embed.url = self.audiopath
+	async def get_info(self):
+		text = "\"{0}\" - {1}".format(self.response.text, self.response.hero.localized_name)
 		if self.response.criteria != "":
-			embed.add_field(inline=False, name="Criteria", value=self.response.criteria.replace("|", "\n"))
+			text += "\nCriteria: " + self.response.criteria.replace("|", "\n          ")
 
-		return embed
+		return text
 
 
