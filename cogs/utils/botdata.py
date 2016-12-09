@@ -10,7 +10,7 @@ class UserInfo:
 		if(self.json_data is None):
 			self.botdata.json_data['userinfo'].append(OrderedDict([
 				("discord", self.discord),
-				("steam", ""),
+				("steam64", None),
 				("intro", "")
 			]))
 			self.botdata.save_data()
@@ -24,17 +24,17 @@ class UserInfo:
 		return None
 
 	@property
-	def steam(self):
-		return self.json_data["steam"]
+	def steam64(self):
+		return self.json_data["steam64"]
 
-	@steam.setter
-	def steam(self, value):
-		self.json_data["steam"] = value
+	@steam64.setter
+	def steam64(self, value):
+		self.json_data["steam64"] = value
 		self.botdata.save_data()
 
 	@property
 	def steam32(self):
-		return int(self.steam) - 76561197960265728
+		return self.steam64 - 76561197960265728
 		
 	@property
 	def intro(self):

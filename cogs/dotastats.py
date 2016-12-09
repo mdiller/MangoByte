@@ -26,9 +26,9 @@ class DotaStats(MangoCog):
 
 	# prints the stats for the given player's latest game
 	async def write_stats(self, userinfo):
-		match_id = d2api.get_match_history(account_id=int(userinfo.steam))['matches'][0]['match_id']
+		match_id = d2api.get_match_history(account_id=userinfo.steam64)['matches'][0]['match_id']
 		game = d2api.get_match_details(match_id)
-		playerinfo = d2api.get_player_summaries(int(userinfo.steam))['players'][0]
+		playerinfo = d2api.get_player_summaries(int(userinfo.steam64))['players'][0]
 		dotabase = self.bot.get_cog("Dotabase")
 
 		# Finds the player in the game which has our matching steam32 id
@@ -100,7 +100,7 @@ class DotaStats(MangoCog):
 			return
 
 		userinfo = botdata.userinfo(user.id)
-		userinfo.steam = str(steam_id)
+		userinfo.steam64 = steam_id
 
 		await self.bot.say("You've been linked to {}".format(playerinfos[0]['personaname']))
 
@@ -120,8 +120,8 @@ class DotaStats(MangoCog):
 		?lastgame
 		"""
 		userinfo = botdata.userinfo(ctx.message.author.id)
-		if(userinfo.steam == ""):
-			await self.bot.say("You need to add your Steam ID! Use the ?setsteam <steam_ID> command")
+		if userinfo.steam64 is None:
+			await self.bot.say("You need to add your Steam ID! Do ?setsteam <steam_ID>")
 		else:
 			await self.bot.send_typing(ctx.message.channel)
 			await self.write_stats(userinfo)
@@ -131,7 +131,7 @@ class DotaStats(MangoCog):
 		"""Displays information about the user's dota profile"""
 		userinfo = botdata.userinfo(user.id)
 
-		if userinfo.steam == "":
+		if userinfo.steam64 is None:
 			await self.bot.say("I haven't the faintest")
 			return
 
