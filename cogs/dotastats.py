@@ -70,11 +70,11 @@ class DotaStats(MangoCog):
 
 	@commands.command(pass_context=True)
 	async def setsteam(self, ctx, steam_id : int, user: discord.User=None):
-		"""Adds a dota player to the dota stat tracker, vie their steam id
+		"""Links a discord user to their steam/dota accont
 
 		The user parameter can only be specified by the bot owner
 		
-		To get your steam_id, an easy way is to go to your profile page in steam, right click anywhere, and select 'Copy Page URL.' Then paste that somewhere, and get the number at the end of the url. It should start with a 7 and be like 16 characters or something. Thats your steam_id. Now just do ?addsteam <thenumber>.
+		An easy way get your steam_id is to go to your profile page in steam, right click anywhere, and select 'Copy Page URL.' Then paste that somewhere, and get the number at the end of the url. Thats your steam_id. Now just do ?addsteam <thenumber> If its not a number, you gotta look somewhere else. the the end of the url for your profile on dotabuff or something.
 		"""
 
 		if user is None:
@@ -84,18 +84,23 @@ class DotaStats(MangoCog):
 				await self.bot.say("You aint the boss of me 😠")
 				return
 
-		userinfo = botdata.userinfo(user.id)
+		if steam_id < 76561197960265728:
+			steam_id += 76561197960265728
 
 		try:
-			hist = d2api.get_match_history(steam_id)
+			playerinfo = d2api.get_player_summaries(steam_id)['players'][0]
+		except dota2api.src.exceptions.APIError as e:
+			await self.bot.say("Either thats tha wrong id or you haven't enabled public match data.")
+			return
 		except Exception as e:
 			print(e.message)
-			await self.bot.say("Either you must enable Expose Public Match Data in your DotA 2 client, or that is an invalid ID")
+			await self.bot.say("Somethin gone wrong 😱")
 			return
 
+		userinfo = botdata.userinfo(user.id)
 		userinfo.steam = str(steam_id)
 
-		await self.bot.say( "I added " + str(user) + " to the list of players. NOW I'M WATCHING YOU")
+		await self.bot.say("You've been linked to {}".format(playerinfo['personaname']))
 
 	@commands.command(pass_context=True, hidden=True)
 	async def addstats(self, ctx, steam_id : int):
