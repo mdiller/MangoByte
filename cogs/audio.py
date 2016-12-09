@@ -170,9 +170,9 @@ class Audio(MangoCog):
 
 	@commands.command(pass_context=True)
 	async def clipinfo(self, ctx, clipid=None):
-		"""Gets info about the indicated clip
+		"""Gets information and a file for the given clip
 
-		no clipid will print info about the last clip played
+		Not giving a clipid will print info about the last clip played
 
 		clipid is specified like this:
 		local:shitpickle

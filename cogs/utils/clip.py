@@ -66,7 +66,7 @@ class LocalClip(Clip):
 		return "local"
 
 	async def get_info(self):
-		return "From the '{}'' section".format(os.path.basename(os.path.dirname(self.audiopath)))
+		return "From the '{}' section".format(os.path.basename(os.path.dirname(self.audiopath)))
 
 
 class TtsClip(Clip):
