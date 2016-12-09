@@ -1,5 +1,5 @@
 # MangoByte<img align="right" src="mangobyte.png"/>
-A discord bot that provides the ability to play audio clips, play dota responses, answer questions, randomly react to messages, and a few other cool things. I'm using the [discord.py](https://github.com/Rapptz/discord.py) python wrapper for the [Discord API](https://discordapp.com/developers). I'm also making use [dotabase](https://github.com/mdiller/dotabase), which is an open source repository (created by yours truly) containing data about the game [Dota 2](http://www.dota2.com).
+A discord bot that provides the ability to play audio clips, play dota responses, answer questions, randomly react to messages, and a few other cool things. I'm using the [discord.py](https://github.com/Rapptz/discord.py) python wrapper for the [Discord API](https://discordapp.com/developers). I'm also making use of [dotabase](https://github.com/mdiller/dotabase), which is an open source repository (created by yours truly) containing data about the game [Dota 2](http://www.dota2.com).
 
 ## Commands
 The following is a list of most of the commands that mangobyte has to offer
