@@ -29,17 +29,17 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(error, ctx):
-	if isinstance(error, commands.MissingRequiredArgument):
-		await bot.send_message(ctx.message.channel,
-				"need moar arguments on command ?{0} try doin ?help {0} to see how its done.".format(ctx.command))
+	if isinstance(error, commands.CommandNotFound):
+		await bot.send_message(ctx.message.channel, "🤔 Ya I dunno what a '{}' is, but it ain't a command. Try ?help".format(ctx.message.content[1:])) 
+	elif isinstance(error, commands.MissingRequiredArgument):
+		await bot.send_message(ctx.message.channel, "Well THATS not right. 🙃 Yer missin some arguments. Try doin ?help {}".format(ctx.command))
 	elif isinstance(error, commands.BadArgument):
-		await bot.send_message(ctx.message.channel,
-				"need better arguments on command ?{0} try doin ?help {0} to see how its done.".format(ctx.command))
+		await bot.send_message(ctx.message.channel, "No... no no no. 😩 Thats the wrong type of argument for that command. Ya might need ta do ?help {}".format(ctx.command))
 	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
 		await bot.send_message(ctx.message.channel, error.original.message)
 	else:
 		print("errored executing command {0}: {1}".format(ctx.command, error))
-		raise error.original
+		await bot.send_message(ctx.message.channel, "Uh-oh, sumthin dun gone wrong 😱")
 
 if __name__ == '__main__':
 	bot.load_extension("cogs.general")
