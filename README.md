@@ -30,4 +30,4 @@ lasagna   |A baked Italian dish
 changelog |Gets a rough changelog for mangobyte
 echo      |Echo...
 info      |Prints info about mangobyte
-help      |Shows this message.
+help      |Prints a help message with a list of all of the commands
