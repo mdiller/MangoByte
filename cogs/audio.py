@@ -107,9 +107,11 @@ class Audio(MangoCog):
 
 	@commands.command(pass_context=True)
 	async def playlist(self, ctx, section : str=""):
-		"""Lists the audio clips available for the play command in the indicated section
+		"""Lists the audio clips available for ?play
 
-		There were beginning to be too many clips so I made a sections system"""
+		Calling this command with no arguments gets you a list of sections
+
+		To get the clips in a specific section, do ?playlist <section>"""
 		dirs = get_clipdirs()
 
 		message = ""
@@ -218,7 +220,7 @@ class Audio(MangoCog):
 
 	@commands.command(pass_context=True)
 	async def tts(self, ctx, *, message : str):
-		"""Says the given message to people who are in the voice channel
+		"""Like ?echo but for people who can't read
 
 		...what more could you possibly need to know...
 		"""

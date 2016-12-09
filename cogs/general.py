@@ -61,7 +61,7 @@ class General(MangoCog):
 
 	@commands.command(pass_context=True)
 	async def info(self, ctx):
-		"""Prints info about MangoByte"""
+		"""Prints info about mangobyte"""
 		github = "https://github.com/mdiller/MangoByte"
 		python_version = "[Python {}.{}.{}]({})".format(*os.sys.version_info[:3], "https://www.python.org/")
 		discordpy = "https://github.com/Rapptz/discord.py"
@@ -89,7 +89,9 @@ class General(MangoCog):
 
 	@commands.command(pass_context=True)
 	async def lasagna(self, ctx):
-		"""a baked Italian dish consisting of wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce."""
+		"""A baked Italian dish
+
+		Contains wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce."""
 		embed = discord.Embed()
 		embed.set_image(url="http://thechronicleherald.ca/sites/default/files/imagecache/ch_article_main_image/articles/B97120471Z.120121215172053000G7E1UPL3.11.jpg")
 		await self.bot.say(embed=embed)

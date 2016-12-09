@@ -215,7 +215,7 @@ class Dotabase(MangoCog):
 
 	@commands.command(pass_context=True)
 	async def yes(self, ctx):
-		"""Ooooo ya."""
+		"""Oooooh ya."""
 		await self.play_response_query(session.query(Response).filter(Response.text_simple == " yes "))
 
 	@commands.command(pass_context=True, aliases=["laugh", "haha", "lerl"])

@@ -104,24 +104,12 @@ class DotaStats(MangoCog):
 
 		await self.bot.say("You've been linked to {}".format(playerinfos[0]['personaname']))
 
-	@commands.command(pass_context=True, hidden=True)
-	async def addstats(self, ctx, steam_id : int):
-		await self.bot.say("?addstats is deprecated, use ?setsteam instead")
-
-	@commands.command(pass_context=True, hidden=True)
-	async def stats(self, ctx):
-		await self.bot.say("?stats is deprecated, use ?lastgame instead")
-
 	@commands.command(pass_context=True)
 	async def lastgame(self, ctx):
-		""" Get your latest stats
-
-		Just run:
-		?lastgame
-		"""
+		"""Gets info about your last dota game"""
 		userinfo = botdata.userinfo(ctx.message.author.id)
 		if userinfo.steam64 is None:
-			await self.bot.say("You need to add your Steam ID! Do ?setsteam <steam_ID>")
+			await self.bot.say("Ya ain't got no steam id linked to ya yet. Do `?setsteam <steam_ID>`")
 		else:
 			await self.bot.send_typing(ctx.message.channel)
 			await self.write_stats(userinfo)
