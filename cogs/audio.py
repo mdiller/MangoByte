@@ -220,20 +220,44 @@ class Audio(MangoCog):
 				await self.bot.say("You aint the boss of me 😠")
 				return
 
-		try:
-			clip = await self.get_clip(clipname)
-		except MissingClipType:
-			clip = await self.get_clip("local:" + clipname)
+		clip = await self.get_clip_try_types(clipname, "local|dota")
 
 		audiolength = clip.audiolength
 
-		if audiolength > 4.0:
+		if audiolength > 3.0:
 			await self.bot.say("Dat clip is " + str(audiolength) + " seconds long, and intros gotta be less than 3.")
 			return
 
 		botdata.userinfo(user.id).intro = clip.clipid
-
 		await self.bot.say("Yer intro is now " + clip.clipid)
+
+
+	@commands.command(pass_context=True)
+	async def setoutro(self, ctx, clipname : str, user: discord.User=None):
+		"""Sets your outro clip
+
+		The argument is the name of the clip that will 'outroduce' you, for example:
+		?setoutro math
+		Note: your outro clip cannot be longer than 4 seconds
+		"""
+		if user is None:
+			user = ctx.message.author
+		else:
+			if not await checks.is_owner_check(ctx):
+				await self.bot.say("You aint the boss of me 😠")
+				return
+
+		clip = await self.get_clip_try_types(clipname, "local|dota")
+
+		audiolength = clip.audiolength
+
+		if audiolength > 3.0:
+			await self.bot.say("Dat clip is " + str(audiolength) + " seconds long, and outros gotta be less than 3.")
+			return
+
+		botdata.userinfo(user.id).outro = clip.clipid
+		await self.bot.say("Yer outro is now " + clip.clipid)
+
 
 	@commands.command(pass_context=True)
 	async def tts(self, ctx, *, message : str):
@@ -245,10 +269,9 @@ class Audio(MangoCog):
 
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
-		if self.voice is None or after.voice_channel is None or before.voice_channel == after.voice_channel or before.voice_channel == after.voice_channel:
-			# if the bot or the member are not in a voice channel, or if the member's channel didnt change, don't worry about checking that theyre equal
-			return
-		if after.voice_channel.id == self.voice.channel.id:
+		if self.voice is None or before.voice_channel == after.voice_channel:
+			return # if the member didnt change channels, dont worry about it
+		if after.voice_channel == self.voice.channel:
 			print(after.name + " joined the channel")
 
 			text = after.name
@@ -261,6 +284,19 @@ class Audio(MangoCog):
 
 			await asyncio.sleep(3)
 			await self.play_clip(introclip)
+			await self.play_clip("tts:" + text)
+		if before.voice_channel == self.voice.channel:
+			print(before.name + " left the channel")
+
+			text = before.name + " has left!"
+			outroclip = "local:farewell"
+
+			userinfo = botdata.userinfo(before.id)
+			if userinfo.outro != "" and userinfo.outro != outroclip:
+				outroclip = userinfo.outro
+
+			await asyncio.sleep(0.5)
+			await self.play_clip(outroclip)
 			await self.play_clip("tts:" + text)
 
 

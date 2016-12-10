@@ -8,6 +8,18 @@ class MangoCog:
 	def __init__(self, bot):
 		self.bot = bot
 
+	async def get_clip_try_types(self, clipid, trytypes=""):
+		trytypes = trytypes.split("|")
+		try:
+			return await self.get_clip(clipid)
+		except MissingClipType:
+			while len(trytypes) > 0:
+				try:
+					return await self.get_clip("{}:{}".format(trytypes.pop(), clipname))
+				except ClipNotFound:
+					continue
+		raise MissingClipType
+
 	async def get_clip(self, clipid):
 		cliptypes = Clip.types_dict()
 
