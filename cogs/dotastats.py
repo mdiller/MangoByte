@@ -129,10 +129,10 @@ class DotaStats(MangoCog):
 		playerwl = await opendota_query("/players/{}/wl".format(userinfo.steam32))
 		gamesplayed = playerwl["win"] + playerwl["lose"]
 		winrate = "{:.2%}".format(playerwl["win"] / gamesplayed)
-		if playerinfo["solo_competitive_rank"] is None:
+		if playerinfo.get("solo_competitive_rank") is not None:
 			solommr = "last displayed as {}".format(playerinfo["solo_competitive_rank"])
 		else:
-			solommr = "never publicly displayed"
+			solommr = "not publicly displayed"
 
 		hero_id_dict = await self.bot.get_cog("Dotabase").get_hero_id_dict()
 
