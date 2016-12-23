@@ -104,6 +104,7 @@ class Dotabase(MangoCog):
 
 	# Plays a random response from a query
 	async def play_response_query(self, query):
+		print(query.count())
 		await self.play_response(query.order_by(func.random()).first())
 
 	@commands.command(pass_context=True)
@@ -166,7 +167,10 @@ class Dotabase(MangoCog):
 		keyphrase = " ".join(words)
 
 		if keyphrase == None or keyphrase == "" or keyphrase == " ":
-			return basequery
+			if basequery.count() > 0:
+				return basequery
+			else:
+				return None
 
 		query = basequery.filter(Response.name == keyphrase)
 		if query.count() > 0:
