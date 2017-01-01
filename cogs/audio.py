@@ -265,6 +265,12 @@ class Audio(MangoCog):
 
 		...what more could you possibly need to know...
 		"""
+		fixes_dict = { "im": "i'm",
+			"shes": "she's",
+			"hes": "he's",
+			"theyre": "they're"}
+		for key in fixes_dict:
+			message = re.sub(key, fixes_dict[key], message, re.IGNORECASE)
 		await self.play_clip("tts:" + message)
 
 	#function called when this event occurs
