@@ -273,6 +273,18 @@ class Audio(MangoCog):
 			message = re.sub(key, fixes_dict[key], message, re.IGNORECASE)
 		await self.play_clip("tts:" + message)
 
+	# fixes discord user names which either are in all caps or have a number serving as a letter
+	async def fix_name(self, name):
+		# If all upper case or numbers n stuff, make all lower case
+		if re.match(r"^[^a-z]*$", name):
+			name = name.lower()
+
+		# Simple replacing of all numbers that appear to be acting as letters
+		letternumbers = { "0": "o", "1": "i", "3": "e", "4": "a", "7": "t" }
+		for num in letternumbers:
+			name = re.sub("{}([A-Za-z])".format(num), r"{}\1".format(letternumbers[num]), name)
+		return name
+
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
 		if self.voice is None or before.voice_channel == after.voice_channel:
@@ -280,7 +292,7 @@ class Audio(MangoCog):
 		if after.voice_channel == self.voice.channel:
 			print(after.name + " joined the channel")
 
-			text = after.name
+			text = await self.fix_name(after.name)
 			introclip = "local:helloits"
 
 			userinfo = botdata.userinfo(after.id)
@@ -294,7 +306,7 @@ class Audio(MangoCog):
 		if before.voice_channel == self.voice.channel:
 			print(before.name + " left the channel")
 
-			text = before.name + " has left!"
+			text = await self.fix_name(before.name) + " has left!"
 			outroclip = "local:farewell"
 
 			userinfo = botdata.userinfo(before.id)
