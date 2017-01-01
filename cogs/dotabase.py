@@ -104,7 +104,6 @@ class Dotabase(MangoCog):
 
 	# Plays a random response from a query
 	async def play_response_query(self, query):
-		print(query.count())
 		await self.play_response(query.order_by(func.random()).first())
 
 	@commands.command(pass_context=True)

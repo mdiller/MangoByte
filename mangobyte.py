@@ -30,7 +30,7 @@ async def on_ready():
 @bot.event
 async def on_command_error(error, ctx):
 	if isinstance(error, commands.CommandNotFound):
-		await bot.send_message(ctx.message.channel, "🤔 Ya I dunno what a '{}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands".format(ctx.message.content[1:])) 
+		await bot.send_message(ctx.message.channel, "🤔 Ya I dunno what a '{}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands".format(ctx.message.content[1:].split(" ")[0])) 
 	elif isinstance(error, commands.MissingRequiredArgument):
 		await bot.send_message(ctx.message.channel, "Well THATS not right. 🙃 Yer missin some arguments. Try doin `?help {}` ta figure out what yer doin wrong".format(ctx.command))
 	elif isinstance(error, commands.BadArgument):
@@ -38,8 +38,9 @@ async def on_command_error(error, ctx):
 	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
 		await bot.send_message(ctx.message.channel, error.original.message)
 	else:
-		print("errored executing command {0}: {1}".format(ctx.command, error))
 		await bot.send_message(ctx.message.channel, "Uh-oh, sumthin dun gone wrong 😱")
+		print("errored while executing command {0}: {1}".format(ctx.command, error))
+		raise error.original
 
 if __name__ == '__main__':
 	bot.load_extension("cogs.general")

@@ -36,6 +36,9 @@ class AI(MangoCog):
 
 
 	async def on_message(self, message):
+		if message.content.startswith("?"):
+			print("--> {0}: {1}".format(message.author, message.content))
+
 		if (message.author == self.bot.user) or message.content.startswith("?"):
 			return
 
