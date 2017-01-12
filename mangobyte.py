@@ -15,6 +15,9 @@ from cogs.utils.clip import *# This has to be done after loading settings
 
 bot = commands.Bot(command_prefix='?', description="MangoByte - " + helpdoc + "\n For more info about Mangobyte, try ?info")
 
+deprecated_commands = {
+	"lastgame": "lastmatch"
+}
 
 @bot.event
 async def on_ready():
@@ -30,11 +33,15 @@ async def on_ready():
 @bot.event
 async def on_command_error(error, ctx):
 	if isinstance(error, commands.CommandNotFound):
-		await bot.send_message(ctx.message.channel, "🤔 Ya I dunno what a '{}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands".format(ctx.message.content[1:].split(" ")[0])) 
+		cmd = ctx.message.content[1:].split(" ")[0]
+		if cmd in deprecated_commands:
+			await bot.send_message(ctx.message.channel, "You shouldn't use `?{}` anymore. It's *deprecated*. Try `?{}` instead.".format(cmd, deprecated_commands[cmd]))
+			return
+		await bot.send_message(ctx.message.channel, "🤔 Ya I dunno what a '{}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands.".format(cmd)) 
 	elif isinstance(error, commands.MissingRequiredArgument):
-		await bot.send_message(ctx.message.channel, "Well THATS not right. 🙃 Yer missin some arguments. Try doin `?help {}` ta figure out what yer doin wrong".format(ctx.command))
+		await bot.send_message(ctx.message.channel, "Well THATS not right. 🙃 Yer missin some arguments. Try doin `?help {}` ta figure out what yer doin wrong.".format(ctx.command))
 	elif isinstance(error, commands.BadArgument):
-		await bot.send_message(ctx.message.channel, "No... no no no. 😩 Thats the wrong type of argument for that command. Ya might need ta do `?help {}` and **actually read** what I say 😒".format(ctx.command))
+		await bot.send_message(ctx.message.channel, "No... no no no. 😩 Thats the wrong type of argument for that command. Ya might need ta do `?help {}` and **actually read** what I say 😒.".format(ctx.command))
 	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
 		await bot.send_message(ctx.message.channel, error.original.message)
 	else:

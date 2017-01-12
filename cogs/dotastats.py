@@ -105,7 +105,7 @@ class DotaStats(MangoCog):
 		await self.bot.say("You've been linked to {}".format(playerinfos[0]['personaname']))
 
 	@commands.command(pass_context=True)
-	async def lastgame(self, ctx):
+	async def lastmatch(self, ctx):
 		"""Gets info about your last dota game"""
 		userinfo = botdata.userinfo(ctx.message.author.id)
 		if userinfo.steam64 is None:
@@ -114,13 +114,13 @@ class DotaStats(MangoCog):
 			await self.bot.send_typing(ctx.message.channel)
 			await self.write_stats(userinfo)
 
-	@commands.command(pass_context=True)
-	async def whois(self, ctx, user : discord.User):
+	@commands.command(pass_context=True, aliases=["whois"])
+	async def profile(self, ctx, user : discord.User):
 		"""Displays information about the user's dota profile"""
 		userinfo = botdata.userinfo(user.id)
 
 		if userinfo.steam64 is None:
-			await self.bot.say("I haven't the faintest")
+			await self.bot.say("I haven't the faintest who that is. They're gonna need ta do a `?setsteam`.")
 			return
 
 		await self.bot.send_typing(ctx.message.channel)
