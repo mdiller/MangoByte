@@ -7,7 +7,6 @@ import aiohttp
 import asyncio
 import async_timeout
 import string
-import dota2api
 import datetime
 import re
 from .mangocog import *
@@ -53,7 +52,7 @@ async def get_check_steamid(steamid, ctx=None):
 			raise UserError("Ya gotta give me a steamid or a @reference to a user who has been linked to a steam id.")
 
 	userinfo = botdata.userinfo(steamid.id)
-	if userinfo.steam64 is None:
+	if userinfo.steam32 is None:
 		if is_author:
 			raise UserError("Ya don't got a have a steamid linked to yer account. Yer gonna have to do `?setsteam <steamid>`.")
 		else:
@@ -73,29 +72,28 @@ class DotaStats(MangoCog):
 		MangoCog.__init__(self, bot)
 
 	# prints the stats for the given player's latest game
-	async def write_stats(self, steamid):
-		match_id = d2api.get_match_history(account_id=steamid + 76561197960265728)['matches'][0]['match_id']
-		game = d2api.get_match_details(match_id)
-		playerinfo = d2api.get_player_summaries(int(steamid + 76561197960265728))['players'][0]
-		dotabase = self.bot.get_cog("Dotabase")
+	async def player_match_stats(self, steamid, matchid):
+		game = await opendota_query("/matches/{}".format(matchid))
 
 		# Finds the player in the game which has our matching steam32 id
-		player = next(p for p in game['players'] if int(p['account_id']) == steamid)
-
+		player = next(p for p in game['players'] if p['account_id'] == steamid)
 		if player is None:
-			raise ValueError("wtf hes not in is own game")
+			raise ValueError("wtf they're not in their own game")
 
-		winstatus = "Won" if (player['player_slot'] < 5 and game['radiant_win'] is True) or (player['player_slot'] >= 5 and game['radiant_win'] is False) else "Lost"
+		dotabase = self.bot.get_cog("Dotabase")
+		hero_name = (await dotabase.get_hero_id_dict())[player['hero_id']]
+
+		winstatus = "Won" if player["win"] != 0 else "Lost"
 
 		description = ("{0} a game as {1} in {2} \n"
 					"More info at [DotaBuff](https://www.dotabuff.com/matches/{3}) or [OpenDota](https://www.opendota.com/matches/{3}) "
-					.format(winstatus, player['hero_name'], datetime.timedelta(seconds=game['duration']), match_id))
+					.format(winstatus, hero_name, datetime.timedelta(seconds=game['duration']), matchid))
 
 		embed = discord.Embed(description=description)
 
-		heroicon = await dotabase.get_hero_icon(int(player['hero_id']))
+		heroicon = await dotabase.get_hero_icon(player['hero_id'])
 
-		embed.set_author(name=playerinfo['personaname'], icon_url=heroicon)
+		embed.set_author(name=player['personaname'], icon_url=heroicon)
 
 		embed.add_field(name="General", value=(
 			"Kills: {}\n"
@@ -106,7 +104,7 @@ class DotaStats(MangoCog):
 		embed.add_field(name="Economy", value=(
 			"GPM: {}\n"
 			"Net Worth: {}\n"
-			"Last Hits: {}\n".format(player['gold_per_min'], int(player['gold_spent']) + int(player['gold']), player['last_hits'])))
+			"Last Hits: {}\n".format(player['gold_per_min'], player['gold_spent'] + player['gold'], player['last_hits'])))
 
 		embed.add_field(name="Experience", value=(
 			"XPM: {}\n"
@@ -122,7 +120,7 @@ class DotaStats(MangoCog):
 
 		The user parameter can only be specified by the bot owner
 		
-		An easy way get your steam_id is to go to your profile page in steam, right click anywhere, and select 'Copy Page URL.' Then paste that somewhere, and get the number at the end of the url. Thats your steam_id. Now just do ?addsteam <thenumber> If its not a number, you gotta look somewhere else. the the end of the url for your profile on dotabuff or something.
+		An easy way get your steamid is to go to your dotabuff profile page and copy the number that is at the end of the url
 		"""
 
 		if user is None:
@@ -132,31 +130,26 @@ class DotaStats(MangoCog):
 				await self.bot.say("You aint the boss of me 😠")
 				return
 
-		if steam_id < 76561197960265728:
-			steam_id += 76561197960265728
+		if steam_id > 76561197960265728:
+			steam_id -= 76561197960265728
 
-		playerinfos = d2api.get_player_summaries(steam_id)['players']
+		player = await opendota_query("/players/{}".format(steam_id))
 
-		if len(playerinfos) != 1:
-			await self.bot.say("Dat dont look liek a valid steam id")
-			return
-
-		try:
-			hist = d2api.get_match_history(steam_id)
-		except dota2api.src.exceptions.APIError as e:
-			await self.bot.say("Looks like either ya don't play dota, or ya haven't enabled public match data.")
-			return
+		if player.get("profile") is None:
+			raise UserError("Either thats a bad id, you don't play dota, or ya haven't enabled public match data")
 
 		userinfo = botdata.userinfo(user.id)
-		userinfo.steam64 = steam_id
+		userinfo.steam32 = steam_id
 
-		await self.bot.say("You've been linked to {}".format(playerinfos[0]['personaname']))
+		await self.bot.say("Linked to {}".format(player['profile']['personaname']))
 
 	@commands.command(pass_context=True)
 	async def lastmatch(self, ctx, player=None):
 		"""Gets info about the player's last dota game"""
 		await self.bot.send_typing(ctx.message.channel)
-		await self.write_stats(await get_check_steamid(player, ctx))
+		steamid = await get_check_steamid(player, ctx)
+		matchid = (await opendota_query("/players/{}/matches?limit=1".format(steamid)))[0]["match_id"]
+		await self.player_match_stats(steamid, matchid)
 
 	@commands.command(pass_context=True, aliases=["whois"])
 	async def profile(self, ctx, player=None):
@@ -235,10 +228,4 @@ class DotaStats(MangoCog):
 
 
 def setup(bot):
-	global d2api
-	try:
-		import dota2api
-		d2api = dota2api.Initialise(settings.steamapikey)
-	except:
-		raise ModuleNotFound("Either dota2api isnt installed, or yourur steam api key is not valid")
 	bot.add_cog(DotaStats(bot))

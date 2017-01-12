@@ -35,7 +35,13 @@ class UserInfo:
 
 	@property
 	def steam32(self):
+		if self.steam64 is None:
+			return None
 		return self.steam64 - 76561197960265728
+
+	@steam32.setter
+	def steam32(self, value):
+		self.steam64 = value + 76561197960265728
 		
 	@property
 	def intro(self):

@@ -11,7 +11,7 @@ from collections import OrderedDict
 class Settings:
 	def __init__(self):
 		self.path = "settings.json"
-		self.defaults = OrderedDict([  ("token", ""), ("resourcedir", "resource/"), ("defaultvoice", ""), ("steamapikey", ""), ("ttslang", "en-au") ])
+		self.defaults = OrderedDict([  ("token", ""), ("resourcedir", "resource/"), ("defaultvoice", ""), ("ttslang", "en-au") ])
 		if not os.path.exists(self.path):
 			self.json_data = self.defaults
 			self.save_settings()
@@ -39,10 +39,6 @@ class Settings:
 	@property
 	def defaultvoice(self):
 		return self.json_data["defaultvoice"]
-
-	@property
-	def steamapikey(self):
-		return self.json_data["steamapikey"]
 
 	@property
 	def ttslang(self):
