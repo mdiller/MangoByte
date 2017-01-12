@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from __main__ import settings, botdata
 from cogs.utils import checks
+from cogs.utils import helpers
 import aiohttp
 import asyncio
 import async_timeout
@@ -12,10 +13,14 @@ import re
 from .mangocog import *
 
 async def opendota_query(querystring):
-	async with aiohttp.get("https://api.opendota.com/api" + querystring) as r:
+	url = "https://api.opendota.com/api" + querystring
+	async with aiohttp.get(url) as r:
 		if r.status == 200:
 			return await r.json()
+		elif r.status == 404:
+			raise UserError("Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com")
 		else:
+			print("OpenDota api errored on GET: {}".format(url))
 			raise UserError("OpenDota said I did things wrong 😢. status code: {}".format(r.status))
 
 # gets the steam32 id from the user or steamid and checks that it is valid before returning
@@ -208,6 +213,25 @@ class DotaStats(MangoCog):
 			"[Overall Favs](https://www.opendota.com/players/{0}/heroes) {2}\n".format(steam32, recent_favs, favs)))
 
 		await self.bot.say(embed=embed)
+
+	@commands.command(pass_context=True)
+	async def opendota(self, ctx, *, query):
+		"""queries the opendota api
+
+		You can use this to get a json file with details about players or matches etc.
+		ex:
+		?opendota /players/{steamid}
+		?opendota /matches/{matchid}
+
+		For more options and a better explanation, check out their documentation: https://docs.opendota.com"""
+		query = query.replace("/", " ")
+		query = query.strip()
+		await self.bot.send_typing(ctx.message.channel)
+		data = await opendota_query("/" + "/".join(query.split(" ")))
+
+		tempfile = settings.resourcedir + "temp/opendotaresult.json"
+		helpers.write_json(tempfile, data)
+		await self.bot.send_file(ctx.message.channel, tempfile, filename="result.json")
 
 
 def setup(bot):
