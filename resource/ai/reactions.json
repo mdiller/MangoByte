@@ -1,5 +1,14 @@
 [
 	{
+		"regex": "mangobyte",
+		"reaction": "💪😊😜🤖"
+	},
+	{
+		"regex": "song|music",
+		"word": true,
+		"reaction": "🎵🎶🎼🎹"
+	},
+	{
 		"regex": "(sleepy?|tired|bye|gnight|goodnight)",
 		"word": true,
 		"reaction": "💤"
