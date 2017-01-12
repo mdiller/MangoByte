@@ -1,19 +1,38 @@
 [
 	{
-		"regex": "sleep|tired|bye|gnight|goodnight",
+		"regex": "(sleepy?|tired|bye|gnight|goodnight)",
+		"word": true,
 		"reaction": "💤"
 	},
 	{
-		"regex": "dick",
+		"regex": "dicks?",
+		"word": true,
 		"reaction": "🍆"
 	},
 	{
-		"regex": "potato",
+		"regex": "hi|hello|sup",
+		"word": true,
+		"reaction": "👋"
+	},
+	{
+		"regex": "potato(es)?",
+		"word": true,
 		"reaction": "🥔"
 	},
 	{
 		"regex": "pizza",
+		"word": true,
 		"reaction": "🍕"
+	},
+	{
+		"regex": "eat(ing)?|food",
+		"word": true,
+		"reaction": "🍕🥔😋🍞🥖"
+	},
+	{
+		"regex": "ichen",
+		"word": true,
+		"reaction": "💁"
 	},
 	{
 		"regex": "i hate you|fuck (off|you)",
@@ -25,11 +44,7 @@
 		"reaction": "😱"
 	},
 	{
-		"regex": "eat|food",
-		"reaction": "🍕🥔😋🍞🥖"
-	},
-	{
-		"regex": "!",
+		"regex": "!$",
 		"chance": 0.2,
 		"reaction": "😱‼"
 	},

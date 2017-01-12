@@ -45,7 +45,10 @@ class AI(MangoCog):
 		random.seed(message.content)
 
 		for check in self.reactions:
-			if re.search(check["regex"], message.content) and (random.random() < check.get("chance", 1.0)):
+			expression = check["regex"]
+			if check.get("word"):
+				expression = "\\b{}\\b".format(expression)
+			if re.search(expression, message.clean_content, re.IGNORECASE) and (random.random() < check.get("chance", 1.0)):
 				await self.bot.add_reaction(message, random.choice(check["reaction"]))
 				break
 
