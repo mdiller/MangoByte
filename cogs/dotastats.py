@@ -8,6 +8,7 @@ import asyncio
 import async_timeout
 import string
 import datetime
+import json
 import re
 from .mangocog import *
 
@@ -15,9 +16,11 @@ async def opendota_query(querystring):
 	url = "https://api.opendota.com/api" + querystring
 	async with aiohttp.get(url) as r:
 		if r.status == 200:
-			return await r.json()
+			return json.loads(await r.text(), object_pairs_hook=OrderedDict)
 		elif r.status == 404:
 			raise UserError("Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com")
+		elif r.status == 521:
+			raise UserError("Looks like the OpenDota API is down or somethin, so ya gotta wait a sec")
 		else:
 			print("OpenDota api errored on GET: {}".format(url))
 			raise UserError("OpenDota said I did things wrong 😢. status code: {}".format(r.status))
