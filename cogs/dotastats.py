@@ -29,31 +29,33 @@ async def get_check_steamid(steamid, ctx=None):
 	except (ValueError, TypeError):
 		pass # This either this is a discord user or an invalid argument
 
-	if not isinstance(steamid, int):
-		if not isinstance(steamid, discord.User):
-			try:
-				steamid = commands.MemberConverter(ctx, steamid).convert()
-			except commands.BadArgument:
-				raise UserError("Ya gotta give me a steamid or a @reference to a user who has been linked to a steam id.")
 
-		userinfo = botdata.userinfo(steamid.id)
-		if userinfo.steam64 is None:
-			if is_author:
-				raise UserError("Ya don't got a have a steamid linked to yer account. Yer gonna have to do `?setsteam <steamid>`.")
-			else:
-				raise UserError(steamid.name + " doesnt have a steamid linked. They're gonna have to do '?setsteam <steamid>' before you can do that.")
-		return userinfo.steam32
+	if isinstance(steamid, int):
+		if steamid > 76561197960265728:
+			steamid -= 76561197960265728
+
+		player = await opendota_query("/players/{}".format(steamid))
+
+		if player.get("profile") is None:
+			raise UserError("Either this person doesnt play dota, or they haven't enabled public match data")
+		return steamid
 
 
-	if steamid > 76561197960265728:
-		steamid -= 76561197960265728
+	if not isinstance(steamid, discord.User):
+		try:
+			steamid = commands.MemberConverter(ctx, steamid).convert()
+		except commands.BadArgument:
+			raise UserError("Ya gotta give me a steamid or a @reference to a user who has been linked to a steam id.")
 
-	player = await opendota_query("/players/{}".format(steamid))
+	userinfo = botdata.userinfo(steamid.id)
+	if userinfo.steam64 is None:
+		if is_author:
+			raise UserError("Ya don't got a have a steamid linked to yer account. Yer gonna have to do `?setsteam <steamid>`.")
+		else:
+			raise UserError(steamid.name + " doesnt have a steamid linked. They're gonna have to do '?setsteam <steamid>' before you can do that.")
+	return userinfo.steam32
 
-	if player.get("profile") is None:
-		raise UserError("Either this person doesnt play dota, or they haven't enabled public match data")
 
-	return steamid
 
 
 
