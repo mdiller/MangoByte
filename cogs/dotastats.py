@@ -77,6 +77,7 @@ class DotaStats(MangoCog):
 	# prints the stats for the given player's latest game
 	async def player_match_stats(self, steamid, matchid):
 		game = await opendota_query("/matches/{}".format(matchid))
+		replay_parsed = game.get("radiant_gold_adv") is not None
 
 		# Finds the player in the game which has our matching steam32 id
 		player = next(p for p in game['players'] if p['account_id'] == steamid)
@@ -93,6 +94,8 @@ class DotaStats(MangoCog):
 					.format(winstatus, hero_name, datetime.timedelta(seconds=game['duration']), matchid))
 
 		embed = discord.Embed(description=description)
+
+		lane_dict = { 1:"Safelane", 2:"Middle Lane", 3:"Offlane", 4:"Jungle" }
 
 		heroicon = await dotabase.get_hero_icon(player['hero_id'])
 
@@ -113,6 +116,16 @@ class DotaStats(MangoCog):
 			"XPM: {}\n"
 			"Level: {}\n"
 			"Denies: {}\n".format(player['xp_per_min'], player['level'], player['denies'])))
+
+		# if replay_parsed:
+		# 	embed.add_field(name="Other", value=(
+		# 		"Lane: {}\n"
+		# 		"Pings: {}\n"
+		# 		"APM: {}\n".format(lane_dict.get(player.get("lane_role")), player.get("pings", "Unavailable"), player.get("actions_per_minute", "Unavailable"))))
+
+
+		# if not replay_parsed:
+		# 	embed.set_footer(text="Some data not available for this game")
 
 		await self.bot.say(embed=embed)
 
@@ -146,7 +159,7 @@ class DotaStats(MangoCog):
 
 		await self.bot.say("Linked to {}".format(player['profile']['personaname']))
 
-	@commands.command(pass_context=True)
+	@commands.command(pass_context=True, aliases=["lastgame"])
 	async def lastmatch(self, ctx, player=None):
 		"""Gets info about the player's last dota game"""
 		await self.bot.send_typing(ctx.message.channel)

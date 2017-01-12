@@ -15,9 +15,7 @@ from cogs.utils.clip import *# This has to be done after loading settings
 
 bot = commands.Bot(command_prefix='?', description="MangoByte - " + helpdoc + "\n For more info about Mangobyte, try ?info")
 
-deprecated_commands = {
-	"lastgame": "lastmatch"
-}
+deprecated_commands = {}
 
 @bot.event
 async def on_ready():
