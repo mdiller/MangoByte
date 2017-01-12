@@ -8,6 +8,7 @@ import async_timeout
 import string
 import dota2api
 import datetime
+import re
 from .mangocog import *
 
 async def opendota_query(querystring):
@@ -15,7 +16,47 @@ async def opendota_query(querystring):
 		if r.status == 200:
 			return await r.json()
 		else:
-			raise ValueError("OpenDota bad response: " + r.status)
+			raise UserError("OpenDota said I did things wrong 😢. status code: {}".format(r.status))
+
+# gets the steam32 id from the user or steamid and checks that it is valid before returning
+async def get_check_steamid(steamid, ctx=None):
+	is_author = steamid == None
+	if is_author:
+		steamid = ctx.message.author
+
+	try:
+		steamid = int(steamid)
+	except (ValueError, TypeError):
+		pass # This either this is a discord user or an invalid argument
+
+	if not isinstance(steamid, int):
+		if not isinstance(steamid, discord.User):
+			try:
+				steamid = commands.MemberConverter(ctx, steamid).convert()
+			except commands.BadArgument:
+				raise UserError("Ya gotta give me a steamid or a @reference to a user who has been linked to a steam id.")
+
+		userinfo = botdata.userinfo(steamid.id)
+		if userinfo.steam64 is None:
+			if is_author:
+				raise UserError("Ya don't got a have a steamid linked to yer account. Yer gonna have to do `?setsteam <steamid>`.")
+			else:
+				raise UserError(steamid.name + " doesnt have a steamid linked. They're gonna have to do '?setsteam <steamid>' before you can do that.")
+		return userinfo.steam32
+
+
+	if steamid > 76561197960265728:
+		steamid -= 76561197960265728
+
+	player = await opendota_query("/players/{}".format(steamid))
+
+	if player.get("profile") is None:
+		raise UserError("Either this person doesnt play dota, or they haven't enabled public match data")
+
+	return steamid
+
+
+
 
 class DotaStats(MangoCog):
 	"""Commands used to access Dota 2 players' stats
@@ -25,14 +66,14 @@ class DotaStats(MangoCog):
 		MangoCog.__init__(self, bot)
 
 	# prints the stats for the given player's latest game
-	async def write_stats(self, userinfo):
-		match_id = d2api.get_match_history(account_id=userinfo.steam64)['matches'][0]['match_id']
+	async def write_stats(self, steamid):
+		match_id = d2api.get_match_history(account_id=steamid + 76561197960265728)['matches'][0]['match_id']
 		game = d2api.get_match_details(match_id)
-		playerinfo = d2api.get_player_summaries(int(userinfo.steam64))['players'][0]
+		playerinfo = d2api.get_player_summaries(int(steamid + 76561197960265728))['players'][0]
 		dotabase = self.bot.get_cog("Dotabase")
 
 		# Finds the player in the game which has our matching steam32 id
-		player = next(p for p in game['players'] if int(p['account_id']) == userinfo.steam32)
+		player = next(p for p in game['players'] if int(p['account_id']) == steamid)
 
 		if player is None:
 			raise ValueError("wtf hes not in is own game")
@@ -105,28 +146,22 @@ class DotaStats(MangoCog):
 		await self.bot.say("You've been linked to {}".format(playerinfos[0]['personaname']))
 
 	@commands.command(pass_context=True)
-	async def lastmatch(self, ctx):
-		"""Gets info about your last dota game"""
-		userinfo = botdata.userinfo(ctx.message.author.id)
-		if userinfo.steam64 is None:
-			await self.bot.say("Ya ain't got no steam id linked to ya yet. Do `?setsteam <steam_ID>`")
-		else:
-			await self.bot.send_typing(ctx.message.channel)
-			await self.write_stats(userinfo)
+	async def lastmatch(self, ctx, player=None):
+		"""Gets info about the player's last dota game"""
+		await self.bot.send_typing(ctx.message.channel)
+		await self.write_stats(await get_check_steamid(player, ctx))
 
 	@commands.command(pass_context=True, aliases=["whois"])
-	async def profile(self, ctx, user : discord.User):
-		"""Displays information about the user's dota profile"""
-		userinfo = botdata.userinfo(user.id)
+	async def profile(self, ctx, player=None):
+		"""Displays information about the player's dota profile
 
-		if userinfo.steam64 is None:
-			await self.bot.say("I haven't the faintest who that is. They're gonna need ta do a `?setsteam`.")
-			return
+		The argument for this command can be either a steam32 id, a steam64 id, or an @reference to a discord user who has a steamid set"""
+		steam32 = await get_check_steamid(player, ctx)
 
 		await self.bot.send_typing(ctx.message.channel)
 
-		playerinfo = await opendota_query("/players/{}".format(userinfo.steam32))
-		playerwl = await opendota_query("/players/{}/wl".format(userinfo.steam32))
+		playerinfo = await opendota_query("/players/{}".format(steam32))
+		playerwl = await opendota_query("/players/{}/wl".format(steam32))
 		gamesplayed = playerwl["win"] + playerwl["lose"]
 		winrate = "{:.2%}".format(playerwl["win"] / gamesplayed)
 		if playerinfo.get("solo_competitive_rank") is not None:
@@ -136,13 +171,13 @@ class DotaStats(MangoCog):
 
 		hero_id_dict = await self.bot.get_cog("Dotabase").get_hero_id_dict()
 
-		heroes = await opendota_query("/players/{}/heroes".format(userinfo.steam32))
+		heroes = await opendota_query("/players/{}/heroes".format(steam32))
 		favs = ""
 		for i in range(0,3):
 			favs += hero_id_dict[int(heroes[i]["hero_id"])] + ", "
 		favs = favs[:-2]
 
-		heroes = await opendota_query("/players/{}/heroes?date=60".format(userinfo.steam32))
+		heroes = await opendota_query("/players/{}/heroes?date=60".format(steam32))
 		recent_favs = ""
 		for i in range(0,3):
 			recent_favs += hero_id_dict[int(heroes[i]["hero_id"])] + ", "
@@ -164,11 +199,11 @@ class DotaStats(MangoCog):
 		embed.add_field(name="Profiles", value=(
 			"[Steam]({0})\n"
 			"[OpenDota](https://www.opendota.com/players/{1})\n"
-			"[DotaBuff](https://www.dotabuff.com/players/{1})".format(playerinfo["profile"]["profileurl"], userinfo.steam32)))
+			"[DotaBuff](https://www.dotabuff.com/players/{1})".format(playerinfo["profile"]["profileurl"], steam32)))
 
 		embed.add_field(name="Heroes", inline=False, value=(
 			"[Recent Favs](https://www.opendota.com/players/{0}/heroes?date=60) {1}\n"
-			"[Overall Favs](https://www.opendota.com/players/{0}/heroes) {2}\n".format(userinfo.steam32, recent_favs, favs)))
+			"[Overall Favs](https://www.opendota.com/players/{0}/heroes) {2}\n".format(steam32, recent_favs, favs)))
 
 		await self.bot.say(embed=embed)
 
