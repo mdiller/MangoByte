@@ -45,6 +45,7 @@
 	},
 	{
 		"regex": "i hate you|fuck (off|you)",
+		"word": true,
 		"reaction": "😱"
 	},
 	{

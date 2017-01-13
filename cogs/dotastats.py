@@ -95,7 +95,7 @@ class DotaStats(MangoCog):
 
 		embed = discord.Embed(description=description)
 
-		lane_dict = { 1:"Safelane", 2:"Middle Lane", 3:"Offlane", 4:"Jungle" }
+		lane_dict = { 1:"Safelane", 2:"Middle Lane", 3:"Offlane", 4:"Jungle/Roaming" }
 
 		heroicon = await dotabase.get_hero_icon(player['hero_id'])
 
@@ -121,7 +121,7 @@ class DotaStats(MangoCog):
 		# 	embed.add_field(name="Other", value=(
 		# 		"Lane: {}\n"
 		# 		"Pings: {}\n"
-		# 		"APM: {}\n".format(lane_dict.get(player.get("lane_role")), player.get("pings", "Unavailable"), player.get("actions_per_minute", "Unavailable"))))
+		# 		"APM: {}\n".format(lane_dict.get(player.get("lane_role")), player.get("pings", "Unavailable"), player.get("actions_per_min", "Unavailable"))))
 
 
 		# if not replay_parsed:
