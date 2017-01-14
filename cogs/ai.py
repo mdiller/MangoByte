@@ -47,7 +47,7 @@ class AI(MangoCog):
 		for check in self.reactions:
 			expression = check["regex"]
 			if check.get("word"):
-				expression = "\\b{}\\b".format(expression)
+				expression = "\\b({})\\b".format(expression)
 				match = re.search(expression, message.clean_content, re.IGNORECASE)
 			else:
 				match = re.search(expression, message.clean_content)

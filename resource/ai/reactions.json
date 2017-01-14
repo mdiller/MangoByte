@@ -9,7 +9,7 @@
 		"reaction": "🎵🎶🎼🎹"
 	},
 	{
-		"regex": "(sleepy?|tired|bye|gnight|goodnight)",
+		"regex": "sleepy?|tired|bye|gnight|goodnight",
 		"word": true,
 		"reaction": "💤"
 	},
