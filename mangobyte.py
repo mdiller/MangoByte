@@ -28,6 +28,13 @@ async def on_ready():
 	clip.volume = 0.1
 	await cog.play_clip(clip)
 
+async def get_cmd_signature(ctx):
+	# formatter = commands.HelpFormatter()
+	# formatter.command = command
+	bot.formatter.context = ctx
+	bot.formatter.command = ctx.command
+	return bot.formatter.get_command_signature()
+
 @bot.event
 async def on_command_error(error, ctx):
 	if isinstance(error, commands.CommandNotFound):
@@ -37,9 +44,9 @@ async def on_command_error(error, ctx):
 			return
 		await bot.send_message(ctx.message.channel, "🤔 Ya I dunno what a '{}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands.".format(cmd)) 
 	elif isinstance(error, commands.MissingRequiredArgument):
-		await bot.send_message(ctx.message.channel, "Well THATS not right. 🙃 Yer missin some arguments. Try doin `?help {}` ta figure out what yer doin wrong.".format(ctx.command))
+		await bot.send_message(ctx.message.channel, "Well **thats** not right. 🙃 Yer missin some arguments. Ya gotta do it like this:\n\n`{}`\n\nTry doin `?help {}` ta figure out what yer doin wrong.".format(await get_cmd_signature(ctx), ctx.command))
 	elif isinstance(error, commands.BadArgument):
-		await bot.send_message(ctx.message.channel, "No... no no no. 😩 Thats the wrong type of argument for that command. Ya might need ta do `?help {}` and **actually read** what I say 😒.".format(ctx.command))
+		await bot.send_message(ctx.message.channel, "No... no no no. 😩 Thats the wrong type of argument for that command. Ya gotta do it like this:\n\n`{}`\n\nYa might need ta do `?help {}` and **actually read** what I say 😒.".format(await get_cmd_signature(ctx), ctx.command))
 	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
 		await bot.send_message(ctx.message.channel, error.original.message)
 	else:
