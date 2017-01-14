@@ -98,3 +98,4 @@ resource/temp
 
 resource/clips/*
 !resource/clips/dota/
+!resource/clips/spongebob/

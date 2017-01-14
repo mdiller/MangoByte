@@ -10,6 +10,7 @@ import string
 import queue
 import random
 import urllib.request
+from random import randint
 from .mangocog import *
 from ctypes.util import find_library
 
@@ -272,6 +273,13 @@ class Audio(MangoCog):
 		for key in fixes_dict:
 			message = re.sub(key, fixes_dict[key], message, re.IGNORECASE)
 		await self.play_clip("tts:" + message)
+
+	@commands.command(pass_context=True)
+	async def later(self, ctx):
+		"""Tells you how much later it is
+
+		Theres 19 different ones"""
+		await self.play_clip("local:later{}".format(randint(1,19)))
 
 	# fixes discord user names which either are in all caps or have a number serving as a letter
 	async def fix_name(self, name):
