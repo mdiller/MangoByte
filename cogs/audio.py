@@ -270,9 +270,10 @@ class Audio(MangoCog):
 			"shes": "she's",
 			"hes": "he's",
 			"theyre": "they're"}
+		text = ctx.message.clean_content[5:]
 		for key in fixes_dict:
-			message = re.sub(key, fixes_dict[key], message, re.IGNORECASE)
-		await self.play_clip("tts:" + message)
+			text = re.sub(key, fixes_dict[key], text, re.IGNORECASE)
+		await self.play_clip("tts:" + text)
 
 	@commands.command(pass_context=True)
 	async def later(self, ctx):
