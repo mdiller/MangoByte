@@ -8,9 +8,9 @@ from discord.ext import commands
 
 helpdoc = """The juiciest unsigned 8 bit integer you eva gonna see"""
 
-
 botdata = BotData()
 settings = Settings()
+
 from cogs.utils.clip import *# This has to be done after loading settings
 
 bot = commands.Bot(command_prefix='?', description="MangoByte - " + helpdoc + "\n For more info about Mangobyte, try ?info")

@@ -167,6 +167,23 @@ class DotaStats(MangoCog):
 		matchid = (await opendota_query("/players/{}/matches?limit=1".format(steamid)))[0]["match_id"]
 		await self.player_match_stats(steamid, matchid)
 
+	@commands.command(pass_context=True, aliases=["matchdetails"])
+	async def match(self, ctx, match_id : int):
+		"""Gets a summary of the dota match with the given id"""
+		await self.bot.send_typing(ctx.message.channel)
+		try:
+			game = await opendota_query("/matches/{}".format(match_id))
+		except UserError:
+			await self.bot.say("Looks like thats not a valid match id")
+			return
+
+		tempfile = "{}temp/match_{}.png".format(settings.resourcedir, match_id)
+		webkit2png = settings.resourcedir + "scripts/webkit2png.js"
+		url = "http://dotabase.me/image-api/matches.php?match={}".format(match_id)
+		helpers.run_command(["phantomjs", webkit2png, url, tempfile])
+		await self.bot.send_file(ctx.message.channel, tempfile)
+		os.remove(tempfile)
+
 	@commands.command(pass_context=True, aliases=["whois"])
 	async def profile(self, ctx, player=None):
 		"""Displays information about the player's dota profile

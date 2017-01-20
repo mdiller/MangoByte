@@ -71,7 +71,7 @@ class LocalClip(Clip):
 
 class TtsClip(Clip):
 	def __init__(self, text, bot):
-		tempfile = settings.resourcedir + "temp/" + str(int(random.random() * 1000000000)) + ".mp3"
+		tempfile = "{}temp/{}.mp3".format(settings.resourcedir, int(random.random() * 1000000000))
 		tts = gTTS(text=text, lang=settings.ttslang)
 		tts.save(tempfile)
 		Clip.__init__(self, text, tempfile, text)
