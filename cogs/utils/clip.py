@@ -105,7 +105,9 @@ class DotaClip(Clip):
 	async def get_info(self):
 		text = "\"{0}\" - {1}".format(self.response.text, self.response.hero.localized_name)
 		if self.response.criteria != "":
-			text += "\nCriteria: " + self.response.criteria.replace("|", "\n          ")
+			text += "\n\n*"
+			text += self.response.pretty_criteria
+			text += "*"
 
 		return text
 
