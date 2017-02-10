@@ -108,31 +108,36 @@ class Audio(MangoCog):
 			
 
 	@commands.command(pass_context=True)
-	async def playlist(self, ctx, section : str=""):
+	async def playlist(self, ctx, section : str=None):
 		"""Lists the audio clips available for ?play
 
-		Calling this command with no arguments gets you a list of sections
+		Calling this command with no arguments gets you a list of sections and a list of all of the clips
 
 		To get the clips in a specific section, do ?playlist <section>"""
 		dirs = get_clipdirs()
 
 		message = ""
+		clips = []
 
-		if ((not section in dirs) and section != ""):
-			message +=("Thats not a valid section...\n")
-			section = ""
-
-		clips = get_playlist(section)
-		if section == "":
-			message += "Pick a section and do ?playlist <section>\n"
-			message += "Sections:\n"
-			for d in dirs:
-				message += " - " + d + "\n"
+		if section is None:
+			message += "**Sections:**\n"
+			for section in dirs:
+				message += "`{}` ".format(section)
+			message += "\n**Clips:**\n"
+			for section in dirs:
+				clips += get_playlist(section)
+		elif section not in dirs:
+			message +=("Dats not a valid section. You can choose from one of these:\n")
+			for section in dirs:
+				message += "`{}` ".format(section)
 		else:
-			message += "```\n"
+			clips = get_playlist(section)
+
+		if len(clips) > 0:
+			clips.sort()
 			for clip in clips:
-				message += clip + "\n"
-			message += "```"
+				message += "`{}` ".format(clip)
+
 		await self.bot.say(message)
 
 	@commands.command(pass_context=True)
