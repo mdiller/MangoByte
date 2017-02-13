@@ -9,6 +9,7 @@ import os
 import string
 import queue
 import random
+import re
 import urllib.request
 from random import randint
 from .mangocog import *
