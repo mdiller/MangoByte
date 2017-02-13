@@ -1,7 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from __main__ import settings
 from .helpers import *
-from gtts import gTTS
 import discord
 import re
 import os
@@ -16,6 +15,8 @@ def get_clipfile(clipname):
 				return os.path.join(root, file)
 	return None
 
+def tts_save(filename, text):
+	run_command(["pico2wave", "--wave", filename, "-l", "en-GB", text])
 
 class ClipNotFound(UserError):
 	def __init__(self, cliptype, clipname):
@@ -24,7 +25,6 @@ class ClipNotFound(UserError):
 class MissingClipType(UserError):
 	def __init__(self, clipid):
 		self.message = "Yer clipid '{}' is missin a proper cliptype".format(clipid)
-
 
 class Clip(object):
 	def __init__(self, clipname, audiopath, text="", volume=0.6):
@@ -71,9 +71,8 @@ class LocalClip(Clip):
 
 class TtsClip(Clip):
 	def __init__(self, text, bot):
-		tempfile = "{}temp/{}.mp3".format(settings.resourcedir, int(random.random() * 1000000000))
-		tts = gTTS(text=text, lang=settings.ttslang)
-		tts.save(tempfile)
+		tempfile = "{}temp/{}.wav".format(settings.resourcedir, int(random.random() * 1000000000))
+		tts_save(tempfile, text)
 		Clip.__init__(self, text, tempfile, text)
 
 	@classmethod
