@@ -213,8 +213,10 @@ class Audio(MangoCog):
 
 
 	@commands.command(pass_context=True)
-	async def setintro(self, ctx, clipname : str, user: discord.User=None):
+	async def setintro(self, ctx, clipname : str=None, user: discord.User=None):
 		"""Sets your intro clip
+
+		Calling this command without a clipname will tell you your current intro
 
 		The argument is the name of the clip that will introduce you, for example:
 		?setintro math
@@ -225,6 +227,17 @@ class Audio(MangoCog):
 		else:
 			if not await checks.is_owner_check(ctx):
 				await self.bot.say("You aint the boss of me 😠")
+				return
+
+		if clipname is None:
+			intro = botdata.userinfo(user.id).intro
+			if intro is None or intro == "":
+				await self.bot.say("Yer intro isn't set. Try doin somethin' like `?setintro dota:gyro_items_01`")
+				return
+			else:
+				await self.bot.say("Your intro is: {}".format(intro))
+				await self.play_clip("tts:your intro is")
+				await self.play_clip(intro)
 				return
 
 		clip = await self.get_clip_try_types(clipname, "local|dota")
@@ -240,7 +253,7 @@ class Audio(MangoCog):
 
 
 	@commands.command(pass_context=True)
-	async def setoutro(self, ctx, clipname : str, user: discord.User=None):
+	async def setoutro(self, ctx, clipname : str=None, user: discord.User=None):
 		"""Sets your outro clip
 
 		The argument is the name of the clip that will 'outroduce' you, for example:
@@ -252,6 +265,17 @@ class Audio(MangoCog):
 		else:
 			if not await checks.is_owner_check(ctx):
 				await self.bot.say("You aint the boss of me 😠")
+				return
+
+		if clipname is None:
+			outro = botdata.userinfo(user.id).outro
+			if outro is None or outro == "":
+				await self.bot.say("Yer outro isn't set. Try doin somethin' like `?setoutro dota:troll_lose_03`")
+				return
+			else:
+				await self.bot.say("Your outro is: {}".format(outro))
+				await self.play_clip("tts:your outro is")
+				await self.play_clip(outro)
 				return
 
 		clip = await self.get_clip_try_types(clipname, "local|dota")
