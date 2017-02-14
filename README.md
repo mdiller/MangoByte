@@ -31,3 +31,19 @@ changelog |Gets a rough changelog for mangobyte
 echo      |Echo...
 info      |Prints info about mangobyte
 help      |Prints a help message with a list of all of the commands
+
+## Installation
+
+Before installing and running your own instance of mangobyte, you will first need to install the following:
+
+* Python 3.5
+* Pip
+* PicoTTS (run `sudo apt-get libttspico-utils`)
+* [dotabase](https://github.com/mdiller/dotabase)
+* [discord.py](https://github.com/Rapptz/discord.py)
+
+Now make sure to run `python3.5 -m pip install -r requirements.txt` to install the rest of the needed packages.
+
+If you run `python3.5 mangobyte.py`, you will probably get an error message because the bot token isn't set. You'll have to [create a bot account](https://twentysix26.github.io/Red-Docs/red_guide_bot_accounts/) through discord and then set the `token` field in the `settings.json` file to your new bot's token. After you have done this, and have invited your bot to your server, dont forget to add the ID of the voice channel you want to connect it to in the `defaultvoice` field in the `settings.json` file.
+
+You should now be done! You can run mangobyte by calling `python3.5 mangobyte.py`, and you should probably set up a virtual environment so that nothing bad has a chance of happening.
