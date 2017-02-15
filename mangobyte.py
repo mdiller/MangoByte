@@ -43,6 +43,9 @@ async def on_command_error(error, ctx):
 			await bot.send_message(ctx.message.channel, "You shouldn't use `?{}` anymore. It's *deprecated*. Try `?{}` instead.".format(cmd, deprecated_commands[cmd]))
 			return
 		await bot.send_message(ctx.message.channel, "🤔 Ya I dunno what a '{}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands.".format(cmd)) 
+	elif isinstance(error, commands.CheckFailure):
+		print("(suppressed)")
+		return # The user does not have permissions
 	elif isinstance(error, commands.MissingRequiredArgument):
 		await bot.send_message(ctx.message.channel, "Well **thats** not right. 🙃 Yer missin some arguments. Ya gotta do it like this:\n\n`{}`\n\nTry doin `?help {}` ta figure out what yer doin wrong.".format(await get_cmd_signature(ctx), ctx.command))
 	elif isinstance(error, commands.BadArgument):

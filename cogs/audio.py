@@ -256,6 +256,8 @@ class Audio(MangoCog):
 	async def setoutro(self, ctx, clipname : str=None, user: discord.User=None):
 		"""Sets your outro clip
 
+		Calling this command without a clipname will tell you your current outro
+
 		The argument is the name of the clip that will 'outroduce' you, for example:
 		?setoutro math
 		Note: your outro clip cannot be longer than 4 seconds

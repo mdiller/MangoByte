@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from __main__ import settings, helpdoc
+from __main__ import settings, helpdoc, botdata
 from cogs.utils.helpers import *
 from cogs.utils import checks
 import asyncio
@@ -106,6 +106,38 @@ class General(MangoCog):
 		await audio.voice.move_to(new_channel)
 		print("joined channel: " + channel_id)
 		audio.voice_channel = self.bot.get_channel(channel_id)
+
+	def __check(self, ctx):
+		"""Checks to make sure the user has permissions"""
+		if botdata.userinfo(ctx.message.author.id).banned:
+			return False
+
+		return True
+
+	# @checks.is_owner()
+	@commands.command(pass_context=True)
+	async def botban(self, ctx, user: discord.User):
+		"""Bans the user from using commands"""
+		if not await checks.is_owner_check(ctx):
+			await self.bot.say("You aint the boss of me 😠")
+			return
+		if user.id == (await ctx.bot.application_info()).owner.id:
+			return # Dont mess with the owner's banned state
+		botdata.userinfo(user.id).banned = True
+		await self.bot.say("{} has henceforth been banned from using commands 😤".format(user.mention))
+
+
+	# @checks.is_owner()
+	@commands.command(pass_context=True)
+	async def botunban(self, ctx, user: discord.User):
+		"""Unbans the user, allowing them to use commands"""
+		if not await checks.is_owner_check(ctx):
+			await self.bot.say("You aint the boss of me 😠")
+			return
+		if user.id == (await ctx.bot.application_info()).owner.id:
+			return # Dont mess with the owner's banned state
+		botdata.userinfo(user.id).banned = False
+		await self.bot.say("{} is free of their restraints and may once again use commands".format(user.mention))
 
 
 

@@ -12,7 +12,8 @@ class UserInfo:
 				("discord", self.discord),
 				("steam64", None),
 				("intro", ""),
-				("outro", "")
+				("outro", ""),
+				("banned", False)
 			]))
 			self.botdata.save_data()
 
@@ -59,6 +60,15 @@ class UserInfo:
 	@outro.setter
 	def outro(self, value):
 		self.json_data["outro"] = value
+		self.botdata.save_data()
+
+	@property
+	def banned(self):
+		return self.json_data.get("banned", False)
+
+	@banned.setter
+	def banned(self, value):
+		self.json_data["banned"] = value
 		self.botdata.save_data()
 
 	

@@ -34,7 +34,6 @@ class AI(MangoCog):
 				return
 		print("didnt match anything for ask")
 
-
 	async def on_message(self, message):
 		if message.content.startswith("?"):
 			print("--> {0}: {1}".format(message.author, message.content))
