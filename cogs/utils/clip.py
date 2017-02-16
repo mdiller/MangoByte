@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from __main__ import settings
 from .helpers import *
+from gtts import gTTS
 import discord
 import re
 import os
@@ -16,7 +17,9 @@ def get_clipfile(clipname):
 	return None
 
 def tts_save(filename, text):
-	run_command(["pico2wave", "--wave", filename, "-l", "en-GB", text])
+	# run_command(["pico2wave", "--wave", filename, "-l", "en-GB", text])
+	tts = gTTS(text=text, lang=settings.ttslang)
+	tts.save(filename)
 
 class ClipNotFound(UserError):
 	def __init__(self, cliptype, clipname):

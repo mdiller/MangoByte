@@ -10,6 +10,7 @@ import string
 import datetime
 import json
 import re
+import os
 from .mangocog import *
 
 async def opendota_query(querystring):
@@ -252,12 +253,15 @@ class DotaStats(MangoCog):
 		For more options and a better explanation, check out their documentation: https://docs.opendota.com"""
 		query = query.replace("/", " ")
 		query = query.strip()
+		query = "/" + "/".join(query.split(" "))
 		await self.bot.send_typing(ctx.message.channel)
-		data = await opendota_query("/" + "/".join(query.split(" ")))
+		data = await opendota_query(query)
 
-		tempfile = settings.resourcedir + "temp/opendotaresult.json"
-		helpers.write_json(tempfile, data)
-		await self.bot.send_file(ctx.message.channel, tempfile, filename="result.json")
+		filename = re.search("/([/0-9a-zA-Z]+)", query).group(1).replace("/", "_")
+		filename = "{}temp/{}.json".format(settings.resourcedir, filename)
+		helpers.write_json(filename, data)
+		await self.bot.send_file(ctx.message.channel, filename)
+		os.remove(filename)
 
 
 def setup(bot):

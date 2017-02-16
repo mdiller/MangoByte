@@ -38,7 +38,6 @@ Before installing and running your own instance of mangobyte, you will first nee
 
 * Python 3.5
 * Pip
-* PicoTTS (run `sudo apt-get libttspico-utils`)
 * [dotabase](https://github.com/mdiller/dotabase)
 * [discord.py](https://github.com/Rapptz/discord.py)
 
