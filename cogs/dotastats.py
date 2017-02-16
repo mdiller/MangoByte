@@ -23,8 +23,8 @@ async def opendota_query(querystring):
 		elif r.status == 521:
 			raise UserError("Looks like the OpenDota API is down or somethin, so ya gotta wait a sec")
 		else:
-			print("OpenDota api errored on GET: {}".format(url))
-			raise UserError("OpenDota said I did things wrong 😢. status code: {}".format(r.status))
+			print("OpenDota api errored on GET: '{}'".format(url))
+			raise UserError("OpenDota said we did things wrong 😢. status code: {}".format(r.status))
 
 # gets the steam32 id from the user or steamid and checks that it is valid before returning
 async def get_check_steamid(steamid, ctx=None):
@@ -254,11 +254,37 @@ class DotaStats(MangoCog):
 		query = query.replace("/", " ")
 		query = query.strip()
 		query = "/" + "/".join(query.split(" "))
+
 		await self.bot.send_typing(ctx.message.channel)
 		data = await opendota_query(query)
 
 		filename = re.search("/([/0-9a-zA-Z]+)", query).group(1).replace("/", "_")
 		filename = "{}temp/{}.json".format(settings.resourcedir, filename)
+		helpers.write_json(filename, data)
+		await self.bot.send_file(ctx.message.channel, filename)
+		os.remove(filename)
+
+
+	@commands.command(pass_context=True)
+	async def opendotasql(self, ctx, *, sql):
+		"""submits an sql query to the opendota database
+
+		Example:
+		?opendotasql SELECT * FROM matches limit 10
+
+		see https://github.com/odota/core/blob/master/sql/create_tables.sql to get an idea of the structure of the database
+		"""
+		match = re.search("limit ([0-9]+)", sql)
+		if not match or int(match.group(1)) > 100:
+			await self.bot.say("You gotta give a reasonable limit for these queries, otherwise they will not complete. Try adding `limit 10` to the end of that.")
+			return
+		query = "/explorer?sql={}".format(html.escape(sql))
+		query = query.replace(" ", "%20")
+
+		await self.bot.send_typing(ctx.message.channel)
+		data = await opendota_query(query)
+
+		filename = "{}temp/{}.json".format(settings.resourcedir, "query_results")
 		helpers.write_json(filename, data)
 		await self.bot.send_file(ctx.message.channel, filename)
 		os.remove(filename)
