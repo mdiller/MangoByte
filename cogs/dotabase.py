@@ -135,7 +135,7 @@ class Dotabase(MangoCog):
 		ProTip: If you click the discord button next to the response, it will copy to your clipboard in the format needed to play using the bot."""
 		variables = [
 			QueryVariable("hero", self.hero_aliases, lambda query, value: query.filter(Response.hero_id == value)),
-			QueryVariable("criteria", self.criteria_aliases, lambda query, value: query.filter(or_(Response.criteria.like(value + " %"), Response.criteria.like("%|" + value + " %")))),
+			QueryVariable("criteria", self.criteria_aliases, lambda query, value: query.filter(or_(Response.criteria.like(value + "%"), Response.criteria.like("%|" + value + "%")))),
 		]
 
 		if keyphrase is None:

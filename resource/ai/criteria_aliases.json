@@ -13,5 +13,6 @@
 	"rune": "Powerup",
 	"buy": "Purchase",
 	"ty": "Thanks",
-	"thank": "Thanks"
+	"thank": "Thanks",
+	"firstblood": "%IsFirstBlood"
 }
