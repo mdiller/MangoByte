@@ -1,6 +1,7 @@
 [
 	{
 		"regex": "mangobyte",
+		"word": true,
 		"reaction": "💪😊😜🤖"
 	},
 	{
