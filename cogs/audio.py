@@ -42,8 +42,7 @@ def remove_if_temp(mp3name):
 			print("removed temp file " + mp3name)
 
 class Audio(MangoCog):
-	"""Commands used to play audio
-	"""
+	"""Commands used to play audio"""
 
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
@@ -99,9 +98,9 @@ class Audio(MangoCog):
 		"""Plays an audio clip
 
 		example:
-		?play hello
+		`{cmdpfx}play hello`
 
-		for a complete list of the available clips, try ?playlist"""
+		for a complete list of the available clips, try `{cmdpfx}playlist`"""
 		try:
 			await self.play_clip("local:" + clip)
 		except ClipNotFound:
@@ -110,11 +109,11 @@ class Audio(MangoCog):
 
 	@commands.command(pass_context=True)
 	async def playlist(self, ctx, section : str=None):
-		"""Lists the audio clips available for ?play
+		"""Lists the audio clips available for the play command
 
 		Calling this command with no arguments gets you a list of sections and a list of all of the clips
 
-		To get the clips in a specific section, do ?playlist <section>"""
+		To get the clips in a specific section, do `{cmdpfx}playlist <section>`"""
 		dirs = get_clipdirs()
 
 		message = ""
@@ -182,8 +181,8 @@ class Audio(MangoCog):
 		Not giving a clipid will print info about the last clip played
 
 		clipid is specified like this:
-		local:shitpickle
-		dota:timb_ally_01
+		`local:shitpickle`
+		`dota:timb_ally_01`
 		"""
 		if clipid is None:
 			if self.last_clip == None:
@@ -219,8 +218,8 @@ class Audio(MangoCog):
 		Calling this command without a clipname will tell you your current intro
 
 		The argument is the name of the clip that will introduce you, for example:
-		?setintro math
-		Note: your intro clip cannot be longer than 4 seconds
+		`{cmdpfx}setintro math`
+		**Note:** your intro clip cannot be longer than 4 seconds
 		"""
 		if user is None:
 			user = ctx.message.author
@@ -259,8 +258,8 @@ class Audio(MangoCog):
 		Calling this command without a clipname will tell you your current outro
 
 		The argument is the name of the clip that will 'outroduce' you, for example:
-		?setoutro math
-		Note: your outro clip cannot be longer than 4 seconds
+		`{cmdpfx}setoutro math`
+		**Note:** your outro clip cannot be longer than 4 seconds
 		"""
 		if user is None:
 			user = ctx.message.author
@@ -294,7 +293,7 @@ class Audio(MangoCog):
 
 	@commands.command(pass_context=True)
 	async def tts(self, ctx, *, message : str):
-		"""Like ?echo but for people who can't read
+		"""Like echo but for people who can't read
 
 		...what more could you possibly need to know...
 		"""

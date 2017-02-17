@@ -68,7 +68,7 @@ def extract_var(words, variables):
 
 
 class Dotabase(MangoCog):
-	"""Commands for interfacing with Dotabase. See http://dotabase.me for a website that interfaces with Dotabase.
+	"""Commands for interfacing with Dotabase. Check out [Dotabase.me](http://dotabase.me) if you want to see a website that interfaces with Dotabase.
 	"""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
@@ -115,24 +115,21 @@ class Dotabase(MangoCog):
 		If there is no response matching the input string, searches for any response that has the input string as part of its text 
 
 		To specify a specific hero to search for responses for, use ';' before the hero's name like this:
-		?dota ;rubick
+		`{cmdpfx}dota ;rubick`
 
 		To specify a specific criteria to search for responses for, use ';' before the criteria name like this:
-		?dota ;rubick ;defeat
+		`{cmdpfx}dota ;rubick ;defeat`
 		There are some aliases for heroes, so the following will work:
-		?dota sf
-		?dota furion
-		?dota shredder
-		But there are some aliases that will not work, like magina
+		`{cmdpfx}dota sf`
+		`{cmdpfx}dota furion`
+		`{cmdpfx}dota shredder`
 
 		If failing all of the above, the command will also try to find unlabeled heroes and critera. try:
-		?dota juggernaut bottling
+		`{cmdpfx}dota juggernaut bottling`
 		A few critera you can use are: kill, bottling, cooldown, acknowledge, immortality, nomana, and select
-		Check the dropdown box at http://dotabase.me/responses/ for more criteria names
 
-		To search for a response, try using the web tool at:
-		http://dotabase.me/responses/
-		ProTip: If you click the discord button next to the response, it will copy to your clipboard in the format needed to play using the bot."""
+		To search for a response without asking mangobyte, try using the [Response Searcher](http://dotabase.me/responses/) at Dotabase.me
+		ProTip: If you click the discord button next to the response in the above web app, it will copy to your clipboard in the format needed to play using the bot."""
 		variables = [
 			QueryVariable("hero", self.hero_aliases, lambda query, value: query.filter(Response.hero_id == value)),
 			QueryVariable("criteria", self.criteria_aliases, lambda query, value: query.filter(or_(Response.criteria.like(value + "%"), Response.criteria.like("%|" + value + "%")))),

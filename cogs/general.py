@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands.bot import _mention_pattern, _mentions_transforms
-from __main__ import settings, helpdoc, botdata
+from __main__ import settings, botdata
 from cogs.utils.helpers import *
 from cogs.utils import checks
 import asyncio
@@ -48,7 +48,7 @@ class General(MangoCog):
 
 		Note that this is a very rough changelog built from git commit messages and so will sometimes not relate directly to your perspective.
 
-		For more commit versions or better detailed information, check out the source on GitHub: https://github.com/mdiller/MangoByte/commits/master
+		For more commit versions or better detailed information, check out the source on [GitHub](https://github.com/mdiller/MangoByte/commits/master)
 		"""
 		if (count <= 0) or (count > int(get_version())):
 			await self.bot.add_reaction(ctx.message, "😒")
@@ -67,7 +67,7 @@ class General(MangoCog):
 		python_version = "[Python {}.{}.{}]({})".format(*os.sys.version_info[:3], "https://www.python.org/")
 		discordpy = "https://github.com/Rapptz/discord.py"
 
-		embed = discord.Embed(description=helpdoc)
+		embed = discord.Embed(description="The juiciest unsigned 8 bit integer you eva gonna see")
 
 		embed.set_author(name=ctx.message.channel.server.me.nick, icon_url=self.bot.user.avatar_url, url=github)
 

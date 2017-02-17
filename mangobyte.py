@@ -7,14 +7,17 @@ import asyncio
 import string
 from discord.ext import commands
 
-helpdoc = """The juiciest unsigned 8 bit integer you eva gonna see"""
-
 botdata = BotData()
 settings = Settings()
 
 from cogs.utils.clip import *# This has to be done after loading settings
 
-bot = commands.Bot(command_prefix='?', formatter=MangoHelpFormatter(), description="MangoByte - " + helpdoc + "\n For more info about Mangobyte, try ?info")
+description = """**MangoByte** - The juiciest unsigned 8 bit integer you eva gonna see
+				For more info about Mangobyte, try `{cmdpfx}info`
+				
+				To get more information about a specific command, try `{cmdpfx}help <command>`"""
+
+bot = commands.Bot(command_prefix='?', formatter=MangoHelpFormatter(), description=description)
 bot.remove_command("help")
 
 

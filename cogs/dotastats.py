@@ -69,8 +69,7 @@ async def get_check_steamid(steamid, ctx=None):
 
 
 class DotaStats(MangoCog):
-	"""Commands used to access Dota 2 players' stats
-	"""
+	"""Commands used to access Dota 2 players' stats. Most of the data for this is collected through the [OpenDota API](https://docs.opendota.com/)"""
 
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
@@ -243,14 +242,14 @@ class DotaStats(MangoCog):
 
 	@commands.command(pass_context=True)
 	async def opendota(self, ctx, *, query):
-		"""queries the opendota api
+		"""Queries the opendota api
 
 		You can use this to get a json file with details about players or matches etc.
-		ex:
-		?opendota /players/{steamid}
-		?opendota /matches/{matchid}
+		Examples:
+		`{cmdpfx}opendota /players/{steamid}`
+		`{cmdpfx}opendota /matches/{matchid}`
 
-		For more options and a better explanation, check out their documentation: https://docs.opendota.com"""
+		For more options and a better explanation, check out their [documentation](https://docs.opendota.com)"""
 		query = query.replace("/", " ")
 		query = query.strip()
 		query = "/" + "/".join(query.split(" "))
@@ -267,12 +266,14 @@ class DotaStats(MangoCog):
 
 	@commands.command(pass_context=True)
 	async def opendotasql(self, ctx, *, sql):
-		"""submits an sql query to the opendota database
+		"""Submits an sql query to the opendota database
 
 		Example:
-		?opendotasql SELECT * FROM matches limit 10
+		`{cmdpfx}opendotasql SELECT * FROM matches limit 10`
 
-		see https://github.com/odota/core/blob/master/sql/create_tables.sql to get an idea of the structure of the database
+		Note that you should always have a limit argument at the end, as the api will stall if you request too many rows
+
+		You can check out their [create_tables script](https://github.com/odota/core/blob/master/sql/create_tables.sql) to get an idea of the structure of the database
 		"""
 		match = re.search("limit ([0-9]+)", sql)
 		if not match or int(match.group(1)) > 100:
