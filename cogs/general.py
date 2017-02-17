@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord.ext.commands.bot import _mention_pattern, _mentions_transforms
 from __main__ import settings, helpdoc, botdata
 from cogs.utils.helpers import *
 from cogs.utils import checks
@@ -138,6 +139,29 @@ class General(MangoCog):
 			return # Dont mess with the owner's banned state
 		botdata.userinfo(user.id).banned = False
 		await self.bot.say("{} is free of their restraints and may once again use commands".format(user.mention))
+
+	@commands.command(pass_context=True)
+	async def help(self, ctx, command : str=None):
+		"""Shows this message."""
+		def repl(obj):
+			return _mentions_transforms.get(obj.group(0), '')
+
+		# help by itself just lists our own commands.
+		if command is None:
+			embed = self.bot.formatter.format_as_embed(ctx, self.bot)
+		else:
+			# try to see if it is a cog name
+			name = _mention_pattern.sub(repl, command)
+			if name in self.bot.cogs:
+				command = self.bot.cogs[name]
+			else:
+				command = self.bot.commands.get(name)
+				if command is None:
+					await self.bot.send_message(ctx.message.channel, self.bot.command_not_found.format(name))
+					return
+			embed = self.bot.formatter.format_as_embed(ctx, command)
+
+		await self.bot.send_message(ctx.message.channel, embed=embed)
 
 
 

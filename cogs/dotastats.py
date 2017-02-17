@@ -133,7 +133,7 @@ class DotaStats(MangoCog):
 
 	@commands.command(pass_context=True)
 	async def setsteam(self, ctx, steam_id : int, user: discord.User=None):
-		"""Links a discord user to their steam/dota accont
+		"""Links a discord user to their steam/dota account
 
 		The user parameter can only be specified by the bot owner
 		

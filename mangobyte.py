@@ -2,6 +2,7 @@ import discord
 from cogs.utils.botdata import BotData
 from cogs.utils.settings import Settings
 from cogs.utils.helpers import *
+from cogs.utils.helpformatter import MangoHelpFormatter
 import asyncio
 import string
 from discord.ext import commands
@@ -13,7 +14,9 @@ settings = Settings()
 
 from cogs.utils.clip import *# This has to be done after loading settings
 
-bot = commands.Bot(command_prefix='?', description="MangoByte - " + helpdoc + "\n For more info about Mangobyte, try ?info")
+bot = commands.Bot(command_prefix='?', formatter=MangoHelpFormatter(), description="MangoByte - " + helpdoc + "\n For more info about Mangobyte, try ?info")
+bot.remove_command("help")
+
 
 deprecated_commands = {}
 
