@@ -72,11 +72,39 @@ class UserInfo:
 		self.botdata.save_data()
 
 	
+class ServerInfo:
+	def __init__(self, botdata, serverid):
+		self.botdata = botdata
+		self.id = serverid
+		if(self.json_data is None):
+			self.botdata.json_data['serverinfo'].append(OrderedDict([
+				("id", self.id),
+				("voicechannel", None),
+				("reactions", False)
+			]))
+			self.botdata.save_data()
+
+	@property
+	def json_data(self):
+		for server in self.botdata.json_data['serverinfo']:
+			if (server['id'] == self.id):
+				return server
+		# Should only happen when loading a serverinfo for the first time
+		return None
+
+	@property
+	def voicechannel(self):
+		return self.json_data.get("voicechannel", None)
+
+	@property
+	def reactions(self):
+		return self.json_data.get("reactions", False)
+
 
 class BotData:
 	def __init__(self):
 		self.path = "botdata.json"
-		self.defaults = OrderedDict([ ("userinfo" , []) ])
+		self.defaults = OrderedDict([ ("userinfo" , []), ("serverinfo" , []) ])
 		if not os.path.exists(self.path):
 			self.json_data = self.defaults
 			self.save_data()
@@ -95,4 +123,7 @@ class BotData:
 
 	def userinfo(self, userid):
 		return UserInfo(self, userid)
+
+	def serverinfo(self, serverid):
+		return ServerInfo(self, serverid)
 

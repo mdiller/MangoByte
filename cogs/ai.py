@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from __main__ import settings
+from __main__ import settings, botdata
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
 from cogs.utils import checks
@@ -37,6 +37,9 @@ class AI(MangoCog):
 	async def on_message(self, message):
 		if message.content.startswith("?"):
 			print("--> {0}: {1}".format(message.author, message.content))
+
+		if message.server is not None and not botdata.serverinfo(message.server.id).reactions:
+			return
 
 		if (message.author == self.bot.user) or message.content.startswith("?"):
 			return
