@@ -95,19 +95,6 @@ class General(MangoCog):
 		Contains wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce."""
 		await self.bot.send_file(ctx.message.channel, settings.resourcedir + "images/lasagna.jpg")
 
-	@checks.is_owner()
-	@commands.command(pass_context=True, hidden=True)
-	async def join(self, ctx, channel_id : str):
-		new_channel = self.bot.get_channel(channel_id)
-		if(new_channel == None):
-			print("attempted to join invalid channel: " + channel_id)
-			return
-
-		audio = self.bot.get_cog("Audio")
-		await audio.voice.move_to(new_channel)
-		print("joined channel: " + channel_id)
-		audio.voice_channel = self.bot.get_channel(channel_id)
-
 	def __check(self, ctx):
 		"""Checks to make sure the user has permissions"""
 		if botdata.userinfo(ctx.message.author.id).banned:

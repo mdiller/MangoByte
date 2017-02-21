@@ -26,17 +26,16 @@ deprecated_commands = {}
 @bot.event
 async def on_ready():
 	print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
-	print('Automatically connecting to default channel via ID...')
+	print('Connecting to voice channels if specified in botdata.json ...')
 	cog = bot.get_cog("Audio")
 
 	for serverinfo in botdata.serverinfo_list():
 		if serverinfo.voicechannel is not None:
 			await cog.connect_voice(serverinfo.voicechannel)
-
-	# await bot.change_nickname(cog.voice.channel.server.me, bot.user.name + " v" + get_version())
-	# clip = await cog.get_clip("local:bothello")
-	# clip.volume = 0.1
-	# await cog.play_clip(clip)
+	
+	for server in bot.servers:
+		if server.me.server_permissions.change_nickname:
+			await bot.change_nickname(server.me, bot.user.name + " v" + get_version())
 
 async def get_cmd_signature(ctx):
 	# formatter = commands.HelpFormatter()

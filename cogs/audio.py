@@ -53,11 +53,22 @@ class AudioPlayer:
 		self.clipqueue = queue.Queue()
 		self.last_clip = None
 
+	@property
+	def voice_channel(self):
+		if self.voice is None:
+			return None
+		else:
+			return self.server.me.voice_channel
+
 	# connects to a voice channel
 	async def connect(self, channel):
 		if not isinstance(channel, discord.Channel):
 			channel = self.bot.get_channel(channel)
-		self.voice = await self.bot.join_voice_channel(channel)
+
+		if self.voice is None:
+			self.voice = await self.bot.join_voice_channel(channel)
+		else:
+			await self.voice.move_to(channel)
 
 	def done_talking(self):
 		self.player = None
@@ -135,6 +146,9 @@ class Audio(MangoCog):
 			audioplayer = AudioPlayer(self.bot, channel.server)
 			await audioplayer.connect(channel)
 			self.audioplayers.append(audioplayer)
+			clip = await self.get_clip("local:bothello")
+			clip.volume = 0.1
+			await self.play_clip(clip, channel)
 
 
 	@commands.command(pass_context=True)
@@ -358,6 +372,19 @@ class Audio(MangoCog):
 		Theres 19 different ones"""
 		await self.play_clip("local:later{}".format(randint(1,19)))
 
+
+	#@checks.is_owner()
+	@commands.command(pass_context=True, hidden=True)
+	async def summon(self, ctx):
+		"""Summons the bot to the voice channel you are currently in"""
+		new_channel = ctx.message.author.voice.voice_channel
+		if new_channel is None:
+			raise UserError("You are not currently in a voice channel")
+		if new_channel.server != ctx.message.server:
+			raise UserError("You are not currently in a voice channel on this server")
+
+		await self.connect_voice(new_channel)
+
 	# fixes discord user names which either are in all caps or have a number serving as a letter
 	async def fix_name(self, name):
 		# If all upper case or numbers n stuff, make all lower case
@@ -372,38 +399,39 @@ class Audio(MangoCog):
 
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
-		beforeplayer = await self.audioplayer(before, error_on_none=False)
-		afterplayer = await self.audioplayer(after, error_on_none=False)
-
 		if before.voice_channel == after.voice_channel:
 			return # if the member didnt change channels, dont worry about it
-		if beforeplayer is not None and beforeplayer.voice_channel == before.voice_channel:
-			print(before.name + " left the channel")
+		if before.voice_channel is not None:
+			beforeplayer = await self.audioplayer(before.voice_channel, error_on_none=False)
+			if beforeplayer is not None and beforeplayer.voice_channel == before.voice_channel:
+				print(before.name + " left the channel")
 
-			text = await self.fix_name(before.name) + " has left!"
-			outroclip = "local:farewell"
+				text = await self.fix_name(before.name) + " has left!"
+				outroclip = "local:farewell"
 
-			userinfo = botdata.userinfo(before.id)
-			if userinfo.outro != "" and userinfo.outro != outroclip:
-				outroclip = userinfo.outro
+				userinfo = botdata.userinfo(before.id)
+				if userinfo.outro != "" and userinfo.outro != outroclip:
+					outroclip = userinfo.outro
 
-			await asyncio.sleep(0.5)
-			await self.play_clip(outroclip, before.server)
-			await self.play_clip("tts:" + text, before.server)
-		if afterplayer is not None and afterplayer.voice_channel == after.voice_channel:
-			print(after.name + " joined the channel")
+				await asyncio.sleep(0.5)
+				await self.play_clip(outroclip, before.server)
+				await self.play_clip("tts:" + text, before.server)
+		if after.voice_channel is not None:
+			afterplayer = await self.audioplayer(after.voice_channel, error_on_none=False)
+			if afterplayer is not None and afterplayer.voice_channel == after.voice_channel:
+				print(after.name + " joined the channel")
 
-			text = await self.fix_name(after.name)
-			introclip = "local:helloits"
+				text = await self.fix_name(after.name)
+				introclip = "local:helloits"
 
-			userinfo = botdata.userinfo(after.id)
-			if userinfo.intro != "" and userinfo.intro != introclip:
-				introclip = userinfo.intro
-				text = "its " + after.name
+				userinfo = botdata.userinfo(after.id)
+				if userinfo.intro != "" and userinfo.intro != introclip:
+					introclip = userinfo.intro
+					text = "its " + after.name
 
-			await asyncio.sleep(3)
-			await self.play_clip(introclip, after.server)
-			await self.play_clip("tts:" + text, after.server)
+				await asyncio.sleep(3)
+				await self.play_clip(introclip, after.server)
+				await self.play_clip("tts:" + text, after.server)
 
 
 def setup(bot):
