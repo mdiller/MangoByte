@@ -111,16 +111,17 @@ class DotaStats(MangoCog):
 
 		embed.set_author(name=player['personaname'], icon_url=await dotabase.get_hero_icon(player['hero_id']), url="https://www.opendota.com/players/{}".format(steamid))
 
+		embed.add_field(name="Damage", value=(
+			"KDA: **{}**/**{}**/**{}**\n"
+			"Hero Damage: {:,}\n"
+			"Hero Healing: {:,}\n"
+			"Tower Damage: {:,}\n".format(player['kills'], player['deaths'], player['assists'], player['hero_damage'], player['hero_healing'], player['tower_damage'])))
+
 		embed.add_field(name="Economy", value=(
 			"Net Worth: {:,}\n"
 			"Last Hits: {:,}\n"
 			"Denies: {}\n"
 			"Level: {}\n".format(player['gold_spent'] + player['gold'], player['last_hits'], player['denies'], player['level'])))
-
-		embed.add_field(name="Damage", value=(
-			"Hero Damage: {:,}\n"
-			"Hero Healing: {:,}\n"
-			"Tower Damage: {:,}\n".format(player['hero_damage'], player['hero_healing'], player['tower_damage'])))
 
 		embed.set_image(url=await get_match_image(matchid, is_parsed(game)))
 
