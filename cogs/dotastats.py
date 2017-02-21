@@ -26,6 +26,21 @@ async def opendota_query(querystring):
 			print("OpenDota api errored on GET: '{}'".format(url))
 			raise UserError("OpenDota said we did things wrong 😢. status code: {}".format(r.status))
 
+async def get_match_image(matchid, is_parsed):
+	# Make sure to check that the match id is valid before calling this
+	url = "http://dotabase.me/image-api/request.php?match={}".format(matchid)
+	url += "&parsed={}".format("true" if is_parsed else "false")
+	async with aiohttp.post(url) as r:
+		if r.status == 200:
+			data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
+			return data['file']
+		else:
+			print("Dotabase image-api errored on POST: '{}'".format(url))
+			raise UserError("Errored on generating match image".format(r.status))
+
+def is_parsed(match_json):
+	return match_json.get("radiant_gold_adv") is not None
+
 # gets the steam32 id from the user or steamid and checks that it is valid before returning
 async def get_check_steamid(steamid, ctx=None):
 	is_author = steamid == None
@@ -77,7 +92,6 @@ class DotaStats(MangoCog):
 	# prints the stats for the given player's latest game
 	async def player_match_stats(self, steamid, matchid):
 		game = await opendota_query("/matches/{}".format(matchid))
-		replay_parsed = game.get("radiant_gold_adv") is not None
 
 		# Finds the player in the game which has our matching steam32 id
 		player = next(p for p in game['players'] if p['account_id'] == steamid)
@@ -178,12 +192,10 @@ class DotaStats(MangoCog):
 			await self.bot.say("Looks like thats not a valid match id")
 			return
 
-		tempfile = "{}temp/match_{}.png".format(settings.resourcedir, match_id)
-		webkit2png = settings.resourcedir + "scripts/webkit2png.js"
-		url = "http://dotabase.me/image-api/matches.php?match={}".format(match_id)
-		helpers.run_command(["phantomjs", webkit2png, url, tempfile])
-		await self.bot.send_file(ctx.message.channel, tempfile)
-		os.remove(tempfile)
+		embed = discord.Embed(description="For more information, check [OpenDota](https://www.opendota.com/matches/{0}) or [DotaBuff](https://www.dotabuff.com/matches/{0})".format(match_id)) 
+		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
+		embed.set_image(url=await get_match_image(match_id, is_parsed(game)))
+		await self.bot.say(embed=embed)
 
 	@commands.command(pass_context=True, aliases=["whois"])
 	async def profile(self, ctx, player=None):
