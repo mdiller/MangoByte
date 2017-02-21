@@ -367,7 +367,6 @@ class Audio(MangoCog):
 		text = ctx.message.clean_content[5:]
 		for key in gtts_fixes:
 			text = re.sub("\\b({})\\b".format(key), gtts_fixes[key], text, re.IGNORECASE)
-		print(text)
 		await self.play_clip("tts:" + text)
 
 	@commands.command(pass_context=True)
@@ -409,9 +408,8 @@ class Audio(MangoCog):
 		if before.voice_channel is not None:
 			beforeplayer = await self.audioplayer(before.voice_channel, error_on_none=False)
 			if beforeplayer is not None and beforeplayer.voice_channel == before.voice_channel:
-				print(before.name + " left the channel")
-
-				text = await self.fix_name(before.name) + " has left!"
+				text = (await self.fix_name(before.name)) + " has left!"
+				print(text)
 				outroclip = "local:farewell"
 
 				userinfo = botdata.userinfo(before.id)
@@ -424,9 +422,8 @@ class Audio(MangoCog):
 		if after.voice_channel is not None:
 			afterplayer = await self.audioplayer(after.voice_channel, error_on_none=False)
 			if afterplayer is not None and afterplayer.voice_channel == after.voice_channel:
-				print(after.name + " joined the channel")
-
 				text = await self.fix_name(after.name)
+				print(text + " joined the channel")
 				introclip = "local:helloits"
 
 				userinfo = botdata.userinfo(after.id)
