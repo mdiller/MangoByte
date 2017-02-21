@@ -38,11 +38,16 @@ async def on_ready():
 			await bot.change_nickname(server.me, bot.user.name + " v" + get_version())
 
 async def get_cmd_signature(ctx):
-	# formatter = commands.HelpFormatter()
-	# formatter.command = command
 	bot.formatter.context = ctx
 	bot.formatter.command = ctx.command
 	return bot.formatter.get_command_signature()
+
+# Whether or not we report invalid commands
+async def invalid_command_reporting(ctx):
+	if ctx.message.server is None:
+		return True
+	else:
+		return botdata.serverinfo(ctx.message.server.id).invalidcommands
 
 @bot.event
 async def on_command_error(error, ctx):
@@ -50,6 +55,8 @@ async def on_command_error(error, ctx):
 		cmd = ctx.message.content[1:].split(" ")[0]
 		if cmd in deprecated_commands:
 			await bot.send_message(ctx.message.channel, "You shouldn't use `?{}` anymore. It's *deprecated*. Try `?{}` instead.".format(cmd, deprecated_commands[cmd]))
+			return
+		if not await invalid_command_reporting(ctx):
 			return
 		await bot.send_message(ctx.message.channel, "🤔 Ya I dunno what a '{}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands.".format(cmd)) 
 	elif isinstance(error, commands.CheckFailure):

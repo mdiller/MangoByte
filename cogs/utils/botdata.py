@@ -80,7 +80,8 @@ class ServerInfo:
 			self.botdata.json_data['serverinfo'].append(OrderedDict([
 				("id", self.id),
 				("voicechannel", None),
-				("reactions", False)
+				("reactions", False),
+				("invalidcommands", False)
 			]))
 			self.botdata.save_data()
 
@@ -99,6 +100,10 @@ class ServerInfo:
 	@property
 	def reactions(self):
 		return self.json_data.get("reactions", False)
+
+	@property
+	def invalidcommands(self):
+		return self.json_data.get("invalidcommands", False)
 
 
 class BotData:
