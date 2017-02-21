@@ -109,38 +109,20 @@ class DotaStats(MangoCog):
 
 		embed = discord.Embed(description=description)
 
-		lane_dict = { 1:"Safelane", 2:"Middle Lane", 3:"Offlane", 4:"Jungle/Roaming" }
-
-		heroicon = await dotabase.get_hero_icon(player['hero_id'])
-
-		embed.set_author(name=player['personaname'], icon_url=heroicon)
-
-		embed.add_field(name="General", value=(
-			"Kills: {}\n"
-			"Deaths: {}\n"
-			"Assists: {}\n"
-			"Hero Dmg: {}\n".format(player['kills'], player['deaths'], player['assists'], player['hero_damage'])))
+		embed.set_author(name=player['personaname'], icon_url=await dotabase.get_hero_icon(player['hero_id']), url="https://www.opendota.com/players/{}".format(steamid))
 
 		embed.add_field(name="Economy", value=(
-			"GPM: {}\n"
-			"Net Worth: {}\n"
-			"Last Hits: {}\n".format(player['gold_per_min'], player['gold_spent'] + player['gold'], player['last_hits'])))
+			"Net Worth: {:,}\n"
+			"Last Hits: {:,}\n"
+			"Denies: {}\n"
+			"Level: {}\n".format(player['gold_spent'] + player['gold'], player['last_hits'], player['denies'], player['level'])))
 
-		embed.add_field(name="Experience", value=(
-			"XPM: {}\n"
-			"Level: {}\n"
-			"Denies: {}\n".format(player['xp_per_min'], player['level'], player['denies'])))
+		embed.add_field(name="Damage", value=(
+			"Hero Damage: {:,}\n"
+			"Hero Healing: {:,}\n"
+			"Tower Damage: {:,}\n".format(player['hero_damage'], player['hero_healing'], player['tower_damage'])))
 
-		# if replay_parsed:
-		# 	embed.add_field(name="Other", value=(
-		# 		"Lane: {}\n"
-		# 		"Pings: {}\n"
-		# 		"APM: {}\n".format(lane_dict.get(player.get("lane_role")), player.get("pings", "Unavailable"), player.get("actions_per_min", "Unavailable"))))
-
-
-		# if not replay_parsed:
-		# 	embed.set_footer(text="Some data not available for this game")
-		embed.set_footer(text="For more details, try {}match {}".format(self.bot.command_prefix, matchid))
+		embed.set_image(url=await get_match_image(matchid, is_parsed(game)))
 
 		await self.bot.say(embed=embed)
 
