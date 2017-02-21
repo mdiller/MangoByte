@@ -118,10 +118,17 @@ class Audio(MangoCog):
 		# TODO: ACCOUNT FOR WHEN THIS MESSAGE IS A PM
 		if server is None:
 			channel = _get_variable('_internal_channel')
-			if channel.server is not None:
+			if channel.type is discord.ChannelType.text:
 				server = channel.server
 			else:
-				raise ValueError("this is likely a PM, which are not handled at the moment")
+				# This is likely a private message, so figure out if theres a server they could mean
+				author = _get_variable('_internal_author')
+				for audioplayer in self.audioplayers:
+					member = audioplayer.server.get_member(author.id)
+					if member is not None and audioplayer.voice_channel == member.voice_channel:
+						return audioplayer
+
+				raise UserError("You're not in any voice channels that I'm in")
 
 		if isinstance(server, discord.Channel):
 			server = server.server
@@ -130,7 +137,7 @@ class Audio(MangoCog):
 				return audioplayer
 
 		if error_on_none:
-			raise UserError("I'm not in a voice channel on this server. Have an admin do `{}summon` to put me in one.".format(self.bot.command_prefix))
+			raise UserError("I'm not in a voice channel on this server. Do `{}summon` to put me in one.".format(self.bot.command_prefix))
 		else:
 			return None
 
