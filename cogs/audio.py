@@ -363,13 +363,11 @@ class Audio(MangoCog):
 
 		...what more could you possibly need to know...
 		"""
-		fixes_dict = { "im": "i'm",
-			"shes": "she's",
-			"hes": "he's",
-			"theyre": "they're"}
+		gtts_fixes = read_json(settings.resourcedir + "ai/gtts_fixes.json")
 		text = ctx.message.clean_content[5:]
-		for key in fixes_dict:
-			text = re.sub(key, fixes_dict[key], text, re.IGNORECASE)
+		for key in gtts_fixes:
+			text = re.sub("\\b({})\\b".format(key), gtts_fixes[key], text, re.IGNORECASE)
+		print(text)
 		await self.play_clip("tts:" + text)
 
 	@commands.command(pass_context=True)
