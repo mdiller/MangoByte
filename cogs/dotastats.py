@@ -126,6 +126,7 @@ class DotaStats(MangoCog):
 
 		# if not replay_parsed:
 		# 	embed.set_footer(text="Some data not available for this game")
+		embed.set_footer(text="For more details, try {}match {}".format(self.bot.command_prefix, matchid))
 
 		await self.bot.say(embed=embed)
 
