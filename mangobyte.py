@@ -28,11 +28,15 @@ async def on_ready():
 	print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
 	print('Automatically connecting to default channel via ID...')
 	cog = bot.get_cog("Audio")
-	cog.voice = await bot.join_voice_channel(bot.get_channel(settings.defaultvoice))
-	await bot.change_nickname(cog.voice.channel.server.me, bot.user.name + " v" + get_version())
-	clip = await cog.get_clip("local:bothello")
-	clip.volume = 0.1
-	await cog.play_clip(clip)
+
+	for serverinfo in botdata.serverinfo_list():
+		if serverinfo.voicechannel is not None:
+			await cog.connect_voice(serverinfo.voicechannel)
+
+	# await bot.change_nickname(cog.voice.channel.server.me, bot.user.name + " v" + get_version())
+	# clip = await cog.get_clip("local:bothello")
+	# clip.volume = 0.1
+	# await cog.play_clip(clip)
 
 async def get_cmd_signature(ctx):
 	# formatter = commands.HelpFormatter()

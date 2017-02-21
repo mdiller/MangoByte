@@ -127,3 +127,9 @@ class BotData:
 	def serverinfo(self, serverid):
 		return ServerInfo(self, serverid)
 
+	def serverinfo_list(self):
+		serverinfos = []
+		for data in self.json_data['serverinfo']:
+			serverinfos.append(ServerInfo(self, data['id']))
+		return serverinfos
+

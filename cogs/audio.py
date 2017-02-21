@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord.ext.commands.bot import _get_variable
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
 from __main__ import settings, botdata
@@ -41,20 +42,22 @@ def remove_if_temp(mp3name):
 			os.remove(mp3name)
 			print("removed temp file " + mp3name)
 
-class Audio(MangoCog):
-	"""Commands used to play audio"""
 
-	def __init__(self, bot):
-		MangoCog.__init__(self, bot)
+class AudioPlayer:
+	"""The server-specific objects used for mangobyte's audio output"""
+	def __init__(self, bot, server):
+		self.bot = bot
+		self.server = server
 		self.voice = None
 		self.player = None
 		self.clipqueue = queue.Queue()
 		self.last_clip = None
 
-
-	# whether or not the bot is currently talking
-	def is_talking(self):
-		return (self.player is not None) and (not self.player.is_done())
+	# connects to a voice channel
+	async def connect(self, channel):
+		if not isinstance(channel, discord.Channel):
+			channel = self.bot.get_channel(channel)
+		self.voice = await self.bot.join_voice_channel(channel)
 
 	def done_talking(self):
 		self.player = None
@@ -69,17 +72,14 @@ class Audio(MangoCog):
 
 	# plays the next clip in the queue
 	def play_next_clip(self):
-		try:
-			clip = self.next_clip()
-			self.player = self.voice.create_ffmpeg_player(clip.audiopath, after=self.done_talking)
-			self.player.volume = clip.volume
-			self.player.start()
-			print("playing: " + clip.audiopath)
-			if self.last_clip != None and clip.audiopath != self.last_clip.audiopath:
-				remove_if_temp(self.last_clip.audiopath)
-			self.last_clip = clip
-		except Exception as e:
-			print(str(e))
+		clip = self.next_clip()
+		self.player = self.voice.create_ffmpeg_player(clip.audiopath, after=self.done_talking)
+		self.player.volume = clip.volume
+		self.player.start()
+		print("playing: " + clip.audiopath)
+		if self.last_clip != None and clip.audiopath != self.last_clip.audiopath:
+			remove_if_temp(self.last_clip.audiopath)
+		self.last_clip = clip
 
 	# try queueing an mp3 to play
 	async def queue_clip(self, clip):
@@ -90,8 +90,52 @@ class Audio(MangoCog):
 
 		self.clipqueue.put(clip)
 
-		if not self.is_talking():
+		if self.player is None or self.player.is_done():
 			self.play_next_clip()
+
+
+
+class Audio(MangoCog):
+	"""Commands used to play audio"""
+
+	def __init__(self, bot):
+		MangoCog.__init__(self, bot)
+		self.audioplayers = []
+
+	# gets the audioplayer for the current server/channel
+	async def audioplayer(self, server=None, error_on_none=True):
+		# TODO: ACCOUNT FOR WHEN THIS MESSAGE IS A PM
+		if server is None:
+			channel = _get_variable('_internal_channel')
+			if channel.server is not None:
+				server = channel.server
+			else:
+				raise ValueError("this is likely a PM, which are not handled at the moment")
+
+		if isinstance(server, discord.Channel):
+			server = server.server
+		for audioplayer in self.audioplayers:
+			if audioplayer.server == server:
+				return audioplayer
+
+		if error_on_none:
+			raise UserError("I'm not in a voice channel on this server. Have an admin do `{}summon` to put me in one.".format(self.bot.command_prefix))
+		else:
+			return None
+
+	# Connects an audioplayer for the correct server to the indicated channel
+	async def connect_voice(self, channel):
+		if not isinstance(channel, discord.Channel):
+			channel = self.bot.get_channel(channel)
+
+		audioplayer = await self.audioplayer(channel, error_on_none=False)
+		if audioplayer is not None:
+			await audioplayer.connect(channel)
+		else:
+			audioplayer = AudioPlayer(self.bot, channel.server)
+			await audioplayer.connect(channel)
+			self.audioplayers.append(audioplayer)
+
 
 	@commands.command(pass_context=True)
 	async def play(self, ctx, clip : str=""):
@@ -153,26 +197,27 @@ class Audio(MangoCog):
 
 		Also empties the clip queue
 		"""
-		while not self.clipqueue.empty():
+		audioplayer = await self.audioplayer()
+		while not audioplayer.clipqueue.empty():
 			try:
-				self.clipqueue.get()
+				audioplayer.clipqueue.get()
 			except Empty:
 				continue
-		if not self.player is None:
-			self.player.stop();
+		if not audioplayer.player is None:
+			audioplayer.player.stop();
 
 	@commands.command(pass_context=True)
 	async def replay(self, ctx):
 		"""Replays the last played clip
 		"""
-		if self.last_clip == None:
+		last_clip = (await self.audioplayer()).last_clip()
+		if last_clip == None:
 			await self.bot.say("Nobody said anythin' yet")
 			return
 
 		# If its not a temp file
-		await self.bot.say("Replaying " + self.last_clip.clipid)
-
-		await self.queue_clip(self.last_clip)
+		await self.bot.say("Replaying " + last_clip.clipid)
+		await self.play_clip(last_clip)
 
 	@commands.command(pass_context=True)
 	async def clipinfo(self, ctx, clipid=None):
@@ -185,10 +230,10 @@ class Audio(MangoCog):
 		`dota:timb_ally_01`
 		"""
 		if clipid is None:
-			if self.last_clip == None:
+			if (await self.audioplayer()).last_clip == None:
 				await self.bot.say("Nobody said anythin' yet")
 				return
-			clipid = self.last_clip.clipid
+			clipid = (await self.audioplayer()).last_clip.clipid
 
 		clip = await self.get_clip(clipid)
 
@@ -327,9 +372,25 @@ class Audio(MangoCog):
 
 	#function called when this event occurs
 	async def on_voice_state_update(self, before, after):
-		if self.voice is None or before.voice_channel == after.voice_channel:
+		beforeplayer = await self.audioplayer(before, error_on_none=False)
+		afterplayer = await self.audioplayer(after, error_on_none=False)
+
+		if before.voice_channel == after.voice_channel:
 			return # if the member didnt change channels, dont worry about it
-		if after.voice_channel == self.voice.channel:
+		if beforeplayer is not None and beforeplayer.voice_channel == before.voice_channel:
+			print(before.name + " left the channel")
+
+			text = await self.fix_name(before.name) + " has left!"
+			outroclip = "local:farewell"
+
+			userinfo = botdata.userinfo(before.id)
+			if userinfo.outro != "" and userinfo.outro != outroclip:
+				outroclip = userinfo.outro
+
+			await asyncio.sleep(0.5)
+			await self.play_clip(outroclip, before.server)
+			await self.play_clip("tts:" + text, before.server)
+		if afterplayer is not None and afterplayer.voice_channel == after.voice_channel:
 			print(after.name + " joined the channel")
 
 			text = await self.fix_name(after.name)
@@ -341,21 +402,8 @@ class Audio(MangoCog):
 				text = "its " + after.name
 
 			await asyncio.sleep(3)
-			await self.play_clip(introclip)
-			await self.play_clip("tts:" + text)
-		if before.voice_channel == self.voice.channel:
-			print(before.name + " left the channel")
-
-			text = await self.fix_name(before.name) + " has left!"
-			outroclip = "local:farewell"
-
-			userinfo = botdata.userinfo(before.id)
-			if userinfo.outro != "" and userinfo.outro != outroclip:
-				outroclip = userinfo.outro
-
-			await asyncio.sleep(0.5)
-			await self.play_clip(outroclip)
-			await self.play_clip("tts:" + text)
+			await self.play_clip(introclip, after.server)
+			await self.play_clip("tts:" + text, after.server)
 
 
 def setup(bot):

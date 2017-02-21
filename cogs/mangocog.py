@@ -31,9 +31,9 @@ class MangoCog:
 		return cliptypes[match.group(1)](match.group(2), self.bot)
 
 
-	async def play_clip(self, clip):
+	async def play_clip(self, clip, server=None):
 		if isinstance(clip, str):
 			clip = await self.get_clip(clip)
 
 		audio = self.bot.get_cog("Audio")
-		await audio.queue_clip(clip)
+		await (await audio.audioplayer(server)).queue_clip(clip)
