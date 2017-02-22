@@ -99,7 +99,7 @@ def format_teamfight(teamfight):
 		format_str = "We lost our {our_dead} and couldn't kill any of them"
 	else:
 		format_str = "We traded our {our_dead} for {their_dead}"
-	format_str += ", resulting in a net {gain_loss} of {net_change} gold"
+	format_str += ", resulting in a net {gain_loss} of {net_change:,} gold"
 	return format_str.format(**teamfight)
 
 
@@ -141,6 +141,7 @@ class DotaStats(MangoCog):
 					"our_dead": pretty_list(our_dead, None),
 					"their_dead": pretty_list(their_dead, None),
 					"net_change": abs(net_gain),
+					"deaths": teamfight['deaths'],
 					"time": teamfight['start'],
 					"time_end": teamfight['end']
 				}
@@ -151,12 +152,29 @@ class DotaStats(MangoCog):
 
 	async def get_timeline_story(self, game, is_radiant):
 		teamfights = await self.get_teamfights(game, is_radiant)
+		teamfights_count = len(teamfights)
 		story = ""
-		teamfights = sorted(teamfights, key=lambda t: t['time']) 
-		for teamfight in teamfights:
-			story += teamfight['formatted'] + "\n\n"
-		return story
 
+		timeline = []
+		most_deaths_fights = 2
+		most_change_fights = 2
+		if len(teamfights) > most_deaths_fights + most_change_fights:
+			# do calcs
+			teamfights = sorted(teamfights, key=lambda t: t['net_change'], reverse=True)
+			for i in range(0, most_change_fights):
+				timeline.append(teamfights.pop(0))
+			teamfights = sorted(teamfights, key=lambda t: t['deaths'], reverse=True)
+			for i in range(0, most_deaths_fights):
+				timeline.append(teamfights.pop(0))
+		else:
+			timeline.extend(teamfights)
+			teamfights = []
+
+		timeline = sorted(timeline, key=lambda t: t['time']) 
+		for line in timeline:
+			story += "\n" + line['formatted'] + "\n"
+
+		return story
 
 	async def get_lane_story(self, players, laneid, is_radiant):
 		our_eff = 0
@@ -166,19 +184,17 @@ class DotaStats(MangoCog):
 		for player in players:
 			if player['lane'] == laneid:
 				if (player['isRadiant'] == is_radiant): #on our team
-					our_eff += player['lane_efficiency']
+					if player['lane_efficiency'] > our_eff:
+						our_eff = player['lane_efficiency']
 					our_heroes.append(await self.get_pretty_hero(player))
 				else: #on their team
-					their_eff += player['lane_efficiency']
+					if player['lane_efficiency'] > their_eff:
+						their_eff = player['lane_efficiency']
 					their_heroes.append(await self.get_pretty_hero(player))
-		if len(our_heroes) != 0:
-			our_eff = our_eff / len(our_heroes)
-		if len(their_heroes) != 0:
-			their_eff = their_eff / len(their_heroes)
 		return {
-			"us": pretty_list(our_heroes, "an empty lane"),
+			"us": pretty_list(our_heroes, "An empty lane"),
 			"won_lost": "won" if our_eff > their_eff else "lost",
-			"them": pretty_list(their_heroes, "An empty lane")
+			"them": pretty_list(their_heroes, "an empty lane")
 		}
 
 	# gets the story for all of the lanes
@@ -285,6 +301,7 @@ class DotaStats(MangoCog):
 	@commands.command(pass_context=True)
 	async def matchstory(self, ctx, match_id : int, perspective="radiant"):
 		"""Tells the story of the match from the given perspective"""
+		await self.bot.send_typing(ctx.message.channel)
 		if perspective == "radiant":
 			is_radiant = True
 		elif perspective == "dire":
@@ -304,13 +321,17 @@ class DotaStats(MangoCog):
 
 		story += "\n\n" + await self.get_lane_stories(game, is_radiant)
 
-		story += "\n**Teamfights:**\n\n" + await self.get_timeline_story(game, is_radiant)
+		teamfights = await self.get_timeline_story(game, is_radiant)
+		if teamfights != "":
+			story += teamfights
+
+		game_ending_state = "victory" if (is_radiant == game['radiant_win']) else "defeat"
+		story += "\nThe game ended in a {0} at {1} minutes in".format(game_ending_state, int(game['duration'] / 60))
 
 		embed = discord.Embed(description=story)
 		embed.set_author(name="Story of Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
 		embed.set_footer(text="For more information, try ?match {}".format(match_id))
 		await self.bot.say(embed=embed)
-
 
 	@commands.command(pass_context=True, aliases=["whois"])
 	async def profile(self, ctx, player=None):
