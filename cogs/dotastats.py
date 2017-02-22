@@ -41,6 +41,17 @@ async def get_match_image(matchid, is_parsed):
 def is_parsed(match_json):
 	return match_json.get("radiant_gold_adv") is not None
 
+def pretty_list(l, none=None):
+	if len(l) == 0:
+		return none
+	if len(l) == 1:
+		return l[0]
+	elif len(l) == 2:
+		return "{} and {}".format(l[0], l[1])
+	else:
+		l[-1] = "and " + str(l[-1])
+		return ", ".join(l)
+
 # gets the steam32 id from the user or steamid and checks that it is valid before returning
 async def get_check_steamid(steamid, ctx=None):
 	is_author = steamid == None
@@ -79,6 +90,17 @@ async def get_check_steamid(steamid, ctx=None):
 	return userinfo.steam32
 
 
+def format_teamfight(teamfight):
+	if teamfight['our_dead'] is None and teamfight['their_dead'] is None:
+		format_str = "There was a teamfight with no deaths"
+	elif teamfight['our_dead'] is None:
+		format_str = "We killed their {their_dead} without losing anyone"
+	elif teamfight['their_dead'] is None:
+		format_str = "We lost our {our_dead} and couldn't kill any of them"
+	else:
+		format_str = "We traded our {our_dead} for {their_dead}"
+	format_str += ", resulting in a net {gain_loss} of {net_change} gold"
+	return format_str.format(**teamfight)
 
 
 
@@ -88,6 +110,85 @@ class DotaStats(MangoCog):
 
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
+
+	async def get_pretty_hero(self, player):
+		dotabase = self.bot.get_cog("Dotabase")
+		return "**{}**".format((await dotabase.get_hero_id_dict())[player['hero_id']])
+
+	async def get_teamfights(self, game, is_radiant):
+		teamfights = []
+		for teamfight in game['teamfights']:
+			net_gain = 0
+			our_dead = []
+			their_dead = []
+			for i in range(0, len(teamfight['players'])):
+				deadtext = await self.get_pretty_hero(game['players'][i])
+				if teamfight['players'][i]['deaths'] == 0:
+					deadtext = None
+				elif teamfight['players'][i]['deaths'] > 1:
+					deadtext += "(x{})".format(teamfight['players'][i]['deaths'])
+
+				if (game['players'][i]['isRadiant'] == is_radiant): # on our team
+					net_gain += teamfight['players'][i]['gold_delta']
+					if deadtext:
+						our_dead.append(deadtext)
+				else:
+					net_gain -= teamfight['players'][i]['gold_delta']
+					if deadtext:
+						their_dead.append(deadtext)
+			teamfight_dict = {
+					"gain_loss": "gain" if net_gain >= 0 else "loss",
+					"our_dead": pretty_list(our_dead, None),
+					"their_dead": pretty_list(their_dead, None),
+					"net_change": abs(net_gain),
+					"time": teamfight['start'],
+					"time_end": teamfight['end']
+				}
+			teamfight_dict['formatted'] = format_teamfight(teamfight_dict)
+			teamfights.append(teamfight_dict)
+		return teamfights
+
+
+	async def get_timeline_story(self, game, is_radiant):
+		teamfights = await self.get_teamfights(game, is_radiant)
+		story = ""
+		teamfights = sorted(teamfights, key=lambda t: t['time']) 
+		for teamfight in teamfights:
+			story += teamfight['formatted'] + "\n\n"
+		return story
+
+
+	async def get_lane_story(self, players, laneid, is_radiant):
+		our_eff = 0
+		their_eff = 0
+		our_heroes = []
+		their_heroes = []
+		for player in players:
+			if player['lane'] == laneid:
+				if (player['isRadiant'] == is_radiant): #on our team
+					our_eff += player['lane_efficiency']
+					our_heroes.append(await self.get_pretty_hero(player))
+				else: #on their team
+					their_eff += player['lane_efficiency']
+					their_heroes.append(await self.get_pretty_hero(player))
+		if len(our_heroes) != 0:
+			our_eff = our_eff / len(our_heroes)
+		if len(their_heroes) != 0:
+			their_eff = their_eff / len(their_heroes)
+		return {
+			"us": pretty_list(our_heroes, "an empty lane"),
+			"won_lost": "won" if our_eff > their_eff else "lost",
+			"them": pretty_list(their_heroes, "An empty lane")
+		}
+
+	# gets the story for all of the lanes
+	async def get_lane_stories(self, game, is_radiant):
+		story = ""
+		lanes = {1: "bottom", 2: "middle", 3: "top"}
+		for laneid in lanes:
+		 	story += "• {0[us]} {0[won_lost]} {1} lane vs {0[them]}\n".format(await self.get_lane_story(game['players'], laneid, is_radiant), lanes[laneid])
+		return story
+
 
 	# prints the stats for the given player's latest game
 	async def player_match_stats(self, steamid, matchid):
@@ -112,18 +213,19 @@ class DotaStats(MangoCog):
 		embed.set_author(name=player['personaname'], icon_url=await dotabase.get_hero_icon(player['hero_id']), url="https://www.opendota.com/players/{}".format(steamid))
 
 		embed.add_field(name="Damage", value=(
-			"KDA: **{}**/**{}**/**{}**\n"
-			"Hero Damage: {:,}\n"
-			"Hero Healing: {:,}\n"
-			"Tower Damage: {:,}\n".format(player['kills'], player['deaths'], player['assists'], player['hero_damage'], player['hero_healing'], player['tower_damage'])))
+			"KDA: **{kills}**/**{deaths}**/**{assists}**\n"
+			"Hero Damage: {hero_damage:,}\n"
+			"Hero Healing: {hero_healing:,}\n"
+			"Tower Damage: {tower_damage:,}\n".format(**player)))
 
 		embed.add_field(name="Economy", value=(
-			"Net Worth: {:,}\n"
-			"Last Hits: {:,}\n"
-			"Denies: {}\n"
-			"Level: {}\n".format(player['gold_spent'] + player['gold'], player['last_hits'], player['denies'], player['level'])))
+			"Net Worth: {total_gold:,}\n"
+			"Last Hits: {last_hits:,}\n"
+			"Denies: {denies}\n"
+			"Level: {level}\n".format(**player)))
 
 		embed.set_image(url=await get_match_image(matchid, is_parsed(game)))
+		embed.set_footer(text="For a story of the game, try ?matchstory {}".format(matchid))
 
 		await self.bot.say(embed=embed)
 
@@ -179,6 +281,36 @@ class DotaStats(MangoCog):
 		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
 		embed.set_image(url=await get_match_image(match_id, is_parsed(game)))
 		await self.bot.say(embed=embed)
+
+	@commands.command(pass_context=True)
+	async def matchstory(self, ctx, match_id : int, perspective="radiant"):
+		"""Tells the story of the match from the given perspective"""
+		if perspective == "radiant":
+			is_radiant = True
+		elif perspective == "dire":
+			is_radiant = False
+		else:
+			raise UserError("Perspective must be either radiant or dire")
+		try:
+			game = await opendota_query("/matches/{}".format(match_id))
+		except UserError:
+			await self.bot.say("Looks like thats not a valid match id")
+			return
+		if not is_parsed(game):
+			UserError("This game must be parsed before I can create a story")
+
+		perspective_title = "The Radiant" if is_radiant else "The Dire"
+		story = "*Told from the perspective of {}*".format(perspective_title)
+
+		story += "\n\n" + await self.get_lane_stories(game, is_radiant)
+
+		story += "\n**Teamfights:**\n\n" + await self.get_timeline_story(game, is_radiant)
+
+		embed = discord.Embed(description=story)
+		embed.set_author(name="Story of Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
+		embed.set_footer(text="For more information, try ?match {}".format(match_id))
+		await self.bot.say(embed=embed)
+
 
 	@commands.command(pass_context=True, aliases=["whois"])
 	async def profile(self, ctx, player=None):
