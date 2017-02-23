@@ -16,7 +16,6 @@ from dotabase import *
 session = dotabase_session()
 
 
-
 # A variable that can specify a filter on a query
 class QueryVariable():
 	def __init__(self, name, aliases, query_filter, prefix=";"):
@@ -86,20 +85,15 @@ class Dotabase(MangoCog):
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name
 
-	async def get_hero_id_dict(self):
+	async def get_hero_infos(self):
 		result = {}
 		for hero in session.query(Hero):
-			result[hero.id] = hero.localized_name
-		return result
-
-	async def get_hero_icon(self, heroid):
-		hero = session.query(Hero).filter(Hero.id == heroid).first()
-		return self.vpkurl + hero.icon
-
-	async def get_hero_name_id_dict(self):
-		result = {}
-		for hero in session.query(Hero):
-			result[hero.full_name] = hero.id
+			result[hero.id] = {
+				"name": hero.localized_name,
+				"full_name": hero.full_name,
+				"icon": self.vpkurl + hero.icon
+			}
+			#this to replace the ones below
 		return result
 
 	async def play_response(self, response):

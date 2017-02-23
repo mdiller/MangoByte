@@ -133,9 +133,13 @@ class DotaStats(MangoCog):
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 
+	async def init_dicts(self):
+		dotabase = self.bot.get_cog("Dotabase")
+		self.hero_info = await dotabase.get_hero_infos()
+
 	async def get_pretty_hero(self, player):
 		dotabase = self.bot.get_cog("Dotabase")
-		return "**{}**".format((await dotabase.get_hero_id_dict())[player['hero_id']])
+		return "**{}**".format(self.hero_info[player['hero_id']]['name'])
 
 	async def get_teamfights(self, game, is_radiant):
 		teamfights = []
@@ -181,7 +185,7 @@ class DotaStats(MangoCog):
 		if fb_log is None:
 			return "" # Can't find the kill log of when first blood happened
 		dotabase = self.bot.get_cog("Dotabase")
-		fb_victim_id = (await dotabase.get_hero_name_id_dict())[fb_log['key']]
+		fb_victim_id = next(h for h in self.hero_info if self.hero_info[h]['full_name'] == fb_log['key'])
 		fb_victim = next(p for p in game['players'] if p['hero_id'] == fb_victim_id)
 
 		return "First blood was drawn when {} {} killed {} {} at {}\n\n".format(
@@ -258,7 +262,7 @@ class DotaStats(MangoCog):
 			raise ValueError("wtf they're not in their own game")
 
 		dotabase = self.bot.get_cog("Dotabase")
-		hero_name = (await dotabase.get_hero_id_dict())[player['hero_id']]
+		hero_name = self.hero_info[player['hero_id']]['name']
 
 		winstatus = "Won" if player["win"] != 0 else "Lost"
 
@@ -268,7 +272,7 @@ class DotaStats(MangoCog):
 
 		embed = discord.Embed(description=description)
 
-		embed.set_author(name=player['personaname'], icon_url=await dotabase.get_hero_icon(player['hero_id']), url="https://www.opendota.com/players/{}".format(steamid))
+		embed.set_author(name=player['personaname'], icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
 
 		embed.add_field(name="Damage", value=(
 			"KDA: **{kills}**/**{deaths}**/**{assists}**\n"
@@ -395,18 +399,16 @@ class DotaStats(MangoCog):
 		else:
 			solommr = "not publicly displayed"
 
-		hero_id_dict = await self.bot.get_cog("Dotabase").get_hero_id_dict()
-
 		heroes = await opendota_query("/players/{}/heroes".format(steam32))
 		favs = ""
 		for i in range(0,3):
-			favs += hero_id_dict[int(heroes[i]["hero_id"])] + ", "
+			favs += self.hero_info[int(heroes[i]["hero_id"])]['name'] + ", "
 		favs = favs[:-2]
 
 		heroes = await opendota_query("/players/{}/heroes?date=60".format(steam32))
 		recent_favs = ""
 		for i in range(0,3):
-			recent_favs += hero_id_dict[int(heroes[i]["hero_id"])] + ", "
+			recent_favs += self.hero_info[int(heroes[i]["hero_id"])]['name'] + ", "
 		recent_favs = recent_favs[:-2]
 
 

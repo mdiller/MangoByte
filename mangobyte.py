@@ -27,6 +27,7 @@ deprecated_commands = {}
 async def on_ready():
 	print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
 	print('Connecting to voice channels if specified in botdata.json ...')
+	await bot.get_cog("DotaStats").init_dicts()
 	cog = bot.get_cog("Audio")
 
 	for serverinfo in botdata.serverinfo_list():
