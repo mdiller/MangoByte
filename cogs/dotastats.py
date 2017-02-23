@@ -72,7 +72,7 @@ def get_pretty_duration(duration, postfix=True):
 
 
 def is_parsed(match_json):
-	return match_json.get("radiant_gold_adv") is not None
+	return match_json.get("radiant_gold_adv", None) is not None
 
 # gets the steam32 id from the user or steamid and checks that it is valid before returning
 async def get_check_steamid(steamid, ctx=None):
@@ -137,7 +137,7 @@ class DotaStats(MangoCog):
 		dotabase = self.bot.get_cog("Dotabase")
 		self.hero_info = await dotabase.get_hero_infos()
 
-	async def get_pretty_hero(self, player):
+	def get_pretty_hero(self, player):
 		dotabase = self.bot.get_cog("Dotabase")
 		return "**{}**".format(self.hero_info[player['hero_id']]['name'])
 
@@ -148,7 +148,7 @@ class DotaStats(MangoCog):
 			our_dead = []
 			their_dead = []
 			for i in range(0, len(teamfight['players'])):
-				deadtext = await self.get_pretty_hero(game['players'][i])
+				deadtext = self.get_pretty_hero(game['players'][i])
 				if teamfight['players'][i]['deaths'] == 0:
 					deadtext = None
 				elif teamfight['players'][i]['deaths'] > 1:
@@ -190,9 +190,9 @@ class DotaStats(MangoCog):
 
 		return "First blood was drawn when {} {} killed {} {} at {}\n\n".format(
 			"our" if (fb_killer['isRadiant'] == is_radiant) else "their",
-			await self.get_pretty_hero(fb_killer),
+			self.get_pretty_hero(fb_killer),
 			"our" if (fb_victim['isRadiant'] == is_radiant) else "their",
-			await self.get_pretty_hero(fb_victim),
+			self.get_pretty_hero(fb_victim),
 			get_pretty_duration(fb_objective['time']))
 
 
@@ -232,11 +232,11 @@ class DotaStats(MangoCog):
 				if (player['isRadiant'] == is_radiant): #on our team
 					if player['lane_efficiency'] > our_eff:
 						our_eff = player['lane_efficiency']
-					our_heroes.append(await self.get_pretty_hero(player))
+					our_heroes.append(self.get_pretty_hero(player))
 				else: #on their team
 					if player['lane_efficiency'] > their_eff:
 						their_eff = player['lane_efficiency']
-					their_heroes.append(await self.get_pretty_hero(player))
+					their_heroes.append(self.get_pretty_hero(player))
 		return {
 			"us": pretty_list(our_heroes, "An empty lane"),
 			"won_lost": "won" if our_eff > their_eff else "lost",
@@ -251,6 +251,27 @@ class DotaStats(MangoCog):
 		 	story += "• {0[us]} {0[won_lost]} {1} lane vs {0[them]}\n".format(await self.get_lane_story(game['players'], laneid, is_radiant), lanes[laneid])
 		return story
 
+	async def tell_match_story(self, game, is_radiant, perspective):
+		if not is_parsed(game):
+			raise UserError("This game must be parsed before I can create a story")
+
+		story = "*Told from the perspective of {}*\n\n".format(perspective)
+
+		story += await self.get_firstblood_story(game, is_radiant)
+
+		story += await self.get_lane_stories(game, is_radiant)
+
+		teamfights = await self.get_timeline_story(game, is_radiant)
+		if teamfights != "":
+			story += teamfights
+
+		game_ending_state = "victory" if (is_radiant == game['radiant_win']) else "defeat"
+		story += "\nThe game ended in a {0} at {1}".format(game_ending_state, get_pretty_duration(game['duration']))
+
+		embed = discord.Embed(description=story)
+		embed.set_author(name="Story of Match {}".format(game["match_id"]), url="https://www.opendota.com/matches/{}".format(game["match_id"]))
+		embed.set_footer(text="For more information, try ?match {}".format(game["match_id"]))
+		await self.bot.say(embed=embed)
 
 	# prints the stats for the given player's latest game
 	async def player_match_stats(self, steamid, matchid):
@@ -359,27 +380,35 @@ class DotaStats(MangoCog):
 		except UserError:
 			await self.bot.say("Looks like thats not a valid match id")
 			return
-		if not is_parsed(game):
-			UserError("This game must be parsed before I can create a story")
 
-		perspective_title = "The Radiant" if is_radiant else "The Dire"
-		story = "*Told from the perspective of {}*\n\n".format(perspective_title)
+		await self.tell_match_story(game, is_radiant, "The Radiant" if is_radiant else "The Dire")
 
-		story += await self.get_firstblood_story(game, is_radiant)
+	@commands.command(pass_context=True)
+	async def lastmatchstory(self, ctx, player=None):
+		"""Tells the story of the player's last match
 
-		story += await self.get_lane_stories(game, is_radiant)
+		Input must be either a discord user, a steam32 id, or a steam64 id"""
+		await self.bot.send_typing(ctx.message.channel)
+		steamid = await get_check_steamid(player, ctx)
+		try:
+			match_id = (await opendota_query("/players/{}/matches?limit=1".format(steamid)))[0]['match_id']
+			game = await opendota_query("/matches/{}".format(match_id))
+		except UserError:
+			await self.bot.say("I can't find the last game this player played")
+			return
+		if player is None:
+			player = ctx.message.author.mention
 
-		teamfights = await self.get_timeline_story(game, is_radiant)
-		if teamfights != "":
-			story += teamfights
+		player_data = next(p for p in game['players'] if p['account_id'] == steamid)
+		is_radiant = player_data['isRadiant']
+		if player.startswith('<'):
+			perspective = player
+		else:
+			perspective = "[{personaname}](https://www.opendota.com/players/{account_id})".format(**player_data)
+		perspective += "({0}, {1})".format(self.get_pretty_hero(player_data), "Radiant" if is_radiant else "Dire")
 
-		game_ending_state = "victory" if (is_radiant == game['radiant_win']) else "defeat"
-		story += "\nThe game ended in a {0} at {1}".format(game_ending_state, get_pretty_duration(game['duration']))
+		await self.tell_match_story(game, is_radiant, perspective)
 
-		embed = discord.Embed(description=story)
-		embed.set_author(name="Story of Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
-		embed.set_footer(text="For more information, try ?match {}".format(match_id))
-		await self.bot.say(embed=embed)
 
 	@commands.command(pass_context=True, aliases=["whois"])
 	async def profile(self, ctx, player=None):

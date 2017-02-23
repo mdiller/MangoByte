@@ -80,6 +80,7 @@ class General(MangoCog):
 			"• Plays audio clips (?play, ?dota)\n"
 			"• Greets users joining a voice channel\n"
 			"• Reacts to things people say 😉\n"
+			"• Is a slight bit sassy at times\n"
 			"• For a full list of commands, try ?help"))
 
 		owner = (await self.bot.application_info()).owner

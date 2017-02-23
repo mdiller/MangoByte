@@ -143,3 +143,4 @@ class BotData:
 			serverinfos.append(ServerInfo(self, data['id']))
 		return serverinfos
 
+
