@@ -21,8 +21,9 @@ def get_changelog(count):
 	return run_command(["git", "log", "-n", str(count), "--pretty=**%cd** %s", "--date=format:%b %d, %I:%M%p"])
 
 def write_json(filename, data):
+	text = json.dumps(data, indent="\t")
 	with open(filename, "w+") as f:
-		json.dump(data, f, indent="\t")
+		f.write(text) # Do it like this so it doesnt break mid-file
 
 def read_json(filename):
 	with open(filename) as f:

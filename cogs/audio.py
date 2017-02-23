@@ -388,6 +388,7 @@ class Audio(MangoCog):
 			raise UserError("You are not currently in a voice channel on this server")
 
 		await self.connect_voice(new_channel)
+		botdata.serverinfo(new_channel.server.id).voicechannel = new_channel.id
 
 	# fixes discord user names which either are in all caps or have a number serving as a letter
 	async def fix_name(self, name):

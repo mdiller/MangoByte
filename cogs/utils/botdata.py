@@ -97,6 +97,11 @@ class ServerInfo:
 	def voicechannel(self):
 		return self.json_data.get("voicechannel", None)
 
+	@voicechannel.setter
+	def voicechannel(self, value):
+		self.json_data["voicechannel"] = value
+		self.botdata.save_data()
+
 	@property
 	def reactions(self):
 		return self.json_data.get("reactions", False)
