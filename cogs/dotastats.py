@@ -38,8 +38,8 @@ async def get_match_image(matchid, is_parsed):
 			print("Dotabase image-api errored on POST: '{}'".format(url))
 			raise UserError("Errored on generating match image".format(r.status))
 
-def is_parsed(match_json):
-	return match_json.get("radiant_gold_adv") is not None
+def s_if_plural(text, n):
+	return text + "s" if n > 1 else text
 
 def pretty_list(l, none=None):
 	if len(l) == 0:
@@ -47,10 +47,32 @@ def pretty_list(l, none=None):
 	if len(l) == 1:
 		return l[0]
 	elif len(l) == 2:
-		return "{} and {}".format(l[0], l[1])
+		return l[0] + " and " + l[1]
 	else:
 		l[-1] = "and " + str(l[-1])
 		return ", ".join(l)
+
+def get_pretty_duration(duration, postfix=True):
+	if duration == 0:
+		return "the exact start of the game"
+	is_after = duration > 0
+	duration = abs(duration)
+	time = {"hours": duration // 3600, "minutes": (duration // 60) % 60, "seconds": duration % 60}
+	format_arr = []
+	if time["hours"] > 0:
+		format_arr.append(s_if_plural("{hours} hour", time["hours"]))
+	if time["minutes"] > 0:
+		format_arr.append(s_if_plural("{minutes} minute", time["minutes"]))
+	if time["seconds"] > 0:
+		format_arr.append(s_if_plural("{seconds} second", time["seconds"]))
+	format_str = pretty_list(format_arr)
+	if postfix:
+		format_str += " in" if is_after else " before the game started"
+	return format_str.format(**time)
+
+
+def is_parsed(match_json):
+	return match_json.get("radiant_gold_adv") is not None
 
 # gets the steam32 id from the user or steamid and checks that it is valid before returning
 async def get_check_steamid(steamid, ctx=None):
@@ -149,6 +171,26 @@ class DotaStats(MangoCog):
 			teamfights.append(teamfight_dict)
 		return teamfights
 
+	async def get_firstblood_story(self, game, is_radiant):
+		fb_objective = next((obj for obj in game['objectives'] if obj['type'] == "CHAT_MESSAGE_FIRSTBLOOD"), None)
+		if None:
+			return "" # No first blood this game, or it wasnt reported in objectives log
+		fb_log = None
+		fb_killer = next(p for p in game['players'] if p['player_slot'] == fb_objective['player_slot'])
+		fb_log = next((kill for kill in fb_killer['kills_log'] if kill['time'] == fb_objective['time']), None)
+		if fb_log is None:
+			return "" # Can't find the kill log of when first blood happened
+		dotabase = self.bot.get_cog("Dotabase")
+		fb_victim_id = (await dotabase.get_hero_name_id_dict())[fb_log['key']]
+		fb_victim = next(p for p in game['players'] if p['hero_id'] == fb_victim_id)
+
+		return "First blood was drawn when {} {} killed {} {} at {}\n\n".format(
+			"our" if (fb_killer['isRadiant'] == is_radiant) else "their",
+			await self.get_pretty_hero(fb_killer),
+			"our" if (fb_victim['isRadiant'] == is_radiant) else "their",
+			await self.get_pretty_hero(fb_victim),
+			get_pretty_duration(fb_objective['time']))
+
 
 	async def get_timeline_story(self, game, is_radiant):
 		teamfights = await self.get_teamfights(game, is_radiant)
@@ -222,7 +264,7 @@ class DotaStats(MangoCog):
 
 		description = ("{0} a game as {1} in {2} \n"
 					"More info at [DotaBuff](https://www.dotabuff.com/matches/{3}) or [OpenDota](https://www.opendota.com/matches/{3}) "
-					.format(winstatus, hero_name, datetime.timedelta(seconds=game['duration']), matchid))
+					.format(winstatus, hero_name, get_pretty_duration(game['duration'], postfix=False), matchid))
 
 		embed = discord.Embed(description=description)
 
@@ -317,16 +359,18 @@ class DotaStats(MangoCog):
 			UserError("This game must be parsed before I can create a story")
 
 		perspective_title = "The Radiant" if is_radiant else "The Dire"
-		story = "*Told from the perspective of {}*".format(perspective_title)
+		story = "*Told from the perspective of {}*\n\n".format(perspective_title)
 
-		story += "\n\n" + await self.get_lane_stories(game, is_radiant)
+		story += await self.get_firstblood_story(game, is_radiant)
+
+		story += await self.get_lane_stories(game, is_radiant)
 
 		teamfights = await self.get_timeline_story(game, is_radiant)
 		if teamfights != "":
 			story += teamfights
 
 		game_ending_state = "victory" if (is_radiant == game['radiant_win']) else "defeat"
-		story += "\nThe game ended in a {0} at {1} minutes in".format(game_ending_state, int(game['duration'] / 60))
+		story += "\nThe game ended in a {0} at {1}".format(game_ending_state, get_pretty_duration(game['duration']))
 
 		embed = discord.Embed(description=story)
 		embed.set_author(name="Story of Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))

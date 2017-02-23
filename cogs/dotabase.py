@@ -96,6 +96,12 @@ class Dotabase(MangoCog):
 		hero = session.query(Hero).filter(Hero.id == heroid).first()
 		return self.vpkurl + hero.icon
 
+	async def get_hero_name_id_dict(self):
+		result = {}
+		for hero in session.query(Hero):
+			result[hero.full_name] = hero.id
+		return result
+
 	async def play_response(self, response):
 		await self.play_clip("dota:" + response.name)
 
