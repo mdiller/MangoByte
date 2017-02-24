@@ -4,33 +4,40 @@ A discord bot that provides the ability to play audio clips, play dota responses
 ## Commands
 The following is a list of most of the commands that mangobyte has to offer
 
-   Command|Description
-----------|---
-ask       |Answers any question you might have
-play      |Plays an audio clip
-stop      |Stops the currently playing audio
-tts       |Like ?echo but for people who can't read
-setintro  |Sets your intro clip
-playurl   |Plays an mp3 file at a url
-replay    |Replays the last played clip
-clipinfo  |Gets info about the indicated clip
-playlist  |Lists the audio clips available for ?play
-lastgame  |Gets info about your last dota game
-setsteam  |Links a discord user to their steam/dota accont
-whois     |Displays information about the user's dota profile
-dota      |Plays a dota response
-no        |Nopes.
-yes       |Oooooh ya.
-thanks    |Gives thanks
-inthebag  |Proclaims that 'IT' (whatever it is) is in the bag
-hello     |Says hello
-lol       |WOW I WONDER WAT THIS DOES
-ping      |Pings a number of times(within reason)
-lasagna   |A baked Italian dish
-changelog |Gets a rough changelog for mangobyte
-echo      |Echo...
-info      |Prints info about mangobyte
-help      |Prints a help message with a list of all of the commands
+       Command|Description
+--------------|---
+ask           | Answers any question you might have
+tts           | Like echo but for people who can't read
+later         | Tells you how much later it is
+playurl       | Plays an mp3 file at a url
+setintro      | Sets your intro clip
+replay        | Replays the last played clip
+playlist      | Lists the audio clips available for the play command
+clipinfo      | Gets information and a file for the given clip
+play          | Plays an audio clip
+setoutro      | Sets your outro clip
+stop          | Stops the currently playing audio
+opendotasql   | Submits an sql query to the opendota database
+opendota      | Queries the opendota api
+matchstory    | Tells the story of the match from the given perspective
+lastmatchstory| Tells the story of the player's last match
+profile       | Displays information about the player's dota profile
+setsteam      | Links a discord user to their steam/dota account
+match         | Gets a summary of the dota match with the given id
+lastmatch     | Gets info about the player's last dota game
+dota          | Plays a dota response
+yes           | Oooooh ya.
+no            | Nopes.
+thanks        | Gives thanks
+lol           | WOW I WONDER WAT THIS DOES
+inthebag      | Proclaims that 'IT' (whatever it is) is in the bag
+hello         | Says hello
+lasagna       | A baked Italian dish
+info          | Prints info about mangobyte
+echo          | Echo...
+ping          | Pings a number of times(within reason)
+changelog     | Gets a rough changelog for mangobyte
+help          | Shows this message.
 
 ## Installation
 
