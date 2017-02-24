@@ -159,6 +159,12 @@ class Audio(MangoCog):
 			clip.volume = 0.1
 			await self.play_clip(clip, channel)
 
+	async def disconnect(self, server):
+		audioplayer = await self.audioplayer(server)
+		if audioplayer is not None:
+			await audioplayer.voice.disconnect()
+			self.audioplayers.remove(audioplayer)
+
 
 	@commands.command(pass_context=True)
 	async def play(self, ctx, clip : str=""):
@@ -392,6 +398,15 @@ class Audio(MangoCog):
 
 		await self.connect_voice(new_channel)
 		botdata.serverinfo(new_channel.server.id).voicechannel = new_channel.id
+
+	@checks.is_admin()
+	@checks.is_not_PM()
+	@commands.command(pass_context=True, hidden=True)
+	async def unsummon(self, ctx):
+		"""Removes the bot from the voice channel it is currently in
+		(Requires administrator privilages)"""
+		await self.disconnect(ctx.message.server)
+		botdata.serverinfo(ctx.message.server.id).voicechannel = None
 
 	# fixes discord user names which either are in all caps or have a number serving as a letter
 	async def fix_name(self, name):
