@@ -98,34 +98,40 @@ class General(MangoCog):
 
 	def __check(self, ctx):
 		"""Checks to make sure the user has permissions"""
-		if botdata.userinfo(ctx.message.author.id).banned:
-			return False
+		if not ctx.message.channel.is_private:
+			if botdata.serverinfo(ctx.message.server).is_banned(ctx.message.author):
+				return False
 
 		return True
 
-	# @checks.is_owner()
+	@checks.is_admin()
+	@checks.is_not_PM()
 	@commands.command(pass_context=True)
 	async def botban(self, ctx, user: discord.User):
-		"""Bans the user from using commands"""
-		if not await checks.is_owner_check(ctx):
-			await self.bot.say("You aint the boss of me 😠")
+		"""Bans the user from using commands
+		(Requires administrator privilages)"""
+		if checks.is_owner_check(user):
+			await self.bot.say("Ya can't ban mah owner, man. 😠")
 			return
-		if user.id == (await ctx.bot.application_info()).owner.id:
-			return # Dont mess with the owner's banned state
-		botdata.userinfo(user.id).banned = True
+		if checks.is_admin_check(ctx.message.channel, user):
+			await self.bot.say("Ya can't ban other admins")
+			return
+		if user == self.bot.user:
+			await self.bot.say("Lol you can't ban me, silly")
+			return
+		botdata.serverinfo(ctx.message.server).botban(user)
 		await self.bot.say("{} has henceforth been banned from using commands 😤".format(user.mention))
 
-
-	# @checks.is_owner()
+	@checks.is_admin()
+	@checks.is_not_PM()
 	@commands.command(pass_context=True)
 	async def botunban(self, ctx, user: discord.User):
-		"""Unbans the user, allowing them to use commands"""
-		if not await checks.is_owner_check(ctx):
-			await self.bot.say("You aint the boss of me 😠")
+		"""Unbans the user, allowing them to use commands
+		(Requires administrator privilages)"""
+		if checks.is_owner_check(user) or user == self.bot.user:
+			await self.bot.say("Ha ha. Very funny.")
 			return
-		if user.id == (await ctx.bot.application_info()).owner.id:
-			return # Dont mess with the owner's banned state
-		botdata.userinfo(user.id).banned = False
+		botdata.serverinfo(ctx.message.server).botunban(user)
 		await self.bot.say("{} is free of their restraints and may once again use commands".format(user.mention))
 
 	@commands.command(pass_context=True)

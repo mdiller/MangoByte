@@ -126,6 +126,8 @@ class Audio(MangoCog):
 				for audioplayer in self.audioplayers:
 					member = audioplayer.server.get_member(author.id)
 					if member is not None and audioplayer.voice_channel == member.voice_channel:
+						if botdata.serverinfo(audioplayer.server).is_banned(member):
+							raise UserError("Nice try, but you're banned in the voice channel that I'm in")
 						return audioplayer
 
 				raise UserError("You're not in any voice channels that I'm in")
@@ -137,7 +139,7 @@ class Audio(MangoCog):
 				return audioplayer
 
 		if error_on_none:
-			raise UserError("I'm not in a voice channel on this server. Do `{}summon` to put me in one.".format(self.bot.command_prefix))
+			raise UserError("I'm not in a voice channel on this server. Have an admin do `{}summon` to put me in one.".format(self.bot.command_prefix))
 		else:
 			return None
 
@@ -377,10 +379,11 @@ class Audio(MangoCog):
 		await self.play_clip("local:later{}".format(randint(1,19)))
 
 
-	#@checks.is_owner()
+	@checks.is_admin()
 	@commands.command(pass_context=True, hidden=True)
 	async def summon(self, ctx):
-		"""Summons the bot to the voice channel you are currently in"""
+		"""Summons the bot to the voice channel you are currently in
+		(Requires administrator privilages)"""
 		new_channel = ctx.message.author.voice.voice_channel
 		if new_channel is None:
 			raise UserError("You are not currently in a voice channel")

@@ -8,18 +8,20 @@ from __main__ import botdata
 #          https://github.com/Rapptz/RoboDanny/tree/async
 #
 
-# This has problems because this cant be async but we need it to be to get appinfo
-async def is_owner_check(ctx):
-	appinfo = await ctx.bot.application_info()
-	return ctx.message.author.id == appinfo.owner.id
+def is_owner_check(author):
+    return author.id == '152151513232310272'
 
 def is_owner():
-	return commands.check(is_owner_check)
+    return commands.check(lambda ctx: is_owner_check(ctx.message.author))
 
+def is_admin_check(channel, author):
+	if is_owner_check(author):
+		return True
+	perms = channel.permissions_for(author)
+	return perms.administrator
 
-async def isnt_banned(ctx):
-	user_id = ctx.message.author.id
-	return not botdata.userinfo(user_id).banned
+def is_admin():
+	return commands.check(lambda ctx: is_admin_check(ctx.message.channel, ctx.message.author))
 
-def isnt_banned():
-	return commands.check(is_owner_check)
+def is_not_PM():
+	return commands.check(lambda ctx: not ctx.message.channel.is_private)

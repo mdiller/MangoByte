@@ -1,5 +1,6 @@
 from .helpers import *
 import os
+import discord
 from collections import OrderedDict
 
 
@@ -12,8 +13,7 @@ class UserInfo:
 				("discord", self.discord),
 				("steam64", None),
 				("intro", ""),
-				("outro", ""),
-				("banned", False)
+				("outro", "")
 			]))
 			self.botdata.save_data()
 
@@ -62,15 +62,6 @@ class UserInfo:
 		self.json_data["outro"] = value
 		self.botdata.save_data()
 
-	@property
-	def banned(self):
-		return self.json_data.get("banned", False)
-
-	@banned.setter
-	def banned(self, value):
-		self.json_data["banned"] = value
-		self.botdata.save_data()
-
 	
 class ServerInfo:
 	def __init__(self, botdata, serverid):
@@ -81,7 +72,8 @@ class ServerInfo:
 				("id", self.id),
 				("voicechannel", None),
 				("reactions", False),
-				("invalidcommands", False)
+				("invalidcommands", False),
+				("banned_users", [])
 			]))
 			self.botdata.save_data()
 
@@ -110,6 +102,24 @@ class ServerInfo:
 	def invalidcommands(self):
 		return self.json_data.get("invalidcommands", False)
 
+	def is_banned(self, user):
+		return user.id in self.json_data.get("banned_users", [])
+
+	def botban(self, user):
+		if self.json_data.get("banned_users") is None:
+			self.json_data["banned_users"] = []
+		if user.id not in self.json_data["banned_users"]:
+			self.json_data["banned_users"].append(user.id)
+			self.botdata.save_data()
+
+	def botunban(self, user):
+		if self.json_data.get("banned_users") is None:
+			self.json_data["banned_users"] = []
+		if user.id in self.json_data["banned_users"]:
+			self.json_data["banned_users"].remove(user.id)
+			self.botdata.save_data()
+
+
 
 class BotData:
 	def __init__(self):
@@ -132,9 +142,13 @@ class BotData:
 		write_json(self.path, self.json_data)
 
 	def userinfo(self, userid):
+		if isinstance(userid, discord.User):
+			userid = userid.id
 		return UserInfo(self, userid)
 
 	def serverinfo(self, serverid):
+		if isinstance(serverid, discord.Server):
+			serverid = serverid.id
 		return ServerInfo(self, serverid)
 
 	def serverinfo_list(self):
