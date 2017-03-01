@@ -239,7 +239,7 @@ class Audio(MangoCog):
 	async def replay(self, ctx):
 		"""Replays the last played clip
 		"""
-		last_clip = (await self.audioplayer()).last_clip()
+		last_clip = (await self.audioplayer()).last_clip
 		if last_clip == None:
 			await self.bot.say("Nobody said anythin' yet")
 			return
