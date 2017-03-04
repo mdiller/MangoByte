@@ -228,7 +228,7 @@ class DotaStats(MangoCog):
 		our_heroes = []
 		their_heroes = []
 		for player in players:
-			if player['lane'] == laneid:
+			if player['lane'] == laneid and not player.get('is_roaming', False):
 				if (player['isRadiant'] == is_radiant): #on our team
 					if player['lane_efficiency'] > our_eff:
 						our_eff = player['lane_efficiency']
