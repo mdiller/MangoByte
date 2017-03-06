@@ -11,6 +11,7 @@ import datetime
 import json
 import re
 import os
+import urllib
 from .mangocog import *
 
 async def opendota_query(querystring):
@@ -72,7 +73,7 @@ def get_pretty_duration(duration, postfix=True):
 
 
 def is_parsed(match_json):
-	return match_json.get("radiant_gold_adv", None) is not None
+	return match_json.get("version", None) is not None
 
 # gets the steam32 id from the user or steamid and checks that it is valid before returning
 async def get_check_steamid(steamid, ctx=None):
@@ -505,8 +506,8 @@ class DotaStats(MangoCog):
 		if not match or int(match.group(1)) > 100:
 			await self.bot.say("You gotta give a reasonable limit for these queries, otherwise they will not complete. Try adding `limit 10` to the end of that.")
 			return
-		query = "/explorer?sql={}".format(html.escape(sql))
-		query = query.replace(" ", "%20")
+		query = "/explorer?sql={}".format(urllib.parse.quote(sql, safe=''))
+		print(query)
 
 		await self.bot.send_typing(ctx.message.channel)
 		data = await opendota_query(query)
