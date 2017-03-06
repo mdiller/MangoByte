@@ -291,7 +291,7 @@ class DotaStats(MangoCog):
 					"More info at [DotaBuff](https://www.dotabuff.com/matches/{3}) or [OpenDota](https://www.opendota.com/matches/{3}) "
 					.format(winstatus, hero_name, get_pretty_duration(game['duration'], postfix=False), matchid))
 
-		embed = discord.Embed(description=description)
+		embed = discord.Embed(description=description, timestamp=datetime.datetime.utcfromtimestamp(game['start_time']))
 
 		embed.set_author(name=player['personaname'], icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
 
@@ -308,7 +308,7 @@ class DotaStats(MangoCog):
 			"Level: {level}\n".format(**player)))
 
 		embed.set_image(url=await get_match_image(matchid, is_parsed(game)))
-		embed.set_footer(text="For a story of the game, try ?matchstory {}".format(matchid))
+		embed.set_footer(text="Started".format(matchid))
 
 		await self.bot.say(embed=embed)
 
@@ -360,9 +360,11 @@ class DotaStats(MangoCog):
 			await self.bot.say("Looks like thats not a valid match id")
 			return
 
-		embed = discord.Embed(description="For more information, check [OpenDota](https://www.opendota.com/matches/{0}) or [DotaBuff](https://www.dotabuff.com/matches/{0})".format(match_id)) 
+		embed = discord.Embed(description="For more information, check [OpenDota](https://www.opendota.com/matches/{0}) or [DotaBuff](https://www.dotabuff.com/matches/{0})".format(match_id), 
+							timestamp=datetime.datetime.utcfromtimestamp(game['start_time']))
 		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
 		embed.set_image(url=await get_match_image(match_id, is_parsed(game)))
+		embed.set_footer(text="Started")
 		await self.bot.say(embed=embed)
 
 	@commands.command(pass_context=True)
