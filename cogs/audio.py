@@ -48,10 +48,13 @@ class AudioPlayer:
 	def __init__(self, bot, server):
 		self.bot = bot
 		self.server = server
-		self.voice = None
 		self.player = None
 		self.clipqueue = queue.Queue()
 		self.last_clip = None
+
+	@property
+	def voice(self):
+		return next((voice for voice in self.bot.voice_clients if voice.server == self.server), None)
 
 	@property
 	def voice_channel(self):
@@ -66,7 +69,7 @@ class AudioPlayer:
 			channel = self.bot.get_channel(channel)
 
 		if self.voice is None:
-			self.voice = await self.bot.join_voice_channel(channel)
+			await self.bot.join_voice_channel(channel)
 		else:
 			await self.voice.move_to(channel)
 
