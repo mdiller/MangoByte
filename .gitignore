@@ -95,6 +95,7 @@ settings.json
 tmpfile
 
 resource/temp
+resource/cache
 
 resource/clips/*
 !resource/clips/dota/

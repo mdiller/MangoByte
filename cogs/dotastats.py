@@ -12,6 +12,8 @@ import json
 import re
 import os
 import urllib
+import functools
+from types import *
 from .mangocog import *
 
 async def opendota_query(querystring):
@@ -26,6 +28,21 @@ async def opendota_query(querystring):
 		else:
 			print("OpenDota api errored on GET: '{}'".format(url))
 			raise UserError("OpenDota said we did things wrong 😢. status code: {}".format(r.status))
+
+# rate_limit = false if this is the only query we're sending
+async def get_match(match_id, rate_limit=True):
+	match_file = f"{settings.resourcedir}cache/match_{match_id}.json"
+	if os.path.isfile(match_file):
+		return helpers.read_json(match_file)
+	else:
+		if rate_limit:
+			await asyncio.sleep(1)
+		match = await opendota_query("/matches/{}".format(match_id))
+		if match.get("version", None) is not None:
+			if not os.path.exists(os.path.dirname(match_file)):
+				os.makedirs(os.path.dirname(match_file))
+			helpers.write_json(match_file, match)
+		return match
 
 async def get_match_image(matchid, is_parsed):
 	# Make sure to check that the match id is valid before calling this
@@ -249,7 +266,7 @@ class DotaStats(MangoCog):
 		story = ""
 		lanes = {1: "bottom", 2: "middle", 3: "top"}
 		for laneid in lanes:
-		 	story += "• {0[us]} {0[won_lost]} {1} lane vs {0[them]}\n".format(await self.get_lane_story(game['players'], laneid, is_radiant), lanes[laneid])
+			story += "• {0[us]} {0[won_lost]} {1} lane vs {0[them]}\n".format(await self.get_lane_story(game['players'], laneid, is_radiant), lanes[laneid])
 		return story
 
 	async def tell_match_story(self, game, is_radiant, perspective):
@@ -276,7 +293,7 @@ class DotaStats(MangoCog):
 
 	# prints the stats for the given player's latest game
 	async def player_match_stats(self, steamid, matchid):
-		game = await opendota_query("/matches/{}".format(matchid))
+		game = await get_match(matchid)
 
 		# Finds the player in the game which has our matching steam32 id
 		player = next(p for p in game['players'] if p['account_id'] == steamid)
@@ -356,7 +373,7 @@ class DotaStats(MangoCog):
 		"""Gets a summary of the dota match with the given id"""
 		await self.bot.send_typing(ctx.message.channel)
 		try:
-			game = await opendota_query("/matches/{}".format(match_id))
+			game = await get_match(matchid)
 		except UserError:
 			await self.bot.say("Looks like thats not a valid match id")
 			return
@@ -379,7 +396,7 @@ class DotaStats(MangoCog):
 		else:
 			raise UserError("Perspective must be either radiant or dire")
 		try:
-			game = await opendota_query("/matches/{}".format(match_id))
+			game = await get_match(match_id, False)
 		except UserError:
 			await self.bot.say("Looks like thats not a valid match id")
 			return
@@ -395,7 +412,7 @@ class DotaStats(MangoCog):
 		steamid = await get_check_steamid(player, ctx)
 		try:
 			match_id = (await opendota_query("/players/{}/matches?limit=1".format(steamid)))[0]['match_id']
-			game = await opendota_query("/matches/{}".format(match_id))
+			game = await get_match(match_id, False)
 		except UserError:
 			await self.bot.say("I can't find the last game this player played")
 			return
@@ -464,6 +481,100 @@ class DotaStats(MangoCog):
 		embed.add_field(name="Heroes", inline=False, value=(
 			"[Recent Favs](https://www.opendota.com/players/{0}/heroes?date=60) {1}\n"
 			"[Overall Favs](https://www.opendota.com/players/{0}/heroes) {2}\n".format(steam32, recent_favs, favs)))
+
+		await self.bot.say(embed=embed)
+
+	@commands.command(pass_context=True)
+	async def playerstats(self, ctx, *, player=None):
+		"""Gets stats from the given player's last 20 parsed games
+
+		Note that this only cares about parsed games, and unparsed games will be ignored
+		If the player has less than 20 parsed matches, we'll use all the parsed matches available"""
+		steam32 = await get_check_steamid(player, ctx)
+		await self.bot.send_typing(ctx.message.channel)
+
+		playerinfo = await opendota_query(f"/players/{steam32}")
+		player_matches = await opendota_query(f"/players/{steam32}/matches")
+		matches = []
+		i = 0
+		while i < len(player_matches) and len(matches) < 20:
+			if player_matches[i].get('version', None) is not None:
+				match = await get_match(player_matches[i]['match_id'])
+				matches.append(next(p for p in match['players'] if p['account_id'] == steam32))
+				for player in match['players']:
+					if player['party_id'] == matches[-1]['party_id']:
+						matches[-1]['party_size'] = matches[-1].get('party_size', 0) + 1
+				await self.bot.send_typing(ctx.message.channel)
+			i += 1
+		if len(matches) < 2:
+			await self.bot.say("Not enough parsed matches!")
+			return
+
+		embed = discord.Embed(description=f"*The following are averages and percentages based on the last {len(matches)} parsed matches*")
+
+		embed.set_author(
+			name=playerinfo["profile"]["personaname"], 
+			icon_url=playerinfo["profile"]["avatar"], 
+			url=f"https://www.opendota.com/players/{steam32}")
+
+		def avg(key, round_place=0, per_min=False):
+			x = 0
+			for match in matches:
+				if isinstance(key, LambdaType):
+					val = key(match)
+				else:
+					val = match.get(key)
+				if per_min:
+					x += val / (match['duration'] / 60)
+				else:
+					x += val
+			x = round(x / len(matches), round_place)
+			return int(x) if round_place == 0 else x
+
+		def percent(key, round_place=0):
+			count = 0
+			for match in matches:
+				if isinstance(key, LambdaType):
+					success = key(match)
+				else:
+					success = match.get(key)
+				if success:
+					count += 1
+			count = round((count * 100) / len(matches), round_place)
+			return int(count) if round_place == 0 else count
+
+		embed.add_field(name="General", value=(
+			f"Winrate: {percent('win')}%\n"
+			f"KDA: **{avg('kills')}**/**{avg('deaths')}**/**{avg('assists')}**\n"
+			f"In a Party: {percent(lambda p: p['party_size'] > 1)}%"))
+
+		embed.add_field(name="Economy", value=(
+			f"GPM: {avg('gold_per_min')}\n"
+			f"Last Hits/min: {avg('last_hits', 2, True)}\n"
+			f"Farm from jungle: {avg(lambda p: 100 * p['neutral_kills'] / p['last_hits'])}%"))
+
+		embed.add_field(name="Wards placed", value=(
+			f"None: {percent(lambda p: p['obs_placed'] + p['sen_placed'] == 0)}%\n"
+			f"<5: {percent(lambda p: p['obs_placed'] + p['sen_placed'] < 5 and p['obs_placed'] + p['sen_placed'] != 0)}%\n"
+			f"<20: {percent(lambda p: p['obs_placed'] + p['sen_placed'] < 20 and p['obs_placed'] + p['sen_placed'] >= 5)}%\n"
+			f">=20: {percent(lambda p: p['obs_placed'] + p['sen_placed'] >= 20)}%"))
+
+		embed.add_field(name="Hero Types", value=(
+			f"{self.get_emoji('attr_str')} {percent(lambda p: self.hero_info[p['hero_id']]['attr'] == 'str')}%\n"
+			f"{self.get_emoji('attr_agi')} {percent(lambda p: self.hero_info[p['hero_id']]['attr'] == 'agi')}%\n"
+			f"{self.get_emoji('attr_int')} {percent(lambda p: self.hero_info[p['hero_id']]['attr'] == 'int')}%"))
+
+		embed.add_field(name="Laning", value=(
+			f"Safe Lane: {percent(lambda p: p['lane_role'] == 1 and not p.get('is_roaming'))}%\n"
+			f"Mid Lane: {percent(lambda p: p['lane_role'] == 2 and not p.get('is_roaming'))}%\n"
+			f"Off Lane: {percent(lambda p: p['lane_role'] == 3 and not p.get('is_roaming'))}%\n"
+			f"Jungle: {percent(lambda p: p['lane_role'] == 4 and not p.get('is_roaming'))}%\n"
+			f"Safe Lane: {percent(lambda p: p.get('is_roaming'))}%\n"))
+
+		embed.add_field(name="Other", value=(
+			f"Trees eaten: {avg(lambda p: p['item_uses'].get('tango', 0))}"))
+
+		# in a group
 
 		await self.bot.say(embed=embed)
 

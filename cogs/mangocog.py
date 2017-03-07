@@ -7,6 +7,10 @@ from cogs.utils.clip import *
 class MangoCog:
 	def __init__(self, bot):
 		self.bot = bot
+		self.emoji_dict = read_json(f"{settings.resourcedir}ai/emoji.json")
+
+	def get_emoji(self, key):
+		return self.emoji_dict.get(key, f":{key}:")
 
 	async def get_clip_try_types(self, clipid, trytypes=""):
 		trytypes = trytypes.split("|")

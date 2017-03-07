@@ -43,7 +43,7 @@ help          | Shows this message.
 
 Before installing and running your own instance of mangobyte, you will first need to install the following:
 
-* Python 3.5
+* Python 3.6
 * Pip
 * [dotabase](https://github.com/mdiller/dotabase)
 * [discord.py](https://github.com/Rapptz/discord.py)

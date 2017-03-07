@@ -91,7 +91,12 @@ class Dotabase(MangoCog):
 			result[hero.id] = {
 				"name": hero.localized_name,
 				"full_name": hero.full_name,
-				"icon": self.vpkurl + hero.icon
+				"icon": self.vpkurl + hero.icon,
+				"attr": {
+					"DOTA_ATTRIBUTE_STRENGTH": "str",
+					"DOTA_ATTRIBUTE_AGILITY": "agi",
+					"DOTA_ATTRIBUTE_INTELLECT": "int"
+				}[hero.attr_primary]
 			}
 			#this to replace the ones below
 		return result
