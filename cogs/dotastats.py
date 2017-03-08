@@ -494,16 +494,18 @@ class DotaStats(MangoCog):
 		await self.bot.send_typing(ctx.message.channel)
 
 		playerinfo = await opendota_query(f"/players/{steam32}")
-		player_matches = await opendota_query(f"/players/{steam32}/matches")
+		matches_info = await opendota_query(f"/players/{steam32}/matches")
+		player_matches = []
 		matches = []
 		i = 0
-		while i < len(player_matches) and len(matches) < 20:
-			if player_matches[i].get('version', None) is not None:
-				match = await get_match(player_matches[i]['match_id'])
-				matches.append(next(p for p in match['players'] if p['account_id'] == steam32))
+		while i < len(matches_info) and len(player_matches) < 20:
+			if matches_info[i].get('version', None) is not None:
+				match = await get_match(matches_info[i]['match_id'])
+				player_matches.append(next(p for p in match['players'] if p['account_id'] == steam32))
+				matches.append(match)
 				for player in match['players']:
-					if player['party_id'] == matches[-1]['party_id']:
-						matches[-1]['party_size'] = matches[-1].get('party_size', 0) + 1
+					if player['party_id'] == player_matches[-1]['party_id']:
+						player_matches[-1]['party_size'] = player_matches[-1].get('party_size', 0) + 1
 				await self.bot.send_typing(ctx.message.channel)
 			i += 1
 		if len(matches) < 2:
@@ -517,40 +519,51 @@ class DotaStats(MangoCog):
 			icon_url=playerinfo["profile"]["avatar"], 
 			url=f"https://www.opendota.com/players/{steam32}")
 
-		def avg(key, round_place=0, per_min=False):
+		def avg(key, round_place=0):
 			x = 0
-			for match in matches:
+			for player in player_matches:
 				if isinstance(key, LambdaType):
-					val = key(match)
+					val = key(player)
 				else:
-					val = match.get(key)
-				if per_min:
-					x += val / (match['duration'] / 60)
-				else:
-					x += val
-			x = round(x / len(matches), round_place)
+					val = player.get(key)
+				x += val
+			x = round(x / len(player_matches), round_place)
 			return int(x) if round_place == 0 else x
 
 		def percent(key, round_place=0):
 			count = 0
-			for match in matches:
+			for player in player_matches:
 				if isinstance(key, LambdaType):
-					success = key(match)
+					success = key(player)
 				else:
-					success = match.get(key)
+					success = player.get(key)
 				if success:
 					count += 1
-			count = round((count * 100) / len(matches), round_place)
+			count = round((count * 100) / len(player_matches), round_place)
 			return int(count) if round_place == 0 else count
+
+		message_count = 0
+		longest_message = None
+		for match in matches:
+			player = next(p for p in match['players'] if p['account_id'] == steam32)
+			for message in match['chat']:
+				if message.get('player_slot', -1) == player['player_slot']:
+					message_count += 1
+					if longest_message is None or len(longest_message) <= len(message['key']):
+						longest_message = message['key']
+		if longest_message is not None:
+			longest_message = f"Longest Chat Message: \"{longest_message}\""
 
 		embed.add_field(name="General", value=(
 			f"Winrate: {percent('win')}%\n"
 			f"KDA: **{avg('kills')}**/**{avg('deaths')}**/**{avg('assists')}**\n"
-			f"In a Party: {percent(lambda p: p['party_size'] > 1)}%"))
+			f"Game duration: {get_pretty_duration(avg('duration'))}\n"
+			f"In a Party: {percent(lambda p: p['party_size'] > 1)}%\n"
+			f"Ranked: {percent(lambda p: p['lobby_type'] == 7)}%"))
 
 		embed.add_field(name="Economy", value=(
 			f"GPM: {avg('gold_per_min')}\n"
-			f"Last Hits/min: {avg('last_hits', 2, True)}\n"
+			f"Last Hits/min: {avg(lambda p: p['last_hits'] / p['duration'], 2)}\n"
 			f"Farm from jungle: {avg(lambda p: 100 * p['neutral_kills'] / p['last_hits'])}%"))
 
 		embed.add_field(name="Wards placed", value=(
@@ -569,10 +582,16 @@ class DotaStats(MangoCog):
 			f"Mid Lane: {percent(lambda p: p['lane_role'] == 2 and not p.get('is_roaming'))}%\n"
 			f"Off Lane: {percent(lambda p: p['lane_role'] == 3 and not p.get('is_roaming'))}%\n"
 			f"Jungle: {percent(lambda p: p['lane_role'] == 4 and not p.get('is_roaming'))}%\n"
-			f"Safe Lane: {percent(lambda p: p.get('is_roaming'))}%\n"))
+			f"Roaming: {percent(lambda p: p.get('is_roaming'))}%\n"))
+
+		embed.add_field(name="Communication", value=(
+			f"Pings: {avg('pings')}\n"
+			f"Chat Messages: {message_count}\n"
+			f"{longest_message}"))
 
 		embed.add_field(name="Other", value=(
-			f"Trees eaten: {avg(lambda p: p['item_uses'].get('tango', 0))}"))
+			f"Trees eaten: {avg(lambda p: p['item_uses'].get('tango', 0))}\n"
+			f"TPs used: {avg(lambda p: p['item_uses'].get('tpscroll', 0))}"))
 
 		# in a group
 
