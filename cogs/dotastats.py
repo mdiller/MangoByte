@@ -570,7 +570,7 @@ class DotaStats(MangoCog):
 
 		embed.add_field(name="Economy", value=(
 			f"GPM: {avg('gold_per_min')}\n"
-			f"Last Hits/min: {avg(lambda p: p['last_hits'] / p['duration'], 2)}\n"
+			f"Last Hits/min: {avg(lambda p: p['last_hits'] / (p['duration'] / 60), 2)}\n"
 			f"Farm from jungle: {avg(lambda p: 100 * p['neutral_kills'] / p['last_hits'])}%"))
 
 		embed.add_field(name="Wards placed", value=(
