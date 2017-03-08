@@ -373,7 +373,7 @@ class DotaStats(MangoCog):
 		"""Gets a summary of the dota match with the given id"""
 		await self.bot.send_typing(ctx.message.channel)
 		try:
-			game = await get_match(matchid)
+			game = await get_match(match_id)
 		except UserError:
 			await self.bot.say("Looks like thats not a valid match id")
 			return
