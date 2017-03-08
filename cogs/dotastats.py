@@ -88,6 +88,12 @@ def get_pretty_duration(duration, postfix=True):
 		format_str += " in" if is_after else " before the game started"
 	return format_str.format(**time)
 
+def format_duration_simple(duration):
+	if duration >= 3600:
+		return f"{int(duration / 3600)}:{int((duration / 60) % 60):02}:{duration % 60:02}"
+	else:
+		return f"{int((duration / 60) % 60)}:{duration % 60:02}"
+
 
 def is_parsed(match_json):
 	return match_json.get("version", None) is not None
@@ -525,7 +531,7 @@ class DotaStats(MangoCog):
 				if isinstance(key, LambdaType):
 					val = key(player)
 				else:
-					val = player.get(key)
+					val = player.get(key, 0)
 				x += val
 			x = round(x / len(player_matches), round_place)
 			return int(x) if round_place == 0 else x
@@ -536,7 +542,7 @@ class DotaStats(MangoCog):
 				if isinstance(key, LambdaType):
 					success = key(player)
 				else:
-					success = player.get(key)
+					success = player.get(key, 0)
 				if success:
 					count += 1
 			count = round((count * 100) / len(player_matches), round_place)
@@ -551,13 +557,14 @@ class DotaStats(MangoCog):
 					message_count += 1
 					if longest_message is None or len(longest_message) <= len(message['key']):
 						longest_message = message['key']
+		message_count = int(round(message_count / len(matches)))
 		if longest_message is not None:
 			longest_message = f"Longest Chat Message: \"{longest_message}\""
 
 		embed.add_field(name="General", value=(
 			f"Winrate: {percent('win')}%\n"
 			f"KDA: **{avg('kills')}**/**{avg('deaths')}**/**{avg('assists')}**\n"
-			f"Game duration: {get_pretty_duration(avg('duration'))}\n"
+			f"Game duration: {format_duration_simple(avg('duration'))}\n"
 			f"In a Party: {percent(lambda p: p['party_size'] > 1)}%\n"
 			f"Ranked: {percent(lambda p: p['lobby_type'] == 7)}%"))
 
@@ -584,14 +591,14 @@ class DotaStats(MangoCog):
 			f"Jungle: {percent(lambda p: p['lane_role'] == 4 and not p.get('is_roaming'))}%\n"
 			f"Roaming: {percent(lambda p: p.get('is_roaming'))}%\n"))
 
+		embed.add_field(name="Other", value=(
+			f"Trees eaten: {avg(lambda p: p['item_uses'].get('tango', 0))}\n"
+			f"TPs used: {avg(lambda p: p['item_uses'].get('tpscroll', 0))}"))
+
 		embed.add_field(name="Communication", value=(
 			f"Pings: {avg('pings')}\n"
 			f"Chat Messages: {message_count}\n"
 			f"{longest_message}"))
-
-		embed.add_field(name="Other", value=(
-			f"Trees eaten: {avg(lambda p: p['item_uses'].get('tango', 0))}\n"
-			f"TPs used: {avg(lambda p: p['item_uses'].get('tpscroll', 0))}"))
 
 		# in a group
 
