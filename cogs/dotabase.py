@@ -67,8 +67,9 @@ def extract_var(words, variables):
 
 
 class Dotabase(MangoCog):
-	"""Commands for interfacing with Dotabase. Check out [Dotabase.me](http://dotabase.me) if you want to see a website that interfaces with Dotabase.
-	"""
+	"""Dota hero response commands
+
+	Interfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.me](http://dotabase.me) if you want to see a website that interfaces with dotabase."""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 		self.criteria_aliases = read_json(settings.resourcedir + "ai/criteria_aliases.json")

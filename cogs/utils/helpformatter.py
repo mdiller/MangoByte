@@ -15,6 +15,8 @@ class MangoHelpFormatter(HelpFormatter):
 			results.append(entry)
 		return "\n".join(results)
 
+	def cog_short_doc(self, cog):
+		return re.sub("\{cmdpfx\}", self.command.command_prefix, inspect.getdoc(cog).split('\n')[0])
 
 	def format_as_embed(self, context, command_or_bot, show_all=False):
 		self.context = context
@@ -42,8 +44,7 @@ class MangoHelpFormatter(HelpFormatter):
 				embed = self.embed_description(self.command.description + "\n\nTo get more information about a specific category, try `{cmdpfx}help <category>`")
 				embed.set_author(name=self.command.user.name, icon_url=self.command.user.avatar_url, url="https://github.com/mdiller/MangoByte")
 				for cog in self.command.cogs:
-					description = re.sub("\{cmdpfx\}", self.command.command_prefix, inspect.getdoc(self.command.cogs[cog]))
-					embed.add_field(name=f"**{cog}**", value=description)
+					embed.add_field(name=f"**{cog}**", value=self.cog_short_doc(self.command.cogs[cog]))
 		else:
 			# This is a cog
 			embed = self.embed_description(inspect.getdoc(self.command))

@@ -11,15 +11,17 @@ from .mangocog import *
 
 
 class General(MangoCog):
-	"""Basic commands used to interface with me and admin commands used to stop people from ruining things"""
+	"""Basic and admin commands
+
+	These commands are primarily used to stop people from ruining things"""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 
 	@commands.command(pass_context=True)
 	async def ping(self, ctx, count : int=1):
-		"""Pings a number of times(within reason)
+		"""Pongs a number of times(within reason)
 
-		Pings... a number of times.... within reason. *glares at blanedale*"""
+		Pongs... a number of times.... within reason. *glares at blanedale*"""
 		if count < 1:
 			await self.bot.say("thats not enough pings. stahp trying to break me.😠")
 			return
@@ -29,7 +31,7 @@ class General(MangoCog):
 
 		ping_string = ""
 		for i in range(0, count):
-			ping_string += "Ping "
+			ping_string += "pong "
 		await self.bot.say(ping_string)
 
 	@commands.command(pass_context=True)
