@@ -110,7 +110,7 @@ class AudioPlayer:
 
 
 class Audio(MangoCog):
-	"""Commands used to play audio"""
+	"""For playing audio in a voice channel. For dota-related audio commands, see Dotabase"""
 
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)

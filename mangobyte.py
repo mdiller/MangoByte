@@ -12,10 +12,8 @@ settings = Settings()
 
 from cogs.utils.clip import *# This has to be done after loading settings
 
-description = """**MangoByte** - The juiciest unsigned 8 bit integer you eva gonna see
-				For more info about Mangobyte, try `{cmdpfx}info`
-				
-				To get more information about a specific command, try `{cmdpfx}help <command>`"""
+description = """The juiciest unsigned 8 bit integer you is eva gonna see.
+				For more information about me, try `{cmdpfx}info`"""
 
 bot = commands.Bot(command_prefix='?', formatter=MangoHelpFormatter(), description=description)
 bot.remove_command("help")

@@ -11,8 +11,7 @@ from .mangocog import *
 
 
 class General(MangoCog):
-	"""General Commands
-	"""
+	"""Basic commands used to interface with me and admin commands used to stop people from ruining things"""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 
@@ -141,13 +140,17 @@ class General(MangoCog):
 			return _mentions_transforms.get(obj.group(0), '')
 
 		# help by itself just lists our own commands.
-		if command is None:
-			embed = self.bot.formatter.format_as_embed(ctx, self.bot)
+		if command == "all":
+			embed = self.bot.formatter.format_as_embed(ctx, self.bot, True)
+		elif command == None:
+			embed = self.bot.formatter.format_as_embed(ctx, self.bot, False)
 		else:
 			# try to see if it is a cog name
 			name = _mention_pattern.sub(repl, command)
-			if name in self.bot.cogs:
-				command = self.bot.cogs[name]
+			if name in map(lambda c: c.lower(), self.bot.cogs):
+				for cog in self.bot.cogs:
+					if cog.lower() == name:
+						command = self.bot.cogs[cog]
 			else:
 				command = self.bot.commands.get(name)
 				if command is None:

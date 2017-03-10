@@ -157,7 +157,7 @@ def format_teamfight(teamfight):
 
 
 class DotaStats(MangoCog):
-	"""Commands used to access Dota 2 players' stats. Most of the data for this is collected through the [OpenDota API](https://docs.opendota.com/)"""
+	"""Used to access Dota 2 players' stats. Most of the data for this is collected through the [OpenDota API](https://docs.opendota.com/)"""
 
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
