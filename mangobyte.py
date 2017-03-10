@@ -6,6 +6,9 @@ from cogs.utils.helpformatter import MangoHelpFormatter
 import asyncio
 import string
 from discord.ext import commands
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 botdata = BotData()
 settings = Settings()
