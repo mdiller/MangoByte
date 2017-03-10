@@ -400,7 +400,6 @@ class Audio(MangoCog):
 			raise UserError("You are not currently in a voice channel on this server")
 
 		await self.connect_voice(new_channel)
-		botdata.serverinfo(new_channel.server.id).voicechannel = new_channel.id
 
 	@checks.is_admin()
 	@checks.is_not_PM()
@@ -444,6 +443,9 @@ class Audio(MangoCog):
 		if after.voice_channel is not None:
 			afterplayer = await self.audioplayer(after.voice_channel, error_on_none=False)
 			if afterplayer is not None and afterplayer.voice_channel == after.voice_channel:
+				if after.id == self.bot.user.id:
+					botdata.serverinfo(after.voice_channel.server.id).voicechannel = after.voice_channel.id
+
 				text = await self.fix_name(after.name)
 				print(text + " joined the channel")
 				introclip = "local:helloits"

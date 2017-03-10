@@ -37,7 +37,8 @@ async def on_ready():
 	
 	for server in bot.servers:
 		if server.me.server_permissions.change_nickname:
-			await bot.change_nickname(server.me, bot.user.name + " v" + get_version())
+			if server.me.nick is None or server.me.nick.startswith(bot.user.name):
+				await bot.change_nickname(server.me, bot.user.name + " v" + get_version())
 
 async def get_cmd_signature(ctx):
 	bot.formatter.context = ctx
