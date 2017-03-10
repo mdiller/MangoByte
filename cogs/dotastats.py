@@ -16,8 +16,10 @@ import functools
 from types import *
 from .mangocog import *
 
-async def opendota_query(querystring):
+async def opendota_query(querystring, rate_limit=True):
 	url = "https://api.opendota.com/api" + querystring
+	if rate_limit:
+		await asyncio.sleep(1)
 	async with aiohttp.get(url) as r:
 		if r.status == 200:
 			return json.loads(await r.text(), object_pairs_hook=OrderedDict)
@@ -35,9 +37,7 @@ async def get_match(match_id, rate_limit=True):
 	if os.path.isfile(match_file):
 		return helpers.read_json(match_file)
 	else:
-		if rate_limit:
-			await asyncio.sleep(1)
-		match = await opendota_query("/matches/{}".format(match_id))
+		match = await opendota_query("/matches/{}".format(match_id), rate_limit)
 		if match.get("version", None) is not None:
 			if not os.path.exists(os.path.dirname(match_file)):
 				os.makedirs(os.path.dirname(match_file))
@@ -114,7 +114,8 @@ async def get_check_steamid(steamid, ctx=None):
 		if steamid > 76561197960265728:
 			steamid -= 76561197960265728
 
-		player = await opendota_query("/players/{}".format(steamid))
+		# Don't have to rate limit here because this will be first query ran
+		player = await opendota_query("/players/{}".format(steamid), rate_limit=False)
 
 		if player.get("profile") is None:
 			raise UserError("Either this person doesnt play dota, or they haven't enabled public match data")
@@ -498,6 +499,7 @@ class DotaStats(MangoCog):
 		If the player has less than 20 parsed matches, we'll use all the parsed matches available"""
 		steam32 = await get_check_steamid(player, ctx)
 		await self.bot.send_typing(ctx.message.channel)
+		await self.bot.add_reaction(ctx.message, "🤔")
 
 		playerinfo = await opendota_query(f"/players/{steam32}")
 		matches_info = await opendota_query(f"/players/{steam32}/matches")
@@ -515,8 +517,10 @@ class DotaStats(MangoCog):
 				await self.bot.send_typing(ctx.message.channel)
 			i += 1
 		if len(matches) < 2:
+			await self.bot.remove_reaction(ctx.message, "🤔")
 			await self.bot.say("Not enough parsed matches!")
 			return
+		await self.bot.remove_reaction(ctx.message, "🤔", self.bot.user)
 
 		embed = discord.Embed(description=f"*The following are averages and percentages based on the last {len(matches)} parsed matches*")
 
@@ -559,7 +563,7 @@ class DotaStats(MangoCog):
 						longest_message = message['key']
 		message_count = int(round(message_count / len(matches)))
 		if longest_message is not None:
-			longest_message = f"Longest Chat Message: \"{longest_message}\""
+			longest_message = f"\"{longest_message}\""
 
 		embed.add_field(name="General", value=(
 			f"Winrate: {percent('win')}%\n"
@@ -598,7 +602,7 @@ class DotaStats(MangoCog):
 		embed.add_field(name="Communication", value=(
 			f"Pings: {avg('pings')}\n"
 			f"Chat Messages: {message_count}\n"
-			f"{longest_message}"))
+			f"Longest Chat Message: {longest_message}"))
 
 		# in a group
 

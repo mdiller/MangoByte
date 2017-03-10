@@ -400,6 +400,7 @@ class Audio(MangoCog):
 			raise UserError("You are not currently in a voice channel on this server")
 
 		await self.connect_voice(new_channel)
+		botdata.serverinfo(new_channel.server.id).voicechannel = new_channel.id
 
 	@checks.is_admin()
 	@checks.is_not_PM()
