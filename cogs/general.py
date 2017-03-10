@@ -66,7 +66,7 @@ class General(MangoCog):
 		python_version = "[Python {}.{}.{}]({})".format(*os.sys.version_info[:3], "https://www.python.org/")
 		discordpy = "https://github.com/Rapptz/discord.py"
 
-		embed = discord.Embed(description="The juiciest unsigned 8 bit integer you eva gonna see")
+		embed = discord.Embed(description="The juiciest unsigned 8 bit integer you eva gonna see", color=discord.Color.green())
 
 		embed.set_author(name=ctx.message.channel.server.me.nick, icon_url=self.bot.user.avatar_url, url=github)
 

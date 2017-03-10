@@ -56,4 +56,4 @@ class MangoHelpFormatter(HelpFormatter):
 		if not description:
 			return discord.Embed()
 		description = re.sub("\{cmdpfx\}", self.context.bot.command_prefix, description)
-		return discord.Embed(description=description)
+		return discord.Embed(description=description, color=discord.Color.blue())

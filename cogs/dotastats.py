@@ -161,6 +161,7 @@ class DotaStats(MangoCog):
 
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
+		self.embed_color = discord.Color.teal()
 
 	async def init_dicts(self):
 		dotabase = self.bot.get_cog("Dotabase")
@@ -297,7 +298,7 @@ class DotaStats(MangoCog):
 		game_ending_state = "victory" if (is_radiant == game['radiant_win']) else "defeat"
 		story += "\nThe game ended in a {0} at {1}".format(game_ending_state, get_pretty_duration(game['duration']))
 
-		embed = discord.Embed(description=story)
+		embed = discord.Embed(description=story, color=self.embed_color)
 		embed.set_author(name="Story of Match {}".format(game["match_id"]), url="https://www.opendota.com/matches/{}".format(game["match_id"]))
 		embed.set_footer(text="For more information, try ?match {}".format(game["match_id"]))
 		await self.bot.say(embed=embed)
@@ -320,7 +321,7 @@ class DotaStats(MangoCog):
 					"More info at [DotaBuff](https://www.dotabuff.com/matches/{3}) or [OpenDota](https://www.opendota.com/matches/{3}) "
 					.format(winstatus, hero_name, get_pretty_duration(game['duration'], postfix=False), matchid))
 
-		embed = discord.Embed(description=description, timestamp=datetime.datetime.utcfromtimestamp(game['start_time']))
+		embed = discord.Embed(description=description, color=self.embed_color, timestamp=datetime.datetime.utcfromtimestamp(game['start_time']))
 
 		embed.set_author(name=player['personaname'], icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
 
@@ -390,7 +391,7 @@ class DotaStats(MangoCog):
 			return
 
 		embed = discord.Embed(description="For more information, check [OpenDota](https://www.opendota.com/matches/{0}) or [DotaBuff](https://www.dotabuff.com/matches/{0})".format(match_id), 
-							timestamp=datetime.datetime.utcfromtimestamp(game['start_time']))
+							timestamp=datetime.datetime.utcfromtimestamp(game['start_time']), color=self.embed_color)
 		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
 		embed.set_image(url=await get_match_image(match_id, is_parsed(game)))
 		embed.set_footer(text="Started")
@@ -472,7 +473,7 @@ class DotaStats(MangoCog):
 		recent_favs = recent_favs[:-2]
 
 
-		embed = discord.Embed()
+		embed = discord.Embed(color=self.embed_color)
 
 		embed.set_author(
 			name=playerinfo["profile"]["personaname"], 
@@ -526,7 +527,7 @@ class DotaStats(MangoCog):
 			return
 		await self.bot.remove_reaction(ctx.message, "🤔", self.bot.user)
 
-		embed = discord.Embed(description=f"*The following are averages and percentages based on the last {len(matches)} parsed matches*")
+		embed = discord.Embed(description=f"*The following are averages and percentages based on the last {len(matches)} parsed matches*", color=self.embed_color)
 
 		embed.set_author(
 			name=playerinfo["profile"]["personaname"], 
