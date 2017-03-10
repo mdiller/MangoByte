@@ -48,13 +48,17 @@ async def get_match_image(matchid, is_parsed):
 	# Make sure to check that the match id is valid before calling this
 	url = "http://dotabase.me/image-api/request.php?match={}".format(matchid)
 	url += "&parsed={}".format("true" if is_parsed else "false")
-	async with aiohttp.post(url) as r:
-		if r.status == 200:
-			data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
-			return data['file']
-		else:
-			print("Dotabase image-api errored on POST: '{}'".format(url))
-			raise UserError("Errored on generating match image".format(r.status))
+	try:
+		with async_timeout.timeout(8):
+			async with aiohttp.post(url) as r:
+				if r.status == 200:
+					data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
+					return data['file']
+				else:
+					print("Dotabase image-api errored on POST: '{}'".format(url))
+					raise UserError("Errored on generating match image".format(r.status))
+	except asyncio.TimeoutError:
+		raise UserError("TimeoutError while generating match image: try again")
 
 def s_if_plural(text, n):
 	return text + "s" if n > 1 else text
