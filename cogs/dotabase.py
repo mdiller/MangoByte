@@ -174,13 +174,15 @@ class Dotabase(MangoCog):
 			else:
 				return None
 
-		query = basequery.filter(Response.name == keyphrase)
-		if query.count() > 0:
-			return query
+		# Because some of wisp's responses are not named correctly
+		if '_' in keyphrase:
+			query = basequery.filter(Response.name == keyphrase)
+			if query.count() > 0:
+				return query
 
 		simple_input = " " + re.sub(r'[^a-z^0-9^A-Z^\s]', r'', keyphrase) + " "
 
-		query = basequery.filter(Response.text_simple  == simple_input)
+		query = basequery.filter(Response.text_simple == simple_input)
 		if query.count() > 0:
 			return query
 
