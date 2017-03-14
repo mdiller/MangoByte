@@ -122,7 +122,7 @@ async def get_check_steamid(steamid, ctx=None):
 		player = await opendota_query("/players/{}".format(steamid), rate_limit=False)
 
 		if player.get("profile") is None:
-			raise UserError("Either this person doesnt play dota, or they haven't enabled public match data")
+			raise UserError("Either this person doesn't play dota, or they haven't enabled public match data")
 		return steamid
 
 
@@ -130,14 +130,14 @@ async def get_check_steamid(steamid, ctx=None):
 		try:
 			steamid = commands.MemberConverter(ctx, steamid).convert()
 		except commands.BadArgument:
-			raise UserError("Ya gotta give me a steamid or a @reference to a user who has been linked to a steam id.")
+			raise UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me a steamid")
 
 	userinfo = botdata.userinfo(steamid.id)
 	if userinfo.steam32 is None:
 		if is_author:
-			raise UserError("Ya don't got a have a steamid linked to yer account. Yer gonna have to do `?setsteam <steamid>`.")
+			raise UserError("Yer steam account isn't linked to yer discord account yet.\nTry doin `?help setsteam` to see how to link a steam account.")
 		else:
-			raise UserError(steamid.name + " doesnt have a steamid linked. They're gonna have to do '?setsteam <steamid>' before you can do that.")
+			raise UserError(f"{steamid.name} doesn't have a steam account linked. They should try `?help setsteam` to see how to link their steam account.")
 	return userinfo.steam32
 
 
@@ -345,13 +345,16 @@ class DotaStats(MangoCog):
 		await self.bot.say(embed=embed)
 
 
-	@commands.command(pass_context=True)
+	@commands.command(pass_context=True, aliases=["register"])
 	async def setsteam(self, ctx, steam_id : int, user: discord.User=None):
 		"""Links a discord user to their steam/dota account
-
-		The user parameter can only be specified by the bot owner
+		*The user parameter can only be specified by the bot owner*
 		
-		An easy way get your steamid is to go to your dotabuff profile page and copy the number that is at the end of the url
+		You have to give this command either your steam32 or steam64 id. An easy way to find this is to look at the end of your dotabuff/opendota profile url.
+
+		**Example:**
+		If my dotabuff url is https://www.dotabuff.com/players/70388657
+		I would do: `{cmdpfx}setsteam 70388657`
 		"""
 
 		if user is None:
@@ -448,7 +451,7 @@ class DotaStats(MangoCog):
 	async def profile(self, ctx, player=None):
 		"""Displays information about the player's dota profile
 
-		The argument for this command can be either a steam32 id, a steam64 id, or an @reference to a discord user who has a steamid set"""
+		The argument for this command can be either a steam32 id, a steam64 id, or an @mention of a discord user who has a steamid set"""
 		steam32 = await get_check_steamid(player, ctx)
 
 		await self.bot.send_typing(ctx.message.channel)
