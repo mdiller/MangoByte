@@ -367,7 +367,7 @@ class DotaStats(MangoCog):
 		if steam_id > 76561197960265728:
 			steam_id -= 76561197960265728
 
-		player = await opendota_query("/players/{}".format(steam_id))
+		player = await opendota_query("/players/{}".format(steam_id), False)
 
 		if player.get("profile") is None:
 			raise UserError("Either thats a bad id, you don't play dota, or ya haven't enabled public match data")
@@ -382,7 +382,7 @@ class DotaStats(MangoCog):
 		"""Gets info about the player's last dota game"""
 		await self.bot.send_typing(ctx.message.channel)
 		steamid = await get_check_steamid(player, ctx)
-		matchid = (await opendota_query("/players/{}/matches?limit=1".format(steamid)))[0]["match_id"]
+		matchid = (await opendota_query("/players/{}/matches?limit=1".format(steamid), False))[0]["match_id"]
 		await self.player_match_stats(steamid, matchid)
 
 	@commands.command(pass_context=True, aliases=["matchdetails"])
@@ -456,12 +456,12 @@ class DotaStats(MangoCog):
 
 		await self.bot.send_typing(ctx.message.channel)
 
-		playerinfo = await opendota_query("/players/{}".format(steam32))
+		playerinfo = await opendota_query("/players/{}".format(steam32), False)
 		playerwl = await opendota_query("/players/{}/wl".format(steam32))
 		gamesplayed = playerwl["win"] + playerwl["lose"]
 		winrate = "{:.2%}".format(playerwl["win"] / gamesplayed)
 		if playerinfo.get("solo_competitive_rank") is not None:
-			solommr = "last displayed as {}".format(playerinfo["solo_competitive_rank"])
+			solommr = f"**{playerinfo['solo_competitive_rank']}**"
 		else:
 			solommr = "not publicly displayed"
 
@@ -477,7 +477,6 @@ class DotaStats(MangoCog):
 			recent_favs += self.hero_info[int(heroes[i]["hero_id"])]['name'] + ", "
 		recent_favs = recent_favs[:-2]
 
-
 		embed = discord.Embed(color=self.embed_color)
 
 		embed.set_author(
@@ -486,18 +485,30 @@ class DotaStats(MangoCog):
 			url=playerinfo["profile"]["profileurl"])
 
 		embed.add_field(name="General", value=(
-			"Winrate of {} over {} games, "
-			"Solo MMR {}, and based on players in games played recently, "
-			"MMR estimated to be {}.".format(winrate, gamesplayed, solommr, playerinfo["mmr_estimate"]["estimate"])))
+			f"Winrate of **{winrate}** over **{gamesplayed}** games\n"
+			f"Solo MMR: {solommr}\n"
+			f"Estimated MMR: **{playerinfo.get('mmr_estimate').get('estimate')}** *(based players in recently played games)*"))
 
 		embed.add_field(name="Profiles", value=(
-			"[Steam]({0})\n"
-			"[OpenDota](https://www.opendota.com/players/{1})\n"
-			"[DotaBuff](https://www.dotabuff.com/players/{1})".format(playerinfo["profile"]["profileurl"], steam32)))
+			f"[Steam]({playerinfo['profile']['profileurl']})\n"
+			f"[OpenDota](https://www.opendota.com/players/{steam32})\n"
+			f"[DotaBuff](https://www.dotabuff.com/players/{steam32})"))
 
-		embed.add_field(name="Heroes", inline=False, value=(
-			"[Recent Favs](https://www.opendota.com/players/{0}/heroes?date=60) {1}\n"
-			"[Overall Favs](https://www.opendota.com/players/{0}/heroes) {2}\n".format(steam32, recent_favs, favs)))
+		embed.add_field(name="Heroes", value=(
+			f"[Recent Favs](https://www.opendota.com/players/{steam32}/heroes?date=60) {recent_favs}\n"
+			f"[Overall Favs](https://www.opendota.com/players/{steam32}/heroes) {favs}\n"))
+
+		if player is None:
+			player_mention = ""
+		else:
+			try:
+				player_user = commands.MemberConverter(ctx, player).convert()
+				player_mention = f"@{player_user.nick if player_user.nick else player_user.name}"
+			except commands.BadArgument:
+				# This is a steamid
+				player_mention = player
+
+		embed.set_footer(text=f"For more info, try ?playerstats {player_mention}")
 
 		await self.bot.say(embed=embed)
 
