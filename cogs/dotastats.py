@@ -598,11 +598,16 @@ class DotaStats(MangoCog):
 			f"Last Hits/min: {avg(lambda p: p['last_hits'] / (p['duration'] / 60), 2)}\n"
 			f"Farm from jungle: {avg(lambda p: 100 * p['neutral_kills'] / p['last_hits'])}%"))
 
+		def wards_placed(p):
+			obs = 0 if p.get('obs_placed') is None else p.get('obs_placed')
+			sents = 0 if p.get('sen_placed') is None else p.get('sen_placed')
+			return obs + sents
+
 		embed.add_field(name="Wards placed", value=(
-			f"None: {percent(lambda p: p['obs_placed'] + p['sen_placed'] == 0)}%\n"
-			f"<5: {percent(lambda p: p['obs_placed'] + p['sen_placed'] < 5 and p['obs_placed'] + p['sen_placed'] != 0)}%\n"
-			f"<20: {percent(lambda p: p['obs_placed'] + p['sen_placed'] < 20 and p['obs_placed'] + p['sen_placed'] >= 5)}%\n"
-			f">=20: {percent(lambda p: p['obs_placed'] + p['sen_placed'] >= 20)}%"))
+			f"None: {percent(lambda p: wards_placed(p) == 0)}%\n"
+			f"<5: {percent(lambda p: wards_placed(p) < 5 and wards_placed(p) != 0)}%\n"
+			f"<20: {percent(lambda p: wards_placed(p) < 20 and wards_placed(p) >= 5)}%\n"
+			f">=20: {percent(lambda p: wards_placed(p) >= 20)}%"))
 
 		embed.add_field(name="Hero Types", value=(
 			f"{self.get_emoji('attr_str')} {percent(lambda p: self.hero_info[p['hero_id']]['attr'] == 'str')}%\n"

@@ -148,7 +148,7 @@ class General(MangoCog):
 			embed = self.bot.formatter.format_as_embed(ctx, self.bot, False)
 		else:
 			# try to see if it is a cog name
-			name = _mention_pattern.sub(repl, command)
+			name = _mention_pattern.sub(repl, command).lower()
 			if name in map(lambda c: c.lower(), self.bot.cogs):
 				for cog in self.bot.cogs:
 					if cog.lower() == name:
