@@ -303,7 +303,7 @@ class Audio(MangoCog):
 		if user is None:
 			user = ctx.message.author
 		else:
-			if not await checks.is_owner_check(ctx):
+			if not checks.is_owner_check(ctx.message.author):
 				await self.bot.say("You aint the boss of me 😠")
 				return
 
@@ -343,7 +343,7 @@ class Audio(MangoCog):
 		if user is None:
 			user = ctx.message.author
 		else:
-			if not await checks.is_owner_check(ctx):
+			if not checks.is_owner_check(ctx.message.author):
 				await self.bot.say("You aint the boss of me 😠")
 				return
 
