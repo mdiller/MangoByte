@@ -83,4 +83,5 @@ if __name__ == '__main__':
 	bot.load_extension("cogs.dotastats")
 	bot.load_extension("cogs.dotabase")
 	bot.load_extension("cogs.ai")
+	bot.load_extension("cogs.pokemon")
 	bot.run(settings.token)
