@@ -7,7 +7,7 @@ from cogs.utils.clip import *
 class MangoCog:
 	def __init__(self, bot):
 		self.bot = bot
-		self.emoji_dict = read_json(f"{settings.resourcedir}ai/emoji.json")
+		self.emoji_dict = read_json(f"{settings.resourcedir}json/emoji.json")
 
 	def get_emoji(self, key):
 		return self.emoji_dict.get(key, f":{key}:")

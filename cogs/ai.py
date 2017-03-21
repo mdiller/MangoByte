@@ -17,8 +17,8 @@ class AI(MangoCog):
 	A small selection of commands which showcase my immense wisdom"""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
-		self.reactions = read_json(settings.resourcedir + "ai/reactions.json")
-		self.questions = read_json(settings.resourcedir + "ai/questions.json")
+		self.reactions = read_json(settings.resourcedir + "json/reactions.json")
+		self.questions = read_json(settings.resourcedir + "json/questions.json")
 
 	async def play_say_clip(self, responsename):
 		clip = await self.get_clip("dota:" + responsename)

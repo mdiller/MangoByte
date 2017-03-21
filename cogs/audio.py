@@ -376,7 +376,7 @@ class Audio(MangoCog):
 
 		...what more could you possibly need to know...
 		"""
-		gtts_fixes = read_json(settings.resourcedir + "ai/gtts_fixes.json")
+		gtts_fixes = read_json(settings.resourcedir + "json/gtts_fixes.json")
 		text = ctx.message.clean_content[5:]
 		for key in gtts_fixes:
 			text = re.sub("\\b({})\\b".format(key), gtts_fixes[key], text, re.IGNORECASE)

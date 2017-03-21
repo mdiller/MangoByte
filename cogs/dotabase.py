@@ -72,7 +72,7 @@ class Dotabase(MangoCog):
 	Interfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.me](http://dotabase.me) if you want to see a website that interfaces with dotabase."""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
-		self.criteria_aliases = read_json(settings.resourcedir + "ai/criteria_aliases.json")
+		self.criteria_aliases = read_json(settings.resourcedir + "json/criteria_aliases.json")
 		self.hero_aliases = {}
 		self.build_aliases()
 		self.vpkurl = "http://dotabase.me/dota-vpk"
