@@ -287,7 +287,8 @@ class DotaStats(MangoCog):
 		if not is_parsed(game):
 			raise UserError("This game must be parsed before I can create a story")
 
-		story = "*Told from the perspective of {}*\n\n".format(perspective)
+		story = (f"*Told from the perspective of {perspective}*\n"
+				f"To see a more extensive story, try the [story tab](https://www.opendota.com/matches/{game['match_id']}/story) on opendota\n\n")
 
 		story += await self.get_firstblood_story(game, is_radiant)
 
@@ -420,7 +421,7 @@ class DotaStats(MangoCog):
 
 		await self.tell_match_story(game, is_radiant, "The Radiant" if is_radiant else "The Dire")
 
-	@commands.command(pass_context=True)
+	@commands.command(pass_context=True, aliases=["lastgamestory"])
 	async def lastmatchstory(self, ctx, player=None):
 		"""Tells the story of the player's last match
 
