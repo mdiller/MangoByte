@@ -5,6 +5,7 @@ from __main__ import settings, botdata
 from cogs.utils.helpers import *
 from cogs.utils import checks
 import asyncio
+import aiohttp
 import string
 import random
 from .mangocog import *
@@ -161,6 +162,19 @@ class General(MangoCog):
 			embed = self.bot.formatter.format_as_embed(ctx, command)
 
 		await self.bot.send_message(ctx.message.channel, embed=embed)
+
+	@commands.command(pass_context=True, hidden=True)
+	async def restget(self, ctx, url):
+		"""Gets a json response from a rest api and returns it"""
+		async with aiohttp.get(url) as r:
+			if r.status == 200:
+				data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
+			else:
+				raise UserError(f"Rest API call failed with status code: {r.status}")
+		filename = "{}temp/{}.json".format(settings.resourcedir, "response")
+		write_json(filename, data)
+		await self.bot.send_file(ctx.message.channel, filename)
+		os.remove(filename)
 
 
 

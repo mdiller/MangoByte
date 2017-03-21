@@ -46,16 +46,10 @@ class Pokemon(MangoCog):
 		MangoCog.__init__(self, bot)
 
 	@commands.command(pass_context=True)
-	async def test(self, ctx, query):
-		data = await pokeapi_query(query, True)
-		filename = "{}temp/{}.json".format(settings.resourcedir, "query_results")
-		write_json(filename, data)
-		await self.bot.send_file(ctx.message.channel, filename)
-		os.remove(filename)
-
-	@commands.command(pass_context=True)
 	async def pokedex(self, ctx, pokemon):
-		"""Looks up information about the indicated pokemon"""
+		"""Looks up information about the indicated pokemon
+
+		pokemon should be specified using either their name or id number"""
 		await self.bot.send_typing(ctx.message.channel)
 		data = await pokeapi_query(f"/pokemon/{pokemon.lower()}/")
 		species_data = await pokeapi_query(data["species"]["url"], True)
@@ -75,9 +69,11 @@ class Pokemon(MangoCog):
 
 		embed.set_thumbnail(url=data["sprites"]["front_default"])
 
+		embed.add_field(name=f"Type{'s' if len(types) > 1 else ''}", value=f"{', '.join(types)}")
+		if species_data.get("habitat"):
+			embed.add_field(name="Habitat", value=f"{species_data['habitat']['name']}")
 		embed.add_field(name="Weight", value=f"{data['weight'] / 10} kg")
 		embed.add_field(name="Height", value=f"{data['height'] / 10} m")
-		embed.add_field(name=f"Type{'s' if len(types) > 1 else ''}", value=f"{', '.join(types)}")
 
 		await self.bot.say(embed=embed)
 
