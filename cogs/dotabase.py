@@ -94,11 +94,7 @@ class Dotabase(MangoCog):
 				"name": hero.localized_name,
 				"full_name": hero.full_name,
 				"icon": self.vpkurl + hero.icon,
-				"attr": {
-					"DOTA_ATTRIBUTE_STRENGTH": "str",
-					"DOTA_ATTRIBUTE_AGILITY": "agi",
-					"DOTA_ATTRIBUTE_INTELLECT": "int"
-				}[hero.attr_primary]
+				"attr": hero.attr_primary
 			}
 			#this to replace the ones below
 		return result
@@ -286,8 +282,17 @@ class Dotabase(MangoCog):
 		hero = session.query(Hero).filter(Hero.id == self.hero_aliases[hero]).first()
 
 		description = ""
+		def add_attr(name, base_func, gain_func):
+			global description
+			result = f"{base_func(hero)} + {gain_func(hero)}"
+			if hero.attr_primary == name:
+				result = f"**{result}**"
+			icon = self.get_emoji(f"attr_{name}")
+			return f"{icon} {result}\n"
 
-
+		description += add_attr("strength", lambda h: h.attr_strength_base, lambda h: h.attr_strength_gain)
+		description += add_attr("agility", lambda h: h.attr_agility_base, lambda h: h.attr_agility_gain)
+		description += add_attr("intelligence", lambda h: h.attr_intelligence_base, lambda h: h.attr_intelligence_gain)
 
 		if hero.glow_color:
 			embed = discord.Embed(description=description, color=discord.Color(int(hero.glow_color[1:], 16)))

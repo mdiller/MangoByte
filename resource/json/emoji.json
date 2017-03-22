@@ -1,7 +1,7 @@
 {
-	"attr_str": "<:attr_str:288225269293121536>",
-	"attr_agi": "<:attr_agi:288225203518046209>",
-	"attr_int": "<:attr_int:288225245050044417>",
+	"attr_strength": "<:attr_strength:288225269293121536>",
+	"attr_agility": "<:attr_agility:288225203518046209>",
+	"attr_intelligence": "<:attr_intelligence:288225245050044417>",
 	"poke_normal": "<:poke_normal:293917200350183425>",
 	"poke_fire": "<:poke_fire:293923710409244672>",
 	"poke_water": "<:poke_water:293923710371627009>",
