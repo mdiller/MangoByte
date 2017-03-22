@@ -23,7 +23,6 @@ async def pokeapi_query(querystring, fullurl=False):
 			print("pokeapi errored on GET: '{}'".format(url))
 			raise UserError("pokeapi said we did things wrong 😢. status code: {}".format(r.status))
 
-
 def poke_color(color):
 	return {
 		"black": discord.Color(0x000000),
@@ -45,6 +44,12 @@ class Pokemon(MangoCog):
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 
+	def poke_type(self, type_name):
+		if type_name == "shadow" or type_name == "unknown":
+			return type_name
+		else:
+			return self.get_emoji(f"poke_{type_name}")
+
 	@commands.command(pass_context=True)
 	async def pokedex(self, ctx, pokemon):
 		"""Looks up information about the indicated pokemon
@@ -54,8 +59,8 @@ class Pokemon(MangoCog):
 		data = await pokeapi_query(f"/pokemon/{pokemon.lower()}/")
 		species_data = await pokeapi_query(data["species"]["url"], True)
 		types = []
-		for t in data["types"]:
-			types.append(t["type"]["name"])
+		for t in sorted(data["types"], key=lambda t: t["slot"]):
+			types.append(self.poke_type(t["type"]["name"]))
 
 		def localize(list_data):
 			for item in list_data:
@@ -69,7 +74,7 @@ class Pokemon(MangoCog):
 
 		embed.set_thumbnail(url=data["sprites"]["front_default"])
 
-		embed.add_field(name=f"Type{'s' if len(types) > 1 else ''}", value=f"{', '.join(types)}")
+		embed.add_field(name=f"Type{'s' if len(types) > 1 else ''}", value=f"{''.join(types)}")
 		if species_data.get("habitat"):
 			embed.add_field(name="Habitat", value=f"{species_data['habitat']['name']}")
 		embed.add_field(name="Weight", value=f"{data['weight'] / 10} kg")
