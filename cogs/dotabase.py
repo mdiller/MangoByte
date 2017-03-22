@@ -136,6 +136,15 @@ class Dotabase(MangoCog):
 
 		To search for a response without asking mangobyte, try using the [Response Searcher](http://dotabase.me/responses/) at Dotabase.me
 		ProTip: If you click the discord button next to the response in the above web app, it will copy to your clipboard in the format needed to play using the bot."""
+		query = await self.dota_keyphrase_query(keyphrase)
+
+		if query is None:
+			await self.bot.say("No responses found! 😱");
+		else:
+			await self.play_response_query(query)
+
+
+	async def dota_keyphrase_query(self, keyphrase):
 		variables = [
 			QueryVariable("hero", self.hero_aliases, lambda query, value: query.filter(Response.hero_id == value)),
 			QueryVariable("criteria", self.criteria_aliases, lambda query, value: query.filter(or_(Response.criteria.like(value + "%"), Response.criteria.like("%|" + value + "%")))),
@@ -154,10 +163,7 @@ class Dotabase(MangoCog):
 		while query is None and extract_var(words, variables):
 			query = await self.smart_dota_query(words, variables)
 
-		if query is None:
-			await self.bot.say("No responses found! 😱");
-		else:
-			await self.play_response_query(query)
+		return query
 
 
 	async def smart_dota_query(self, words, variables):
@@ -216,34 +222,59 @@ class Dotabase(MangoCog):
 		print("hello: " + response.name)
 		await self.play_response(response)
 
+	# Plays the correct command for the given keyphrase and hero, if a valid one is given
+	async def hero_keyphrase_command(self, keyphrase, hero):
+		query = await self.dota_keyphrase_query(keyphrase)
+		if hero is None:
+			await self.play_response_query(query)
+		elif hero in self.hero_aliases:
+			query = query.filter(Response.hero_id == self.hero_aliases[hero])
+			if query.count() > 0:
+				await self.play_response_query(query)
+			else:
+				raise UserError("No responses found! 😱")
+		else:
+			raise UserError("Don't know what hero yer talkin about")
+
 	@commands.command(pass_context=True, aliases=["nope"])
-	async def no(self, ctx):
+	async def no(self, ctx, hero=None):
 		"""Nopes."""
-		await self.play_response_query(session.query(Response).filter(Response.text.like("no!")))
+		await self.hero_keyphrase_command("no", hero)
 
 	@commands.command(pass_context=True)
-	async def yes(self, ctx):
+	async def yes(self, ctx, hero=None):
 		"""Oooooh ya."""
-		await self.play_response_query(session.query(Response).filter(Response.text_simple == " yes "))
+		await self.hero_keyphrase_command("yes", hero)
 
 	@commands.command(pass_context=True, aliases=["laugh", "haha", "lerl"])
-	async def lol(self, ctx):
+	async def lol(self, ctx, hero=None):
 		"""WOW I WONDER WAT THIS DOES
 
 		Laughs using dota. Thats what it does."""
-		await self.play_response_query(session.query(Response).filter(Response.criteria.like("Emote%")))
+		await self.hero_keyphrase_command(";laugh", hero)
 
 	@commands.command(pass_context=True, aliases=["ty"])
-	async def thanks(self, ctx):
+	async def thanks(self, ctx, hero=None):
 		"""Gives thanks
 
 		Thanks are given by a random dota hero in their own special way"""
-		await self.play_response_query(session.query(Response).filter(Response.criteria.like("Thanks%")))
+		await self.hero_keyphrase_command(";thanks", hero)
 
 	@commands.command(pass_context=True)
-	async def inthebag(self, ctx):
+	async def inthebag(self, ctx, hero=None):
 		"""Proclaims that 'IT' (whatever it is) is in the bag"""
-		await self.play_response_query(session.query(Response).filter(and_(Response.criteria.like("InTheBag%"),Response.text != "It's in the bag!")))
+		query = await self.dota_keyphrase_query(";inthebag")
+		if hero is None:
+				await self.play_response_query(query.filter(Response.simple_text != " its in the bag "))
+		elif hero in self.hero_aliases:
+			query = query.filter(Response.hero_id == self.hero_aliases[hero])
+			newquery = query.filter(Response.text_simple != " its in the bag ")
+			if newquery.count() > 0:
+				await self.play_response_query(newquery)
+			else:
+				await self.play_response_query(query)
+		else:
+			raise UserError("Don't know what hero yer talkin about")
 
 
 def setup(bot):
