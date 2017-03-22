@@ -67,7 +67,7 @@ def extract_var(words, variables):
 
 
 class Dotabase(MangoCog):
-	"""Dota hero response commands
+	"""Dota hero responses and info
 
 	Interfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.me](http://dotabase.me) if you want to see a website that interfaces with dotabase."""
 	def __init__(self, bot):
@@ -79,9 +79,10 @@ class Dotabase(MangoCog):
 
 	def build_aliases(self):
 		for hero in session.query(Hero):
-			aliases = hero.aliases.replace(" ", "").split("|")
+			aliases = hero.aliases.split("|")
 			for alias in aliases:
 				self.hero_aliases[alias] = hero.id
+				self.hero_aliases[alias.replace(" ", "")] = hero.id
 
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name
@@ -237,31 +238,31 @@ class Dotabase(MangoCog):
 			raise UserError("Don't know what hero yer talkin about")
 
 	@commands.command(pass_context=True, aliases=["nope"])
-	async def no(self, ctx, hero=None):
+	async def no(self, ctx, *, hero=None):
 		"""Nopes."""
 		await self.hero_keyphrase_command("no", hero)
 
 	@commands.command(pass_context=True)
-	async def yes(self, ctx, hero=None):
+	async def yes(self, ctx, *, hero=None):
 		"""Oooooh ya."""
 		await self.hero_keyphrase_command("yes", hero)
 
 	@commands.command(pass_context=True, aliases=["laugh", "haha", "lerl"])
-	async def lol(self, ctx, hero=None):
+	async def lol(self, ctx, *, hero=None):
 		"""WOW I WONDER WAT THIS DOES
 
 		Laughs using dota. Thats what it does."""
 		await self.hero_keyphrase_command(";laugh", hero)
 
 	@commands.command(pass_context=True, aliases=["ty"])
-	async def thanks(self, ctx, hero=None):
+	async def thanks(self, ctx, *, hero=None):
 		"""Gives thanks
 
 		Thanks are given by a random dota hero in their own special way"""
 		await self.hero_keyphrase_command(";thanks", hero)
 
 	@commands.command(pass_context=True)
-	async def inthebag(self, ctx, hero=None):
+	async def inthebag(self, ctx, *, hero=None):
 		"""Proclaims that 'IT' (whatever it is) is in the bag"""
 		query = await self.dota_keyphrase_query(";inthebag")
 		if hero is None:
@@ -275,6 +276,33 @@ class Dotabase(MangoCog):
 				await self.play_response_query(query)
 		else:
 			raise UserError("Don't know what hero yer talkin about")
+
+
+	@commands.command(pass_context=True)
+	async def hero(self, ctx, *, hero : str):
+		"""Gets information about a specific hero"""
+		if hero not in self.hero_aliases:
+			raise UserError("That doesn't look like a hero")
+		hero = session.query(Hero).filter(Hero.id == self.hero_aliases[hero]).first()
+
+		description = ""
+
+
+
+		if hero.glow_color:
+			embed = discord.Embed(description=description, color=discord.Color(int(hero.glow_color[1:], 16)))
+		else:
+			embed = discord.Embed(description=description)
+
+		wikiurl = hero.localized_name.replace(" ", "_").replace("'", "%27")
+		wikiurl = f"http://dota2.gamepedia.com/{wikiurl}"
+
+		embed.set_author(name=hero.localized_name, icon_url=f"{self.vpkurl}{hero.icon}", url=wikiurl)
+		embed.set_thumbnail(url=f"{self.vpkurl}{hero.portrait}")
+
+		await self.bot.say(embed=embed)
+
+		
 
 
 def setup(bot):
