@@ -305,6 +305,12 @@ class Dotabase(MangoCog):
 		embed.set_author(name=hero.localized_name, icon_url=f"{self.vpkurl}{hero.icon}", url=wikiurl)
 		embed.set_thumbnail(url=f"{self.vpkurl}{hero.portrait}")
 
+		if hero.real_name != '':
+			embed.add_field(name="Real Name", value=hero.real_name)
+
+		roles = hero.roles.split("|")
+		embed.add_field(name=f"Role{'s' if len(roles) > 1 else ''}", value=', '.join(roles))
+
 		await self.bot.say(embed=embed)
 
 		
