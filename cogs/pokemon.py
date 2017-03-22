@@ -8,6 +8,7 @@ from .mangocog import *
 import aiohttp
 import asyncio
 import os
+import re
 
 async def pokeapi_query(querystring, fullurl=False):
 	if not fullurl:
@@ -51,12 +52,20 @@ class Pokemon(MangoCog):
 			return self.get_emoji(f"poke_{type_name}")
 
 	@commands.command(pass_context=True)
-	async def pokedex(self, ctx, pokemon):
+	async def pokedex(self, ctx, *, pokemon):
 		"""Looks up information about the indicated pokemon
 
 		pokemon should be specified using either their name or id number"""
+
+		# Sanitize input first
+		pokemon = pokemon.lower()
+		replacements = { " ": "-", "♂": "-m", "♀": "-f" }
+		for key in replacements:
+			pokemon = pokemon.replace(key, replacements[key])
+		pokemon = re.sub(r'[^a-z\-]', '', pokemon)
+
 		await self.bot.send_typing(ctx.message.channel)
-		data = await pokeapi_query(f"/pokemon/{pokemon.lower()}/")
+		data = await pokeapi_query(f"/pokemon/{pokemon}/")
 		species_data = await pokeapi_query(data["species"]["url"], True)
 		types = []
 		for t in sorted(data["types"], key=lambda t: t["slot"]):
