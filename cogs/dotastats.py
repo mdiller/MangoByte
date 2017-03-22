@@ -209,7 +209,7 @@ class DotaStats(MangoCog):
 
 	async def get_firstblood_story(self, game, is_radiant):
 		fb_objective = next((obj for obj in game['objectives'] if obj['type'] == "CHAT_MESSAGE_FIRSTBLOOD"), None)
-		if None:
+		if fb_objective is None:
 			return "" # No first blood this game, or it wasnt reported in objectives log
 		fb_log = None
 		fb_killer = next(p for p in game['players'] if p['player_slot'] == fb_objective['player_slot'])
