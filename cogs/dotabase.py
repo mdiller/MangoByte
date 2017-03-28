@@ -277,6 +277,7 @@ class Dotabase(MangoCog):
 	@commands.command(pass_context=True)
 	async def hero(self, ctx, *, hero : str):
 		"""Gets information about a specific hero"""
+		hero = hero.lower()
 		if hero not in self.hero_aliases:
 			raise UserError("That doesn't look like a hero")
 		hero = session.query(Hero).filter(Hero.id == self.hero_aliases[hero]).first()

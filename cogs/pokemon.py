@@ -51,7 +51,7 @@ class Pokemon(MangoCog):
 		else:
 			return self.get_emoji(f"poke_{type_name}")
 
-	@commands.command(pass_context=True)
+	@commands.command(pass_context=True, aliases=["pokemon"])
 	async def pokedex(self, ctx, *, pokemon):
 		"""Looks up information about the indicated pokemon
 
@@ -77,7 +77,10 @@ class Pokemon(MangoCog):
 					return item
 			raise UserError("Error gathering pokemon data")
 
-		embed = discord.Embed(description=localize(species_data["flavor_text_entries"])["flavor_text"], color=poke_color(species_data["color"]["name"]))
+		flavor_text = localize(species_data["flavor_text_entries"])["flavor_text"]
+		flavor_text = flavor_text.replace("\n", " ")
+
+		embed = discord.Embed(description=flavor_text, color=poke_color(species_data["color"]["name"]))
 
 		embed.set_author(name=localize(species_data["names"])["name"])
 
