@@ -87,7 +87,7 @@ class General(MangoCog):
 
 		embed = discord.Embed(description="The juiciest unsigned 8 bit integer you eva gonna see", color=discord.Color.green())
 
-		embed.set_author(name=ctx.message.channel.server.me.nick, icon_url=self.bot.user.avatar_url, url=github)
+		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url, url=github)
 
 		embed.add_field(name="Development Info", value=(
 			"Developed as an open source project, hosted on [GitHub]({}). "
