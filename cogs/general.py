@@ -163,6 +163,26 @@ class General(MangoCog):
 
 		await self.bot.send_message(ctx.message.channel, embed=embed)
 
+	@commands.command(pass_context=True)
+	async def scramble(self, ctx, *, message : str):
+		"""Scrambles the insides of words"""
+
+		def scramble_word(word):
+			if len(word) < 4:
+				letters = list(word)
+				random.shuffle(letters)
+				return "".join(letters)
+			else:
+				letters = list(word[1:-1])
+				random.shuffle(letters)
+				return word[0] + "".join(letters) + word[-1]
+
+		results = []
+		for word in message.split(" "):
+			results.append(scramble_word(word))
+
+		await self.bot.send_message(ctx.message.channel, " ".join(results))
+
 	@commands.command(pass_context=True, hidden=True, aliases=["restapi"])
 	async def restget(self, ctx, url):
 		"""Gets a json response from a rest api and returns it"""
