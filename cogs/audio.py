@@ -172,7 +172,7 @@ class Audio(MangoCog):
 
 
 	@commands.command(pass_context=True)
-	async def play(self, ctx, clip : str=""):
+	async def play(self, ctx, clip : str):
 		"""Plays an audio clip
 
 		example:
