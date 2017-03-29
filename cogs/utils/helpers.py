@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import subprocess
+import asyncio
 from collections import OrderedDict
 
 def findfile(name, path):
@@ -33,3 +34,30 @@ def read_json(filename):
 class UserError(Exception):
 	def __init__(self, message):
 		self.message = message
+
+# thinks about messages
+class Thinker():
+	def __init__(self, bot):
+		self.bot = bot
+		self.messages = {} # Dictionary of message, time
+		self.bot.loop.create_task(self.thinking_task())
+		# May be used in future
+		self.clocks = [ "🕛", "🕐", "🕑", "🕒", "🕓", "🕔", "🕕", "🕖", "🕗", "🕘", "🕙", "🕚" ]
+
+	async def think(self, message):
+		self.messages[message] = 0
+		await self.bot.send_typing(message.channel)
+		await self.bot.add_reaction(message, "🤔")
+
+	async def stop_thinking(self, message):
+		last_time = self.messages.pop(message)
+		await self.bot.remove_reaction(message, "🤔", self.bot.user)
+
+	async def thinking_task(self):
+		await self.bot.wait_until_ready()
+		while not self.bot.is_closed:
+			for message in self.messages:
+				self.messages[message] += 1
+				if self.messages[message] % 5 == 0:
+					await self.bot.send_typing(message.channel)
+			await asyncio.sleep(1)

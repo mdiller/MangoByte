@@ -20,7 +20,7 @@ description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 
 bot = commands.Bot(command_prefix='?', formatter=MangoHelpFormatter(), description=description)
 bot.remove_command("help")
-
+thinker = Thinker(bot)
 
 deprecated_commands = {}
 
@@ -55,6 +55,9 @@ async def invalid_command_reporting(ctx):
 
 @bot.event
 async def on_command_error(error, ctx):
+	if ctx.message in thinker.messages:
+		await thinker.stop_thinking(ctx.message)
+
 	if isinstance(error, commands.CommandNotFound):
 		cmd = ctx.message.content[1:].split(" ")[0]
 		if cmd in deprecated_commands:
@@ -82,6 +85,7 @@ async def on_command_error(error, ctx):
 		print("errored while executing command {0}: {1}".format(ctx.command, error))
 		raise error.original
 
+
 if __name__ == '__main__':
 	bot.load_extension("cogs.general")
 	bot.load_extension("cogs.audio")
@@ -90,3 +94,4 @@ if __name__ == '__main__':
 	bot.load_extension("cogs.ai")
 	bot.load_extension("cogs.pokemon")
 	bot.run(settings.token)
+

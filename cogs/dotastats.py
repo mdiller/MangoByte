@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from __main__ import settings, botdata
+from __main__ import settings, botdata, thinker
 from cogs.utils import checks
 from cogs.utils import helpers
 import aiohttp
@@ -520,8 +520,7 @@ class DotaStats(MangoCog):
 		Note that this only cares about parsed games, and unparsed games will be ignored
 		If the player has less than 20 parsed matches, we'll use all the parsed matches available"""
 		steam32 = await get_check_steamid(player, ctx)
-		await self.bot.send_typing(ctx.message.channel)
-		await self.bot.add_reaction(ctx.message, "🤔")
+		await thinker.think(ctx.message)
 
 		playerinfo = await opendota_query(f"/players/{steam32}")
 		matches_info = await opendota_query(f"/players/{steam32}/matches")
@@ -536,13 +535,12 @@ class DotaStats(MangoCog):
 				for player in match['players']:
 					if player['party_id'] == player_matches[-1]['party_id']:
 						player_matches[-1]['party_size'] = player_matches[-1].get('party_size', 0) + 1
-				await self.bot.send_typing(ctx.message.channel)
 			i += 1
+
+		await thinker.stop_thinking(ctx.message)
 		if len(matches) < 2:
-			await self.bot.remove_reaction(ctx.message, "🤔")
 			await self.bot.say("Not enough parsed matches!")
 			return
-		await self.bot.remove_reaction(ctx.message, "🤔", self.bot.user)
 
 		embed = discord.Embed(description=f"*The following are averages and percentages based on the last {len(matches)} parsed matches*", color=self.embed_color)
 
