@@ -8,6 +8,7 @@ import asyncio
 import aiohttp
 import string
 import random
+import datetime
 from .mangocog import *
 
 
@@ -43,24 +44,39 @@ class General(MangoCog):
 		await self.bot.say(message)
 
 	@commands.command(pass_context=True)
-	async def changelog(self, ctx, count : int=5):
+	async def changelog(self, ctx):
 		"""Gets a rough changelog for mangobyte
-
-		Count is how many versions to go back and give a log of. This is limited to 20 because of discord message size restrictions, and also to limit the amount of text that gets spammed in a channel.
 
 		Note that this is a very rough changelog built from git commit messages and so will sometimes not relate directly to your perspective.
 
 		For more commit versions or better detailed information, check out the source on [GitHub](https://github.com/mdiller/MangoByte/commits/master)
 		"""
-		if (count <= 0) or (count > int(get_version())):
-			await self.bot.add_reaction(ctx.message, "😒")
-			return
-		elif count > 20:
-			await self.bot.say("Count is limited to 20 versions.\nFor more versions or better detailed information, check out the source on GitHub: https://github.com/mdiller/MangoByte/commits/master")
-			return
+		commit_url = "https://github.com/mdiller/MangoByte"
+		description = f"For more information check out the [commit history]({commit_url}/commits/master) on GitHub\n"
+		lines = get_changelog().split("\n")
+
+		recent_date = 0
+
+		for line in lines:
+			if line == "":
+				continue
+			commit = line.split(",")
+			full_sha = commit[0]
+			timestamp = int(commit[1])
+			small_sha = commit[2]
+			message = ",".join(commit[3:])
+			if timestamp > recent_date:
+				recent_date = timestamp
+			description += f"\n[`{small_sha}`]({commit_url}/commit/{full_sha}) {message}"
+
+		if recent_date != 0:
+			embed = discord.Embed(description=description, color=discord.Color.green(), timestamp=datetime.datetime.utcfromtimestamp(recent_date))
+			embed.set_footer(text="Most recent change at")
 		else:
-			await self.bot.say(get_changelog(count))
-			return
+			embed = discord.Embed(description=description, color=discord.Color.green())
+
+		embed.set_author(name="Changelog", url=f"{commit_url}/commits/master")
+		await self.bot.say(embed=embed)
 
 	@commands.command(pass_context=True)
 	async def info(self, ctx):
