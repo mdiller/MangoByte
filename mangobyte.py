@@ -58,18 +58,23 @@ async def on_command_error(error, ctx):
 	if isinstance(error, commands.CommandNotFound):
 		cmd = ctx.message.content[1:].split(" ")[0]
 		if cmd in deprecated_commands:
-			await bot.send_message(ctx.message.channel, "You shouldn't use `?{}` anymore. It's *deprecated*. Try `?{}` instead.".format(cmd, deprecated_commands[cmd]))
+			await bot.send_message(ctx.message.channel, f"You shouldn't use `?{cmd}` anymore. It's *deprecated*. Try `?{deprecated_commands[cmd]}` instead.")
 			return
-		if not await invalid_command_reporting(ctx):
-			return
-		await bot.send_message(ctx.message.channel, "🤔 Ya I dunno what a '{}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands.".format(cmd)) 
+		elif cmd == "" or cmd.startswith("?") or cmd.startswith("!"):
+			return # These were probably not meant to be commands
+		elif await invalid_command_reporting(ctx):
+			await bot.send_message(ctx.message.channel, f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands.") 
 	elif isinstance(error, commands.CheckFailure):
 		print("(suppressed)")
 		return # The user does not have permissions
 	elif isinstance(error, commands.MissingRequiredArgument):
-		await bot.send_message(ctx.message.channel, "Well **thats** not right. 🙃 Yer missin some arguments. Ya gotta do it like this:\n\n`{}`\n\nTry doin `?help {}` ta figure out what yer doin wrong.".format(await get_cmd_signature(ctx), ctx.command))
+		await bot.send_message(ctx.message.channel, embed=bot.formatter.format_as_embed(ctx, ctx.command))
 	elif isinstance(error, commands.BadArgument):
-		await bot.send_message(ctx.message.channel, "No... no no no. 😩 Thats the wrong type of argument for that command. Ya gotta do it like this:\n\n`{}`\n\nYa might need ta do `?help {}` and **actually read** what I say 😒.".format(await get_cmd_signature(ctx), ctx.command))
+		signature = await get_cmd_signature(ctx)
+		await bot.send_message(ctx.message.channel, (
+			"Thats the wrong type of argument for that command.\n\n"
+			f"Ya gotta do it like this:\n`{signature}`\n\n"
+			f"Try `?help {ctx.command}` for a more detailed description of the command"))
 	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
 		await bot.send_message(ctx.message.channel, error.original.message)
 	else:

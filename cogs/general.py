@@ -163,7 +163,7 @@ class General(MangoCog):
 
 		await self.bot.send_message(ctx.message.channel, embed=embed)
 
-	@commands.command(pass_context=True, hidden=True)
+	@commands.command(pass_context=True, hidden=True, aliases=["restapi"])
 	async def restget(self, ctx, url):
 		"""Gets a json response from a rest api and returns it"""
 		async with aiohttp.get(url) as r:

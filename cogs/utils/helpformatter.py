@@ -53,6 +53,34 @@ class MangoHelpFormatter(HelpFormatter):
 
 		return embed
 
+	# Overridden to remove aliases
+	def get_command_signature(self):
+		"""Retrieves the signature portion of the help page."""
+		result = []
+		prefix = self.clean_prefix
+		cmd = self.command
+		parent = cmd.full_parent_name
+		name = prefix + cmd.name if not parent else prefix + parent + ' ' + cmd.name
+		result.append(name)
+
+		params = cmd.clean_params
+		if len(params) > 0:
+			for name, param in params.items():
+				if param.default is not param.empty:
+					# We don't want None or '' to trigger the [name=value] case and instead it should
+					# do [name] since [name=None] or [name=] are not exactly useful for the user.
+					should_print = param.default if isinstance(param.default, str) else param.default is not None
+					if should_print:
+						result.append('[{}={}]'.format(name, param.default))
+					else:
+						result.append('[{}]'.format(name))
+				elif param.kind == param.VAR_POSITIONAL:
+					result.append('[{}...]'.format(name))
+				else:
+					result.append('<{}>'.format(name))
+
+		return ' '.join(result)
+
 	def embed_description(self, description):
 		if not description:
 			return discord.Embed()

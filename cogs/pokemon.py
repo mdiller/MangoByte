@@ -55,7 +55,10 @@ class Pokemon(MangoCog):
 	async def pokedex(self, ctx, *, pokemon):
 		"""Looks up information about the indicated pokemon
 
-		pokemon should be specified using either their name or id number"""
+		pokemon should be specified using either their name or id number
+
+		Example:
+		`{cmdpfx}pokedex charizard`"""
 
 		# Sanitize input first
 		pokemon = pokemon.lower()
