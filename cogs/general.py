@@ -94,12 +94,13 @@ class General(MangoCog):
 			"Implemented using {} and a python discord api wrapper [discord.py]({})".format(github, python_version, discordpy)))
 
 		embed.add_field(name="Features", value=(
-			"• Answers questions (?ask)\n"
-			"• Plays audio clips (?play, ?dota)\n"
+			"• Answers questions (`?ask`)\n"
+			"• Plays audio clips (`?play`, `?dota`)\n"
 			"• Greets users joining a voice channel\n"
 			"• Reacts to things people say 😉\n"
 			"• Is a slight bit sassy at times\n"
-			"• For a full list of commands, try ?help"))
+			"• For a full list of commands, try `?help`\n"
+			"• [Invite Link](https://discordapp.com/oauth2/authorize?permissions=27712&scope=bot&client_id=213476188037971968)"))
 
 		owner = (await self.bot.application_info()).owner
 
