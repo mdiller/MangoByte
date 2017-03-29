@@ -170,19 +170,26 @@ class Audio(MangoCog):
 			await audioplayer.voice.disconnect()
 			self.audioplayers.remove(audioplayer)
 
-
 	@commands.command(pass_context=True)
-	async def play(self, ctx, clip : str):
+	async def play(self, ctx, *, clip : str):
 		"""Plays an audio clip
 
-		example:
+		Example:
 		`{cmdpfx}play hello`
 
-		for a complete list of the available clips, try `{cmdpfx}playlist`"""
-		try:
-			await self.play_clip("local:" + clip)
-		except ClipNotFound:
-			await self.bot.say("'" + clip + "' is not a valid clip. 🤦 Try ?playlist. ")
+		For a complete list of the available clips, try `{cmdpfx}playlist`
+
+		This can also play other clip types via their ClipID
+		Example:
+		`{cmdpfx}play tts:hello there`"""
+		if ":" not in clip:
+			try:
+				await self.play_clip(f"local:{clip}")
+			except ClipNotFound:
+				await self.bot.say(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
+		else:
+			await self.play_clip(clip)
+
 			
 
 	@commands.command(pass_context=True)
@@ -280,12 +287,17 @@ class Audio(MangoCog):
 
 		filename += os.path.splitext(clip.audiopath)[1]
 
+		content = f"ClipID: **{clip.clipid}**"
+		clip_info = await clip.get_info()
+		if clip_info != "":
+			content += f"\n\n{clip_info}"
+
 		try:
-			await self.bot.send_file(ctx.message.channel, clip.audiopath, filename=filename, content=await clip.get_info())
+			await self.bot.send_file(ctx.message.channel, clip.audiopath, filename=filename, content=content)
 		except FileNotFoundError as e:
 			# The file is probably actually a url
 			fp = urllib.request.urlopen(clip.audiopath)
-			await self.bot.send_file(ctx.message.channel, fp, filename=filename, content=await clip.get_info())
+			await self.bot.send_file(ctx.message.channel, fp, filename=filename, content=content)
 			fp.close()
 
 
@@ -374,10 +386,14 @@ class Audio(MangoCog):
 	async def tts(self, ctx, *, message : str):
 		"""Like echo but for people who can't read
 
-		...what more could you possibly need to know...
+		Talks in whatever voice channel mangobyte is currently in
+		
+		Example:
+		`{cmdpfx}tts Hello I'm a bot`
 		"""
 		gtts_fixes = read_json(settings.resourcedir + "json/gtts_fixes.json")
 		text = ctx.message.clean_content[5:]
+		text = text.replace("\n", " ")
 		for key in gtts_fixes:
 			text = re.sub("\\b({})\\b".format(key), gtts_fixes[key], text, re.IGNORECASE)
 		await self.play_clip("tts:" + text)

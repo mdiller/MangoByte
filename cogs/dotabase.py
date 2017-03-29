@@ -109,7 +109,7 @@ class Dotabase(MangoCog):
 	async def play_response_query(self, query):
 		await self.play_response(query.order_by(func.random()).first())
 
-	@commands.command(pass_context=True)
+	@commands.command(pass_context=True, aliases=["dotar"])
 	async def dota(self, ctx, *, keyphrase : str=None):
 		"""Plays a dota response
 
