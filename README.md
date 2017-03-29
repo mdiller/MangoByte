@@ -60,7 +60,6 @@ You should now be done! You can run mangobyte by calling `python3.5 mangobyte.py
 {
 	"token": "<token here>",
 	"resourcedir": "resource/",
-	"defaultvoice": null,
 	"ttslang": "en-au"
 }
 ```
