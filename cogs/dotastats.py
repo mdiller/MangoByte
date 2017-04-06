@@ -608,10 +608,11 @@ class DotaStats(MangoCog):
 			f"<20: {percent(lambda p: wards_placed(p) < 20 and wards_placed(p) >= 5)}%\n"
 			f">=20: {percent(lambda p: wards_placed(p) >= 20)}%"))
 
-		embed.add_field(name="Hero Types", value=(
+		embed.add_field(name="Heroes", value=(
 			f"{self.get_emoji('attr_strength')} {percent(lambda p: self.hero_info[p['hero_id']]['attr'] == 'strength')}%\n"
 			f"{self.get_emoji('attr_agility')} {percent(lambda p: self.hero_info[p['hero_id']]['attr'] == 'agility')}%\n"
-			f"{self.get_emoji('attr_intelligence')} {percent(lambda p: self.hero_info[p['hero_id']]['attr'] == 'intelligence')}%"))
+			f"{self.get_emoji('attr_intelligence')} {percent(lambda p: self.hero_info[p['hero_id']]['attr'] == 'intelligence')}%\n"
+			f"Randomed: {percent('randomed')}%"))
 
 		embed.add_field(name="Laning", value=(
 			f"Safe Lane: {percent(lambda p: p['lane_role'] == 1 and not p.get('is_roaming'))}%\n"
