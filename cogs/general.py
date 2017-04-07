@@ -9,6 +9,8 @@ import aiohttp
 import string
 import random
 import datetime
+import wikipedia
+import re
 from .mangocog import *
 
 
@@ -204,6 +206,37 @@ class General(MangoCog):
 
 		await self.bot.send_message(ctx.message.channel, " ".join(results))
 
+	@commands.command(pass_context=True, aliases=["define", "lookup", "wikipedia", "whatis"])
+	async def wiki(self, ctx, *, query : str):
+		"""Looks up a thing on wikipedia
+		
+		Uses the [python Wikipedia API](https://wikipedia.readthedocs.io/en/latest/) to look up a thing. 
+
+		This api is a wrapper for the [MediaWiki API](https://www.mediawiki.org/wiki/API:Main_page), which is applicable to Wikipedia because Wikipedia is build ontop of MediaWiki
+		"""
+		await self.bot.send_typing(ctx.message.channel)
+		results = wikipedia.search(query, results=1)
+
+		if len(results) == 0:
+			await self.bot.say(f"Couldn't find anything for {query}")
+			return
+
+		title = results[0]
+
+		page = wikipedia.page(title=title)
+
+		embed = discord.Embed(description=page.summary.split(".")[0])
+		embed.set_author(name=title, url=f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}")
+
+		for image in page.images:
+			if re.search("\.(png|jpg|jpeg|gif)$", image, re.IGNORECASE):
+				embed.set_image(url=image)
+				break
+
+		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
+
+		await self.bot.say(embed=embed)
+
 	@commands.command(pass_context=True, hidden=True, aliases=["restapi"])
 	async def restget(self, ctx, url):
 		"""Gets a json response from a rest api and returns it"""
@@ -216,7 +249,6 @@ class General(MangoCog):
 		write_json(filename, data)
 		await self.bot.send_file(ctx.message.channel, filename)
 		os.remove(filename)
-
 
 
 def setup(bot):
