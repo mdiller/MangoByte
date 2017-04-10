@@ -321,7 +321,9 @@ class DotaStats(MangoCog):
 		winstatus = "Won" if player["win"] != 0 else "Lost"
 
 		description = ("{0} a game as {1} in {2} \n"
-					"More info at [DotaBuff](https://www.dotabuff.com/matches/{3}) or [OpenDota](https://www.opendota.com/matches/{3}) "
+					"More info at [DotaBuff](https://www.dotabuff.com/matches/{3}), "
+					"[OpenDota](https://www.opendota.com/matches/{3}), or "
+					"[Stratz](https://www.stratz.com/match/{3})"
 					.format(winstatus, hero_name, get_pretty_duration(game['duration'], postfix=False), matchid))
 
 		embed = discord.Embed(description=description, color=self.embed_color, timestamp=datetime.datetime.utcfromtimestamp(game['start_time']))
@@ -396,7 +398,13 @@ class DotaStats(MangoCog):
 			await self.bot.say("Looks like thats not a valid match id")
 			return
 
-		embed = discord.Embed(description="For more information, check [OpenDota](https://www.opendota.com/matches/{0}) or [DotaBuff](https://www.dotabuff.com/matches/{0})".format(match_id), 
+		description = ("Game ended in {0} \n"
+					"More info at [DotaBuff](https://www.dotabuff.com/matches/{1}), "
+					"[OpenDota](https://www.opendota.com/matches/{1}), or "
+					"[Stratz](https://www.stratz.com/match/{1})"
+					.format(get_pretty_duration(game['duration'], postfix=False), match_id))
+
+		embed = discord.Embed(description=description, 
 							timestamp=datetime.datetime.utcfromtimestamp(game['start_time']), color=self.embed_color)
 		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
 		embed.set_image(url=await get_match_image(match_id, is_parsed(game)))
@@ -493,7 +501,8 @@ class DotaStats(MangoCog):
 		embed.add_field(name="Profiles", value=(
 			f"[Steam]({playerinfo['profile']['profileurl']})\n"
 			f"[OpenDota](https://www.opendota.com/players/{steam32})\n"
-			f"[DotaBuff](https://www.dotabuff.com/players/{steam32})"))
+			f"[DotaBuff](https://www.dotabuff.com/players/{steam32})\n"
+			f"[Stratz](https://www.stratz.com/player/{steam32})"))
 
 		embed.add_field(name="Heroes", value=(
 			f"[Recent Favs](https://www.opendota.com/players/{steam32}/heroes?date=60) {recent_favs}\n"
