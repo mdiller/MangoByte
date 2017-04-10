@@ -283,9 +283,15 @@ class DotaStats(MangoCog):
 			story += "• {0[us]} {0[won_lost]} {1} lane vs {0[them]}\n".format(await self.get_lane_story(game['players'], laneid, is_radiant), lanes[laneid])
 		return story
 
-	async def tell_match_story(self, game, is_radiant, perspective):
+	async def tell_match_story(self, game, is_radiant, perspective=None):
 		if not is_parsed(game):
 			raise UserError("This game must be parsed before I can create a story")
+
+		if not perspective:
+			perspective = "The Radiant" if is_radiant else "The Dire"
+			end_perspective = perspective
+		else:
+			end_perspective = f"{perspective} and their friends"
 
 		story = (f"*Told from the perspective of {perspective}*\n"
 				f"To see a more extensive story, try the [story tab](https://www.opendota.com/matches/{game['match_id']}/story) on opendota\n\n")
@@ -298,8 +304,8 @@ class DotaStats(MangoCog):
 		if teamfights != "":
 			story += teamfights
 
-		game_ending_state = "victory" if (is_radiant == game['radiant_win']) else "defeat"
-		story += "\nThe game ended in a {0} at {1}".format(game_ending_state, get_pretty_duration(game['duration']))
+		game_ending_state = "won" if (is_radiant == game['radiant_win']) else "lost"
+		story += f"\n{end_perspective} {game_ending_state} the game at { get_pretty_duration(game['duration']) }"
 
 		embed = discord.Embed(description=story, color=self.embed_color)
 		embed.set_author(name="Story of Match {}".format(game["match_id"]), url="https://www.opendota.com/matches/{}".format(game["match_id"]))
@@ -415,9 +421,9 @@ class DotaStats(MangoCog):
 	async def matchstory(self, ctx, match_id : int, perspective="radiant"):
 		"""Tells the story of the match from the given perspective"""
 		await self.bot.send_typing(ctx.message.channel)
-		if perspective == "radiant":
+		if perspective.lower() == "radiant":
 			is_radiant = True
-		elif perspective == "dire":
+		elif perspective.lower() == "dire":
 			is_radiant = False
 		else:
 			raise UserError("Perspective must be either radiant or dire")
@@ -427,7 +433,7 @@ class DotaStats(MangoCog):
 			await self.bot.say("Looks like thats not a valid match id")
 			return
 
-		await self.tell_match_story(game, is_radiant, "The Radiant" if is_radiant else "The Dire")
+		await self.tell_match_story(game, is_radiant)
 
 	@commands.command(pass_context=True, aliases=["lastgamestory"])
 	async def lastmatchstory(self, ctx, player=None):
