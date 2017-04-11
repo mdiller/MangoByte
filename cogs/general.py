@@ -240,11 +240,11 @@ class General(MangoCog):
 		embed.set_author(name=title, url=page_url)
 
 		best_image = None
-		best_image_index = None
+		best_image_index = -1
 		for image in page.images:
 			if re.search("\.(png|jpg|jpeg|gif)$", image, re.IGNORECASE):
 				index = page_html.find(image.split('/')[-1])
-				if (not best_image) or (index != -1 and (best_image_index < index or best_image_index == -1)):
+				if (best_image_index == -1) or (index != -1 and index < best_image_index):
 					best_image = image
 					best_image_index = index
 		if best_image:
