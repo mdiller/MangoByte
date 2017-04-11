@@ -230,13 +230,26 @@ class General(MangoCog):
 			except wikipedia.exceptions.DisambiguationError as e:
 				continue # Try the next page if this is a bad one
 
-		embed = discord.Embed(description=page.summary.split(".")[0])
-		embed.set_author(name=title, url=f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}")
+		page_url = f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}"
 
+		async with aiohttp.get(page_url) as r:
+			if r.status == 200:
+				page_html = await r.text()
+
+		embed = discord.Embed(description=page.summary.split(".")[0])
+		embed.set_author(name=title, url=page_url)
+
+		best_image = None
+		best_image_index = None
 		for image in page.images:
 			if re.search("\.(png|jpg|jpeg|gif)$", image, re.IGNORECASE):
-				embed.set_image(url=image)
-				break
+				index = page_html.find(image.split('/')[-1])
+				if (not best_image) or (index != -1 and (best_image_index < index or best_image_index == -1)):
+					best_image = image
+					best_image_index = index
+		if best_image:
+			embed.set_image(url=best_image)
+
 
 		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 
