@@ -215,15 +215,20 @@ class General(MangoCog):
 		This api is a wrapper for the [MediaWiki API](https://www.mediawiki.org/wiki/API:Main_page), which is applicable to Wikipedia because Wikipedia is build ontop of MediaWiki
 		"""
 		await self.bot.send_typing(ctx.message.channel)
-		results = wikipedia.search(query, results=1)
 
-		if len(results) == 0:
-			await self.bot.say(f"Couldn't find anything for {query}")
-			return
+		results = wikipedia.search(query, results=10)
 
-		title = results[0]
+		page = None
 
-		page = wikipedia.page(title=title)
+		while not page:
+			if len(results) <= 0:
+				await self.bot.say(f"Couldn't find anything for {query}")
+				return
+			title = results.pop(0)
+			try:
+				page = wikipedia.page(title=title, redirect=True, auto_suggest=True)
+			except wikipedia.exceptions.DisambiguationError as e:
+				continue # Try the next page if this is a bad one
 
 		embed = discord.Embed(description=page.summary.split(".")[0])
 		embed.set_author(name=title, url=f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}")
