@@ -276,7 +276,10 @@ class Audio(MangoCog):
 				return
 			clipid = (await self.audioplayer()).last_clip.clipid
 
-		clip = await self.get_clip(clipid)
+		try:
+			clip = await self.get_clip(f"local:{clipid}")
+		except ClipNotFound:
+			clip = await self.get_clip(clipid)
 
 		await self.bot.send_typing(ctx.message.channel)
 
