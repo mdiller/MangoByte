@@ -65,7 +65,7 @@ class Pokemon(MangoCog):
 		replacements = { " ": "-", "♂": "-m", "♀": "-f" }
 		for key in replacements:
 			pokemon = pokemon.replace(key, replacements[key])
-		pokemon = re.sub(r'[^a-z\-]', '', pokemon)
+		pokemon = re.sub(r'[^a-z0-9\-]', '', pokemon)
 
 		await self.bot.send_typing(ctx.message.channel)
 		data = await pokeapi_query(f"/pokemon/{pokemon}/")
