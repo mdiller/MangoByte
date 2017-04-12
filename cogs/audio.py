@@ -402,6 +402,31 @@ class Audio(MangoCog):
 		await self.play_clip("tts:" + text)
 
 	@commands.command(pass_context=True)
+	async def ttsclip(self, ctx, *, clip : str):
+		"""Tries to text-to-speech the given clip
+
+		Only works on clips that have text specified
+
+		Example:
+		`{cmdpfx}ttsclip yodel`
+		"""
+		if ":" not in clip:
+			try:
+				clip = await self.get_clip(f"local:{clip}")
+			except ClipNotFound:
+				await self.bot.say(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
+				return
+		else:
+			clip = await self.get_clip(clip)
+		text = clip.text.lower()
+		if text == "":
+			await self.bot.say(f"I can't read this clip for tts 😕. Try a different one.")
+			return
+
+		await self.play_clip(f"tts:{text}")
+
+
+	@commands.command(pass_context=True)
 	async def later(self, ctx):
 		"""Tells you how much later it is
 
