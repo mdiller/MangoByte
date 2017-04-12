@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from __main__ import settings
 from .helpers import *
 from gtts import gTTS
+import taglib
 import discord
 import re
 import os
@@ -62,14 +63,42 @@ class LocalClip(Clip):
 		clipfile = get_clipfile(clipname)
 		if clipfile == None:
 			raise ClipNotFound(self.type(), clipname)
-		Clip.__init__(self, clipname, clipfile)
+
+		self.author = None
+		self.source = None
+		text = ""
+
+		if clipfile.endswith(".mp3"):
+			filedata = taglib.File(clipfile)
+			if filedata.tags.get('ARTIST'):
+				self.author = filedata.tags['ARTIST'][0]
+			if filedata.tags.get('SOURCE'):
+				self.source = filedata.tags['SOURCE'][0]
+			if filedata.tags.get('COMMENT'):
+				text = filedata.tags['COMMENT'][0]
+
+		Clip.__init__(self, clipname, clipfile, text=text)
 
 	@classmethod
 	def type(cls):
 		return "local"
 
 	async def get_info(self):
-		return "From the '{}' section".format(os.path.basename(os.path.dirname(self.audiopath)))
+		result = ""
+		if self.text != "":
+			result += f"\"{self.text}\""
+		if self.author:
+			if self.text != "":
+				result += f" - {self.author}"
+			else:
+				result += f"By {self.author}"
+		if self.author or self.text != "":
+			result += "\n\n"
+		if self.source:
+			result += f"**Source:** {self.source}\n"
+		result += "*From the '{}' section*".format(os.path.basename(os.path.dirname(self.audiopath)))
+		return result
+
 
 
 class TtsClip(Clip):

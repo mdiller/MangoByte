@@ -49,6 +49,7 @@ Before installing and running your own instance of mangobyte, you will first nee
 
 * Python 3.6
 * Pip
+* [taglib](http://taglib.org/) (just run `apt-get install libtag1-dev` if on ubuntu)
 * [dotabase](https://github.com/mdiller/dotabase)
 * [discord.py](https://github.com/Rapptz/discord.py)
 
