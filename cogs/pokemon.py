@@ -51,6 +51,14 @@ class Pokemon(MangoCog):
 		else:
 			return self.get_emoji(f"poke_{type_name}")
 
+	def clean_pokename(self, pokemon):
+		pokemon = pokemon.lower()
+		replacements = { " ": "-", "♂": "-m", "♀": "-f" }
+		for key in replacements:
+			pokemon = pokemon.replace(key, replacements[key])
+		pokemon = re.sub(r'[^a-z0-9\-]', '', pokemon)
+		return pokemon
+
 	@commands.command(pass_context=True, aliases=["pokemon"])
 	async def pokedex(self, ctx, *, pokemon):
 		"""Looks up information about the indicated pokemon
@@ -61,11 +69,7 @@ class Pokemon(MangoCog):
 		`{cmdpfx}pokedex charizard`"""
 
 		# Sanitize input first
-		pokemon = pokemon.lower()
-		replacements = { " ": "-", "♂": "-m", "♀": "-f" }
-		for key in replacements:
-			pokemon = pokemon.replace(key, replacements[key])
-		pokemon = re.sub(r'[^a-z0-9\-]', '', pokemon)
+		pokemon = self.clean_pokename(pokemon)
 
 		await self.bot.send_typing(ctx.message.channel)
 		data = await pokeapi_query(f"/pokemon/{pokemon}/")
@@ -97,7 +101,28 @@ class Pokemon(MangoCog):
 
 		await self.bot.say(embed=embed)
 
+	@commands.command(pass_context=True)
+	async def shiny(self, ctx, *, pokemon):
+		"""Gets the shiny version of this pokemon
 
+		pokemon should be specified using either their name or id number
+
+		Example:
+		`{cmdpfx}shiny charizard`"""
+
+		# Sanitize input first
+		pokemon = self.clean_pokename(pokemon)
+		await self.bot.send_typing(ctx.message.channel)
+		data = await pokeapi_query(f"/pokemon/{pokemon}/")
+		species_data = await pokeapi_query(data["species"]["url"], True)
+
+		if not data["sprites"].get("front_shiny"):
+			await self.bot.say("This pokemon doesn't have a shiny version")
+
+		embed = discord.Embed(color=poke_color(species_data["color"]["name"]))
+		embed.set_image(url=data["sprites"].get("front_shiny"))
+		await self.bot.say(embed=embed)
+	
 
 def setup(bot):
 	bot.add_cog(Pokemon(bot))
