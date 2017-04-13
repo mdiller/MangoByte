@@ -236,7 +236,16 @@ class General(MangoCog):
 			if r.status == 200:
 				page_html = await r.text()
 
-		embed = discord.Embed(description=page.summary.split(".")[0])
+		sentances = page.summary.split(".")
+		summary = sentances[0]
+		for i in range(1, len(sentances)):
+			# If this sentence is acutally a part of the last sentence OR our summary isn't long enough
+			if not re.search(r"^ [a-z]", sentances[i]) and len(summary) > 50:
+				break
+			summary += "." + sentances[i]
+		summary += "."
+
+		embed = discord.Embed(description=summary)
 		embed.set_author(name=title, url=page_url)
 
 		best_image = None
