@@ -10,6 +10,12 @@ import asyncio
 import os
 import re
 
+
+
+class Pokemon404Error(UserError):
+	def __init__(self):
+		self.message = "Pokemon not found"
+
 async def pokeapi_query(querystring, fullurl=False):
 	if not fullurl:
 		url = "http://pokeapi.co/api/v2" + querystring
@@ -19,7 +25,7 @@ async def pokeapi_query(querystring, fullurl=False):
 		if r.status == 200:
 			return json.loads(await r.text(), object_pairs_hook=OrderedDict)
 		elif r.status == 404:
-			raise UserError("Pokemon not found")
+			raise Pokemon404Error()
 		else:
 			print("pokeapi errored on GET: '{}'".format(url))
 			raise UserError("pokeapi said we did things wrong 😢. status code: {}".format(r.status))
@@ -38,6 +44,13 @@ def poke_color(color):
 		"yellow": discord.Color(0xFFFF00)
 	}[color]
 
+
+def localize(list_data):
+	for item in list_data:
+		if item["language"]["name"] == "en":
+			return item
+	raise UserError("Error gathering pokemon data")
+
 class Pokemon(MangoCog):
 	"""Pokemon related commands
 	
@@ -53,13 +66,30 @@ class Pokemon(MangoCog):
 		else:
 			return self.get_emoji(f"poke_{type_name}")
 
-	def clean_pokename(self, pokemon):
+	async def get_pokemon_data(self, pokemon):
+		# Sanitize input first
 		pokemon = pokemon.lower()
 		replacements = { " ": "-", "♂": "-m", "♀": "-f" }
 		for key in replacements:
 			pokemon = pokemon.replace(key, replacements[key])
 		pokemon = re.sub(r'[^a-z0-9\-]', '', pokemon)
-		return pokemon
+
+		try:
+			form_data = await pokeapi_query(f"/pokemon-form/{pokemon}/")
+			data = await pokeapi_query(form_data["pokemon"]["url"], True)
+		except Pokemon404Error as e:
+			form_data = None
+			data = await pokeapi_query(f"/pokemon/{pokemon}/")
+		species_data = await pokeapi_query(data["species"]["url"], True)
+
+		if form_data:
+			data["sprites"] = form_data["sprites"]
+			data["localized_name"] = localize(form_data["names"])["name"]
+		else:
+			data["localized_name"] = localize(species_data["names"])["name"]
+
+		return data, species_data
+
 
 	@commands.command(pass_context=True, aliases=["pokemon"])
 	async def pokedex(self, ctx, *, pokemon):
@@ -71,28 +101,19 @@ class Pokemon(MangoCog):
 
 		Example:
 		`{cmdpfx}pokedex charizard`"""
-
-		# Sanitize input first
-		pokemon = self.clean_pokename(pokemon)
-
 		await self.bot.send_typing(ctx.message.channel)
-		data = await pokeapi_query(f"/pokemon/{pokemon}/")
-		species_data = await pokeapi_query(data["species"]["url"], True)
+
+		data, species_data = await self.get_pokemon_data(pokemon)
+
 		types = []
 		for t in sorted(data["types"], key=lambda t: t["slot"]):
 			types.append(self.poke_type(t["type"]["name"]))
-
-		def localize(list_data):
-			for item in list_data:
-				if item["language"]["name"] == "en":
-					return item
-			raise UserError("Error gathering pokemon data")
 
 		flavor_text = localize(species_data["flavor_text_entries"])["flavor_text"]
 		flavor_text = flavor_text.replace("\n", " ")
 
 		embed = discord.Embed(description=flavor_text, color=poke_color(species_data["color"]["name"]))
-		embed.set_author(name=localize(species_data["names"])["name"] + f" #{data['id']}", url=f"http://www.serebii.net/pokedex-sm/{data['id']:03d}.shtml")
+		embed.set_author(name=data["localized_name"] + f" #{data['id']}", url=f"http://www.serebii.net/pokedex-sm/{data['id']:03d}.shtml")
 		embed.set_thumbnail(url=data["sprites"]["front_default"])
 
 		embed.add_field(name=f"Type{'s' if len(types) > 1 else ''}", value=f"{''.join(types)}")
@@ -113,11 +134,8 @@ class Pokemon(MangoCog):
 		`{cmdpfx}shiny charizard`"""
 
 		# Sanitize input first
-		pokemon = self.clean_pokename(pokemon)
-
 		await self.bot.send_typing(ctx.message.channel)
-		data = await pokeapi_query(f"/pokemon/{pokemon}/")
-		species_data = await pokeapi_query(data["species"]["url"], True)
+		data, species_data = await self.get_pokemon_data(pokemon)
 
 		if not data["sprites"].get("front_shiny"):
 			await self.bot.say("This pokemon doesn't have a shiny version")
