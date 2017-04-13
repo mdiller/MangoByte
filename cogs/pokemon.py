@@ -41,7 +41,9 @@ def poke_color(color):
 class Pokemon(MangoCog):
 	"""Pokemon related commands
 	
-	A few commands using the [pokeapi](https://pokeapi.co/) which provides information about pokemon"""
+	A few commands using the [pokeapi](https://pokeapi.co/) which provides information about pokemon
+
+	Note that the above API does not include information about pokemon Sun and Moon, so I can't look up those pokemon for you"""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 
@@ -63,7 +65,9 @@ class Pokemon(MangoCog):
 	async def pokedex(self, ctx, *, pokemon):
 		"""Looks up information about the indicated pokemon
 
-		pokemon should be specified using either their name or id number
+		Pokemon should be specified using either their name or id number
+
+		Clicking on the pokemon's name will bring you to their wiki page
 
 		Example:
 		`{cmdpfx}pokedex charizard`"""
@@ -88,9 +92,7 @@ class Pokemon(MangoCog):
 		flavor_text = flavor_text.replace("\n", " ")
 
 		embed = discord.Embed(description=flavor_text, color=poke_color(species_data["color"]["name"]))
-
-		embed.set_author(name=localize(species_data["names"])["name"])
-
+		embed.set_author(name=localize(species_data["names"])["name"] + f" #{data['id']}", url=f"http://www.serebii.net/pokedex-sm/{data['id']:03d}.shtml")
 		embed.set_thumbnail(url=data["sprites"]["front_default"])
 
 		embed.add_field(name=f"Type{'s' if len(types) > 1 else ''}", value=f"{''.join(types)}")
@@ -112,6 +114,7 @@ class Pokemon(MangoCog):
 
 		# Sanitize input first
 		pokemon = self.clean_pokename(pokemon)
+
 		await self.bot.send_typing(ctx.message.channel)
 		data = await pokeapi_query(f"/pokemon/{pokemon}/")
 		species_data = await pokeapi_query(data["species"]["url"], True)
