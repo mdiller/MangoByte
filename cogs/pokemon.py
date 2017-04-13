@@ -45,11 +45,11 @@ def poke_color(color):
 	}[color]
 
 
-def localize(list_data):
+def localize(list_data, end_key):
 	for item in list_data:
 		if item["language"]["name"] == "en":
-			return item
-	raise UserError("Error gathering pokemon data")
+			return item[end_key]
+	return None
 
 class Pokemon(MangoCog):
 	"""Pokemon related commands
@@ -74,6 +74,13 @@ class Pokemon(MangoCog):
 			pokemon = pokemon.replace(key, replacements[key])
 		pokemon = re.sub(r'[^a-z0-9\-]', '', pokemon)
 
+		words = pokemon.split("-")
+		words.remove("")
+		if "mega" in words:
+			words.remove("mega")
+			words.insert(1, "mega")
+		pokemon = "-".join(words)
+
 		try:
 			form_data = await pokeapi_query(f"/pokemon-form/{pokemon}/")
 			data = await pokeapi_query(form_data["pokemon"]["url"], True)
@@ -82,11 +89,19 @@ class Pokemon(MangoCog):
 			data = await pokeapi_query(f"/pokemon/{pokemon}/")
 		species_data = await pokeapi_query(data["species"]["url"], True)
 
+		data["localized_name"] = localize(species_data["names"], "name")
+		if data["id"] >= 1000:
+			data["id"] = species_data["id"]
+		data["wiki_url"] = f"http://www.serebii.net/pokedex-sm/{data['id']:03d}.shtml"
+
+
 		if form_data:
 			data["sprites"] = form_data["sprites"]
-			data["localized_name"] = localize(form_data["names"])["name"]
-		else:
-			data["localized_name"] = localize(species_data["names"])["name"]
+			name = localize(form_data["names"], "name")
+			if name:
+				data["localized_name"] = name
+			if form_data.get("is_mega"):
+				data["wiki_url"] += "#mega"
 
 		return data, species_data
 
@@ -109,11 +124,11 @@ class Pokemon(MangoCog):
 		for t in sorted(data["types"], key=lambda t: t["slot"]):
 			types.append(self.poke_type(t["type"]["name"]))
 
-		flavor_text = localize(species_data["flavor_text_entries"])["flavor_text"]
+		flavor_text = localize(species_data["flavor_text_entries"], "flavor_text")
 		flavor_text = flavor_text.replace("\n", " ")
 
 		embed = discord.Embed(description=flavor_text, color=poke_color(species_data["color"]["name"]))
-		embed.set_author(name=data["localized_name"] + f" #{data['id']}", url=f"http://www.serebii.net/pokedex-sm/{data['id']:03d}.shtml")
+		embed.set_author(name=data["localized_name"] + f" #{data['id']}", url=data["wiki_url"])
 		embed.set_thumbnail(url=data["sprites"]["front_default"])
 
 		embed.add_field(name=f"Type{'s' if len(types) > 1 else ''}", value=f"{''.join(types)}")
