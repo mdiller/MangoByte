@@ -587,8 +587,10 @@ class DotaStats(MangoCog):
 			count = round((count * 100) / len(player_matches), round_place)
 			return int(count) if round_place == 0 else count
 
+		longest_message_heading = "Longest Chat Message"
 		message_count = 0
 		longest_message = None
+		longest_message_matchid = None
 		for match in matches:
 			player = next(p for p in match['players'] if p['account_id'] == steam32)
 			for message in match['chat']:
@@ -596,9 +598,11 @@ class DotaStats(MangoCog):
 					message_count += 1
 					if longest_message is None or len(longest_message) <= len(message['key']):
 						longest_message = message['key']
+						longest_message_matchid = match['match_id']
 		message_count = int(round(message_count / len(matches)))
 		if longest_message is not None:
 			longest_message = f"\"{longest_message}\""
+			longest_message_heading = f"[{longest_message_heading}](https://www.opendota.com/matches/{longest_message_matchid}/chat)"
 
 		embed.add_field(name="General", value=(
 			f"Winrate: {percent('win')}%\n"
@@ -643,7 +647,7 @@ class DotaStats(MangoCog):
 		embed.add_field(name="Communication", value=(
 			f"Pings: {avg('pings')}\n"
 			f"Chat Messages: {message_count}\n"
-			f"Longest Chat Message: {longest_message}"))
+			f"{longest_message_heading}: {longest_message}"))
 
 		# in a group
 
