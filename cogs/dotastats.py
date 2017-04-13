@@ -532,8 +532,7 @@ class DotaStats(MangoCog):
 	async def playerstats(self, ctx, *, player=None):
 		"""Gets stats from the given player's last 20 parsed games
 
-		Note that this only cares about parsed games, and unparsed games will be ignored
-		If the player has less than 20 parsed matches, we'll use all the parsed matches available"""
+		Note that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available"""
 		steam32 = await get_check_steamid(player, ctx)
 		await thinker.think(ctx.message)
 

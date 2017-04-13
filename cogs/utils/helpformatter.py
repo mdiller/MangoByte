@@ -25,6 +25,8 @@ class MangoHelpFormatter(HelpFormatter):
 		if isinstance(self.command, Command):
 			embed = self.embed_description(self.command.help)
 			embed.set_author(name=self.get_command_signature())
+			if self.command.aliases:
+				embed.add_field(name="Aliases", value=", ".join(self.command.aliases))
 			return embed
 
 		def category(tup):
