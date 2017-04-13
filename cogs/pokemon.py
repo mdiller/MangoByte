@@ -75,11 +75,10 @@ class Pokemon(MangoCog):
 		pokemon = re.sub(r'[^a-z0-9\-]', '', pokemon)
 
 		words = pokemon.split("-")
-		words.remove("")
 		if "mega" in words:
 			words.remove("mega")
 			words.insert(1, "mega")
-		pokemon = "-".join(words)
+			pokemon = "-".join(words)
 
 		try:
 			form_data = await pokeapi_query(f"/pokemon-form/{pokemon}/")
