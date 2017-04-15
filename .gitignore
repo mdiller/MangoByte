@@ -90,6 +90,8 @@ ENV/
 
 .DS_Store
 
+*.db
+
 botdata.json
 settings.json
 tmpfile

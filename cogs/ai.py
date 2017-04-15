@@ -37,7 +37,7 @@ class AI(MangoCog):
 
 	async def on_message(self, message):
 		if message.content.startswith("?"):
-			print("--> {0}: {1}".format(message.author, message.content))
+			await self.log_message(message)
 
 		if message.server is not None and not botdata.serverinfo(message.server.id).reactions:
 			return

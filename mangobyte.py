@@ -3,6 +3,7 @@ from cogs.utils.botdata import BotData
 from cogs.utils.settings import Settings
 from cogs.utils.helpers import *
 from cogs.utils.helpformatter import MangoHelpFormatter
+from cogs.utils.loggingdb import create_session
 import asyncio
 import string
 from discord.ext import commands
@@ -12,6 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 botdata = BotData()
 settings = Settings()
+loggingdb_session = create_session(settings.resourcedir + "loggingdb.db")
 
 from cogs.utils.clip import *# This has to be done after loading settings
 
