@@ -13,13 +13,15 @@ import re
 import os
 import urllib
 import functools
+import time
+import statistics
 from types import *
 from .mangocog import *
 
 async def opendota_query(querystring, rate_limit=True):
 	url = "https://api.opendota.com/api" + querystring
 	if rate_limit:
-		await asyncio.sleep(1)
+		await asyncio.sleep(0.2)
 	async with aiohttp.get(url) as r:
 		if r.status == 200:
 			return json.loads(await r.text(), object_pairs_hook=OrderedDict)
@@ -74,13 +76,15 @@ def pretty_list(l, none=None):
 		l[-1] = "and " + str(l[-1])
 		return ", ".join(l)
 
-def get_pretty_duration(duration, postfix=True):
-	if duration == 0:
-		return "the exact start of the game"
-	is_after = duration > 0
-	duration = abs(duration)
-	time = {"hours": duration // 3600, "minutes": (duration // 60) % 60, "seconds": duration % 60}
+def get_pretty_time(unixtime):
+	if unixtime == 0:
+		return None
+	is_after = unixtime > 0
+	unixtime = abs(unixtime)
+	time = {"days": (unixtime // 86400) % 86400, "hours": (unixtime // 3600) % 3600, "minutes": (unixtime // 60) % 60, "seconds": unixtime % 60}
 	format_arr = []
+	if time["days"] > 0:
+		format_arr.append(s_if_plural("{days} day", time["days"]))
 	if time["hours"] > 0:
 		format_arr.append(s_if_plural("{hours} hour", time["hours"]))
 	if time["minutes"] > 0:
@@ -88,9 +92,16 @@ def get_pretty_duration(duration, postfix=True):
 	if time["seconds"] > 0:
 		format_arr.append(s_if_plural("{seconds} second", time["seconds"]))
 	format_str = pretty_list(format_arr)
-	if postfix:
-		format_str += " in" if is_after else " before the game started"
 	return format_str.format(**time)
+
+def get_pretty_duration(duration, postfix=True):
+	if duration == 0:
+		return "the exact start of the game"
+	is_after = duration > 0
+	result = get_pretty_time(duration)
+	if postfix:
+		result += " in" if is_after else " before the game started"
+	return result
 
 def format_duration_simple(duration):
 	if duration >= 3600:
@@ -471,8 +482,9 @@ class DotaStats(MangoCog):
 
 		await self.bot.send_typing(ctx.message.channel)
 
-		playerinfo = await opendota_query("/players/{}".format(steam32), False)
-		playerwl = await opendota_query("/players/{}/wl".format(steam32))
+		playerinfo = await opendota_query(f"/players/{steam32}", False)
+		playerwl = await opendota_query(f"/players/{steam32}/wl")
+		playermatches = await opendota_query(f"/players/{steam32}/matches")
 		gamesplayed = playerwl["win"] + playerwl["lose"]
 		winrate = "{:.2%}".format(playerwl["win"] / gamesplayed)
 		if playerinfo.get("solo_competitive_rank") is not None:
@@ -486,11 +498,27 @@ class DotaStats(MangoCog):
 			favs += self.hero_info[int(heroes[i]["hero_id"])]['name'] + ", "
 		favs = favs[:-2]
 
+		# Recent means 2 months / 60 days
 		heroes = await opendota_query("/players/{}/heroes?date=60".format(steam32))
 		recent_favs = ""
 		for i in range(0,3):
 			recent_favs += self.hero_info[int(heroes[i]["hero_id"])]['name'] + ", "
 		recent_favs = recent_favs[:-2]
+
+		timecutoff = time.time() - (86400 * 60)
+		activity = []
+		activity_recent = []
+		for i in range(0, len(playermatches) - 1):
+			delta = playermatches[i]["start_time"] - (playermatches[i + 1]["start_time"] + playermatches[i]["duration"])
+			activity.append(delta)
+			if playermatches[i]["start_time"] > timecutoff:
+				activity_recent.append(delta)
+		if not activity:
+			activity = [ 0 ]
+		activity = get_pretty_time((int(statistics.mean(activity)) // 60) * 60)
+		if not activity_recent:
+			activity_recent = [ 0 ]
+		activity_recent = get_pretty_time((int(statistics.mean(activity_recent)) // 60) * 60)
 
 		embed = discord.Embed(color=self.embed_color)
 
@@ -513,6 +541,11 @@ class DotaStats(MangoCog):
 		embed.add_field(name="Heroes", value=(
 			f"[Recent Favs](https://www.opendota.com/players/{steam32}/heroes?date=60) {recent_favs}\n"
 			f"[Overall Favs](https://www.opendota.com/players/{steam32}/heroes) {favs}\n"))
+
+		embed.add_field(name="Activity", value=(
+			"*Average time between games*\n"
+			f"**Recent**: {activity_recent}\n"
+			f"**Overall**: {activity}"))
 
 		if player is None:
 			player_mention = ""
