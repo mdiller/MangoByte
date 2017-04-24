@@ -31,7 +31,7 @@ def get_playlist(clipdir):
 	clips = []
 	for root, dirs, files in os.walk(settings.resourcedir + "clips/" + clipdir):
 		for file in files:
-			if file.endswith(".mp3"):
+			if file.endswith(".mp3") or file.endswith(".wav"):
 				clips.append(file[:-4])
 	clips.sort()
 	return clips
@@ -198,7 +198,9 @@ class Audio(MangoCog):
 
 		Calling this command with no arguments gets you a list of sections and a list of all of the clips
 
-		To get the clips in a specific section, do `{cmdpfx}playlist <section>`"""
+		To get the clips in a specific section, do `{cmdpfx}playlist <section>`
+
+		You can also do `{cmdpfx}playlist new` to get the 10 newest clips"""
 		dirs = get_clipdirs()
 
 		message = ""
@@ -211,6 +213,16 @@ class Audio(MangoCog):
 			message += "\n**Clips:**\n"
 			for section in dirs:
 				clips += get_playlist(section)
+		elif section in [ "recent", "latest", "new" ]:
+			clips = {}
+			for root, dirs, files in os.walk(settings.resourcedir + "clips/"):
+				for file in files:
+					if file.endswith(".mp3") or file.endswith(".wav"):
+						clips[file[:-4]] = os.path.getctime(os.path.join(root, file))
+			clips = sorted(clips.items(), key=lambda x: x[1], reverse=True)
+			for clip in clips[:10]:
+				message += f"`{clip[0]}`\n"
+			clips = []
 		elif section not in dirs:
 			message +=("Dats not a valid section. You can choose from one of these:\n")
 			for section in dirs:
