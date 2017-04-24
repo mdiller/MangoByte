@@ -502,7 +502,7 @@ class DotaStats(MangoCog):
 					favs += ", "
 				favs += self.hero_info[heroes[i][0]]['name']
 
-		# Recent means 2 months / 60 days
+		# Recent means 2 months / 60 days 
 		timecutoff = time.time() - (86400 * 60)
 
 		heroes = {}
@@ -517,20 +517,33 @@ class DotaStats(MangoCog):
 					recent_favs += ", "
 				recent_favs += self.hero_info[heroes[i][0]]['name']
 
-
-		activity = []
-		activity_recent = []
+		recent_count = 0
+		activity_delta = []
+		activity_count = []
+		count = 1
 		for i in range(0, len(matches) - 1):
 			delta = matches[i]["start_time"] - (matches[i + 1]["start_time"] + matches[i]["duration"])
-			activity.append(delta)
-			if matches[i]["start_time"] > timecutoff:
-				activity_recent.append(delta)
-		if not activity:
-			activity = [ 0 ]
-		activity = get_pretty_time((int(statistics.mean(activity)) // 60) * 60)
-		if not activity_recent:
-			activity_recent = [ 0 ]
-		activity_recent = get_pretty_time((int(statistics.mean(activity_recent)) // 60) * 60)
+			if delta < (60 * 60 * 2): # If these are part of the same group
+				count += 1
+				continue
+			else:
+				activity_count.append(count)
+				activity_delta.append(delta)
+				count = 1
+				if matches[i]["start_time"] > timecutoff:
+					recent_count += 1
+
+		if not activity_delta:
+			activity_delta = [ 0 ]
+			activity_count = [ 0 ]
+
+		overall_activity_delta = get_pretty_time((int(statistics.mean(activity_delta)) // 60) * 60)
+		if recent_count:
+			recent_activity_delta = get_pretty_time((int(statistics.mean(activity_delta[:recent_count])) // 60) * 60)
+		else:
+			recent_activity_delta = None
+		# overall_activity_count = int(statistics.mean(activity_count))
+		# recent_activity_count = int(statistics.mean(activity_count[:recent_count]))
 
 		embed = discord.Embed(color=self.embed_color)
 
@@ -555,9 +568,9 @@ class DotaStats(MangoCog):
 			f"[Overall Favs](https://www.opendota.com/players/{steam32}/heroes) {favs}\n"))
 
 		embed.add_field(name="Activity", value=(
-			"*Average time between games*\n"
-			f"**Recent**: {activity_recent}\n"
-			f"**Overall**: {activity}"))
+			"*Average time between groups of games*\n"
+			f"**Recent**: {recent_activity_delta}\n"
+			f"**Overall**: {overall_activity_delta}\n"))
 
 		if player is None:
 			player_mention = ""
