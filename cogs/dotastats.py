@@ -483,35 +483,47 @@ class DotaStats(MangoCog):
 		await self.bot.send_typing(ctx.message.channel)
 
 		playerinfo = await opendota_query(f"/players/{steam32}", False)
-		playerwl = await opendota_query(f"/players/{steam32}/wl")
-		playermatches = await opendota_query(f"/players/{steam32}/matches")
-		gamesplayed = playerwl["win"] + playerwl["lose"]
-		winrate = "{:.2%}".format(playerwl["win"] / gamesplayed)
+		matches = await opendota_query(f"/players/{steam32}/matches")
+		gamesplayed = len(matches)
+		winrate = "{:.2%}".format(len(list(filter(lambda m: m['radiant_win'] == (m['player_slot'] < 128), matches))) / gamesplayed)
 		if playerinfo.get("solo_competitive_rank") is not None:
 			solommr = f"**{playerinfo['solo_competitive_rank']}**"
 		else:
 			solommr = "not publicly displayed"
 
-		heroes = await opendota_query("/players/{}/heroes".format(steam32))
+		heroes = {}
+		for match in matches:
+			heroes[match['hero_id']] = heroes.get(match['hero_id'], 0) + 1
+		heroes = sorted(heroes.items(), key=lambda x: x[1], reverse=True)
 		favs = ""
 		for i in range(0,3):
-			favs += self.hero_info[int(heroes[i]["hero_id"])]['name'] + ", "
-		favs = favs[:-2]
+			if i < len(heroes):
+				if i:
+					favs += ", "
+				favs += self.hero_info[heroes[i][0]]['name']
 
 		# Recent means 2 months / 60 days
-		heroes = await opendota_query("/players/{}/heroes?date=60".format(steam32))
+		timecutoff = time.time() - (86400 * 60)
+
+		heroes = {}
+		for match in matches:
+			if match['start_time'] > timecutoff:
+				heroes[match['hero_id']] = heroes.get(match['hero_id'], 0) + 1
+		heroes = sorted(heroes.items(), key=lambda x: x[1], reverse=True)
 		recent_favs = ""
 		for i in range(0,3):
-			recent_favs += self.hero_info[int(heroes[i]["hero_id"])]['name'] + ", "
-		recent_favs = recent_favs[:-2]
+			if i < len(heroes):
+				if i:
+					recent_favs += ", "
+				recent_favs += self.hero_info[heroes[i][0]]['name']
 
-		timecutoff = time.time() - (86400 * 60)
+
 		activity = []
 		activity_recent = []
-		for i in range(0, len(playermatches) - 1):
-			delta = playermatches[i]["start_time"] - (playermatches[i + 1]["start_time"] + playermatches[i]["duration"])
+		for i in range(0, len(matches) - 1):
+			delta = matches[i]["start_time"] - (matches[i + 1]["start_time"] + matches[i]["duration"])
 			activity.append(delta)
-			if playermatches[i]["start_time"] > timecutoff:
+			if matches[i]["start_time"] > timecutoff:
 				activity_recent.append(delta)
 		if not activity:
 			activity = [ 0 ]
