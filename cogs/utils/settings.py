@@ -40,3 +40,6 @@ class Settings:
 	def ttslang(self):
 		return self.json_data["ttslang"]
 
+	def resource(self, dir):
+		return os.path.join(self.resourcedir, dir)
+

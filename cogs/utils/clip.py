@@ -11,7 +11,7 @@ import html
 
 # Clip helper functions
 def get_clipfile(clipname):
-	for root, dirs, files in os.walk(settings.resourcedir + "clips/"):
+	for root, dirs, files in os.walk(settings.resource("clips/")):
 		for file in files:
 			if re.search("^" + clipname + "\.(mp3|wav)$", file):
 				return os.path.join(root, file)
@@ -103,7 +103,7 @@ class LocalClip(Clip):
 
 class TtsClip(Clip):
 	def __init__(self, text, bot):
-		tempfile = "{}temp/{}.wav".format(settings.resourcedir, int(random.random() * 1000000000))
+		tempfile = settings.resource("temp/{}.wav".format(int(random.random() * 1000000000)))
 		tts_save(tempfile, text)
 		Clip.__init__(self, text, tempfile, text)
 

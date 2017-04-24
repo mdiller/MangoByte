@@ -20,7 +20,7 @@ discord.opus.load_opus(find_library('opus'))
 
 def get_clipdirs():
 	result = []
-	for root, dirs, files in os.walk(settings.resourcedir + "clips/"):
+	for root, dirs, files in os.walk(settings.resource("clips/")):
 		for d in dirs:
 			result.append(d)
 	result.sort()
@@ -29,7 +29,7 @@ def get_clipdirs():
 # gets a list of all the mp3s in the indicated clipdir
 def get_playlist(clipdir):
 	clips = []
-	for root, dirs, files in os.walk(settings.resourcedir + "clips/" + clipdir):
+	for root, dirs, files in os.walk(settings.resource("clips/" + clipdir)):
 		for file in files:
 			if file.endswith(".mp3") or file.endswith(".wav"):
 				clips.append(file[:-4])
@@ -38,7 +38,7 @@ def get_playlist(clipdir):
 
 def remove_if_temp(mp3name):
 	if os.path.isfile(mp3name):
-		if os.path.dirname(mp3name) == os.path.join(settings.resourcedir, "temp"):
+		if os.path.dirname(mp3name) == settings.resource("temp"):
 			os.remove(mp3name)
 			print("removed temp file " + mp3name)
 
@@ -215,7 +215,7 @@ class Audio(MangoCog):
 				clips += get_playlist(section)
 		elif section in [ "recent", "latest", "new" ]:
 			clips = {}
-			for root, dirs, files in os.walk(settings.resourcedir + "clips/"):
+			for root, dirs, files in os.walk(settings.resource("clips/")):
 				for file in files:
 					if file.endswith(".mp3") or file.endswith(".wav"):
 						clips[file[:-4]] = os.path.getctime(os.path.join(root, file))
@@ -406,7 +406,7 @@ class Audio(MangoCog):
 		Example:
 		`{cmdpfx}tts Hello I'm a bot`
 		"""
-		gtts_fixes = read_json(settings.resourcedir + "json/gtts_fixes.json")
+		gtts_fixes = read_json(settings.resource("json/gtts_fixes.json"))
 		text = ctx.message.clean_content[5:]
 		text = text.replace("\n", " ")
 		for key in gtts_fixes:

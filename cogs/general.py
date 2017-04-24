@@ -119,7 +119,7 @@ class General(MangoCog):
 		"""A baked Italian dish
 
 		Contains wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce."""
-		await self.bot.send_file(ctx.message.channel, settings.resourcedir + "images/lasagna.jpg")
+		await self.bot.send_file(ctx.message.channel, settings.resource("images/lasagna.jpg"))
 
 	def __check(self, ctx):
 		"""Checks to make sure the user has permissions"""
@@ -272,7 +272,7 @@ class General(MangoCog):
 				data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
 			else:
 				raise UserError(f"Rest API call failed with status code: {r.status}")
-		filename = "{}temp/{}.json".format(settings.resourcedir, "response")
+		filename = settings.resource("temp/response.json")
 		write_json(filename, data)
 		await self.bot.send_file(ctx.message.channel, filename)
 		os.remove(filename)

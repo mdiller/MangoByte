@@ -35,7 +35,7 @@ async def opendota_query(querystring, rate_limit=True):
 
 # rate_limit = false if this is the only query we're sending
 async def get_match(match_id, rate_limit=True):
-	match_file = f"{settings.resourcedir}cache/match_{match_id}.json"
+	match_file = settings.resource(f"cache/match_{match_id}.json")
 	if os.path.isfile(match_file):
 		return helpers.read_json(match_file)
 	else:
@@ -703,7 +703,7 @@ class DotaStats(MangoCog):
 		data = await opendota_query(query)
 
 		filename = re.search("/([/0-9a-zA-Z]+)", query).group(1).replace("/", "_")
-		filename = "{}temp/{}.json".format(settings.resourcedir, filename)
+		filename = settings.resource(f"temp/{filename}.json")
 		helpers.write_json(filename, data)
 		await self.bot.send_file(ctx.message.channel, filename)
 		os.remove(filename)
@@ -730,7 +730,7 @@ class DotaStats(MangoCog):
 		await self.bot.send_typing(ctx.message.channel)
 		data = await opendota_query(query)
 
-		filename = "{}temp/{}.json".format(settings.resourcedir, "query_results")
+		filename = settings.resource(f"temp/query_results.json")
 		helpers.write_json(filename, data)
 		await self.bot.send_file(ctx.message.channel, filename)
 		os.remove(filename)
