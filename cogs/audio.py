@@ -512,7 +512,7 @@ class Audio(MangoCog):
 				userinfo = botdata.userinfo(after.id)
 				if userinfo.intro != "" and userinfo.intro != introclip:
 					introclip = userinfo.intro
-					text = "its " + after.name
+					text = "its " + text
 
 				await asyncio.sleep(3)
 				await self.play_clip(introclip, after.server)
