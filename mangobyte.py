@@ -67,6 +67,11 @@ async def on_command_error(error, ctx):
 			return
 		elif cmd == "" or cmd.startswith("?") or cmd.startswith("!"):
 			return # These were probably not meant to be commands
+
+		if cmd.lower() in bot.commands:
+			new_message = ctx.message
+			new_message.content = "?" + cmd.lower() + ctx.message.content[len(cmd) + 1:]
+			await bot.process_commands(new_message)
 		elif await invalid_command_reporting(ctx):
 			await bot.send_message(ctx.message.channel, f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands.") 
 	elif isinstance(error, commands.CheckFailure):
