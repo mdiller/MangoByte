@@ -19,8 +19,11 @@ def get_clipfile(clipname):
 
 def tts_save(filename, text):
 	# run_command(["pico2wave", "--wave", filename, "-l", "en-GB", text])
-	tts = gTTS(text=text, lang=settings.ttslang)
-	tts.save(filename)
+	try:
+		tts = gTTS(text=text, lang=settings.ttslang)
+		tts.save(filename)
+	except AttributeError as e:
+		raise UserError("Whoops. Looks like gtts is broken right now.")
 
 class ClipNotFound(UserError):
 	def __init__(self, cliptype, clipname):
