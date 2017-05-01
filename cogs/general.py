@@ -216,23 +216,17 @@ class General(MangoCog):
 		"""
 		await self.bot.send_typing(ctx.message.channel)
 
-		results = wikipedia.search(query, results=10)
-
-		page = None
-
-		while not page:
-			if len(results) <= 0:
-				await self.bot.say(f"Couldn't find anything for {query}")
-				return
-			title = results.pop(0)
+		def getWikiPage(title):
 			try:
-				page = wikipedia.page(title=title, redirect=True, auto_suggest=True)
-			except wikipedia.exceptions.DisambiguationError as e:
-				continue # Try the next page if this is a bad one
+				return wikipedia.page(title=title, redirect=True, auto_suggest=True)
+			except (wikipedia.exceptions.DisambiguationError, wikipedia.exceptions.PageError) as e:
+				if isinstance(e, wikipedia.exceptions.PageError) or len(e.options) == 0:
+					raise UserError(f"Couldn't find anythin' fer \"*{query}*\"")
+				return getWikiPage(e.options[0])
 
-		page_url = f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}"
+		page = getWikiPage(query)
 
-		async with aiohttp.get(page_url) as r:
+		async with aiohttp.get(page.url) as r:
 			if r.status == 200:
 				page_html = await r.text()
 
@@ -246,7 +240,7 @@ class General(MangoCog):
 		summary += "."
 
 		embed = discord.Embed(description=summary)
-		embed.set_author(name=title, url=page_url)
+		embed.set_author(name=page.title, url=page.url)
 
 		best_image = None
 		best_image_index = -1
@@ -258,7 +252,6 @@ class General(MangoCog):
 					best_image_index = index
 		if best_image:
 			embed.set_image(url=best_image)
-
 
 		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 
