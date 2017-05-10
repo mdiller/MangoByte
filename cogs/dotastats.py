@@ -115,7 +115,7 @@ def is_parsed(match_json):
 
 # gets the steam32 id from the user or steamid and checks that it is valid before returning
 async def get_check_steamid(steamid, ctx=None):
-	is_author = steamid == None
+	is_author = steamid is None
 	if is_author:
 		steamid = ctx.message.author
 
@@ -179,6 +179,7 @@ class DotaStats(MangoCog):
 	async def init_dicts(self):
 		dotabase = self.bot.get_cog("Dotabase")
 		self.hero_info = await dotabase.get_hero_infos()
+		self.hero_aliases = dotabase.hero_aliases
 
 	def get_pretty_hero(self, player):
 		dotabase = self.bot.get_cog("Dotabase")
@@ -707,6 +708,91 @@ class DotaStats(MangoCog):
 			f"{longest_message_heading}: {longest_message}"))
 
 		# in a group
+
+		await self.bot.say(embed=embed)
+
+	@commands.command(pass_context=True)
+	async def herostats(self, ctx, *, hero):
+		"""Gets your stats for a hero
+
+		Clicking on the title of the returned embed will bring you to an opendota page with all of your games with that hero.
+
+		Lanes can only be calculated for matches that have been parsed
+
+		Example:
+		`{cmdpfx}herostats tinker`
+		"""
+		steam32 = await get_check_steamid(None, ctx)
+
+		if hero not in self.hero_aliases:
+			self.bot.say(f"I'm not sure who \"*{hero}*\" is.")
+			return
+		hero_id = self.hero_aliases[hero]
+
+		projections = [ "kills", "deaths", "assists", "hero_id", "version", "lane_role" ]
+		projections = map(lambda p: f"project={p}", projections)
+		projections = "&".join(projections)
+
+		queryargs = f"?hero_id={hero_id}&{projections}"
+
+		await thinker.think(ctx.message)
+		playerinfo = await opendota_query(f"/players/{steam32}")
+		matches = await opendota_query(f"/players/{steam32}/matches{queryargs}")
+		await thinker.stop_thinking(ctx.message)
+
+		if len(matches) == 0:
+			self.bot.say(f"Looks like you don't have any matches played on this hero")
+			return
+
+		parsed_count = len(list(filter(lambda p: p['version'] is not None, matches)))
+
+		def avg(key, parsed=False, round_place=0):
+			x = 0
+			for match in matches:
+				if parsed and not match['version']:
+					continue
+				if isinstance(key, LambdaType):
+					val = key(match)
+				else:
+					val = match.get(key, 0)
+				x += val
+			x = round(x / (len(matches) if not parsed else parsed_count), round_place)
+			return int(x) if round_place == 0 else x
+
+		def percent(key, parsed=False, round_place=0):
+			count = 0
+			for match in matches:
+				if parsed and not match['version']:
+					continue
+				if isinstance(key, LambdaType):
+					success = key(match)
+				else:
+					success = match.get(key, 0)
+				if success:
+					count += 1
+			count = round((count * 100) / (len(matches) if not parsed else parsed_count), round_place)
+			return int(count) if round_place == 0 else count
+
+
+		embed = discord.Embed(description=(
+			f"Games Played: **{len(matches)}**\n"
+			f"Winrate: **{percent(lambda p: p['radiant_win'] == (p['player_slot'] < 128), round_place=2)}%**\n"
+			f"Avg KDA: **{avg('kills')}**/**{avg('deaths')}**/**{avg('assists')}**\n"), color=self.embed_color)
+
+		embed.set_author(
+			name=f"{playerinfo['profile']['personaname']} ({self.hero_info[hero_id]['name']})", 
+			icon_url=self.hero_info[hero_id]["icon"],
+			url=f"https://www.opendota.com/players/{steam32}/matches?hero_id={hero_id}")
+
+		embed.set_thumbnail(url=self.hero_info[hero_id]['portrait'])
+
+		if parsed_count > 0:
+			embed.add_field(name=f"Laning ({parsed_count} parsed matches)", value=(
+				f"Safe Lane: {percent(lambda p: p.get('lane_role') == 1 and not p.get('is_roaming'), parsed=True)}%\n"
+				f"Mid Lane: {percent(lambda p: p.get('lane_role') == 2 and not p.get('is_roaming'), parsed=True)}%\n"
+				f"Off Lane: {percent(lambda p: p.get('lane_role') == 3 and not p.get('is_roaming'), parsed=True)}%\n"
+				f"Jungle: {percent(lambda p: p.get('lane_role') == 4 and not p.get('is_roaming'), parsed=True)}%\n"
+				f"Roaming: {percent(lambda p: p.get('is_roaming'), parsed=True)}%\n"))
 
 		await self.bot.say(embed=embed)
 

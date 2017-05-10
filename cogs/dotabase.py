@@ -94,7 +94,8 @@ class Dotabase(MangoCog):
 				"name": hero.localized_name,
 				"full_name": hero.full_name,
 				"icon": self.vpkurl + hero.icon,
-				"attr": hero.attr_primary
+				"attr": hero.attr_primary,
+				"portrait": self.vpkurl + hero.portrait
 			}
 			#this to replace the ones below
 		return result
