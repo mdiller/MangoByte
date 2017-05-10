@@ -260,6 +260,7 @@ class General(MangoCog):
 	@commands.command(pass_context=True, hidden=True, aliases=["restapi"])
 	async def restget(self, ctx, url):
 		"""Gets a json response from a rest api and returns it"""
+		await self.bot.send_typing(ctx.message.channel)
 		async with aiohttp.get(url) as r:
 			if r.status == 200:
 				data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
