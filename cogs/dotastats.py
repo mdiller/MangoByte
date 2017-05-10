@@ -787,12 +787,18 @@ class DotaStats(MangoCog):
 		embed.set_thumbnail(url=self.hero_info[hero_id]['portrait'])
 
 		if parsed_count > 0:
-			embed.add_field(name=f"Laning ({parsed_count} parsed matches)", value=(
-				f"Safe Lane: {percent(lambda p: p.get('lane_role') == 1 and not p.get('is_roaming'), parsed=True)}%\n"
-				f"Mid Lane: {percent(lambda p: p.get('lane_role') == 2 and not p.get('is_roaming'), parsed=True)}%\n"
-				f"Off Lane: {percent(lambda p: p.get('lane_role') == 3 and not p.get('is_roaming'), parsed=True)}%\n"
-				f"Jungle: {percent(lambda p: p.get('lane_role') == 4 and not p.get('is_roaming'), parsed=True)}%\n"
-				f"Roaming: {percent(lambda p: p.get('is_roaming'), parsed=True)}%\n"))
+			lanes = {
+				"Safe Lane": percent(lambda p: p.get('lane_role') == 1 and not p.get('is_roaming'), parsed=True),
+				"Mid Lane": percent(lambda p: p.get('lane_role') == 2 and not p.get('is_roaming'), parsed=True),
+				"Off Lane": percent(lambda p: p.get('lane_role') == 3 and not p.get('is_roaming'), parsed=True),
+				"Jungle": percent(lambda p: p.get('lane_role') == 4 and not p.get('is_roaming'), parsed=True),
+				"Roaming": percent(lambda p: p.get('is_roaming'), parsed=True)
+			}
+			values = []
+			for lane in lanes:
+				if lanes[lane] > 0:
+					values.append(f"{lane}: **{lanes[lane]}%**")
+			embed.add_field(name=f"Laning ({parsed_count} parsed match{'es' if parsed_count > 1 else ''})", value="\n".join(values))
 
 		await self.bot.say(embed=embed)
 
