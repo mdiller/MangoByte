@@ -717,15 +717,68 @@ class DotaStats(MangoCog):
 
 		Clicking on the title of the returned embed will bring you to an opendota page with all of your games with that hero.
 
-		Lanes can only be calculated for matches that have been parsed
-
 		Example:
 		`{cmdpfx}herostats tinker`
+
+		Example:
+		`{cmdpfx}herostats tinker mid`
+
+		You can also give a lane, and then the command will return stats for games you played in that lane
+
+		Lanes can only be calculated for matches that have been parsed
 		"""
 		steam32 = await get_check_steamid(None, ctx)
 
+		lane_args = [
+			{
+				"name": "safe lane",
+				"keywords": [ "safe" ] ,
+				"url_query": "&lane_role=1",
+				"filter": lambda p: p.get('lane_role') == 1 and not p.get('is_roaming')
+			},
+			{
+				"name": "mid lane",
+				"keywords": [ "mid", "middle" ],
+				"url_query": "&lane_role=2",
+				"filter": lambda p: p.get('lane_role') == 2 and not p.get('is_roaming')
+			},
+			{
+				"name": "offlane",
+				"keywords": [ "off", "hard" ],
+				"url_query": "&lane_role=3",
+				"filter": lambda p: p.get('lane_role') == 3 and not p.get('is_roaming')
+			},
+			{
+				"name": "jungle",
+				"keywords": [ "jungle", "jungling" ],
+				"url_query": "&lane_role=4",
+				"filter": lambda p: p.get('lane_role') == 4 and not p.get('is_roaming')
+			},
+			{
+				"name": "roaming",
+				"keywords": [ "roaming", "roam", "gank", "ganking" ],
+				"filter": lambda p: p.get('is_roaming')
+			}
+		]
+
+		words = hero.lower().replace("lane", "").split(" ")
+
+		chosen_lane = None
+		for i in range(len(words)):
+			for lane in lane_args:
+				if words[i] in lane["keywords"]:
+					words.pop(i)
+					i -= 1
+					if chosen_lane is None:
+						chosen_lane = lane
+					else:
+						raise UserError("Only specify one lane plz")
+
+
+		hero = " ".join(words)
+
 		if hero not in self.hero_aliases:
-			self.bot.say(f"I'm not sure who \"*{hero}*\" is.")
+			await self.bot.say(f"I'm not sure what hero \"*{hero}*\" is.")
 			return
 		hero_id = self.hero_aliases[hero]
 
@@ -740,8 +793,14 @@ class DotaStats(MangoCog):
 		matches = await opendota_query(f"/players/{steam32}/matches{queryargs}")
 		await thinker.stop_thinking(ctx.message)
 
+		if chosen_lane:
+			matches = list(filter(chosen_lane["filter"], matches))
+
 		if len(matches) == 0:
-			self.bot.say(f"Looks like you don't have any matches played on this hero")
+			if not chosen_lane:
+				await self.bot.say(f"Looks like you haven't played {self.hero_info[hero_id]['name']}")
+			else:
+				await self.bot.say(f"Looks like you haven't played any parsed matches as {self.hero_info[hero_id]['name']} in {chosen_lane['name']}")
 			return
 
 		parsed_count = len(list(filter(lambda p: p['version'] is not None, matches)))
@@ -779,14 +838,19 @@ class DotaStats(MangoCog):
 			f"Winrate: **{percent(lambda p: p['radiant_win'] == (p['player_slot'] < 128), round_place=2)}%**\n"
 			f"Avg KDA: **{avg('kills')}**/**{avg('deaths')}**/**{avg('assists')}**\n"), color=self.embed_color)
 
+
+		url = f"https://www.opendota.com/players/{steam32}/matches?hero_id={hero_id}"
+		if chosen_lane:
+			url += chosen_lane.get("url_query", "")
+
 		embed.set_author(
 			name=f"{playerinfo['profile']['personaname']} ({self.hero_info[hero_id]['name']})", 
 			icon_url=self.hero_info[hero_id]["icon"],
-			url=f"https://www.opendota.com/players/{steam32}/matches?hero_id={hero_id}")
+			url=url)
 
 		embed.set_thumbnail(url=self.hero_info[hero_id]['portrait'])
 
-		if parsed_count > 0:
+		if (not chosen_lane) and parsed_count > 0:
 			lanes = {
 				"Safe Lane": percent(lambda p: p.get('lane_role') == 1 and not p.get('is_roaming'), parsed=True),
 				"Mid Lane": percent(lambda p: p.get('lane_role') == 2 and not p.get('is_roaming'), parsed=True),
