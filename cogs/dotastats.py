@@ -179,7 +179,7 @@ class DotaStats(MangoCog):
 	async def init_dicts(self):
 		dotabase = self.bot.get_cog("Dotabase")
 		self.hero_info = await dotabase.get_hero_infos()
-		self.hero_aliases = dotabase.hero_aliases
+		self.lookup_hero = dotabase.lookup_hero
 
 	def get_pretty_hero(self, player):
 		dotabase = self.bot.get_cog("Dotabase")
@@ -360,8 +360,12 @@ class DotaStats(MangoCog):
 			"Denies: {denies}\n"
 			"Level: {level}\n".format(**player)))
 
-		embed.set_image(url=await get_match_image(matchid, is_parsed(game)))
+		embed._video = {
+			"url": "https://youtu.be/q47sFg_WFus"
+		}
 		embed.set_footer(text="Started".format(matchid))
+
+		print(embed.to_dict())
 
 		await self.bot.say(embed=embed)
 
@@ -775,18 +779,18 @@ class DotaStats(MangoCog):
 						raise UserError("Only specify one lane plz")
 
 
-		hero = " ".join(words)
+		hero_text = " ".join(words)
 
-		if hero not in self.hero_aliases:
-			await self.bot.say(f"I'm not sure what hero \"*{hero}*\" is.")
+		hero = self.lookup_hero(hero_text)
+		if not hero:
+			await self.bot.say(f"I'm not sure what hero \"*{hero_text}*\" is.")
 			return
-		hero_id = self.hero_aliases[hero]
 
 		projections = [ "kills", "deaths", "assists", "hero_id", "version", "lane_role" ]
 		projections = map(lambda p: f"project={p}", projections)
 		projections = "&".join(projections)
 
-		queryargs = f"?hero_id={hero_id}&{projections}"
+		queryargs = f"?hero_id={hero.id}&{projections}"
 
 		await thinker.think(ctx.message)
 		playerinfo = await opendota_query(f"/players/{steam32}")
@@ -798,9 +802,9 @@ class DotaStats(MangoCog):
 
 		if len(matches) == 0:
 			if not chosen_lane:
-				await self.bot.say(f"Looks like you haven't played {self.hero_info[hero_id]['name']}")
+				await self.bot.say(f"Looks like you haven't played {hero.localized_name}")
 			else:
-				await self.bot.say(f"Looks like you haven't played any parsed matches as {self.hero_info[hero_id]['name']} in {chosen_lane['name']}")
+				await self.bot.say(f"Looks like you haven't played any parsed matches as {hero.localized_name} in {chosen_lane['name']}")
 			return
 
 		parsed_count = len(list(filter(lambda p: p['version'] is not None, matches)))
@@ -833,7 +837,7 @@ class DotaStats(MangoCog):
 			return int(count) if round_place == 0 else count
 
 
-		url = f"https://www.opendota.com/players/{steam32}/matches?hero_id={hero_id}"
+		url = f"https://www.opendota.com/players/{steam32}/matches?hero_id={hero.id}"
 		if chosen_lane:
 			url += chosen_lane.get("url_query", "")
 
@@ -844,11 +848,11 @@ class DotaStats(MangoCog):
 
 
 		embed.set_author(
-			name=f"{playerinfo['profile']['personaname']} ({self.hero_info[hero_id]['name']})", 
-			icon_url=self.hero_info[hero_id]["icon"],
+			name=f"{playerinfo['profile']['personaname']} ({hero.localized_name})", 
+			icon_url=self.hero_info[hero.id]["icon"],
 			url=url)
 
-		embed.set_thumbnail(url=self.hero_info[hero_id]['portrait'])
+		embed.set_thumbnail(url=self.hero_info[hero.id]['portrait'])
 
 		if (not chosen_lane) and parsed_count > 0:
 			lanes = {

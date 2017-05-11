@@ -87,6 +87,28 @@ class Dotabase(MangoCog):
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name
 
+	def lookup_hero(self, hero):
+		hero_id = self.lookup_hero_id(hero)
+		if hero_id:
+			return session.query(Hero).filter(Hero.id == hero_id).first()
+		else:
+			return None
+
+	def lookup_hero_id(self, text):
+		text = re.sub(r'[^a-z^\s]', r'', text.lower())
+		if text in self.hero_aliases:
+			return self.hero_aliases[text]
+		for hero in session.query(Hero):
+			if hero.localized_name.lower().startswith(text):
+				return hero.id
+		for hero in self.hero_aliases:
+			if hero.startswith(text):
+				return self.hero_aliases[hero]
+		for hero in self.hero_aliases:
+			if text in hero:
+				return self.hero_aliases[hero]
+		return None
+
 	async def get_hero_infos(self):
 		result = {}
 		for hero in session.query(Hero):
@@ -278,10 +300,9 @@ class Dotabase(MangoCog):
 	@commands.command(pass_context=True)
 	async def hero(self, ctx, *, hero : str):
 		"""Gets information about a specific hero"""
-		hero = hero.lower()
-		if hero not in self.hero_aliases:
+		hero = self.lookup_hero(hero)
+		if not hero:
 			raise UserError("That doesn't look like a hero")
-		hero = session.query(Hero).filter(Hero.id == self.hero_aliases[hero]).first()
 
 		description = ""
 		def add_attr(name, base_func, gain_func):
