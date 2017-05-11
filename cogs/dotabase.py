@@ -320,7 +320,7 @@ class Dotabase(MangoCog):
 			f"{self.get_emoji('hero_projectile_speed')} {hero.attack_projectile_speed:,}\n"))
 
 		embed.add_field(name="Defence", value=(
-			f"{self.get_emoji('hero_armor')} {hero.base_armor + round(0.143 * hero.attr_agility_base, 1):0.1f}\n"
+			f"{self.get_emoji('hero_armor')} {hero.base_armor + round(hero.attr_agility_base / 7, 1):0.1f}\n"
 			f"{self.get_emoji('hero_magic_resist')} {hero.magic_resistance}%\n"))
 
 		embed.add_field(name="Mobility", value=(
