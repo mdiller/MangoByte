@@ -833,15 +833,15 @@ class DotaStats(MangoCog):
 			return int(count) if round_place == 0 else count
 
 
-		embed = discord.Embed(description=(
-			f"Games Played: **{len(matches)}**\n"
-			f"Winrate: **{percent(lambda p: p['radiant_win'] == (p['player_slot'] < 128), round_place=2)}%**\n"
-			f"Avg KDA: **{avg('kills')}**/**{avg('deaths')}**/**{avg('assists')}**\n"), color=self.embed_color)
-
-
 		url = f"https://www.opendota.com/players/{steam32}/matches?hero_id={hero_id}"
 		if chosen_lane:
 			url += chosen_lane.get("url_query", "")
+
+		embed = discord.Embed(description=(
+			f"[Games Played]({url}): **{len(matches)}**\n"
+			f"Winrate: **{percent(lambda p: p['radiant_win'] == (p['player_slot'] < 128), round_place=2)}%**\n"
+			f"Avg KDA: **{avg('kills')}**/**{avg('deaths')}**/**{avg('assists')}**\n"), color=self.embed_color)
+
 
 		embed.set_author(
 			name=f"{playerinfo['profile']['personaname']} ({self.hero_info[hero_id]['name']})", 
