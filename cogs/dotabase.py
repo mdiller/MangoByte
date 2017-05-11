@@ -372,6 +372,10 @@ class Dotabase(MangoCog):
 
 		await self.bot.say(embed=embed)
 
+		query = session.query(Response).filter(Response.hero_id == hero.id).filter(or_(Response.criteria.like("Spawn %"), Response.criteria.like("Spawn%")))
+		if query.count() > 0:
+			await self.play_response_query(query)
+
 		
 
 
