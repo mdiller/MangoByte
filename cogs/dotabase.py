@@ -313,11 +313,14 @@ class Dotabase(MangoCog):
 			"intelligence": hero.attr_intelligence_base
 		}[hero.attr_primary]
 
-		embed.add_field(name="Attack", value=(
+		attack_stats = (
 			f"{self.get_emoji('hero_damage')} {base_damage + hero.attack_damage_min} - {base_damage + hero.attack_damage_max}\n"
 			f"{self.get_emoji('hero_attack_rate')} {hero.attack_rate}\n"
-			f"{self.get_emoji('hero_attack_range')} {hero.attack_range}\n"
-			f"{self.get_emoji('hero_projectile_speed')} {hero.attack_projectile_speed:,}\n"))
+			f"{self.get_emoji('hero_attack_range')} {hero.attack_range}\n")
+		if not hero.is_melee:
+			attack_stats += f"{self.get_emoji('hero_projectile_speed')} {hero.attack_projectile_speed:,}\n"
+		embed.add_field(name="Attack", value=attack_stats)
+
 
 		embed.add_field(name="Defence", value=(
 			f"{self.get_emoji('hero_armor')} {hero.base_armor + round(hero.attr_agility_base / 7, 1):0.1f}\n"
