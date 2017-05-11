@@ -95,7 +95,12 @@ class Dotabase(MangoCog):
 			return None
 
 	def lookup_hero_id(self, text):
+		if isinstance(text, int) or text.isdigit():
+			query = session.query(Hero).filter(Hero.id == int(text))
+			return int(text) if query.count() > 0 else None
 		text = re.sub(r'[^a-z^\s]', r'', text.lower())
+		if text == "":
+			return None
 		if text in self.hero_aliases:
 			return self.hero_aliases[text]
 		for hero in session.query(Hero):
@@ -299,7 +304,14 @@ class Dotabase(MangoCog):
 
 	@commands.command(pass_context=True)
 	async def hero(self, ctx, *, hero : str):
-		"""Gets information about a specific hero"""
+		"""Gets information about a specific hero
+
+		You can give this command almost any variant of the hero's name, or the hero's id
+
+		**Examples:**
+		`{cmdpfx}hero sf`
+		`{cmdpfx}hero inker`
+		`{cmdpfx}hero furi`"""
 		hero = self.lookup_hero(hero)
 		if not hero:
 			raise UserError("That doesn't look like a hero")
