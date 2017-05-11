@@ -307,6 +307,27 @@ class Dotabase(MangoCog):
 		embed.set_author(name=hero.localized_name, icon_url=f"{self.vpkurl}{hero.icon}", url=wikiurl)
 		embed.set_thumbnail(url=f"{self.vpkurl}{hero.portrait}")
 
+		base_damage = {
+			"strength": hero.attr_strength_base,
+			"agility": hero.attr_agility_base,
+			"intelligence": hero.attr_intelligence_base
+		}[hero.attr_primary]
+
+		embed.add_field(name="Attack", value=(
+			f"{self.get_emoji('hero_damage')} {base_damage + hero.attack_damage_min} - {base_damage + hero.attack_damage_max}\n"
+			f"{self.get_emoji('hero_attack_rate')} {hero.attack_rate}\n"
+			f"{self.get_emoji('hero_attack_range')} {hero.attack_range}\n"
+			f"{self.get_emoji('hero_projectile_speed')} {hero.attack_projectile_speed:,}\n"))
+
+		embed.add_field(name="Defence", value=(
+			f"{self.get_emoji('hero_armor')} {hero.base_armor + round(0.143 * hero.attr_agility_base, 1):0.1f}\n"
+			f"{self.get_emoji('hero_magic_resist')} {hero.magic_resistance}%\n"))
+
+		embed.add_field(name="Mobility", value=(
+			f"{self.get_emoji('hero_speed')} {hero.base_movement}\n"
+			f"{self.get_emoji('hero_turn_rate')} {hero.turn_rate}\n"
+			f"{self.get_emoji('hero_vision_range')} {hero.vision_day:,} / {hero.vision_night:,}\n"))
+
 		if hero.real_name != '':
 			embed.add_field(name="Real Name", value=hero.real_name)
 

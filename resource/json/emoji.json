@@ -19,5 +19,14 @@
 	"poke_dragon": "<:poke_dragon:293923709905797121>",
 	"poke_dark": "<:poke_dark:293923709184638978>",
 	"poke_steel": "<:poke_steel:293923710375690240>",
-	"poke_fairy": "<:poke_fairy:293923710187077633>"
+	"poke_fairy": "<:poke_fairy:293923710187077633>",
+	"hero_attack_range": "<:hero_attack_range:312024330974396428>",
+	"hero_projectile_speed": "<:hero_projectile_speed:312024490735304704>",
+	"hero_attack_rate": "<:hero_attack_rate:312024545865236493>",
+	"hero_magic_resist": "<:hero_magic_resist:312024570221821953>",
+	"hero_speed": "<:hero_speed:312024594284544001>",
+	"hero_turn_rate": "<:hero_turn_rate:312024659040272395>",
+	"hero_armor": "<:hero_armor:312025149899800579>",
+	"hero_damage": "<:hero_damage:312025241515720709>",
+	"hero_vision_range": "<:hero_vision_range:312026060055117824>"
 }
