@@ -15,14 +15,12 @@ def is_owner():
     return commands.check(lambda ctx: is_owner_check(ctx.message.author))
 
 def is_admin_check(channel, author):
-	if is_owner_check(author):
-		return True
 	if channel.is_private:
 		return False # All admin commands should be server specific and not work on PM channels
+	if is_owner_check(author):
+		return True
 	
 	perms = channel.permissions_for(author)
-	if not perms.administrator:
-		print("admin check failed")
 	return perms.administrator
 
 def is_admin():
