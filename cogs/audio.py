@@ -158,6 +158,9 @@ class Audio(MangoCog):
 	async def connect_voice(self, channel):
 		if not isinstance(channel, discord.Channel):
 			channel = self.bot.get_channel(channel)
+		if channel is None:
+			raise UserError("channel not found")
+			return
 
 		audioplayer = await self.audioplayer(channel, error_on_none=False)
 		if audioplayer is not None:

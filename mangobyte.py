@@ -36,7 +36,11 @@ async def on_ready():
 
 	for serverinfo in botdata.serverinfo_list():
 		if serverinfo.voicechannel is not None:
-			await cog.connect_voice(serverinfo.voicechannel)
+			try:
+				await cog.connect_voice(serverinfo.voicechannel)
+			except UserError as e:
+				if e.message != "channel not found":
+					raise
 	
 	for server in bot.servers:
 		if server.me.server_permissions.change_nickname:
