@@ -360,12 +360,8 @@ class DotaStats(MangoCog):
 			"Denies: {denies}\n"
 			"Level: {level}\n".format(**player)))
 
-		embed._video = {
-			"url": "https://youtu.be/q47sFg_WFus"
-		}
+		embed.set_image(url=await get_match_image(matchid, is_parsed(game)))
 		embed.set_footer(text="Started".format(matchid))
-
-		print(embed.to_dict())
 
 		await self.bot.say(embed=embed)
 
@@ -807,7 +803,7 @@ class DotaStats(MangoCog):
 				await self.bot.say(f"Looks like you haven't played any parsed matches as {hero.localized_name} in {chosen_lane['name']}")
 			return
 
-		parsed_count = len(list(filter(lambda p: p['version'] is not None, matches)))
+		lane_parsed_count = len(list(filter(lambda p: p['lane_role'] is not None, matches)))
 
 		def avg(key, parsed=False, round_place=0):
 			x = 0
@@ -819,7 +815,7 @@ class DotaStats(MangoCog):
 				else:
 					val = match.get(key, 0)
 				x += val
-			x = round(x / (len(matches) if not parsed else parsed_count), round_place)
+			x = round(x / (len(matches) if not parsed else lane_parsed_count), round_place)
 			return int(x) if round_place == 0 else x
 
 		def percent(key, parsed=False, round_place=0):
@@ -833,7 +829,7 @@ class DotaStats(MangoCog):
 					success = match.get(key, 0)
 				if success:
 					count += 1
-			count = round((count * 100) / (len(matches) if not parsed else parsed_count), round_place)
+			count = round((count * 100) / (len(matches) if not parsed else lane_parsed_count), round_place)
 			return int(count) if round_place == 0 else count
 
 
@@ -854,7 +850,7 @@ class DotaStats(MangoCog):
 
 		embed.set_thumbnail(url=self.hero_info[hero.id]['portrait'])
 
-		if (not chosen_lane) and parsed_count > 0:
+		if (not chosen_lane) and lane_parsed_count > 0:
 			lanes = {
 				"Safe Lane": percent(lambda p: p.get('lane_role') == 1 and not p.get('is_roaming'), parsed=True),
 				"Mid Lane": percent(lambda p: p.get('lane_role') == 2 and not p.get('is_roaming'), parsed=True),
@@ -866,7 +862,7 @@ class DotaStats(MangoCog):
 			for lane in lanes:
 				if lanes[lane] > 0:
 					values.append(f"{lane}: **{lanes[lane]}%**")
-			embed.add_field(name=f"Laning ({parsed_count} parsed match{'es' if parsed_count > 1 else ''})", value="\n".join(values))
+			embed.add_field(name=f"Laning ({lane_parsed_count} parsed match{'es' if lane_parsed_count > 1 else ''})", value="\n".join(values))
 
 		await self.bot.say(embed=embed)
 
