@@ -73,6 +73,7 @@ class Dotabase(MangoCog):
 	Interfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.me](http://dotabase.me) if you want to see a website that interfaces with dotabase."""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
+		self.session = session
 		self.criteria_aliases = read_json(settings.resource("json/criteria_aliases.json"))
 		self.hero_aliases = {}
 		self.build_aliases()
@@ -165,7 +166,7 @@ class Dotabase(MangoCog):
 		query = await self.dota_keyphrase_query(keyphrase)
 
 		if query is None:
-			await self.bot.say("No responses found! 😱");
+			await self.bot.say("No responses found! 😱")
 		else:
 			await self.play_response_query(query)
 
@@ -192,7 +193,7 @@ class Dotabase(MangoCog):
 		return query
 
 
-	async def smart_dota_query(self, words, variables):
+	async def smart_dota_query(self, words, variables, exact=False):
 		basequery = session.query(Response)
 		for var in variables:
 			if var.value is not None:
@@ -218,9 +219,10 @@ class Dotabase(MangoCog):
 		if query.count() > 0:
 			return query
 
-		query = basequery.filter(Response.text_simple.like("%" + simple_input + "%"))
-		if query.count() > 0:
-			return query
+		if not exact:
+			query = basequery.filter(Response.text_simple.like("%" + simple_input + "%"))
+			if query.count() > 0:
+				return query
 
 		return None
 

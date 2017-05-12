@@ -415,12 +415,16 @@ class Audio(MangoCog):
 		Example:
 		`{cmdpfx}tts Hello I'm a bot`
 		"""
+		await self.do_tts(ctx.message.clean_content[5:])
+
+
+	async def do_tts(self, text):
 		gtts_fixes = read_json(settings.resource("json/gtts_fixes.json"))
-		text = ctx.message.clean_content[5:]
 		text = text.replace("\n", " ")
 		for key in gtts_fixes:
 			text = re.sub("\\b({})\\b".format(key), gtts_fixes[key], text, re.IGNORECASE)
 		await self.play_clip("tts:" + text)
+
 
 	@commands.command(pass_context=True)
 	async def ttsclip(self, ctx, *, clip : str):
@@ -445,6 +449,26 @@ class Audio(MangoCog):
 			return
 
 		await self.play_clip(f"tts:{text}")
+
+	@commands.command(pass_context=True, aliases= [ "stts" ])
+	async def smarttts(self, ctx, *, message : str):
+		"""Automatically find the best fit for the tts given
+
+		First checks local clips (like `{cmdpfx}play`),
+		Then checks if there is an exact match for a dota response clip,
+		And if none of the above is found, does a simple tts clip"""
+		try:
+			await self.play_clip(f"local:{message}")
+			return # Clip played successfully so we're done
+		except ClipNotFound:
+			pass
+		dotabase = self.bot.get_cog("Dotabase")
+		if dotabase:
+			query = await dotabase.smart_dota_query(message.split(" "), [], exact=True)
+			if query:
+				await dotabase.play_response_query(query)
+				return
+		await self.do_tts(message)
 
 
 	@commands.command(pass_context=True)
