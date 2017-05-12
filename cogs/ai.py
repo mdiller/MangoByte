@@ -9,6 +9,7 @@ import asyncio
 import string
 import random
 import re
+from cogs.audio import AudioPlayerNotFoundError
 
 
 class AI(MangoCog):
@@ -23,7 +24,10 @@ class AI(MangoCog):
 	async def play_say_clip(self, responsename):
 		clip = await self.get_clip("dota:" + responsename)
 		await self.bot.say(clip.text)
-		await self.play_clip(clip)
+		try:
+			await self.play_clip(clip)
+		except AudioPlayerNotFoundError:
+			pass
 
 	@commands.command(pass_context=True)
 	async def ask(self, ctx, *, question : str=""):

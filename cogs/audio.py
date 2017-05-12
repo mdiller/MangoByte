@@ -18,6 +18,10 @@ from ctypes.util import find_library
 
 discord.opus.load_opus(find_library('opus'))
 
+class AudioPlayerNotFoundError(UserError):
+	def __init__(self, message):
+		self.message = message
+
 def get_clipdirs():
 	result = []
 	for root, dirs, files in os.walk(settings.resource("clips/")):
@@ -132,10 +136,12 @@ class Audio(MangoCog):
 					member = audioplayer.server.get_member(author.id)
 					if member is not None and audioplayer.voice_channel == member.voice_channel:
 						if botdata.serverinfo(audioplayer.server).is_banned(member):
-							raise UserError("Nice try, but you're banned in the voice channel that I'm in")
+							raise AudioPlayerNotFoundError("Nice try, but you're banned in the voice channel that I'm in")
 						return audioplayer
-
-				raise UserError("You're not in any voice channels that I'm in")
+				if error_on_none:
+					raise AudioPlayerNotFoundError("You're not in any voice channels that I'm in")
+				else:
+					None
 
 		if isinstance(server, discord.Channel):
 			server = server.server
@@ -144,7 +150,7 @@ class Audio(MangoCog):
 				return audioplayer
 
 		if error_on_none:
-			raise UserError("I'm not in a voice channel on this server. Have an admin do `{}summon` to put me in one.".format(self.bot.command_prefix))
+			raise AudioPlayerNotFoundError("I'm not in a voice channel on this server. Have an admin do `{}summon` to put me in one.".format(self.bot.command_prefix))
 		else:
 			return None
 

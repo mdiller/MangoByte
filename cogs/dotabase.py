@@ -12,6 +12,7 @@ import string
 import re
 from .mangocog import *
 from dotabase import *
+from cogs.audio import AudioPlayerNotFoundError
 
 session = dotabase_session()
 
@@ -374,7 +375,10 @@ class Dotabase(MangoCog):
 
 		query = session.query(Response).filter(Response.hero_id == hero.id).filter(or_(Response.criteria.like("Spawn %"), Response.criteria.like("Spawn%")))
 		if query.count() > 0:
-			await self.play_response_query(query)
+			try:
+				await self.play_response_query(query)
+			except AudioPlayerNotFoundError:
+				pass
 
 		
 
