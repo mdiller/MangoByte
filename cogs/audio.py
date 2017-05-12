@@ -460,6 +460,8 @@ class Audio(MangoCog):
 		await self.do_smarttts(message)
 
 	async def do_smarttts(self, message):
+		if message == "" or not message:
+			return # dont say anything if theres nothin to be said
 		try:
 			await self.play_clip(f"local:{message}")
 			return # Clip played successfully so we're done
@@ -504,7 +506,7 @@ class Audio(MangoCog):
 		await self.bot.say("TTS Channel removed")
 
 	async def on_message(self, message):
-		if message.server and not message.content.startswith("?"):
+		if message.server and (not message.content.startswith("?")) and (not message.author.id == self.bot.user.id):
 			if botdata.serverinfo(message.server).is_banned(message.author):
 				return # banned users cant talk
 			ttschannel = botdata.serverinfo(message.server.id).ttschannel

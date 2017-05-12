@@ -26,7 +26,7 @@ class MangoCog:
 		except MissingClipType:
 			while len(trytypes) > 0:
 				try:
-					return await self.get_clip("{}:{}".format(trytypes.pop(), clipid))
+					return await self.get_clip("{}:{}".format(trytypes.pop()))
 				except ClipNotFound:
 					continue
 		raise MissingClipType(clipid)
@@ -34,7 +34,7 @@ class MangoCog:
 	async def get_clip(self, clipid):
 		cliptypes = Clip.types_dict()
 
-		match = re.search("^(" + "|".join(cliptypes) + "):(.*)$", clipid)
+		match = re.search(f"^({'|'.join(cliptypes)}):(.*)$", clipid.replace("\n", " "))
 
 		if not match:
 			raise MissingClipType(clipid)
