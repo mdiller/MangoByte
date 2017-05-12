@@ -21,6 +21,8 @@ def is_admin_check(channel, author):
 		return False # All admin commands should be server specific and not work on PM channels
 	
 	perms = channel.permissions_for(author)
+	if not perms.administrator:
+		print("admin check failed")
 	return perms.administrator
 
 def is_admin():
