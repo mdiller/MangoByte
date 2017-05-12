@@ -457,6 +457,9 @@ class Audio(MangoCog):
 		First checks local clips (like `{cmdpfx}play`),
 		Then checks if there is an exact match for a dota response clip,
 		And if none of the above is found, does a simple tts clip"""
+		await self.do_smarttts(message)
+
+	async def do_smarttts(self, message):
 		try:
 			await self.play_clip(f"local:{message}")
 			return # Clip played successfully so we're done
@@ -469,6 +472,45 @@ class Audio(MangoCog):
 				await dotabase.play_response_query(query)
 				return
 		await self.do_tts(message)
+
+
+	@checks.is_admin()
+	@commands.command(pass_context=True, hidden=True)
+	async def ttschannel(self, ctx, channel : discord.Channel):
+		"""Sets a channel as the "TTS Channel"
+		*admin-only command*
+		If someone types in this channel, mangobyte will automatically interpret it as a `{cmdpfx}smarttts` command
+
+		**Example:** (If your channel name is tts)
+		`{cmdpfx}ttschannel #tts`
+		"""
+		if channel.type != discord.ChannelType.text:
+			await self.bot.say("You've gotta give me a text channel")
+			return
+		botdata.serverinfo(channel.server.id).ttschannel = channel.id
+		await self.bot.say(f"{channel.mention} has been set as the tts channel!")
+
+	@checks.is_admin()
+	@commands.command(pass_context=True, hidden=True)
+	async def unttschannel(self, ctx):
+		"""Un-sets the "TTS Channel"
+		*admin-only command*
+		See `{cmdpfx}ttschannel` for more info on what this is about
+		"""
+		if not botdata.serverinfo(ctx.message.server.id).ttschannel:
+			await self.bot.say("TTS Channel has not been set. Try `?ttschannel <name of channel>`")
+			return
+		botdata.serverinfo(ctx.message.server.id).ttschannel = None
+		await self.bot.say("TTS Channel removed")
+
+	async def on_message(self, message):
+		if message.server and not message.content.startswith("?"):
+			if botdata.serverinfo(message.server).is_banned(message.author):
+				return # banned users cant talk
+			ttschannel = botdata.serverinfo(message.server.id).ttschannel
+			if ttschannel == message.channel.id:
+				_internal_channel = message.channel
+				await self.do_smarttts(message.content)
 
 
 	@commands.command(pass_context=True)

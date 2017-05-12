@@ -73,7 +73,8 @@ class ServerInfo:
 				("voicechannel", None),
 				("reactions", False),
 				("invalidcommands", False),
-				("banned_users", [])
+				("banned_users", []),
+				("ttschannel", [])
 			]))
 			self.botdata.save_data()
 
@@ -92,6 +93,15 @@ class ServerInfo:
 	@voicechannel.setter
 	def voicechannel(self, value):
 		self.json_data["voicechannel"] = value
+		self.botdata.save_data()
+
+	@property
+	def ttschannel(self):
+		return self.json_data.get("ttschannel", None)
+
+	@ttschannel.setter
+	def ttschannel(self, value):
+		self.json_data["ttschannel"] = value
 		self.botdata.save_data()
 
 	@property
