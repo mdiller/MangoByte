@@ -21,11 +21,11 @@ class AI(MangoCog):
 		self.reactions = read_json(settings.resource("json/reactions.json"))
 		self.questions = read_json(settings.resource("json/questions.json"))
 
-	async def play_say_clip(self, responsename):
+	async def play_say_clip(self, responsename, ctx):
 		clip = await self.get_clip("dota:" + responsename)
 		await self.bot.say(clip.text)
 		try:
-			await self.play_clip(clip)
+			await self.play_clip(clip, ctx)
 		except AudioPlayerNotFoundError:
 			pass
 
@@ -35,7 +35,7 @@ class AI(MangoCog):
 		random.seed(question)
 		for check in self.questions:
 			if re.search(check["regex"], question):
-				await self.play_say_clip(random.choice(check["responses"]))
+				await self.play_say_clip(random.choice(check["responses"]), ctx)
 				return
 		print("didnt match anything for ask")
 

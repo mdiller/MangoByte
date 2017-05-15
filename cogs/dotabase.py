@@ -90,6 +90,8 @@ class Dotabase(MangoCog):
 			self.criteria_aliases[crit.name.lower()] = crit.name
 
 	def lookup_hero(self, hero):
+		if not hero:
+			return None
 		hero_id = self.lookup_hero_id(hero)
 		if hero_id:
 			return session.query(Hero).filter(Hero.id == hero_id).first()
@@ -129,15 +131,15 @@ class Dotabase(MangoCog):
 			#this to replace the ones below
 		return result
 
-	async def play_response(self, response):
-		await self.play_clip("dota:" + response.name)
+	async def play_response(self, response, ctx):
+		await self.play_clip("dota:" + response.name, ctx)
 
 	def get_response(self, responsename):
 		return session.query(Response).filter(Response.name == responsename).first()
 
 	# Plays a random response from a query
-	async def play_response_query(self, query):
-		await self.play_response(query.order_by(func.random()).first())
+	async def play_response_query(self, query, ctx):
+		await self.play_response(query.order_by(func.random()).first(), ctx)
 
 	@commands.command(pass_context=True, aliases=["dotar"])
 	async def dota(self, ctx, *, keyphrase : str=None):
@@ -168,7 +170,7 @@ class Dotabase(MangoCog):
 		if query is None:
 			await self.bot.say("No responses found! 😱")
 		else:
-			await self.play_response_query(query)
+			await self.play_response_query(query, ctx)
 
 
 	async def dota_keyphrase_query(self, keyphrase):
@@ -248,59 +250,62 @@ class Dotabase(MangoCog):
 		dota_response = random.choice(dota_hellos)
 		response = session.query(Response).filter(Response.name == dota_response).first()
 		print("hello: " + response.name)
-		await self.play_response(response)
+		await self.play_response(response, ctx)
 
 	# Plays the correct command for the given keyphrase and hero, if a valid one is given
-	async def hero_keyphrase_command(self, keyphrase, hero):
+	async def hero_keyphrase_command(self, keyphrase, hero, ctx):
 		query = await self.dota_keyphrase_query(keyphrase)
 		if hero is None:
-			await self.play_response_query(query)
-		elif hero in self.hero_aliases:
-			query = query.filter(Response.hero_id == self.hero_aliases[hero])
-			if query.count() > 0:
-				await self.play_response_query(query)
-			else:
-				raise UserError("No responses found! 😱")
-		else:
+			await self.play_response_query(query, ctx)
+			return
+
+		hero = self.lookup_hero(hero)
+		if hero is None:
 			raise UserError("Don't know what hero yer talkin about")
+		else:
+			query = query.filter(Response.hero_id == hero.id)
+			if query.count() > 0:
+				await self.play_response_query(query, ctx)
+			else:
+				raise UserError(f"No responses found for {hero.localized_name}! 😱")
 
 	@commands.command(pass_context=True, aliases=["nope"])
 	async def no(self, ctx, *, hero=None):
 		"""Nopes."""
-		await self.hero_keyphrase_command("no", hero)
+		await self.hero_keyphrase_command("no", hero, ctx)
 
 	@commands.command(pass_context=True)
 	async def yes(self, ctx, *, hero=None):
 		"""Oooooh ya."""
-		await self.hero_keyphrase_command("yes", hero)
+		await self.hero_keyphrase_command("yes", hero, ctx)
 
 	@commands.command(pass_context=True, aliases=["laugh", "haha", "lerl"])
 	async def lol(self, ctx, *, hero=None):
 		"""WOW I WONDER WAT THIS DOES
 
 		Laughs using dota. Thats what it does."""
-		await self.hero_keyphrase_command(";laugh", hero)
+		await self.hero_keyphrase_command(";laugh", hero, ctx)
 
 	@commands.command(pass_context=True, aliases=["ty"])
 	async def thanks(self, ctx, *, hero=None):
 		"""Gives thanks
 
 		Thanks are given by a random dota hero in their own special way"""
-		await self.hero_keyphrase_command(";thanks", hero)
+		await self.hero_keyphrase_command(";thanks", hero, ctx)
 
 	@commands.command(pass_context=True)
 	async def inthebag(self, ctx, *, hero=None):
 		"""Proclaims that 'IT' (whatever it is) is in the bag"""
 		query = await self.dota_keyphrase_query(";inthebag")
 		if hero is None:
-				await self.play_response_query(query.filter(Response.simple_text != " its in the bag "))
+				await self.play_response_query(query.filter(Response.text_simple != " its in the bag "), ctx)
 		elif hero in self.hero_aliases:
 			query = query.filter(Response.hero_id == self.hero_aliases[hero])
 			newquery = query.filter(Response.text_simple != " its in the bag ")
 			if newquery.count() > 0:
-				await self.play_response_query(newquery)
+				await self.play_response_query(newquery, ctx)
 			else:
-				await self.play_response_query(query)
+				await self.play_response_query(query, ctx)
 		else:
 			raise UserError("Don't know what hero yer talkin about")
 
@@ -378,7 +383,7 @@ class Dotabase(MangoCog):
 		query = session.query(Response).filter(Response.hero_id == hero.id).filter(or_(Response.criteria.like("Spawn %"), Response.criteria.like("Spawn%")))
 		if query.count() > 0:
 			try:
-				await self.play_response_query(query)
+				await self.play_response_query(query, ctx)
 			except AudioPlayerNotFoundError:
 				pass
 
