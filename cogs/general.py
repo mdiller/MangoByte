@@ -21,7 +21,7 @@ class General(MangoCog):
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def ping(self, ctx, count : int=1):
 		"""Pongs a number of times(within reason)
 
@@ -38,14 +38,14 @@ class General(MangoCog):
 			ping_string += "pong "
 		await ctx.channel.send(ping_string)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def echo(self, ctx, *, message : str):
 		"""Echo...
 
 		I would hurl words into this darkness and wait for an echo, and if an echo sounded, no matter how faintly, I would send other words to tell, to march, to fight, to create a sense of the hunger for life that gnaws in us all"""
 		await ctx.channel.send(message)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def changelog(self, ctx):
 		"""Gets a rough changelog for mangobyte
 
@@ -80,7 +80,7 @@ class General(MangoCog):
 		embed.set_author(name="Changelog", url=f"{commit_url}/commits/master")
 		await ctx.channel.send(embed=embed)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def info(self, ctx):
 		"""Prints info about mangobyte"""
 		github = "https://github.com/mdiller/MangoByte"
@@ -112,14 +112,15 @@ class General(MangoCog):
 
 		embed.set_footer(text="This MangoByte managed by {}".format(owner.name), icon_url=owner.avatar_url)
 
+		print(embed.to_dict())
 		await ctx.channel.send(embed=embed)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def lasagna(self, ctx):
 		"""A baked Italian dish
 
 		Contains wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce."""
-		await self.bot.send_file(ctx.message.channel, settings.resource("images/lasagna.jpg"))
+		await ctx.channel.send(file=discord.File(settings.resource("images/lasagna.jpg")))
 
 	def __global_check(self, ctx):
 		"""Checks to make sure the user has permissions"""
@@ -131,8 +132,8 @@ class General(MangoCog):
 
 	@checks.is_admin()
 	@checks.is_not_PM()
-	@commands.command(pass_context=True)
-	async def botban(self, ctx, user: discord.User):
+	@commands.command()
+	async def botban(self, ctx, user: discord.Member):
 		"""Bans the user from using commands
 		(Requires administrator privilages)"""
 		if checks.is_owner_check(user):
@@ -149,8 +150,8 @@ class General(MangoCog):
 
 	@checks.is_admin()
 	@checks.is_not_PM()
-	@commands.command(pass_context=True)
-	async def botunban(self, ctx, user: discord.User):
+	@commands.command()
+	async def botunban(self, ctx, user: discord.Member):
 		"""Unbans the user, allowing them to use commands
 		(Requires administrator privilages)"""
 		if checks.is_owner_check(user) or user == self.bot.user:
@@ -159,7 +160,7 @@ class General(MangoCog):
 		botdata.guildinfo(ctx.message.guild).botunban(user)
 		await ctx.channel.send("{} is free of their restraints and may once again use commands".format(user.mention))
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def help(self, ctx, command : str=None):
 		"""Shows this message."""
 		def repl(obj):
@@ -167,9 +168,9 @@ class General(MangoCog):
 
 		# help by itself just lists our own commands.
 		if command == "all":
-			embed = self.bot.formatter.format_as_embed(ctx, self.bot, True)
+			embed = await self.bot.formatter.format_as_embed(ctx, self.bot, True)
 		elif command == None:
-			embed = self.bot.formatter.format_as_embed(ctx, self.bot, False)
+			embed = await self.bot.formatter.format_as_embed(ctx, self.bot, False)
 		else:
 			# try to see if it is a cog name
 			name = _mention_pattern.sub(repl, command).lower()
@@ -182,11 +183,13 @@ class General(MangoCog):
 				if command is None:
 					await ctx.channel.send(self.bot.command_not_found.format(name))
 					return
-			embed = self.bot.formatter.format_as_embed(ctx, command)
+			embed = await self.bot.formatter.format_as_embed(ctx, command)
+
+		print(embed.to_dict())
 
 		await ctx.channel.send(embed=embed)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def scramble(self, ctx, *, message : str):
 		"""Scrambles the insides of words"""
 
@@ -206,7 +209,7 @@ class General(MangoCog):
 
 		await ctx.channel.send(" ".join(results))
 
-	@commands.command(pass_context=True, aliases=["define", "lookup", "wikipedia", "whatis"])
+	@commands.command(aliases=["define", "lookup", "wikipedia", "whatis"])
 	async def wiki(self, ctx, *, query : str):
 		"""Looks up a thing on wikipedia
 		
@@ -214,7 +217,7 @@ class General(MangoCog):
 
 		This api is a wrapper for the [MediaWiki API](https://www.mediawiki.org/wiki/API:Main_page), which is applicable to Wikipedia because Wikipedia is build ontop of MediaWiki
 		"""
-		await self.bot.send_typing(ctx.message.channel)
+		ctx.channel.typing()
 
 		def getWikiPage(title):
 			try:
@@ -226,9 +229,11 @@ class General(MangoCog):
 
 		page = getWikiPage(query)
 
-		async with aiohttp.get(page.url) as r:
-			if r.status == 200:
-				page_html = await r.text()
+		
+		async with aiohttp.ClientSession() as session:
+			async with session.get(page.url) as r:
+				if r.status == 200:
+					page_html = await r.text()
 
 		sentances = page.summary.split(".")
 		summary = sentances[0]
@@ -257,18 +262,19 @@ class General(MangoCog):
 
 		await ctx.channel.send(embed=embed)
 
-	@commands.command(pass_context=True, hidden=True, aliases=["restapi"])
+	@commands.command(hidden=True, aliases=["restapi"])
 	async def restget(self, ctx, url):
 		"""Gets a json response from a rest api and returns it"""
-		await self.bot.send_typing(ctx.message.channel)
-		async with aiohttp.get(url) as r:
-			if r.status == 200:
-				data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
-			else:
-				raise UserError(f"Rest API call failed with status code: {r.status}")
+		await ctx.channel.typing()
+		async with aiohttp.ClientSession() as session:
+			async with session.get(url) as r:
+				if r.status == 200:
+					data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
+				else:
+					raise UserError(f"Rest API call failed with status code: {r.status}")
 		filename = settings.resource("temp/response.json")
 		write_json(filename, data)
-		await self.bot.send_file(ctx.message.channel, filename)
+		await ctx.channel.send(discord.File(filename))
 		os.remove(filename)
 
 

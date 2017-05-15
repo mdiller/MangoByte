@@ -82,7 +82,7 @@ async def on_command_error(ctx, error):
 		print("(suppressed)")
 		return # The user does not have permissions
 	elif isinstance(error, commands.MissingRequiredArgument):
-		await ctx.channel.send(embed=bot.formatter.format_as_embed(ctx, ctx.command))
+		await ctx.channel.send(embed=await bot.formatter.format_as_embed(ctx, ctx.command))
 	elif isinstance(error, commands.BadArgument):
 		signature = await get_cmd_signature(ctx)
 		await ctx.channel.send((
