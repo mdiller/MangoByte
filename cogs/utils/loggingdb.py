@@ -30,8 +30,8 @@ def convert_message(msg):
 	message.id = msg.id
 	message.author_id = msg.author.id
 	message.author_name = msg.author.name
-	if msg.server:
-		message.server_id = msg.server.id
+	if msg.guild:
+		message.server_id = msg.guild.id
 	else:
 		message.server_id = None
 	message.channel_id = msg.channel.id

@@ -27,23 +27,23 @@ class General(MangoCog):
 
 		Pongs... a number of times.... within reason. *glares at blanedale*"""
 		if count < 1:
-			await self.bot.say("thats not enough pings. stahp trying to break me.😠")
+			await ctx.channel.send("thats not enough pings. stahp trying to break me.😠")
 			return
 		if count > 20:
-			await self.bot.say("thats too many pings. stahp trying to break me.😠")
+			await ctx.channel.send("thats too many pings. stahp trying to break me.😠")
 			return
 
 		ping_string = ""
 		for i in range(0, count):
 			ping_string += "pong "
-		await self.bot.say(ping_string)
+		await ctx.channel.send(ping_string)
 
 	@commands.command(pass_context=True)
 	async def echo(self, ctx, *, message : str):
 		"""Echo...
 
 		I would hurl words into this darkness and wait for an echo, and if an echo sounded, no matter how faintly, I would send other words to tell, to march, to fight, to create a sense of the hunger for life that gnaws in us all"""
-		await self.bot.say(message)
+		await ctx.channel.send(message)
 
 	@commands.command(pass_context=True)
 	async def changelog(self, ctx):
@@ -78,7 +78,7 @@ class General(MangoCog):
 			embed = discord.Embed(description=description, color=discord.Color.green())
 
 		embed.set_author(name="Changelog", url=f"{commit_url}/commits/master")
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed)
 
 	@commands.command(pass_context=True)
 	async def info(self, ctx):
@@ -102,17 +102,17 @@ class General(MangoCog):
 			"• For a list of command categories, try `?help`"))
 
 		invite_link = "https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968"
-		help_server_link = "https://discord.gg/d6WWHxx"
+		help_guild_link = "https://discord.gg/d6WWHxx"
 
 		embed.add_field(name="Help", value=(
-			f"If you want to invite mangobyte to your server, click this [invite link]({invite_link}). "
-			f"If you have a question, suggestion, or just want to try out mah features, check out the [Help Server]({help_server_link})."))
+			f"If you want to invite mangobyte to your server/guild, click this [invite link]({invite_link}). "
+			f"If you have a question, suggestion, or just want to try out mah features, check out the [Help Server/Guild]({help_guild_link})."))
 
 		owner = (await self.bot.application_info()).owner
 
 		embed.set_footer(text="This MangoByte managed by {}".format(owner.name), icon_url=owner.avatar_url)
 
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed)
 
 	@commands.command(pass_context=True)
 	async def lasagna(self, ctx):
@@ -121,10 +121,10 @@ class General(MangoCog):
 		Contains wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce."""
 		await self.bot.send_file(ctx.message.channel, settings.resource("images/lasagna.jpg"))
 
-	def __check(self, ctx):
+	def __global_check(self, ctx):
 		"""Checks to make sure the user has permissions"""
-		if not ctx.message.channel.is_private:
-			if botdata.serverinfo(ctx.message.server).is_banned(ctx.message.author):
+		if not isinstance(ctx.message.channel, discord.abc.PrivateChannel):
+			if botdata.guildinfo(ctx.message.guild).is_banned(ctx.message.author):
 				return False
 
 		return True
@@ -136,16 +136,16 @@ class General(MangoCog):
 		"""Bans the user from using commands
 		(Requires administrator privilages)"""
 		if checks.is_owner_check(user):
-			await self.bot.say("Ya can't ban mah owner, man. 😠")
+			await ctx.channel.send("Ya can't ban mah owner, man. 😠")
 			return
 		if checks.is_admin_check(ctx.message.channel, user):
-			await self.bot.say("Ya can't ban other admins")
+			await ctx.channel.send("Ya can't ban other admins")
 			return
 		if user == self.bot.user:
-			await self.bot.say("Lol you can't ban me, silly")
+			await ctx.channel.send("Lol you can't ban me, silly")
 			return
-		botdata.serverinfo(ctx.message.server).botban(user)
-		await self.bot.say("{} has henceforth been banned from using commands 😤".format(user.mention))
+		botdata.guildinfo(ctx.message.guild).botban(user)
+		await ctx.channel.send("{} has henceforth been banned from using commands 😤".format(user.mention))
 
 	@checks.is_admin()
 	@checks.is_not_PM()
@@ -154,10 +154,10 @@ class General(MangoCog):
 		"""Unbans the user, allowing them to use commands
 		(Requires administrator privilages)"""
 		if checks.is_owner_check(user) or user == self.bot.user:
-			await self.bot.say("Ha ha. Very funny.")
+			await ctx.channel.send("Ha ha. Very funny.")
 			return
-		botdata.serverinfo(ctx.message.server).botunban(user)
-		await self.bot.say("{} is free of their restraints and may once again use commands".format(user.mention))
+		botdata.guildinfo(ctx.message.guild).botunban(user)
+		await ctx.channel.send("{} is free of their restraints and may once again use commands".format(user.mention))
 
 	@commands.command(pass_context=True)
 	async def help(self, ctx, command : str=None):
@@ -178,13 +178,13 @@ class General(MangoCog):
 					if cog.lower() == name:
 						command = self.bot.cogs[cog]
 			else:
-				command = self.bot.commands.get(name)
+				command = self.bot.all_commands.get(name)
 				if command is None:
-					await self.bot.send_message(ctx.message.channel, self.bot.command_not_found.format(name))
+					await ctx.channel.send(self.bot.command_not_found.format(name))
 					return
 			embed = self.bot.formatter.format_as_embed(ctx, command)
 
-		await self.bot.send_message(ctx.message.channel, embed=embed)
+		await ctx.channel.send(embed=embed)
 
 	@commands.command(pass_context=True)
 	async def scramble(self, ctx, *, message : str):
@@ -204,7 +204,7 @@ class General(MangoCog):
 		for word in message.split(" "):
 			results.append(scramble_word(word))
 
-		await self.bot.send_message(ctx.message.channel, " ".join(results))
+		await ctx.channel.send(" ".join(results))
 
 	@commands.command(pass_context=True, aliases=["define", "lookup", "wikipedia", "whatis"])
 	async def wiki(self, ctx, *, query : str):
@@ -255,7 +255,7 @@ class General(MangoCog):
 
 		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed)
 
 	@commands.command(pass_context=True, hidden=True, aliases=["restapi"])
 	async def restget(self, ctx, url):
