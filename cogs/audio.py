@@ -526,30 +526,6 @@ class Audio(MangoCog):
 		Theres 19 different ones"""
 		await self.play_clip("local:later{}".format(randint(1,19)), ctx)
 
-
-	@checks.is_admin()
-	@commands.command(hidden=True)
-	async def summon(self, ctx):
-		"""Summons the bot to the voice channel you are currently in
-		(Requires administrator privilages)"""
-		new_channel = ctx.message.author.voice.channel
-		if new_channel is None:
-			raise UserError("You are not currently in a voice channel")
-		if new_channel.guild != ctx.message.guild:
-			raise UserError("You are not currently in a voice channel on this server/guild")
-
-		await self.connect_voice(new_channel)
-		botdata.guildinfo(new_channel.guild.id).voicechannel = new_channel.id
-
-	@checks.is_admin()
-	@checks.is_not_PM()
-	@commands.command(hidden=True)
-	async def unsummon(self, ctx):
-		"""Removes the bot from the voice channel it is currently in
-		(Requires administrator privilages)"""
-		await self.disconnect(ctx.message.guild)
-		botdata.guildinfo(ctx.message.guild.id).voicechannel = None
-
 	# fixes discord user names which either are in all caps or have a number serving as a letter
 	async def fix_name(self, name):
 		# If all upper case or numbers n stuff, make all lower case

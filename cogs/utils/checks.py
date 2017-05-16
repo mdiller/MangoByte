@@ -10,10 +10,10 @@ from __main__ import botdata
 #
 
 def is_owner_check(author):
-    return author.id == '152151513232310272'
+	return author.id == 152151513232310272
 
 def is_owner():
-    return commands.check(lambda ctx: is_owner_check(ctx.message.author))
+	return commands.check(lambda ctx: is_owner_check(ctx.message.author))
 
 def is_admin_check(channel, author):
 	if isinstance(channel, discord.abc.PrivateChannel):

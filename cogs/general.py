@@ -18,7 +18,7 @@ from .mangocog import *
 class General(MangoCog):
 	"""Basic and admin commands
 
-	These commands are primarily used to stop people from ruining things"""
+	Random and/or fun commands with a variety of uses"""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 		self.reactions = read_json(settings.resource("json/reactions.json"))
@@ -123,44 +123,6 @@ class General(MangoCog):
 
 		Contains wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce."""
 		await ctx.channel.send(file=discord.File(settings.resource("images/lasagna.jpg")))
-
-	def __global_check(self, ctx):
-		"""Checks to make sure the user has permissions"""
-		if not isinstance(ctx.message.channel, discord.abc.PrivateChannel):
-			if botdata.guildinfo(ctx.message.guild).is_banned(ctx.message.author):
-				return False
-
-		return True
-
-	@checks.is_admin()
-	@checks.is_not_PM()
-	@commands.command()
-	async def botban(self, ctx, user: discord.Member):
-		"""Bans the user from using commands
-		(Requires administrator privilages)"""
-		if checks.is_owner_check(user):
-			await ctx.channel.send("Ya can't ban mah owner, man. 😠")
-			return
-		if checks.is_admin_check(ctx.message.channel, user):
-			await ctx.channel.send("Ya can't ban other admins")
-			return
-		if user == self.bot.user:
-			await ctx.channel.send("Lol you can't ban me, silly")
-			return
-		botdata.guildinfo(ctx.message.guild).botban(user)
-		await ctx.channel.send("{} has henceforth been banned from using commands 😤".format(user.mention))
-
-	@checks.is_admin()
-	@checks.is_not_PM()
-	@commands.command()
-	async def botunban(self, ctx, user: discord.Member):
-		"""Unbans the user, allowing them to use commands
-		(Requires administrator privilages)"""
-		if checks.is_owner_check(user) or user == self.bot.user:
-			await ctx.channel.send("Ha ha. Very funny.")
-			return
-		botdata.guildinfo(ctx.message.guild).botunban(user)
-		await ctx.channel.send("{} is free of their restraints and may once again use commands".format(user.mention))
 
 	@commands.command()
 	async def help(self, ctx, command : str=None):
