@@ -53,13 +53,14 @@ async def get_match_image(matchid, is_parsed):
 	url += "&parsed={}".format("true" if is_parsed else "false")
 	try:
 		with async_timeout.timeout(8):
-			async with aiohttp.post(url) as r:
-				if r.status == 200:
-					data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
-					return data['file']
-				else:
-					print("Dotabase image-api errored on POST: '{}'".format(url))
-					raise UserError("Errored on generating match image".format(r.status))
+			async with aiohttp.ClientSession() as session:
+				async with session.post(url) as r:
+						if r.status == 200:
+							data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
+							return data['file']
+						else:
+							print("Dotabase image-api errored on POST: '{}'".format(url))
+							raise UserError("Errored on generating match image".format(r.status))
 	except asyncio.TimeoutError:
 		raise UserError("TimeoutError while generating match image: try again")
 
@@ -326,7 +327,7 @@ class DotaStats(MangoCog):
 		await ctx.channel.send(embed=embed)
 
 	# prints the stats for the given player's latest game
-	async def player_match_stats(self, steamid, matchid):
+	async def player_match_stats(self, steamid, matchid, ctx):
 		game = await get_match(matchid)
 
 		# Finds the player in the game which has our matching steam32 id
@@ -402,20 +403,20 @@ class DotaStats(MangoCog):
 	@commands.command(aliases=["lastgame"])
 	async def lastmatch(self, ctx, player=None):
 		"""Gets info about the player's last dota game"""
-		ctx.channel.typing()
-		steamid = await get_check_steamid(player, ctx)
-		matchid = (await opendota_query("/players/{}/matches?limit=1".format(steamid), False))[0]["match_id"]
-		await self.player_match_stats(steamid, matchid)
+		with ctx.channel.typing():
+			steamid = await get_check_steamid(player, ctx)
+			matchid = (await opendota_query("/players/{}/matches?limit=1".format(steamid), False))[0]["match_id"]
+			await self.player_match_stats(steamid, matchid, ctx)
 
 	@commands.command(aliases=["matchdetails"])
 	async def match(self, ctx, match_id : int):
 		"""Gets a summary of the dota match with the given id"""
-		ctx.channel.typing()
-		try:
-			game = await get_match(match_id)
-		except UserError:
-			await ctx.channel.send("Looks like thats not a valid match id")
-			return
+		with ctx.channel.typing():
+			try:
+				game = await get_match(match_id)
+			except UserError:
+				await ctx.channel.send("Looks like thats not a valid match id")
+				return
 
 		description = ("Game ended in {0} \n"
 					"More info at [DotaBuff](https://www.dotabuff.com/matches/{1}), "
@@ -433,20 +434,20 @@ class DotaStats(MangoCog):
 	@commands.command()
 	async def matchstory(self, ctx, match_id : int, perspective="radiant"):
 		"""Tells the story of the match from the given perspective"""
-		ctx.channel.typing()
-		if perspective.lower() == "radiant":
-			is_radiant = True
-		elif perspective.lower() == "dire":
-			is_radiant = False
-		else:
-			raise UserError("Perspective must be either radiant or dire")
-		try:
-			game = await get_match(match_id, False)
-		except UserError:
-			await ctx.channel.send("Looks like thats not a valid match id")
-			return
+		with ctx.channel.typing():
+			if perspective.lower() == "radiant":
+				is_radiant = True
+			elif perspective.lower() == "dire":
+				is_radiant = False
+			else:
+				raise UserError("Perspective must be either radiant or dire")
+			try:
+				game = await get_match(match_id, False)
+			except UserError:
+				await ctx.channel.send("Looks like thats not a valid match id")
+				return
 
-		await self.tell_match_story(game, is_radiant)
+			await self.tell_match_story(game, is_radiant)
 
 	@commands.command(aliases=["lastgamestory"])
 	async def lastmatchstory(self, ctx, player=None):
@@ -482,10 +483,10 @@ class DotaStats(MangoCog):
 		The argument for this command can be either a steam32 id, a steam64 id, or an @mention of a discord user who has a steamid set"""
 		steam32 = await get_check_steamid(player, ctx)
 
-		ctx.channel.typing()
+		with ctx.channel.typing():
+			playerinfo = await opendota_query(f"/players/{steam32}", False)
+			matches = await opendota_query(f"/players/{steam32}/matches")
 
-		playerinfo = await opendota_query(f"/players/{steam32}", False)
-		matches = await opendota_query(f"/players/{steam32}/matches")
 		gamesplayed = len(matches)
 		winrate = "{:.2%}".format(len(list(filter(lambda m: m['radiant_win'] == (m['player_slot'] < 128), matches))) / gamesplayed)
 		if playerinfo.get("solo_competitive_rank") is not None:
@@ -594,22 +595,23 @@ class DotaStats(MangoCog):
 
 		Note that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available"""
 		steam32 = await get_check_steamid(player, ctx)
-		await thinker.think(ctx.message)
+		with ctx.channel.typing():
+			await thinker.think(ctx.message)
 
-		playerinfo = await opendota_query(f"/players/{steam32}")
-		matches_info = await opendota_query(f"/players/{steam32}/matches")
-		player_matches = []
-		matches = []
-		i = 0
-		while i < len(matches_info) and len(player_matches) < 20:
-			if matches_info[i].get('version', None) is not None:
-				match = await get_match(matches_info[i]['match_id'])
-				player_matches.append(next(p for p in match['players'] if p['account_id'] == steam32))
-				matches.append(match)
-				for player in match['players']:
-					if player['party_id'] == player_matches[-1]['party_id']:
-						player_matches[-1]['party_size'] = player_matches[-1].get('party_size', 0) + 1
-			i += 1
+			playerinfo = await opendota_query(f"/players/{steam32}")
+			matches_info = await opendota_query(f"/players/{steam32}/matches")
+			player_matches = []
+			matches = []
+			i = 0
+			while i < len(matches_info) and len(player_matches) < 20:
+				if matches_info[i].get('version', None) is not None:
+					match = await get_match(matches_info[i]['match_id'])
+					player_matches.append(next(p for p in match['players'] if p['account_id'] == steam32))
+					matches.append(match)
+					for player in match['players']:
+						if player['party_id'] == player_matches[-1]['party_id']:
+							player_matches[-1]['party_size'] = player_matches[-1].get('party_size', 0) + 1
+				i += 1
 
 		await thinker.stop_thinking(ctx.message)
 		if len(matches) < 2:
@@ -881,8 +883,8 @@ class DotaStats(MangoCog):
 		query = query.strip()
 		query = "/" + "/".join(query.split(" "))
 
-		ctx.channel.typing()
-		data = await opendota_query(query)
+		with ctx.channel.typing():
+			data = await opendota_query(query)
 
 		filename = re.search("/([/0-9a-zA-Z]+)", query).group(1).replace("/", "_")
 		filename = settings.resource(f"temp/{filename}.json")
@@ -909,8 +911,8 @@ class DotaStats(MangoCog):
 		query = "/explorer?sql={}".format(urllib.parse.quote(sql, safe=''))
 		print(query)
 
-		ctx.channel.typing()
-		data = await opendota_query(query)
+		with ctx.channel.typing():
+			data = await opendota_query(query)
 
 		filename = settings.resource(f"temp/query_results.json")
 		helpers.write_json(filename, data)
