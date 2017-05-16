@@ -1,9 +1,10 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands.bot import _mention_pattern, _mentions_transforms
-from __main__ import settings, botdata
+from __main__ import settings, botdata, invite_link
 from cogs.utils.helpers import *
 from cogs.utils import checks
+from cogs.audio import AudioPlayerNotFoundError
 import asyncio
 import aiohttp
 import string
@@ -17,35 +18,37 @@ from .mangocog import *
 class General(MangoCog):
 	"""Basic and admin commands
 
-	These commands are primarily used to stop people from ruining things"""
+	Random and/or fun commands with a variety of uses"""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
+		self.reactions = read_json(settings.resource("json/reactions.json"))
+		self.questions = read_json(settings.resource("json/questions.json"))
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def ping(self, ctx, count : int=1):
 		"""Pongs a number of times(within reason)
 
 		Pongs... a number of times.... within reason. *glares at blanedale*"""
 		if count < 1:
-			await self.bot.say("thats not enough pings. stahp trying to break me.😠")
+			await ctx.channel.send("thats not enough pings. stahp trying to break me.😠")
 			return
 		if count > 20:
-			await self.bot.say("thats too many pings. stahp trying to break me.😠")
+			await ctx.channel.send("thats too many pings. stahp trying to break me.😠")
 			return
 
 		ping_string = ""
 		for i in range(0, count):
 			ping_string += "pong "
-		await self.bot.say(ping_string)
+		await ctx.channel.send(ping_string)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def echo(self, ctx, *, message : str):
 		"""Echo...
 
 		I would hurl words into this darkness and wait for an echo, and if an echo sounded, no matter how faintly, I would send other words to tell, to march, to fight, to create a sense of the hunger for life that gnaws in us all"""
-		await self.bot.say(message)
+		await ctx.channel.send(message)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def changelog(self, ctx):
 		"""Gets a rough changelog for mangobyte
 
@@ -78,9 +81,9 @@ class General(MangoCog):
 			embed = discord.Embed(description=description, color=discord.Color.green())
 
 		embed.set_author(name="Changelog", url=f"{commit_url}/commits/master")
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def info(self, ctx):
 		"""Prints info about mangobyte"""
 		github = "https://github.com/mdiller/MangoByte"
@@ -101,65 +104,26 @@ class General(MangoCog):
 			"• Greets users joining a voice channel\n"
 			"• For a list of command categories, try `?help`"))
 
-		invite_link = "https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968"
-		help_server_link = "https://discord.gg/d6WWHxx"
+		help_guild_link = "https://discord.gg/d6WWHxx"
 
 		embed.add_field(name="Help", value=(
-			f"If you want to invite mangobyte to your server, click this [invite link]({invite_link}). "
-			f"If you have a question, suggestion, or just want to try out mah features, check out the [Help Server]({help_server_link})."))
+			f"If you want to invite mangobyte to your server/guild, click this [invite link]({invite_link}). "
+			f"If you have a question, suggestion, or just want to try out mah features, check out the [Help Server/Guild]({help_guild_link})."))
 
 		owner = (await self.bot.application_info()).owner
 
 		embed.set_footer(text="This MangoByte managed by {}".format(owner.name), icon_url=owner.avatar_url)
 
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def lasagna(self, ctx):
 		"""A baked Italian dish
 
 		Contains wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce."""
-		await self.bot.send_file(ctx.message.channel, settings.resource("images/lasagna.jpg"))
+		await ctx.channel.send(file=discord.File(settings.resource("images/lasagna.jpg")))
 
-	def __check(self, ctx):
-		"""Checks to make sure the user has permissions"""
-		if not ctx.message.channel.is_private:
-			if botdata.serverinfo(ctx.message.server).is_banned(ctx.message.author):
-				return False
-
-		return True
-
-	@checks.is_admin()
-	@checks.is_not_PM()
-	@commands.command(pass_context=True)
-	async def botban(self, ctx, user: discord.User):
-		"""Bans the user from using commands
-		(Requires administrator privilages)"""
-		if checks.is_owner_check(user):
-			await self.bot.say("Ya can't ban mah owner, man. 😠")
-			return
-		if checks.is_admin_check(ctx.message.channel, user):
-			await self.bot.say("Ya can't ban other admins")
-			return
-		if user == self.bot.user:
-			await self.bot.say("Lol you can't ban me, silly")
-			return
-		botdata.serverinfo(ctx.message.server).botban(user)
-		await self.bot.say("{} has henceforth been banned from using commands 😤".format(user.mention))
-
-	@checks.is_admin()
-	@checks.is_not_PM()
-	@commands.command(pass_context=True)
-	async def botunban(self, ctx, user: discord.User):
-		"""Unbans the user, allowing them to use commands
-		(Requires administrator privilages)"""
-		if checks.is_owner_check(user) or user == self.bot.user:
-			await self.bot.say("Ha ha. Very funny.")
-			return
-		botdata.serverinfo(ctx.message.server).botunban(user)
-		await self.bot.say("{} is free of their restraints and may once again use commands".format(user.mention))
-
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def help(self, ctx, command : str=None):
 		"""Shows this message."""
 		def repl(obj):
@@ -167,9 +131,9 @@ class General(MangoCog):
 
 		# help by itself just lists our own commands.
 		if command == "all":
-			embed = self.bot.formatter.format_as_embed(ctx, self.bot, True)
+			embed = await self.bot.formatter.format_as_embed(ctx, self.bot, True)
 		elif command == None:
-			embed = self.bot.formatter.format_as_embed(ctx, self.bot, False)
+			embed = await self.bot.formatter.format_as_embed(ctx, self.bot, False)
 		else:
 			# try to see if it is a cog name
 			name = _mention_pattern.sub(repl, command).lower()
@@ -178,15 +142,15 @@ class General(MangoCog):
 					if cog.lower() == name:
 						command = self.bot.cogs[cog]
 			else:
-				command = self.bot.commands.get(name)
+				command = self.bot.all_commands.get(name)
 				if command is None:
-					await self.bot.send_message(ctx.message.channel, self.bot.command_not_found.format(name))
+					await ctx.channel.send(self.bot.command_not_found.format(name))
 					return
-			embed = self.bot.formatter.format_as_embed(ctx, command)
+			embed = await self.bot.formatter.format_as_embed(ctx, command)
 
-		await self.bot.send_message(ctx.message.channel, embed=embed)
+		await ctx.channel.send(embed=embed)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def scramble(self, ctx, *, message : str):
 		"""Scrambles the insides of words"""
 
@@ -204,9 +168,9 @@ class General(MangoCog):
 		for word in message.split(" "):
 			results.append(scramble_word(word))
 
-		await self.bot.send_message(ctx.message.channel, " ".join(results))
+		await ctx.channel.send(" ".join(results))
 
-	@commands.command(pass_context=True, aliases=["define", "lookup", "wikipedia", "whatis"])
+	@commands.command(aliases=["define", "lookup", "wikipedia", "whatis"])
 	async def wiki(self, ctx, *, query : str):
 		"""Looks up a thing on wikipedia
 		
@@ -214,7 +178,7 @@ class General(MangoCog):
 
 		This api is a wrapper for the [MediaWiki API](https://www.mediawiki.org/wiki/API:Main_page), which is applicable to Wikipedia because Wikipedia is build ontop of MediaWiki
 		"""
-		await self.bot.send_typing(ctx.message.channel)
+		await ctx.channel.trigger_typing()
 
 		def getWikiPage(title):
 			try:
@@ -226,9 +190,11 @@ class General(MangoCog):
 
 		page = getWikiPage(query)
 
-		async with aiohttp.get(page.url) as r:
-			if r.status == 200:
-				page_html = await r.text()
+		
+		async with aiohttp.ClientSession() as session:
+			async with session.get(page.url) as r:
+				if r.status == 200:
+					page_html = await r.text()
 
 		sentances = page.summary.split(".")
 		summary = sentances[0]
@@ -255,22 +221,61 @@ class General(MangoCog):
 
 		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed)
 
-	@commands.command(pass_context=True, hidden=True, aliases=["restapi"])
+	@commands.command(hidden=True, aliases=["restapi"])
 	async def restget(self, ctx, url):
 		"""Gets a json response from a rest api and returns it"""
-		await self.bot.send_typing(ctx.message.channel)
-		async with aiohttp.get(url) as r:
-			if r.status == 200:
-				data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
-			else:
-				raise UserError(f"Rest API call failed with status code: {r.status}")
+		await ctx.channel.trigger_typing()
+		async with aiohttp.ClientSession() as session:
+			async with session.get(url) as r:
+				if r.status == 200:
+					data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
+				else:
+					raise UserError(f"Rest API call failed with status code: {r.status}")
 		filename = settings.resource("temp/response.json")
 		write_json(filename, data)
-		await self.bot.send_file(ctx.message.channel, filename)
+		await ctx.channel.send(discord.File(filename))
 		os.remove(filename)
 
+	@commands.command()
+	async def ask(self, ctx, *, question : str=""):
+		"""Answers any question you might have"""
+		random.seed(question)
+		for check in self.questions:
+			if re.search(check["regex"], question):
+				clip = await self.get_clip(f"dota:{random.choice(check['responses'])}")
+				await ctx.channel.send(clip.text)
+				try:
+					await self.play_clip(clip, ctx)
+				except AudioPlayerNotFoundError:
+					pass # Not needed for this 
+				return
+		print("didnt match anything for ask")
+		
+
+	async def on_message(self, message):
+		if message.content.startswith("?"):
+			await self.log_message(message)
+
+		if message.guild is not None and not botdata.guildinfo(message.guild.id).reactions:
+			return
+
+		if (message.author == self.bot.user) or message.content.startswith("?"):
+			return
+
+		random.seed(message.content)
+
+		for check in self.reactions:
+			expression = check["regex"]
+			if check.get("word"):
+				expression = "\\b({})\\b".format(expression)
+				match = re.search(expression, message.clean_content, re.IGNORECASE)
+			else:
+				match = re.search(expression, message.clean_content)
+			if match and (random.random() < check.get("chance", 1.0)):
+				await message.add_reaction(random.choice(check["reaction"]))
+				break
 
 def setup(bot):
 	bot.add_cog(General(bot))

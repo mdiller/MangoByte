@@ -1,3 +1,4 @@
+import discord
 from discord.ext import commands
 from __main__ import botdata
 
@@ -9,14 +10,14 @@ from __main__ import botdata
 #
 
 def is_owner_check(author):
-    return author.id == '152151513232310272'
+	return author.id == 152151513232310272
 
 def is_owner():
-    return commands.check(lambda ctx: is_owner_check(ctx.message.author))
+	return commands.check(lambda ctx: is_owner_check(ctx.message.author))
 
 def is_admin_check(channel, author):
-	if channel.is_private:
-		return False # All admin commands should be server specific and not work on PM channels
+	if isinstance(channel, discord.abc.PrivateChannel):
+		return False # All admin commands should be guild specific and not work on PM channels
 	if is_owner_check(author):
 		return True
 	
@@ -27,4 +28,4 @@ def is_admin():
 	return commands.check(lambda ctx: is_admin_check(ctx.message.channel, ctx.message.author))
 
 def is_not_PM():
-	return commands.check(lambda ctx: not ctx.message.channel.is_private)
+	return commands.check(lambda ctx: not isinstance(ctx.message.channel, discord.abc.PrivateChannel))

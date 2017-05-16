@@ -63,12 +63,12 @@ class UserInfo:
 		self.botdata.save_data()
 
 	
-class ServerInfo:
-	def __init__(self, botdata, serverid):
+class GuildInfo:
+	def __init__(self, botdata, guildid):
 		self.botdata = botdata
-		self.id = serverid
+		self.id = guildid
 		if(self.json_data is None):
-			self.botdata.json_data['serverinfo'].append(OrderedDict([
+			self.botdata.json_data['guildinfo'].append(OrderedDict([
 				("id", self.id),
 				("voicechannel", None),
 				("reactions", False),
@@ -80,10 +80,10 @@ class ServerInfo:
 
 	@property
 	def json_data(self):
-		for server in self.botdata.json_data['serverinfo']:
-			if (server['id'] == self.id):
-				return server
-		# Should only happen when loading a serverinfo for the first time
+		for guild in self.botdata.json_data['guildinfo']:
+			if (guild['id'] == self.id):
+				return guild
+		# Should only happen when loading a guildinfo for the first time
 		return None
 
 	@property
@@ -134,7 +134,7 @@ class ServerInfo:
 class BotData:
 	def __init__(self):
 		self.path = "botdata.json"
-		self.defaults = OrderedDict([ ("userinfo" , []), ("serverinfo" , []) ])
+		self.defaults = OrderedDict([ ("userinfo" , []), ("guildinfo" , []) ])
 		if not os.path.exists(self.path):
 			self.json_data = self.defaults
 			self.save_data()
@@ -156,15 +156,15 @@ class BotData:
 			userid = userid.id
 		return UserInfo(self, userid)
 
-	def serverinfo(self, serverid):
-		if isinstance(serverid, discord.Server):
-			serverid = serverid.id
-		return ServerInfo(self, serverid)
+	def guildinfo(self, guildid):
+		if isinstance(guildid, discord.Guild):
+			guildid = guildid.id
+		return GuildInfo(self, guildid)
 
-	def serverinfo_list(self):
-		serverinfos = []
-		for data in self.json_data['serverinfo']:
-			serverinfos.append(ServerInfo(self, data['id']))
-		return serverinfos
+	def guildinfo_list(self):
+		guildinfos = []
+		for data in self.json_data['guildinfo']:
+			guildinfos.append(GuildInfo(self, data['id']))
+		return guildinfos
 
 

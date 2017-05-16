@@ -21,14 +21,15 @@ async def pokeapi_query(querystring, fullurl=False):
 		url = "http://pokeapi.co/api/v2" + querystring
 	else:
 		url = querystring
-	async with aiohttp.get(url) as r:
-		if r.status == 200:
-			return json.loads(await r.text(), object_pairs_hook=OrderedDict)
-		elif r.status == 404:
-			raise Pokemon404Error()
-		else:
-			print("pokeapi errored on GET: '{}'".format(url))
-			raise UserError("pokeapi said we did things wrong 😢. status code: {}".format(r.status))
+	async with aiohttp.ClientSession() as session:
+		async with session.get(url) as r:
+			if r.status == 200:
+				return json.loads(await r.text(), object_pairs_hook=OrderedDict)
+			elif r.status == 404:
+				raise Pokemon404Error()
+			else:
+				print("pokeapi errored on GET: '{}'".format(url))
+				raise UserError("pokeapi said we did things wrong 😢. status code: {}".format(r.status))
 
 def poke_color(color):
 	return {
@@ -105,7 +106,7 @@ class Pokemon(MangoCog):
 		return data, species_data
 
 
-	@commands.command(pass_context=True, aliases=["pokemon"])
+	@commands.command(aliases=["pokemon"])
 	async def pokedex(self, ctx, *, pokemon):
 		"""Looks up information about the indicated pokemon
 
@@ -115,9 +116,8 @@ class Pokemon(MangoCog):
 
 		Example:
 		`{cmdpfx}pokedex charizard`"""
-		await self.bot.send_typing(ctx.message.channel)
-
-		data, species_data = await self.get_pokemon_data(pokemon)
+		with ctx.channel.typing():
+			data, species_data = await self.get_pokemon_data(pokemon)
 
 		types = []
 		for t in sorted(data["types"], key=lambda t: t["slot"]):
@@ -136,9 +136,9 @@ class Pokemon(MangoCog):
 		embed.add_field(name="Weight", value=f"{data['weight'] / 10} kg")
 		embed.add_field(name="Height", value=f"{data['height'] / 10} m")
 
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def shiny(self, ctx, *, pokemon):
 		"""Gets the shiny version of this pokemon
 
@@ -148,15 +148,15 @@ class Pokemon(MangoCog):
 		`{cmdpfx}shiny charizard`"""
 
 		# Sanitize input first
-		await self.bot.send_typing(ctx.message.channel)
-		data, species_data = await self.get_pokemon_data(pokemon)
+		with ctx.channel.typing():
+			data, species_data = await self.get_pokemon_data(pokemon)
 
 		if not data["sprites"].get("front_shiny"):
-			await self.bot.say("This pokemon doesn't have a shiny version")
+			await ctx.channel.send("This pokemon doesn't have a shiny version")
 
 		embed = discord.Embed(color=poke_color(species_data["color"]["name"]))
 		embed.set_image(url=data["sprites"].get("front_shiny"))
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed)
 	
 
 def setup(bot):

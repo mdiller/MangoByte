@@ -3,6 +3,7 @@ from discord.ext import commands
 from __main__ import settings, botdata, thinker
 from cogs.utils import checks
 from cogs.utils import helpers
+from cogs.utils import drawdota
 import aiohttp
 import asyncio
 import async_timeout
@@ -22,16 +23,17 @@ async def opendota_query(querystring, rate_limit=True):
 	url = "https://api.opendota.com/api" + querystring
 	if rate_limit:
 		await asyncio.sleep(0.2)
-	async with aiohttp.get(url) as r:
-		if r.status == 200:
-			return json.loads(await r.text(), object_pairs_hook=OrderedDict)
-		elif r.status == 404:
-			raise UserError("Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com")
-		elif r.status == 521:
-			raise UserError("Looks like the OpenDota API is down or somethin, so ya gotta wait a sec")
-		else:
-			print("OpenDota api errored on GET: '{}'".format(url))
-			raise UserError("OpenDota said we did things wrong 😢. status code: {}".format(r.status))
+	async with aiohttp.ClientSession() as session:
+		async with session.get(url) as r:
+			if r.status == 200:
+				return json.loads(await r.text(), object_pairs_hook=OrderedDict)
+			elif r.status == 404:
+				raise UserError("Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com")
+			elif r.status == 521:
+				raise UserError("Looks like the OpenDota API is down or somethin, so ya gotta wait a sec")
+			else:
+				print("OpenDota api errored on GET: '{}'".format(url))
+				raise UserError("OpenDota said we did things wrong 😢. status code: {}".format(r.status))
 
 # rate_limit = false if this is the only query we're sending
 async def get_match(match_id, rate_limit=True):
@@ -46,21 +48,10 @@ async def get_match(match_id, rate_limit=True):
 			helpers.write_json(match_file, match)
 		return match
 
-async def get_match_image(matchid, is_parsed):
-	# Make sure to check that the match id is valid before calling this
-	url = "http://dotabase.me/image-api/request.php?match={}".format(matchid)
-	url += "&parsed={}".format("true" if is_parsed else "false")
-	try:
-		with async_timeout.timeout(8):
-			async with aiohttp.post(url) as r:
-				if r.status == 200:
-					data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
-					return data['file']
-				else:
-					print("Dotabase image-api errored on POST: '{}'".format(url))
-					raise UserError("Errored on generating match image".format(r.status))
-	except asyncio.TimeoutError:
-		raise UserError("TimeoutError while generating match image: try again")
+async def get_match_image(match):
+	filename = settings.resource(f"temp/match_{match['match_id']}.png")
+	await drawdota.create_match_image(filename, match)
+	return filename
 
 def s_if_plural(text, n):
 	return text + "s" if n > 1 else text
@@ -139,7 +130,7 @@ async def get_check_steamid(steamid, ctx=None):
 
 	if not isinstance(steamid, discord.User):
 		try:
-			steamid = commands.MemberConverter(ctx, steamid).convert()
+			steamid = await commands.MemberConverter().convert(ctx, str(steamid))
 		except commands.BadArgument:
 			raise UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me a steamid")
 
@@ -175,10 +166,10 @@ class DotaStats(MangoCog):
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 		self.embed_color = discord.Color.teal()
-
-	async def init_dicts(self):
 		dotabase = self.bot.get_cog("Dotabase")
-		self.hero_info = await dotabase.get_hero_infos()
+		if not dotabase:
+			raise ImportError("The Dotabase cog must be added before the DotaStats cog")
+		self.hero_info = dotabase.get_hero_infos()
 		self.lookup_hero = dotabase.lookup_hero
 
 	def get_pretty_hero(self, player):
@@ -295,7 +286,7 @@ class DotaStats(MangoCog):
 			story += "• {0[us]} {0[won_lost]} {1} lane vs {0[them]}\n".format(await self.get_lane_story(game['players'], laneid, is_radiant), lanes[laneid])
 		return story
 
-	async def tell_match_story(self, game, is_radiant, perspective=None):
+	async def tell_match_story(self, game, is_radiant, ctx, perspective=None):
 		if not is_parsed(game):
 			raise UserError("This game must be parsed before I can create a story")
 
@@ -322,10 +313,10 @@ class DotaStats(MangoCog):
 		embed = discord.Embed(description=story, color=self.embed_color)
 		embed.set_author(name="Story of Match {}".format(game["match_id"]), url="https://www.opendota.com/matches/{}".format(game["match_id"]))
 		embed.set_footer(text="For more information, try ?match {}".format(game["match_id"]))
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed)
 
 	# prints the stats for the given player's latest game
-	async def player_match_stats(self, steamid, matchid):
+	async def player_match_stats(self, steamid, matchid, ctx):
 		game = await get_match(matchid)
 
 		# Finds the player in the game which has our matching steam32 id
@@ -360,13 +351,13 @@ class DotaStats(MangoCog):
 			"Denies: {denies}\n"
 			"Level: {level}\n".format(**player)))
 
-		embed.set_image(url=await get_match_image(matchid, is_parsed(game)))
-		embed.set_footer(text="Started".format(matchid))
+		match_image = discord.File(await get_match_image(game), "match.png")
+		embed.set_image(url=f"attachment://{match_image.filename}")
+		embed.set_footer(text="Started")
 
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed, file=match_image)
 
-
-	@commands.command(pass_context=True, aliases=["register"])
+	@commands.command(aliases=["register"])
 	async def setsteam(self, ctx, steam_id : int, user: discord.User=None):
 		"""Links a discord user to their steam/dota account
 		*The user parameter can only be specified by the bot owner*
@@ -382,7 +373,7 @@ class DotaStats(MangoCog):
 			user = ctx.message.author
 		else:
 			if not checks.is_owner_check(ctx.message.author):
-				await self.bot.say("You aint the boss of me 😠")
+				await ctx.channel.send("You aint the boss of me 😠")
 				return
 
 		if steam_id > 76561197960265728:
@@ -396,24 +387,26 @@ class DotaStats(MangoCog):
 		userinfo = botdata.userinfo(user.id)
 		userinfo.steam32 = steam_id
 
-		await self.bot.say("Linked to {}".format(player['profile']['personaname']))
+		await ctx.channel.send("Linked to {}".format(player['profile']['personaname']))
 
-	@commands.command(pass_context=True, aliases=["lastgame"])
+	@commands.command(aliases=["lastgame"])
 	async def lastmatch(self, ctx, player=None):
 		"""Gets info about the player's last dota game"""
-		await self.bot.send_typing(ctx.message.channel)
+		await ctx.channel.trigger_typing()
+
 		steamid = await get_check_steamid(player, ctx)
 		matchid = (await opendota_query("/players/{}/matches?limit=1".format(steamid), False))[0]["match_id"]
-		await self.player_match_stats(steamid, matchid)
+		await self.player_match_stats(steamid, matchid, ctx)
 
-	@commands.command(pass_context=True, aliases=["matchdetails"])
+	@commands.command(aliases=["matchdetails"])
 	async def match(self, ctx, match_id : int):
 		"""Gets a summary of the dota match with the given id"""
-		await self.bot.send_typing(ctx.message.channel)
+		await ctx.channel.trigger_typing()
+
 		try:
 			game = await get_match(match_id)
 		except UserError:
-			await self.bot.say("Looks like thats not a valid match id")
+			await ctx.channel.send("Looks like thats not a valid match id")
 			return
 
 		description = ("Game ended in {0} \n"
@@ -425,14 +418,18 @@ class DotaStats(MangoCog):
 		embed = discord.Embed(description=description, 
 							timestamp=datetime.datetime.utcfromtimestamp(game['start_time']), color=self.embed_color)
 		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
-		embed.set_image(url=await get_match_image(match_id, is_parsed(game)))
-		embed.set_footer(text="Started")
-		await self.bot.say(embed=embed)
 
-	@commands.command(pass_context=True)
+		match_image = discord.File(await get_match_image(game), filename="matchimage.png")
+
+		embed.set_image(url=f"attachment://{match_image.filename}")
+		embed.set_footer(text="Started")
+		await ctx.channel.send(embed=embed, file=match_image)
+
+	@commands.command()
 	async def matchstory(self, ctx, match_id : int, perspective="radiant"):
 		"""Tells the story of the match from the given perspective"""
-		await self.bot.send_typing(ctx.message.channel)
+		await ctx.channel.trigger_typing()
+
 		if perspective.lower() == "radiant":
 			is_radiant = True
 		elif perspective.lower() == "dire":
@@ -442,23 +439,24 @@ class DotaStats(MangoCog):
 		try:
 			game = await get_match(match_id, False)
 		except UserError:
-			await self.bot.say("Looks like thats not a valid match id")
+			await ctx.channel.send("Looks like thats not a valid match id")
 			return
 
-		await self.tell_match_story(game, is_radiant)
+		await self.tell_match_story(game, is_radiant, ctx)
 
-	@commands.command(pass_context=True, aliases=["lastgamestory"])
+	@commands.command(aliases=["lastgamestory"])
 	async def lastmatchstory(self, ctx, player=None):
 		"""Tells the story of the player's last match
 
 		Input must be either a discord user, a steam32 id, or a steam64 id"""
-		await self.bot.send_typing(ctx.message.channel)
+		await ctx.channel.trigger_typing()
+
 		steamid = await get_check_steamid(player, ctx)
 		try:
 			match_id = (await opendota_query("/players/{}/matches?limit=1".format(steamid)))[0]['match_id']
 			game = await get_match(match_id, False)
 		except UserError:
-			await self.bot.say("I can't find the last game this player played")
+			await ctx.channel.send("I can't find the last game this player played")
 			return
 		if player is None:
 			player = ctx.message.author.mention
@@ -471,20 +469,21 @@ class DotaStats(MangoCog):
 			perspective = "[{personaname}](https://www.opendota.com/players/{account_id})".format(**player_data)
 		perspective += "({0}, {1})".format(self.get_pretty_hero(player_data), "Radiant" if is_radiant else "Dire")
 
-		await self.tell_match_story(game, is_radiant, perspective)
+		await self.tell_match_story(game, is_radiant, ctx, perspective)
 
 
-	@commands.command(pass_context=True, aliases=["whois"])
+	@commands.command(aliases=["whois"])
 	async def profile(self, ctx, player=None):
 		"""Displays information about the player's dota profile
 
 		The argument for this command can be either a steam32 id, a steam64 id, or an @mention of a discord user who has a steamid set"""
 		steam32 = await get_check_steamid(player, ctx)
 
-		await self.bot.send_typing(ctx.message.channel)
+		await ctx.channel.trigger_typing()
 
 		playerinfo = await opendota_query(f"/players/{steam32}", False)
 		matches = await opendota_query(f"/players/{steam32}/matches")
+
 		gamesplayed = len(matches)
 		winrate = "{:.2%}".format(len(list(filter(lambda m: m['radiant_win'] == (m['player_slot'] < 128), matches))) / gamesplayed)
 		if playerinfo.get("solo_competitive_rank") is not None:
@@ -577,7 +576,7 @@ class DotaStats(MangoCog):
 			player_mention = ""
 		else:
 			try:
-				player_user = commands.MemberConverter(ctx, player).convert()
+				player_user = await commands.MemberConverter().convert(ctx, player)
 				player_mention = f"@{player_user.nick if player_user.nick else player_user.name}"
 			except commands.BadArgument:
 				# This is a steamid
@@ -585,34 +584,35 @@ class DotaStats(MangoCog):
 
 		embed.set_footer(text=f"For more info, try ?playerstats {player_mention}")
 
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def playerstats(self, ctx, *, player=None):
 		"""Gets stats from the given player's last 20 parsed games
 
 		Note that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available"""
 		steam32 = await get_check_steamid(player, ctx)
-		await thinker.think(ctx.message)
+		with ctx.channel.typing():
+			await thinker.think(ctx.message)
 
-		playerinfo = await opendota_query(f"/players/{steam32}")
-		matches_info = await opendota_query(f"/players/{steam32}/matches")
-		player_matches = []
-		matches = []
-		i = 0
-		while i < len(matches_info) and len(player_matches) < 20:
-			if matches_info[i].get('version', None) is not None:
-				match = await get_match(matches_info[i]['match_id'])
-				player_matches.append(next(p for p in match['players'] if p['account_id'] == steam32))
-				matches.append(match)
-				for player in match['players']:
-					if player['party_id'] == player_matches[-1]['party_id']:
-						player_matches[-1]['party_size'] = player_matches[-1].get('party_size', 0) + 1
-			i += 1
+			playerinfo = await opendota_query(f"/players/{steam32}")
+			matches_info = await opendota_query(f"/players/{steam32}/matches")
+			player_matches = []
+			matches = []
+			i = 0
+			while i < len(matches_info) and len(player_matches) < 20:
+				if matches_info[i].get('version', None) is not None:
+					match = await get_match(matches_info[i]['match_id'])
+					player_matches.append(next(p for p in match['players'] if p['account_id'] == steam32))
+					matches.append(match)
+					for player in match['players']:
+						if player['party_id'] == player_matches[-1]['party_id']:
+							player_matches[-1]['party_size'] = player_matches[-1].get('party_size', 0) + 1
+				i += 1
 
 		await thinker.stop_thinking(ctx.message)
 		if len(matches) < 2:
-			await self.bot.say("Not enough parsed matches!")
+			await ctx.channel.send("Not enough parsed matches!")
 			return
 
 		embed = discord.Embed(description=f"*The following are averages and percentages based on the last {len(matches)} parsed matches*", color=self.embed_color)
@@ -709,9 +709,9 @@ class DotaStats(MangoCog):
 
 		# in a group
 
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def herostats(self, ctx, *, hero):
 		"""Gets your stats for a hero
 
@@ -779,7 +779,7 @@ class DotaStats(MangoCog):
 
 		hero = self.lookup_hero(hero_text)
 		if not hero:
-			await self.bot.say(f"I'm not sure what hero \"*{hero_text}*\" is.")
+			await ctx.channel.send(f"I'm not sure what hero \"*{hero_text}*\" is.")
 			return
 
 		projections = [ "kills", "deaths", "assists", "hero_id", "version", "lane_role" ]
@@ -788,6 +788,7 @@ class DotaStats(MangoCog):
 
 		queryargs = f"?hero_id={hero.id}&{projections}"
 
+		await ctx.channel.trigger_typing()
 		await thinker.think(ctx.message)
 		playerinfo = await opendota_query(f"/players/{steam32}")
 		matches = await opendota_query(f"/players/{steam32}/matches{queryargs}")
@@ -798,9 +799,9 @@ class DotaStats(MangoCog):
 
 		if len(matches) == 0:
 			if not chosen_lane:
-				await self.bot.say(f"Looks like you haven't played {hero.localized_name}")
+				await ctx.channel.send(f"Looks like you haven't played {hero.localized_name}")
 			else:
-				await self.bot.say(f"Looks like you haven't played any parsed matches as {hero.localized_name} in {chosen_lane['name']}")
+				await ctx.channel.send(f"Looks like you haven't played any parsed matches as {hero.localized_name} in {chosen_lane['name']}")
 			return
 
 		lane_parsed_count = len(list(filter(lambda p: p['lane_role'] is not None, matches)))
@@ -864,9 +865,9 @@ class DotaStats(MangoCog):
 					values.append(f"{lane}: **{lanes[lane]}%**")
 			embed.add_field(name=f"Laning ({lane_parsed_count} parsed match{'es' if lane_parsed_count > 1 else ''})", value="\n".join(values))
 
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def opendota(self, ctx, *, query):
 		"""Queries the opendota api
 
@@ -880,17 +881,17 @@ class DotaStats(MangoCog):
 		query = query.strip()
 		query = "/" + "/".join(query.split(" "))
 
-		await self.bot.send_typing(ctx.message.channel)
-		data = await opendota_query(query)
+		with ctx.channel.typing():
+			data = await opendota_query(query)
 
 		filename = re.search("/([/0-9a-zA-Z]+)", query).group(1).replace("/", "_")
 		filename = settings.resource(f"temp/{filename}.json")
 		helpers.write_json(filename, data)
-		await self.bot.send_file(ctx.message.channel, filename)
+		await ctx.channel.send(file=discord.File(filename))
 		os.remove(filename)
 
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def opendotasql(self, ctx, *, sql):
 		"""Submits an sql query to the opendota database
 
@@ -901,19 +902,15 @@ class DotaStats(MangoCog):
 
 		You can check out their [create_tables script](https://github.com/odota/core/blob/master/sql/create_tables.sql) to get an idea of the structure of the database
 		"""
-		match = re.search("limit ([0-9]+)", sql)
-		if not match or int(match.group(1)) > 100:
-			await self.bot.say("You gotta give a reasonable limit for these queries, otherwise they will not complete. Try adding `limit 10` to the end of that.")
-			return
 		query = "/explorer?sql={}".format(urllib.parse.quote(sql, safe=''))
 		print(query)
 
-		await self.bot.send_typing(ctx.message.channel)
-		data = await opendota_query(query)
+		with ctx.channel.typing():
+			data = await opendota_query(query)
 
 		filename = settings.resource(f"temp/query_results.json")
 		helpers.write_json(filename, data)
-		await self.bot.send_file(ctx.message.channel, filename)
+		await ctx.channel.send(file=discord.File(filename))
 		os.remove(filename)
 
 

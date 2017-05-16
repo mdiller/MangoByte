@@ -30,12 +30,12 @@ def convert_message(msg):
 	message.id = msg.id
 	message.author_id = msg.author.id
 	message.author_name = msg.author.name
-	if msg.server:
-		message.server_id = msg.server.id
+	if msg.guild:
+		message.server_id = msg.guild.id
 	else:
 		message.server_id = None
 	message.channel_id = msg.channel.id
-	message.timestamp = msg.timestamp
+	message.timestamp = msg.created_at
 	message.content = msg.content
 	message.clean_content = msg.clean_content
 	message.mentions = "|".join(map(lambda u: u.id, msg.mentions))

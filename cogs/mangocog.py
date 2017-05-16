@@ -26,7 +26,7 @@ class MangoCog:
 		except MissingClipType:
 			while len(trytypes) > 0:
 				try:
-					return await self.get_clip("{}:{}".format(trytypes.pop()))
+					return await self.get_clip("{}:{}".format(trytypes.pop(), clipid))
 				except ClipNotFound:
 					continue
 		raise MissingClipType(clipid)
@@ -42,9 +42,9 @@ class MangoCog:
 		return cliptypes[match.group(1)](match.group(2), self.bot)
 
 
-	async def play_clip(self, clip, server=None):
+	async def play_clip(self, clip, ctx):
 		if isinstance(clip, str):
 			clip = await self.get_clip(clip)
 
 		audio = self.bot.get_cog("Audio")
-		await (await audio.audioplayer(server)).queue_clip(clip)
+		await (await audio.audioplayer(ctx)).queue_clip(clip)
