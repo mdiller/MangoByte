@@ -141,7 +141,7 @@ class Dotabase(MangoCog):
 	async def play_response_query(self, query, ctx):
 		await self.play_response(query.order_by(func.random()).first(), ctx)
 
-	@commands.command(pass_context=True, aliases=["dotar"])
+	@commands.command(aliases=["dotar"])
 	async def dota(self, ctx, *, keyphrase : str=None):
 		"""Plays a dota response
 
@@ -168,7 +168,7 @@ class Dotabase(MangoCog):
 		query = await self.dota_keyphrase_query(keyphrase)
 
 		if query is None:
-			await self.bot.say("No responses found! 😱")
+			await ctx.channel.send("No responses found! 😱")
 		else:
 			await self.play_response_query(query, ctx)
 
@@ -228,7 +228,7 @@ class Dotabase(MangoCog):
 
 		return None
 
-	@commands.command(pass_context=True, aliases=["hi"])
+	@commands.command(aliases=["hi"])
 	async def hello(self, ctx):
 		"""Says hello
 
@@ -269,31 +269,31 @@ class Dotabase(MangoCog):
 			else:
 				raise UserError(f"No responses found for {hero.localized_name}! 😱")
 
-	@commands.command(pass_context=True, aliases=["nope"])
+	@commands.command(aliases=["nope"])
 	async def no(self, ctx, *, hero=None):
 		"""Nopes."""
 		await self.hero_keyphrase_command("no", hero, ctx)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def yes(self, ctx, *, hero=None):
 		"""Oooooh ya."""
 		await self.hero_keyphrase_command("yes", hero, ctx)
 
-	@commands.command(pass_context=True, aliases=["laugh", "haha", "lerl"])
+	@commands.command(aliases=["laugh", "haha", "lerl"])
 	async def lol(self, ctx, *, hero=None):
 		"""WOW I WONDER WAT THIS DOES
 
 		Laughs using dota. Thats what it does."""
 		await self.hero_keyphrase_command(";laugh", hero, ctx)
 
-	@commands.command(pass_context=True, aliases=["ty"])
+	@commands.command(aliases=["ty"])
 	async def thanks(self, ctx, *, hero=None):
 		"""Gives thanks
 
 		Thanks are given by a random dota hero in their own special way"""
 		await self.hero_keyphrase_command(";thanks", hero, ctx)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def inthebag(self, ctx, *, hero=None):
 		"""Proclaims that 'IT' (whatever it is) is in the bag"""
 		query = await self.dota_keyphrase_query(";inthebag")
@@ -310,7 +310,7 @@ class Dotabase(MangoCog):
 			raise UserError("Don't know what hero yer talkin about")
 
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def hero(self, ctx, *, hero : str):
 		"""Gets information about a specific hero
 
@@ -378,7 +378,7 @@ class Dotabase(MangoCog):
 		roles = hero.roles.split("|")
 		embed.add_field(name=f"Role{'s' if len(roles) > 1 else ''}", value=', '.join(roles))
 
-		await self.bot.say(embed=embed)
+		await ctx.channel.send(embed=embed)
 
 		query = session.query(Response).filter(Response.hero_id == hero.id).filter(or_(Response.criteria.like("Spawn %"), Response.criteria.like("Spawn%")))
 		if query.count() > 0:

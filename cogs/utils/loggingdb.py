@@ -35,7 +35,7 @@ def convert_message(msg):
 	else:
 		message.server_id = None
 	message.channel_id = msg.channel.id
-	message.timestamp = msg.timestamp
+	message.timestamp = msg.created_at
 	message.content = msg.content
 	message.clean_content = msg.clean_content
 	message.mentions = "|".join(map(lambda u: u.id, msg.mentions))

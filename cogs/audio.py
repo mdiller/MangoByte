@@ -511,12 +511,11 @@ class Audio(MangoCog):
 		await ctx.channel.send("TTS Channel removed")
 
 	async def on_message(self, message):
-		if message.guild and (not message.content.startswith("?")) and (not message.author.id == self.bot.user.id):
+		if message.guild and (not message.content.startswith("?")) and message.author.id != self.bot.user.id:
 			if botdata.guildinfo(message.guild).is_banned(message.author):
 				return # banned users cant talk
 			ttschannel = botdata.guildinfo(message.guild.id).ttschannel
 			if ttschannel == message.channel.id:
-				_internal_channel = message.channel
 				await self.do_smarttts(message.content, message.guild)
 
 

@@ -23,13 +23,13 @@ class AI(MangoCog):
 
 	async def play_say_clip(self, responsename, ctx):
 		clip = await self.get_clip("dota:" + responsename)
-		await self.bot.say(clip.text)
+		await ctx.channel.send(clip.text)
 		try:
 			await self.play_clip(clip, ctx)
 		except AudioPlayerNotFoundError:
 			pass
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def ask(self, ctx, *, question : str=""):
 		"""Answers any question you might have"""
 		random.seed(question)
@@ -43,7 +43,7 @@ class AI(MangoCog):
 		if message.content.startswith("?"):
 			await self.log_message(message)
 
-		if message.server is not None and not botdata.serverinfo(message.server.id).reactions:
+		if message.guild is not None and not botdata.guildinfo(message.guild.id).reactions:
 			return
 
 		if (message.author == self.bot.user) or message.content.startswith("?"):
@@ -59,7 +59,7 @@ class AI(MangoCog):
 			else:
 				match = re.search(expression, message.clean_content)
 			if match and (random.random() < check.get("chance", 1.0)):
-				await self.bot.add_reaction(message, random.choice(check["reaction"]))
+				await message.add_reaction(random.choice(check["reaction"]))
 				break
 
 

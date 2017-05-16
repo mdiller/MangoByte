@@ -46,12 +46,12 @@ class Thinker():
 
 	async def think(self, message):
 		self.messages[message] = 0
-		await self.bot.send_typing(message.channel)
-		await self.bot.add_reaction(message, "🤔")
+		message.channel.typing()
+		await message.add_reaction("🤔")
 
 	async def stop_thinking(self, message):
 		last_time = self.messages.pop(message)
-		await self.bot.remove_reaction(message, "🤔", self.bot.user)
+		await message.remove_reaction("🤔", self.bot.user)
 
 	async def thinking_task(self):
 		await self.bot.wait_until_ready()
@@ -59,5 +59,5 @@ class Thinker():
 			for message in self.messages:
 				self.messages[message] += 1
 				if self.messages[message] % 5 == 0:
-					await self.bot.send_typing(message.channel)
+					message.channel.typing()
 			await asyncio.sleep(1)
