@@ -47,37 +47,38 @@ def remove_if_temp(mp3name):
 
 
 class AudioPlayer:
-	"""The server-specific objects used for mangobyte's audio output"""
-	def __init__(self, bot, server):
+	"""The guild-specific objects used for mangobyte's audio output"""
+	def __init__(self, bot, guild):
 		self.bot = bot
-		self.server = server
+		self.guild = guild
 		self.player = None
 		self.clipqueue = queue.Queue()
 		self.last_clip = None
 
 	@property
 	def voice(self):
-		return next((voice for voice in self.bot.voice_clients if voice.server == self.server), None)
+		return next((voice for voice in self.bot.voice_clients if voice.guild == self.guild), None)
 
 	@property
 	def voice_channel(self):
 		if self.voice is None:
 			return None
 		else:
-			return self.server.me.voice_channel
+			return self.guild.me.voice_channel
 
 	# connects to a voice channel
 	async def connect(self, channel):
-		if not isinstance(channel, discord.Channel):
+		if not isinstance(channel, discord.VoiceChannel):
 			channel = self.bot.get_channel(channel)
 
 		if self.voice is None:
-			await self.bot.join_voice_channel(channel)
+			await channel.connect()
 		else:
 			await self.voice.move_to(channel)
 
-	def done_talking(self):
-		self.player = None
+	def done_talking(self, error):
+		if error:
+			print(f"Error on voice.play: {error.message}")
 		if not self.clipqueue.empty():
 			self.play_next_clip()
 
@@ -90,9 +91,9 @@ class AudioPlayer:
 	# plays the next clip in the queue
 	def play_next_clip(self):
 		clip = self.next_clip()
-		self.player = self.voice.create_ffmpeg_player(clip.audiopath, after=self.done_talking)
-		self.player.volume = clip.volume
-		self.player.start()
+		self.voice.play(discord.FFmpegPCMAudio(clip.audiopath), after=lambda e: self.done_talking(e))
+		self.voice.source = discord.PCMVolumeTransformer(self.voice.source)
+		self.voice.source.volume = clip.volume
 		print("playing: " + clip.audiopath)
 		if self.last_clip != None and clip.audiopath != self.last_clip.audiopath:
 			remove_if_temp(self.last_clip.audiopath)
@@ -102,12 +103,12 @@ class AudioPlayer:
 	async def queue_clip(self, clip):
 		if(self.voice is None):
 			print("tried to talk while not in voice channel")
-			await self.bot.say("not in voice channel m8")
+			await ctx.channel.send("not in voice channel m8")
 			return
 
 		self.clipqueue.put(clip)
 
-		if self.player is None or self.player.is_done():
+		if self.voice and not self.voice.is_playing():
 			self.play_next_clip()
 
 
@@ -121,46 +122,46 @@ class Audio(MangoCog):
 		MangoCog.__init__(self, bot)
 		self.audioplayers = []
 
-	# gets the audioplayer for the current server/channel/context
+	# gets the audioplayer for the current guild/channel/context
 	async def audioplayer(self, ctx, error_on_none=True):
 		# TODO: ACCOUNT FOR WHEN THIS MESSAGE IS A PM
 		if isinstance(ctx, discord.ext.commands.Context):
-			if ctx.message.server is None: # This is a private channel, so give it user
+			if ctx.message.guild is None: # This is a private channel, so give it user
 				ctx = ctx.message.author
 			else:
-				ctx = ctx.message.server
+				ctx = ctx.message.guild
 
 		if isinstance(ctx, discord.User):
 			author = ctx
 			for audioplayer in self.audioplayers:
-				member = audioplayer.server.get_member(author.id)
+				member = audioplayer.guild.get_member(author.id)
 				if member is not None and audioplayer.voice_channel == member.voice_channel:
-					if botdata.serverinfo(audioplayer.server).is_banned(member):
+					if botdata.guildinfo(audioplayer.guild).is_banned(member):
 						raise AudioPlayerNotFoundError("Nice try, but you're banned in the voice channel that I'm in")
 					return audioplayer
 			if error_on_none:
 				raise AudioPlayerNotFoundError("You're not in any voice channels that I'm in")
 			else:
 				return None
-		elif isinstance(ctx, discord.Server):
-			server = ctx
-		elif isinstance(ctx, discord.Channel):
-			server = ctx.server
+		elif isinstance(ctx, discord.Guild):
+			guild = ctx
+		elif isinstance(ctx, discord.abc.GuildChannel):
+			guild = ctx.guild
 		else:
-			raise ValueError("Incorrect type given to audioplayer function")
+			raise ValueError(f"Incorrect type '{type(ctx)}' given to audioplayer function")
 
 		for audioplayer in self.audioplayers:
-			if audioplayer.server == server:
+			if audioplayer.guild == guild:
 				return audioplayer
 
 		if error_on_none:
-			raise AudioPlayerNotFoundError(f"I'm not in a voice channel on this server. Have an admin do `{self.bot.command_prefix}summon` to put me in one.")
+			raise AudioPlayerNotFoundError(f"I'm not in a voice channel on this server/guild. Have an admin do `{self.bot.command_prefix}summon` to put me in one.")
 		else:
 			return None
 
-	# Connects an audioplayer for the correct server to the indicated channel
+	# Connects an audioplayer for the correct guild to the indicated channel
 	async def connect_voice(self, channel):
-		if not isinstance(channel, discord.Channel):
+		if not isinstance(channel, discord.abc.GuildChannel):
 			channel = self.bot.get_channel(channel)
 		if channel is None:
 			raise UserError("channel not found")
@@ -170,20 +171,20 @@ class Audio(MangoCog):
 		if audioplayer is not None:
 			await audioplayer.connect(channel)
 		else:
-			audioplayer = AudioPlayer(self.bot, channel.server)
+			audioplayer = AudioPlayer(self.bot, channel.guild)
 			await audioplayer.connect(channel)
 			self.audioplayers.append(audioplayer)
 			clip = await self.get_clip("local:bothello")
 			clip.volume = 0.1
 			await self.play_clip(clip, channel)
 
-	async def disconnect(self, server):
-		audioplayer = await self.audioplayer(server)
+	async def disconnect(self, guild):
+		audioplayer = await self.audioplayer(guild)
 		if audioplayer is not None:
 			await audioplayer.voice.disconnect()
 			self.audioplayers.remove(audioplayer)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def play(self, ctx, *, clip : str):
 		"""Plays an audio clip
 
@@ -199,13 +200,13 @@ class Audio(MangoCog):
 			try:
 				await self.play_clip(f"local:{clip}", ctx)
 			except ClipNotFound:
-				await self.bot.say(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
+				await ctx.channel.send(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
 		else:
 			await self.play_clip(clip, ctx)
 
 			
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def playlist(self, ctx, section : str=None):
 		"""Lists the audio clips available for the play command
 
@@ -248,16 +249,16 @@ class Audio(MangoCog):
 			for clip in clips:
 				message += "`{}` ".format(clip)
 
-		await self.bot.say(message)
+		await ctx.channel.send(message)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def playurl(self, ctx, mp3url : str):
 		"""Plays an mp3 file at a url
 
 		Make sure to use http, not https"""
 		await self.play_clip("url:" + mp3url, ctx)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def stop(self, ctx):
 		"""Stops the currently playing audio
 
@@ -269,23 +270,23 @@ class Audio(MangoCog):
 				audioplayer.clipqueue.get()
 			except Empty:
 				continue
-		if not audioplayer.player is None:
-			audioplayer.player.stop()
+		if audioplayer.voice is not None:
+			audioplayer.voice.stop()
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def replay(self, ctx):
 		"""Replays the last played clip
 		"""
 		last_clip = (await self.audioplayer(ctx)).last_clip
 		if last_clip == None:
-			await self.bot.say("Nobody said anythin' yet")
+			await ctx.channel.send("Nobody said anythin' yet")
 			return
 
 		# If its not a temp file
-		await self.bot.say("Replaying " + last_clip.clipid)
+		await ctx.channel.send("Replaying " + last_clip.clipid)
 		await self.play_clip(last_clip, ctx)
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def clipinfo(self, ctx, clipid=None):
 		"""Gets information and a file for the given clip
 
@@ -297,7 +298,7 @@ class Audio(MangoCog):
 		"""
 		if clipid is None:
 			if (await self.audioplayer(ctx)).last_clip == None:
-				await self.bot.say("Nobody said anythin' yet")
+				await ctx.channel.send("Nobody said anythin' yet")
 				return
 			clipid = (await self.audioplayer(ctx)).last_clip.clipid
 
@@ -306,7 +307,7 @@ class Audio(MangoCog):
 		except ClipNotFound:
 			clip = await self.get_clip(clipid)
 
-		await self.bot.send_typing(ctx.message.channel)
+		ctx.channel.typing()
 
 		filename = clip.name
 
@@ -321,16 +322,16 @@ class Audio(MangoCog):
 			content += f"\n\n{clip_info}"
 
 		try:
-			await self.bot.send_file(ctx.message.channel, clip.audiopath, filename=filename, content=content)
+			await ctx.channel.send(content, file=discord.File(clip.audiopath, filename=filename))
 		except FileNotFoundError as e:
 			# The file is probably actually a url
 			fp = urllib.request.urlopen(clip.audiopath)
-			await self.bot.send_file(ctx.message.channel, fp, filename=filename, content=content)
+			await ctx.channel.send(content, file=discord.File(fp, filename=filename))
 			fp.close()
 
 
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def setintro(self, ctx, clipname : str=None, user: discord.User=None):
 		"""Sets your intro clip
 
@@ -344,16 +345,16 @@ class Audio(MangoCog):
 			user = ctx.message.author
 		else:
 			if not checks.is_owner_check(ctx.message.author):
-				await self.bot.say("You aint the boss of me 😠")
+				await ctx.channel.send("You aint the boss of me 😠")
 				return
 
 		if clipname is None:
 			intro = botdata.userinfo(user.id).intro
 			if intro is None or intro == "":
-				await self.bot.say("Yer intro isn't set. Try doin somethin' like `?setintro dota:gyro_items_01`")
+				await ctx.channel.send("Yer intro isn't set. Try doin somethin' like `?setintro dota:gyro_items_01`")
 				return
 			else:
-				await self.bot.say("Your intro is: {}".format(intro))
+				await ctx.channel.send("Your intro is: {}".format(intro))
 				await self.play_clip("tts:your intro is", ctx)
 				await self.play_clip(intro, ctx)
 				return
@@ -363,14 +364,14 @@ class Audio(MangoCog):
 		audiolength = clip.audiolength
 
 		if audiolength > 3.0:
-			await self.bot.say("Dat clip is " + str(audiolength) + " seconds long, and intros gotta be less than 3.")
+			await ctx.channel.send("Dat clip is " + str(audiolength) + " seconds long, and intros gotta be less than 3.")
 			return
 
 		botdata.userinfo(user.id).intro = clip.clipid
-		await self.bot.say("Yer intro is now " + clip.clipid)
+		await ctx.channel.send("Yer intro is now " + clip.clipid)
 
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def setoutro(self, ctx, clipname : str=None, user: discord.User=None):
 		"""Sets your outro clip
 
@@ -384,16 +385,16 @@ class Audio(MangoCog):
 			user = ctx.message.author
 		else:
 			if not checks.is_owner_check(ctx.message.author):
-				await self.bot.say("You aint the boss of me 😠")
+				await ctx.channel.send("You aint the boss of me 😠")
 				return
 
 		if clipname is None:
 			outro = botdata.userinfo(user.id).outro
 			if outro is None or outro == "":
-				await self.bot.say("Yer outro isn't set. Try doin somethin' like `?setoutro dota:troll_lose_03`")
+				await ctx.channel.send("Yer outro isn't set. Try doin somethin' like `?setoutro dota:troll_lose_03`")
 				return
 			else:
-				await self.bot.say("Your outro is: {}".format(outro))
+				await ctx.channel.send("Your outro is: {}".format(outro))
 				await self.play_clip("tts:your outro is", ctx)
 				await self.play_clip(outro, ctx)
 				return
@@ -403,14 +404,14 @@ class Audio(MangoCog):
 		audiolength = clip.audiolength
 
 		if audiolength > 3.0:
-			await self.bot.say("Dat clip is " + str(audiolength) + " seconds long, and outros gotta be less than 3.")
+			await ctx.channel.send("Dat clip is " + str(audiolength) + " seconds long, and outros gotta be less than 3.")
 			return
 
 		botdata.userinfo(user.id).outro = clip.clipid
-		await self.bot.say("Yer outro is now " + clip.clipid)
+		await ctx.channel.send("Yer outro is now " + clip.clipid)
 
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def tts(self, ctx, *, message : str):
 		"""Like echo but for people who can't read
 
@@ -430,7 +431,7 @@ class Audio(MangoCog):
 		await self.play_clip("tts:" + text, ctx)
 
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def ttsclip(self, ctx, *, clip : str):
 		"""Tries to text-to-speech the given clip
 
@@ -443,18 +444,18 @@ class Audio(MangoCog):
 			try:
 				clip = await self.get_clip(f"local:{clip}")
 			except ClipNotFound:
-				await self.bot.say(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
+				await ctx.channel.send(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
 				return
 		else:
 			clip = await self.get_clip(clip)
 		text = clip.text.lower()
 		if text == "":
-			await self.bot.say(f"I can't read this clip for tts 😕. Try a different one.")
+			await ctx.channel.send(f"I can't read this clip for tts 😕. Try a different one.")
 			return
 
 		await self.play_clip(f"tts:{text}", ctx)
 
-	@commands.command(pass_context=True, aliases= [ "stts" ])
+	@commands.command(aliases= [ "stts" ])
 	async def smarttts(self, ctx, *, message : str):
 		"""Automatically find the best fit for the tts given
 
@@ -481,8 +482,8 @@ class Audio(MangoCog):
 
 
 	@checks.is_admin()
-	@commands.command(pass_context=True, hidden=True)
-	async def ttschannel(self, ctx, channel : discord.Channel):
+	@commands.command(hidden=True)
+	async def ttschannel(self, ctx, channel : discord.abc.GuildChannel):
 		"""Sets a channel as the "TTS Channel"
 		*admin-only command*
 		If someone types in this channel, mangobyte will automatically interpret it as a `{cmdpfx}smarttts` command
@@ -491,35 +492,35 @@ class Audio(MangoCog):
 		`{cmdpfx}ttschannel #tts`
 		"""
 		if channel.type != discord.ChannelType.text:
-			await self.bot.say("You've gotta give me a text channel")
+			await ctx.channel.send("You've gotta give me a text channel")
 			return
-		botdata.serverinfo(channel.server.id).ttschannel = channel.id
-		await self.bot.say(f"{channel.mention} has been set as the tts channel!")
+		botdata.guildinfo(channel.guild.id).ttschannel = channel.id
+		await ctx.channel.send(f"{channel.mention} has been set as the tts channel!")
 
 	@checks.is_admin()
-	@commands.command(pass_context=True, hidden=True)
+	@commands.command(hidden=True)
 	async def unttschannel(self, ctx):
 		"""Un-sets the "TTS Channel"
 		*admin-only command*
 		See `{cmdpfx}ttschannel` for more info on what this is about
 		"""
-		if not botdata.serverinfo(ctx.message.server.id).ttschannel:
-			await self.bot.say("TTS Channel has not been set. Try `?ttschannel <name of channel>`")
+		if not botdata.guildinfo(ctx.message.guild.id).ttschannel:
+			await ctx.channel.send("TTS Channel has not been set. Try `?ttschannel <name of channel>`")
 			return
-		botdata.serverinfo(ctx.message.server.id).ttschannel = None
-		await self.bot.say("TTS Channel removed")
+		botdata.guildinfo(ctx.message.guild.id).ttschannel = None
+		await ctx.channel.send("TTS Channel removed")
 
 	async def on_message(self, message):
-		if message.server and (not message.content.startswith("?")) and (not message.author.id == self.bot.user.id):
-			if botdata.serverinfo(message.server).is_banned(message.author):
+		if message.guild and (not message.content.startswith("?")) and (not message.author.id == self.bot.user.id):
+			if botdata.guildinfo(message.guild).is_banned(message.author):
 				return # banned users cant talk
-			ttschannel = botdata.serverinfo(message.server.id).ttschannel
+			ttschannel = botdata.guildinfo(message.guild.id).ttschannel
 			if ttschannel == message.channel.id:
 				_internal_channel = message.channel
-				await self.do_smarttts(message.content, message.server)
+				await self.do_smarttts(message.content, message.guild)
 
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def later(self, ctx):
 		"""Tells you how much later it is
 
@@ -528,27 +529,27 @@ class Audio(MangoCog):
 
 
 	@checks.is_admin()
-	@commands.command(pass_context=True, hidden=True)
+	@commands.command(hidden=True)
 	async def summon(self, ctx):
 		"""Summons the bot to the voice channel you are currently in
 		(Requires administrator privilages)"""
-		new_channel = ctx.message.author.voice.voice_channel
+		new_channel = ctx.message.author.voice.channel
 		if new_channel is None:
 			raise UserError("You are not currently in a voice channel")
-		if new_channel.server != ctx.message.server:
-			raise UserError("You are not currently in a voice channel on this server")
+		if new_channel.guild != ctx.message.guild:
+			raise UserError("You are not currently in a voice channel on this server/guild")
 
 		await self.connect_voice(new_channel)
-		botdata.serverinfo(new_channel.server.id).voicechannel = new_channel.id
+		botdata.guildinfo(new_channel.guild.id).voicechannel = new_channel.id
 
 	@checks.is_admin()
 	@checks.is_not_PM()
-	@commands.command(pass_context=True, hidden=True)
+	@commands.command(hidden=True)
 	async def unsummon(self, ctx):
 		"""Removes the bot from the voice channel it is currently in
 		(Requires administrator privilages)"""
-		await self.disconnect(ctx.message.server)
-		botdata.serverinfo(ctx.message.server.id).voicechannel = None
+		await self.disconnect(ctx.message.guild)
+		botdata.guildinfo(ctx.message.guild.id).voicechannel = None
 
 	# fixes discord user names which either are in all caps or have a number serving as a letter
 	async def fix_name(self, name):
@@ -563,41 +564,41 @@ class Audio(MangoCog):
 		return name
 
 	#function called when this event occurs
-	async def on_voice_state_update(self, before, after):
-		if before.voice_channel == after.voice_channel:
+	async def on_voice_state_update(self, member, before, after):
+		if before == after:
 			return # if the member didnt change channels, dont worry about it
-		if before.voice_channel is not None:
-			beforeplayer = await self.audioplayer(before.voice_channel, error_on_none=False)
-			if beforeplayer is not None and beforeplayer.voice_channel == before.voice_channel:
-				text = (await self.fix_name(before.name)) + " has left!"
+		if before and before.channel:
+			beforeplayer = await self.audioplayer(before.channel, error_on_none=False)
+			if beforeplayer is not None and beforeplayer.voice.channel.id == before.channel.id:
+				text = (await self.fix_name(member.name)) + " has left!"
 				print(text)
 				outroclip = "local:farewell"
 
-				userinfo = botdata.userinfo(before.id)
+				userinfo = botdata.userinfo(member.id)
 				if userinfo.outro != "" and userinfo.outro != outroclip:
 					outroclip = userinfo.outro
 
 				await asyncio.sleep(0.5)
-				await self.play_clip(outroclip, before.server)
-				await self.play_clip("tts:" + text, before.server)
-		if after.voice_channel is not None:
-			afterplayer = await self.audioplayer(after.voice_channel, error_on_none=False)
-			if afterplayer is not None and afterplayer.voice_channel == after.voice_channel:
-				if after.id == self.bot.user.id:
-					botdata.serverinfo(after.voice_channel.server.id).voicechannel = after.voice_channel.id
+				await self.play_clip(outroclip, before.channel)
+				await self.play_clip("tts:" + text, before.channel)
+		if after and after.channel:
+			afterplayer = await self.audioplayer(after.channel, error_on_none=False)
+			if afterplayer is not None and afterplayer.voice.channel.id == after.channel.id:
+				if member.id == self.bot.user.id:
+					botdata.guildinfo(after.channel.guild.id).voicechannel = after.channel.id
 
-				text = await self.fix_name(after.name)
+				text = await self.fix_name(member.name)
 				print(text + " joined the channel")
 				introclip = "local:helloits"
 
-				userinfo = botdata.userinfo(after.id)
+				userinfo = botdata.userinfo(member.id)
 				if userinfo.intro != "" and userinfo.intro != introclip:
 					introclip = userinfo.intro
 					text = "its " + text
 
 				await asyncio.sleep(3)
-				await self.play_clip(introclip, after.server)
-				await self.play_clip("tts:" + text, after.server)
+				await self.play_clip(introclip, after.channel)
+				await self.play_clip("tts:" + text, after.channel)
 
 
 def setup(bot):

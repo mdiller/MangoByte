@@ -32,15 +32,15 @@ async def on_ready():
 	print('Connecting to voice channels if specified in botdata.json ...')
 	await bot.change_presence(game=discord.Game(name="DOTA 3 [?help]", url="http://github.com/mdiller/MangoByte"))
 	# await bot.get_cog("DotaStats").init_dicts()
-	# cog = bot.get_cog("Audio")
+	cog = bot.get_cog("Audio")
 
-	# for guildinfo in botdata.guildinfo_list():
-	# 	if guildinfo.voicechannel is not None:
-	# 		try:
-	# 			await cog.connect_voice(guildinfo.voicechannel)
-	# 		except UserError as e:
-	# 			if e.message != "channel not found":
-	# 				raise
+	for guildinfo in botdata.guildinfo_list():
+		if guildinfo.voicechannel is not None:
+			try:
+				await cog.connect_voice(guildinfo.voicechannel)
+			except UserError as e:
+				if e.message != "channel not found":
+					raise
 	
 	for guild in bot.guilds:
 		if guild.me.guild_permissions.change_nickname:
@@ -99,7 +99,7 @@ async def on_command_error(ctx, error):
 
 if __name__ == '__main__':
 	bot.load_extension("cogs.general")
-	# bot.load_extension("cogs.audio")
+	bot.load_extension("cogs.audio")
 	# bot.load_extension("cogs.dotastats")
 	# bot.load_extension("cogs.dotabase")
 	# bot.load_extension("cogs.ai")

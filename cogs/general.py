@@ -112,7 +112,6 @@ class General(MangoCog):
 
 		embed.set_footer(text="This MangoByte managed by {}".format(owner.name), icon_url=owner.avatar_url)
 
-		print(embed.to_dict())
 		await ctx.channel.send(embed=embed)
 
 	@commands.command()
@@ -184,8 +183,6 @@ class General(MangoCog):
 					await ctx.channel.send(self.bot.command_not_found.format(name))
 					return
 			embed = await self.bot.formatter.format_as_embed(ctx, command)
-
-		print(embed.to_dict())
 
 		await ctx.channel.send(embed=embed)
 

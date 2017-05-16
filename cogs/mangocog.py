@@ -26,7 +26,7 @@ class MangoCog:
 		except MissingClipType:
 			while len(trytypes) > 0:
 				try:
-					return await self.get_clip("{}:{}".format(trytypes.pop()))
+					return await self.get_clip("{}:{}".format(trytypes.pop(), clipid))
 				except ClipNotFound:
 					continue
 		raise MissingClipType(clipid)
