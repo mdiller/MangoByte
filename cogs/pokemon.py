@@ -116,9 +116,8 @@ class Pokemon(MangoCog):
 
 		Example:
 		`{cmdpfx}pokedex charizard`"""
-		ctx.channel.typing()
-
-		data, species_data = await self.get_pokemon_data(pokemon)
+		with ctx.channel.typing():
+			data, species_data = await self.get_pokemon_data(pokemon)
 
 		types = []
 		for t in sorted(data["types"], key=lambda t: t["slot"]):
@@ -149,8 +148,8 @@ class Pokemon(MangoCog):
 		`{cmdpfx}shiny charizard`"""
 
 		# Sanitize input first
-		ctx.channel.typing()
-		data, species_data = await self.get_pokemon_data(pokemon)
+		with ctx.channel.typing():
+			data, species_data = await self.get_pokemon_data(pokemon)
 
 		if not data["sprites"].get("front_shiny"):
 			await ctx.channel.send("This pokemon doesn't have a shiny version")

@@ -101,7 +101,7 @@ class General(MangoCog):
 			"• Greets users joining a voice channel\n"
 			"• For a list of command categories, try `?help`"))
 
-		invite_link = "https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968"
+		invite_link = "https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968"
 		help_guild_link = "https://discord.gg/d6WWHxx"
 
 		embed.add_field(name="Help", value=(
@@ -214,7 +214,7 @@ class General(MangoCog):
 
 		This api is a wrapper for the [MediaWiki API](https://www.mediawiki.org/wiki/API:Main_page), which is applicable to Wikipedia because Wikipedia is build ontop of MediaWiki
 		"""
-		ctx.channel.typing()
+		await ctx.channel.trigger_typing()
 
 		def getWikiPage(title):
 			try:
@@ -262,7 +262,7 @@ class General(MangoCog):
 	@commands.command(hidden=True, aliases=["restapi"])
 	async def restget(self, ctx, url):
 		"""Gets a json response from a rest api and returns it"""
-		await ctx.channel.typing()
+		await ctx.channel.trigger_typing()
 		async with aiohttp.ClientSession() as session:
 			async with session.get(url) as r:
 				if r.status == 200:

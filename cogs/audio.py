@@ -135,7 +135,7 @@ class Audio(MangoCog):
 			author = ctx
 			for audioplayer in self.audioplayers:
 				member = audioplayer.guild.get_member(author.id)
-				if member is not None and audioplayer.voice_channel == member.voice_channel:
+				if member and member.voice and audioplayer.voice and audioplayer.voice.channel.id == member.voice.channel.id:
 					if botdata.guildinfo(audioplayer.guild).is_banned(member):
 						raise AudioPlayerNotFoundError("Nice try, but you're banned in the voice channel that I'm in")
 					return audioplayer
@@ -307,7 +307,7 @@ class Audio(MangoCog):
 		except ClipNotFound:
 			clip = await self.get_clip(clipid)
 
-		ctx.channel.typing()
+		await ctx.channel.trigger_typing()
 
 		filename = clip.name
 

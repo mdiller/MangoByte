@@ -297,7 +297,7 @@ class DotaStats(MangoCog):
 			story += "• {0[us]} {0[won_lost]} {1} lane vs {0[them]}\n".format(await self.get_lane_story(game['players'], laneid, is_radiant), lanes[laneid])
 		return story
 
-	async def tell_match_story(self, game, is_radiant, perspective=None):
+	async def tell_match_story(self, game, is_radiant, ctx, perspective=None):
 		if not is_parsed(game):
 			raise UserError("This game must be parsed before I can create a story")
 
@@ -403,20 +403,22 @@ class DotaStats(MangoCog):
 	@commands.command(aliases=["lastgame"])
 	async def lastmatch(self, ctx, player=None):
 		"""Gets info about the player's last dota game"""
-		with ctx.channel.typing():
-			steamid = await get_check_steamid(player, ctx)
-			matchid = (await opendota_query("/players/{}/matches?limit=1".format(steamid), False))[0]["match_id"]
-			await self.player_match_stats(steamid, matchid, ctx)
+		await ctx.channel.trigger_typing()
+
+		steamid = await get_check_steamid(player, ctx)
+		matchid = (await opendota_query("/players/{}/matches?limit=1".format(steamid), False))[0]["match_id"]
+		await self.player_match_stats(steamid, matchid, ctx)
 
 	@commands.command(aliases=["matchdetails"])
 	async def match(self, ctx, match_id : int):
 		"""Gets a summary of the dota match with the given id"""
-		with ctx.channel.typing():
-			try:
-				game = await get_match(match_id)
-			except UserError:
-				await ctx.channel.send("Looks like thats not a valid match id")
-				return
+		await ctx.channel.trigger_typing()
+
+		try:
+			game = await get_match(match_id)
+		except UserError:
+			await ctx.channel.send("Looks like thats not a valid match id")
+			return
 
 		description = ("Game ended in {0} \n"
 					"More info at [DotaBuff](https://www.dotabuff.com/matches/{1}), "
@@ -434,27 +436,29 @@ class DotaStats(MangoCog):
 	@commands.command()
 	async def matchstory(self, ctx, match_id : int, perspective="radiant"):
 		"""Tells the story of the match from the given perspective"""
-		with ctx.channel.typing():
-			if perspective.lower() == "radiant":
-				is_radiant = True
-			elif perspective.lower() == "dire":
-				is_radiant = False
-			else:
-				raise UserError("Perspective must be either radiant or dire")
-			try:
-				game = await get_match(match_id, False)
-			except UserError:
-				await ctx.channel.send("Looks like thats not a valid match id")
-				return
+		await ctx.channel.trigger_typing()
 
-			await self.tell_match_story(game, is_radiant)
+		if perspective.lower() == "radiant":
+			is_radiant = True
+		elif perspective.lower() == "dire":
+			is_radiant = False
+		else:
+			raise UserError("Perspective must be either radiant or dire")
+		try:
+			game = await get_match(match_id, False)
+		except UserError:
+			await ctx.channel.send("Looks like thats not a valid match id")
+			return
+
+		await self.tell_match_story(game, is_radiant, ctx)
 
 	@commands.command(aliases=["lastgamestory"])
 	async def lastmatchstory(self, ctx, player=None):
 		"""Tells the story of the player's last match
 
 		Input must be either a discord user, a steam32 id, or a steam64 id"""
-		ctx.channel.typing()
+		await ctx.channel.trigger_typing()
+
 		steamid = await get_check_steamid(player, ctx)
 		try:
 			match_id = (await opendota_query("/players/{}/matches?limit=1".format(steamid)))[0]['match_id']
@@ -473,7 +477,7 @@ class DotaStats(MangoCog):
 			perspective = "[{personaname}](https://www.opendota.com/players/{account_id})".format(**player_data)
 		perspective += "({0}, {1})".format(self.get_pretty_hero(player_data), "Radiant" if is_radiant else "Dire")
 
-		await self.tell_match_story(game, is_radiant, perspective)
+		await self.tell_match_story(game, is_radiant, ctx, perspective)
 
 
 	@commands.command(aliases=["whois"])
@@ -483,9 +487,10 @@ class DotaStats(MangoCog):
 		The argument for this command can be either a steam32 id, a steam64 id, or an @mention of a discord user who has a steamid set"""
 		steam32 = await get_check_steamid(player, ctx)
 
-		with ctx.channel.typing():
-			playerinfo = await opendota_query(f"/players/{steam32}", False)
-			matches = await opendota_query(f"/players/{steam32}/matches")
+		await ctx.channel.trigger_typing()
+
+		playerinfo = await opendota_query(f"/players/{steam32}", False)
+		matches = await opendota_query(f"/players/{steam32}/matches")
 
 		gamesplayed = len(matches)
 		winrate = "{:.2%}".format(len(list(filter(lambda m: m['radiant_win'] == (m['player_slot'] < 128), matches))) / gamesplayed)
@@ -579,7 +584,7 @@ class DotaStats(MangoCog):
 			player_mention = ""
 		else:
 			try:
-				player_user = commands.MemberConverter(ctx, player).convert()
+				player_user = await commands.MemberConverter().convert(ctx, player)
 				player_mention = f"@{player_user.nick if player_user.nick else player_user.name}"
 			except commands.BadArgument:
 				# This is a steamid
@@ -791,6 +796,7 @@ class DotaStats(MangoCog):
 
 		queryargs = f"?hero_id={hero.id}&{projections}"
 
+		await ctx.channel.trigger_typing()
 		await thinker.think(ctx.message)
 		playerinfo = await opendota_query(f"/players/{steam32}")
 		matches = await opendota_query(f"/players/{steam32}/matches{queryargs}")
@@ -889,7 +895,7 @@ class DotaStats(MangoCog):
 		filename = re.search("/([/0-9a-zA-Z]+)", query).group(1).replace("/", "_")
 		filename = settings.resource(f"temp/{filename}.json")
 		helpers.write_json(filename, data)
-		await self.bot.send_file(ctx.message.channel, filename)
+		await ctx.channel.send(file=discord.File(filename))
 		os.remove(filename)
 
 
@@ -904,10 +910,6 @@ class DotaStats(MangoCog):
 
 		You can check out their [create_tables script](https://github.com/odota/core/blob/master/sql/create_tables.sql) to get an idea of the structure of the database
 		"""
-		match = re.search("limit ([0-9]+)", sql)
-		if not match or int(match.group(1)) > 100:
-			await ctx.channel.send("You gotta give a reasonable limit for these queries, otherwise they will not complete. Try adding `limit 10` to the end of that.")
-			return
 		query = "/explorer?sql={}".format(urllib.parse.quote(sql, safe=''))
 		print(query)
 
@@ -916,7 +918,7 @@ class DotaStats(MangoCog):
 
 		filename = settings.resource(f"temp/query_results.json")
 		helpers.write_json(filename, data)
-		await self.bot.send_file(ctx.message.channel, filename)
+		await ctx.channel.send(file=discord.File(filename))
 		os.remove(filename)
 
 
