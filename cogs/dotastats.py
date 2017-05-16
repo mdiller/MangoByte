@@ -351,13 +351,11 @@ class DotaStats(MangoCog):
 			"Denies: {denies}\n"
 			"Level: {level}\n".format(**player)))
 
-		match_image = discord.File(await get_match_image(game), filename="match_image.png")
-
-		# embed.set_image(url=f"attachment://{match_image.filename}")
-		embed.set_footer(text="Started".format(matchid))
+		match_image = discord.File(await get_match_image(game), "match.png")
+		embed.set_image(url=f"attachment://{match_image.filename}")
+		embed.set_footer(text="Started")
 
 		await ctx.channel.send(embed=embed, file=match_image)
-
 
 	@commands.command(aliases=["register"])
 	async def setsteam(self, ctx, steam_id : int, user: discord.User=None):
@@ -421,9 +419,9 @@ class DotaStats(MangoCog):
 							timestamp=datetime.datetime.utcfromtimestamp(game['start_time']), color=self.embed_color)
 		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
 
-		match_image = discord.File(await get_match_image(game), filename="match_image.png")
+		match_image = discord.File(await get_match_image(game), filename="matchimage.png")
 
-		# embed.set_image(url=f"attachment://{match_image.filename}")
+		embed.set_image(url=f"attachment://{match_image.filename}")
 		embed.set_footer(text="Started")
 		await ctx.channel.send(embed=embed, file=match_image)
 
