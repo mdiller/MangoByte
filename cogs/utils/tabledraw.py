@@ -35,7 +35,7 @@ class ColorCell(Cell):
 class TextCell(Cell):
 	def __init__(self, text, **kwargs):
 		Cell.__init__(self, **kwargs)
-		if not text:
+		if text is None:
 			text = ""
 		self.text = str(text)
 		if isinstance(text, int) and 'horizontal_align' not in kwargs:

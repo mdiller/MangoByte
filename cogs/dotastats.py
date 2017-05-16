@@ -49,8 +49,7 @@ async def get_match(match_id, rate_limit=True):
 		return match
 
 async def get_match_image(match):
-	# Make sure to check that the match id is valid before calling this
-	filename = settings.resource(f"temp/match_{match['match_id']}")
+	filename = settings.resource(f"temp/match_{match['match_id']}.png")
 	await drawdota.create_match_image(filename, match)
 	return filename
 

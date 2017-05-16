@@ -21,7 +21,6 @@ def init_dota_info(hero_info, item_info):
 	hero_infos = hero_info
 	item_infos = item_info
 
-
 async def get_hero_image(hero_id):
 	async with aiohttp.ClientSession() as session:
 		async with session.get(hero_infos[hero_id]["image"]) as r:
@@ -139,4 +138,6 @@ async def create_match_image(filename, match):
 	image = Image.alpha_composite(image, temp_image)
 
 	image.save(filename)
+
+	return filename
 
