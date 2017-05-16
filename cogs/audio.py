@@ -467,8 +467,9 @@ class Audio(MangoCog):
 	async def do_smarttts(self, message, ctx):
 		if message == "" or not message:
 			return # dont say anything if theres nothin to be said
+		simple_message = re.sub(r'[^a-z0-9\s_]', r'', message.lower())
 		try:
-			await self.play_clip(f"local:{message}", ctx)
+			await self.play_clip(f"local:{simple_message}", ctx)
 			return # Clip played successfully so we're done
 		except ClipNotFound:
 			pass

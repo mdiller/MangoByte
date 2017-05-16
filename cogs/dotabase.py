@@ -226,7 +226,7 @@ class Dotabase(MangoCog):
 			if query.count() > 0:
 				return query
 
-		simple_input = " " + re.sub(r'[^a-z^0-9^A-Z^\s]', r'', keyphrase) + " "
+		simple_input = " " + re.sub(r'[^a-z0-9\s]', r'', keyphrase.lower()) + " "
 
 		query = basequery.filter(Response.text_simple == simple_input)
 		if query.count() > 0:
