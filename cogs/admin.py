@@ -82,6 +82,30 @@ class Admin(MangoCog):
 		await audio.disconnect(ctx.message.guild)
 		botdata.guildinfo(ctx.message.guild.id).voicechannel = None
 
+	@commands.command()
+	async def ttschannel(self, ctx, channel : discord.TextChannel):
+		"""Sets a channel as the "TTS Channel"
+
+		If someone types in this channel, mangobyte will automatically interpret it as a `{cmdpfx}smarttts` command
+
+		**Example:** (If your channel name is tts)
+		`{cmdpfx}ttschannel #tts`
+		"""
+		botdata.guildinfo(channel.guild.id).ttschannel = channel.id
+		await ctx.channel.send(f"{channel.mention} has been set as the tts channel!")
+
+	@commands.command()
+	async def unttschannel(self, ctx):
+		"""Un-sets the "TTS Channel"
+
+		See `{cmdpfx}ttschannel` for more info on what this is about
+		"""
+		if not botdata.guildinfo(ctx.message.guild.id).ttschannel:
+			await ctx.channel.send("TTS Channel has not been set. Try `?ttschannel <name of channel>`")
+			return
+		botdata.guildinfo(ctx.message.guild.id).ttschannel = None
+		await ctx.channel.send("TTS Channel removed")
+
 
 def setup(bot):
 	bot.add_cog(Admin(bot))

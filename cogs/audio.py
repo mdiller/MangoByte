@@ -480,36 +480,6 @@ class Audio(MangoCog):
 				return
 		await self.do_tts(message, ctx)
 
-
-	@checks.is_admin()
-	@commands.command(hidden=True)
-	async def ttschannel(self, ctx, channel : discord.abc.GuildChannel):
-		"""Sets a channel as the "TTS Channel"
-		*admin-only command*
-		If someone types in this channel, mangobyte will automatically interpret it as a `{cmdpfx}smarttts` command
-
-		**Example:** (If your channel name is tts)
-		`{cmdpfx}ttschannel #tts`
-		"""
-		if channel.type != discord.ChannelType.text:
-			await ctx.channel.send("You've gotta give me a text channel")
-			return
-		botdata.guildinfo(channel.guild.id).ttschannel = channel.id
-		await ctx.channel.send(f"{channel.mention} has been set as the tts channel!")
-
-	@checks.is_admin()
-	@commands.command(hidden=True)
-	async def unttschannel(self, ctx):
-		"""Un-sets the "TTS Channel"
-		*admin-only command*
-		See `{cmdpfx}ttschannel` for more info on what this is about
-		"""
-		if not botdata.guildinfo(ctx.message.guild.id).ttschannel:
-			await ctx.channel.send("TTS Channel has not been set. Try `?ttschannel <name of channel>`")
-			return
-		botdata.guildinfo(ctx.message.guild.id).ttschannel = None
-		await ctx.channel.send("TTS Channel removed")
-
 	async def on_message(self, message):
 		if message.guild and (not message.content.startswith("?")) and message.author.id != self.bot.user.id:
 			if botdata.guildinfo(message.guild).is_banned(message.author):
@@ -517,7 +487,6 @@ class Audio(MangoCog):
 			ttschannel = botdata.guildinfo(message.guild.id).ttschannel
 			if ttschannel == message.channel.id:
 				await self.do_smarttts(message.content, message.guild)
-
 
 	@commands.command()
 	async def later(self, ctx):
