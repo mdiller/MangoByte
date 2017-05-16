@@ -23,6 +23,7 @@ description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 bot = commands.Bot(command_prefix='?', formatter=MangoHelpFormatter(), description=description)
 bot.remove_command("help")
 thinker = Thinker(bot)
+invite_link = "https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968"
 
 deprecated_commands = {}
 
@@ -88,6 +89,8 @@ async def on_command_error(ctx, error):
 			"Thats the wrong type of argument for that command.\n\n"
 			f"Ya gotta do it like this:\n`{signature}`\n\n"
 			f"Try `?help {ctx.command}` for a more detailed description of the command"))
+	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.Forbidden):
+		await ctx.channel.send(f"Looks like I'm missing permissions 😢. Have an admin giff me back my permissions, or re-invite me to the server using this invite link: {invite_link}")
 	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
 		await ctx.channel.send(error.original.message)
 	else:

@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands.bot import _mention_pattern, _mentions_transforms
-from __main__ import settings, botdata
+from __main__ import settings, botdata, invite_link
 from cogs.utils.helpers import *
 from cogs.utils import checks
 from cogs.audio import AudioPlayerNotFoundError
@@ -104,7 +104,6 @@ class General(MangoCog):
 			"• Greets users joining a voice channel\n"
 			"• For a list of command categories, try `?help`"))
 
-		invite_link = "https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968"
 		help_guild_link = "https://discord.gg/d6WWHxx"
 
 		embed.add_field(name="Help", value=(
