@@ -3,6 +3,7 @@ from discord.ext import commands
 from __main__ import settings, botdata, thinker
 from cogs.utils import checks
 from cogs.utils import helpers
+from cogs.utils import drawdota
 import aiohttp
 import asyncio
 import async_timeout
@@ -47,22 +48,11 @@ async def get_match(match_id, rate_limit=True):
 			helpers.write_json(match_file, match)
 		return match
 
-async def get_match_image(matchid, is_parsed):
+async def get_match_image(match):
 	# Make sure to check that the match id is valid before calling this
-	url = "http://dotabase.me/image-api/request.php?match={}".format(matchid)
-	url += "&parsed={}".format("true" if is_parsed else "false")
-	try:
-		with async_timeout.timeout(8):
-			async with aiohttp.ClientSession() as session:
-				async with session.post(url) as r:
-						if r.status == 200:
-							data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
-							return data['file']
-						else:
-							print("Dotabase image-api errored on POST: '{}'".format(url))
-							raise UserError("Errored on generating match image".format(r.status))
-	except asyncio.TimeoutError:
-		raise UserError("TimeoutError while generating match image: try again")
+	filename = settings.resource(f"temp/match_{match['match_id']}")
+	await drawdota.create_match_image(filename, match)
+	return filename
 
 def s_if_plural(text, n):
 	return text + "s" if n > 1 else text
@@ -177,10 +167,10 @@ class DotaStats(MangoCog):
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 		self.embed_color = discord.Color.teal()
-
-	async def init_dicts(self):
 		dotabase = self.bot.get_cog("Dotabase")
-		self.hero_info = await dotabase.get_hero_infos()
+		if not dotabase:
+			raise ImportError("The Dotabase cog must be added before the DotaStats cog")
+		self.hero_info = dotabase.get_hero_infos()
 		self.lookup_hero = dotabase.lookup_hero
 
 	def get_pretty_hero(self, player):
@@ -362,10 +352,12 @@ class DotaStats(MangoCog):
 			"Denies: {denies}\n"
 			"Level: {level}\n".format(**player)))
 
-		embed.set_image(url=await get_match_image(matchid, is_parsed(game)))
+		match_image = discord.File(await get_match_image(game), filename="match_image.png")
+
+		# embed.set_image(url=f"attachment://{match_image.filename}")
 		embed.set_footer(text="Started".format(matchid))
 
-		await ctx.channel.send(embed=embed)
+		await ctx.channel.send(embed=embed, file=match_image)
 
 
 	@commands.command(aliases=["register"])
@@ -429,9 +421,12 @@ class DotaStats(MangoCog):
 		embed = discord.Embed(description=description, 
 							timestamp=datetime.datetime.utcfromtimestamp(game['start_time']), color=self.embed_color)
 		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
-		embed.set_image(url=await get_match_image(match_id, is_parsed(game)))
+
+		match_image = discord.File(await get_match_image(game), filename="match_image.png")
+
+		# embed.set_image(url=f"attachment://{match_image.filename}")
 		embed.set_footer(text="Started")
-		await ctx.channel.send(embed=embed)
+		await ctx.channel.send(embed=embed, file=match_image)
 
 	@commands.command()
 	async def matchstory(self, ctx, match_id : int, perspective="radiant"):

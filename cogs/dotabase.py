@@ -5,6 +5,7 @@ from sqlalchemy import and_, or_
 from __main__ import settings
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
+from cogs.utils import drawdota
 import random
 import os
 import asyncio
@@ -78,6 +79,7 @@ class Dotabase(MangoCog):
 		self.hero_aliases = {}
 		self.build_aliases()
 		self.vpkurl = "http://dotabase.me/dota-vpk"
+		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos())
 
 	def build_aliases(self):
 		for hero in session.query(Hero):
@@ -118,7 +120,7 @@ class Dotabase(MangoCog):
 				return self.hero_aliases[hero]
 		return None
 
-	async def get_hero_infos(self):
+	def get_hero_infos(self):
 		result = {}
 		for hero in session.query(Hero):
 			result[hero.id] = {
@@ -126,9 +128,18 @@ class Dotabase(MangoCog):
 				"full_name": hero.full_name,
 				"icon": self.vpkurl + hero.icon,
 				"attr": hero.attr_primary,
-				"portrait": self.vpkurl + hero.portrait
+				"portrait": self.vpkurl + hero.portrait,
+				"image": self.vpkurl + hero.image
 			}
-			#this to replace the ones below
+		return result
+
+	def get_item_infos(self):
+		result = {}
+		for item in session.query(Item):
+			result[item.id] = {
+				"name": item.localized_name,
+				"icon": self.vpkurl + item.icon,
+			}
 		return result
 
 	async def play_response(self, response, ctx):

@@ -31,7 +31,6 @@ async def on_ready():
 	print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
 	print('Connecting to voice channels if specified in botdata.json ...')
 	await bot.change_presence(game=discord.Game(name="DOTA 3 [?help]", url="http://github.com/mdiller/MangoByte"))
-	await bot.get_cog("DotaStats").init_dicts()
 	cog = bot.get_cog("Audio")
 
 	for guildinfo in botdata.guildinfo_list():
@@ -100,8 +99,8 @@ async def on_command_error(ctx, error):
 if __name__ == '__main__':
 	bot.load_extension("cogs.general")
 	bot.load_extension("cogs.audio")
-	bot.load_extension("cogs.dotastats")
 	bot.load_extension("cogs.dotabase")
+	bot.load_extension("cogs.dotastats")
 	bot.load_extension("cogs.ai")
 	bot.load_extension("cogs.pokemon")
 	bot.run(settings.token)
