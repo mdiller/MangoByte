@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from __main__ import settings
 from .helpers import *
 from gtts import gTTS
+import urllib.request
 import taglib
 import discord
 import re
@@ -87,7 +88,6 @@ class LocalClip(Clip):
 		return "local"
 
 	async def get_info(self):
-		raise ValueError("FlerbenShmergen")
 		result = ""
 		if self.text != "":
 			result += f"\"{self.text}\""
@@ -119,6 +119,12 @@ class TtsClip(Clip):
 class UrlClip(Clip):
 	def __init__(self, url, bot):
 		# TODO: add checking for valid url for ffmpeg
+		if not re.match(r'^https?://.*\.(mp3|wav)$', url):
+			raise UserError("That's not a valid mp3 or wav url")
+		try:
+			urllib.request.urlopen(url)
+		except (urllib.error.URLError, urllib.error.HTTPError):
+			raise UserError("There was a problem opening this URL")
 		Clip.__init__(self, url, url)
 
 	@classmethod

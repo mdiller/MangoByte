@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
-from __main__ import settings, botdata
+from __main__ import settings, botdata, report_error
 from cogs.utils import checks
 import asyncio
 import os
@@ -16,6 +16,11 @@ from .mangocog import *
 from ctypes.util import find_library
 
 discord.opus.load_opus(find_library('opus'))
+
+class TtsChannelError(Exception):
+	def __init__(self, error):
+		self.message = "Errored in the tts channel"
+		self.original = error
 
 class AudioPlayerNotFoundError(UserError):
 	def __init__(self, message):
@@ -459,9 +464,7 @@ class Audio(MangoCog):
 	async def smarttts(self, ctx, *, message : str):
 		"""Automatically find the best fit for the tts given
 
-		First checks local clips (like `{cmdpfx}play`),
-		Then checks if there is an exact match for a dota response clip,
-		And if none of the above is found, does a simple tts clip"""
+		First checks local clips (like `{cmdpfx}play`), then checks to see if it is an mp3/wav url, then checks if there is an exact match for a dota response clip, and if none of the above is found, does a simple tts clip"""
 		await self.do_smarttts(message, ctx)
 
 	async def do_smarttts(self, message, ctx):
@@ -473,6 +476,9 @@ class Audio(MangoCog):
 			return # Clip played successfully so we're done
 		except ClipNotFound:
 			pass
+		if re.match(r'^https?://.*\.(mp3|wav)$', message):
+			await self.play_clip(f"url:{message}", ctx)
+			return
 		dotabase = self.bot.get_cog("Dotabase")
 		if dotabase:
 			query = await dotabase.smart_dota_query(message.split(" "), [], exact=True)
@@ -487,7 +493,14 @@ class Audio(MangoCog):
 				return # banned users cant talk
 			ttschannel = botdata.guildinfo(message.guild.id).ttschannel
 			if ttschannel == message.channel.id:
-				await self.do_smarttts(message.content, message.guild)
+				try:
+					await self.do_smarttts(message.clean_content, message.guild)
+				except UserError as e:
+					await message.channel.send(e.message)
+				except Exception as e:
+					await message.channel.send("Uh-oh, sumthin dun gone wrong 😱")
+					report_error(message, TtsChannelError(e))
+
 
 	@commands.command()
 	async def later(self, ctx):

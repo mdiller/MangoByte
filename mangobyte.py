@@ -68,7 +68,7 @@ async def on_command_error(ctx, error):
 	if isinstance(error, commands.CommandNotFound):
 		cmd = ctx.message.content[1:].split(" ")[0]
 		if cmd in deprecated_commands:
-			await ctx.channel.send(f"You shouldn't use `?{cmd}` anymore. It's *deprecated*. Try `?{deprecated_commands[cmd]}` instead.")
+			await ctx.send(f"You shouldn't use `?{cmd}` anymore. It's *deprecated*. Try `?{deprecated_commands[cmd]}` instead.")
 			return
 		elif cmd == "" or cmd.startswith("?") or cmd.startswith("!"):
 			return # These were probably not meant to be commands
@@ -78,29 +78,29 @@ async def on_command_error(ctx, error):
 			new_message.content = "?" + cmd.lower() + ctx.message.content[len(cmd) + 1:]
 			await bot.process_commands(new_message)
 		elif await invalid_command_reporting(ctx):
-			await ctx.channel.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands.") 
+			await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands.") 
 	elif isinstance(error, commands.CheckFailure):
 		print("(suppressed)")
 		return # The user does not have permissions
 	elif isinstance(error, commands.MissingRequiredArgument):
-		await ctx.channel.send(embed=await bot.formatter.format_as_embed(ctx, ctx.command))
+		await ctx.send(embed=await bot.formatter.format_as_embed(ctx, ctx.command))
 	elif isinstance(error, commands.BadArgument):
 		signature = await get_cmd_signature(ctx)
-		await ctx.channel.send((
+		await ctx.send((
 			"Thats the wrong type of argument for that command.\n\n"
 			f"Ya gotta do it like this:\n`{signature}`\n\n"
 			f"Try `?help {ctx.command}` for a more detailed description of the command"))
 	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.Forbidden):
-		await ctx.channel.send(f"Looks like I'm missing permissions 😢. Have an admin giff me back my permissions, or re-invite me to the server using this invite link: {invite_link}")
+		await ctx.send(f"Looks like I'm missing permissions 😢. Have an admin giff me back my permissions, or re-invite me to the server using this invite link: {invite_link}")
 	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
-		await ctx.channel.send(error.original.message)
+		await ctx.send(error.original.message)
 	else:
-		await ctx.channel.send("Uh-oh, sumthin dun gone wrong 😱")
-		report_error(ctx, error)
+		await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
+		report_error(ctx.message, error)
 
 error_file = "errors.json"
 
-def report_error(ctx, error):
+def report_error(message, error):
 	if os.path.isfile(error_file):
 		error_list = read_json(error_file)
 	else:
@@ -115,10 +115,10 @@ def report_error(ctx, error):
 		trace = [x for x in trace if x] # removes empty lines
 
 	error_list.append({
-		"author": ctx.message.author.id,
-		"message_id": ctx.message.id,
-		"message": ctx.message.clean_content,
-		"message_full": ctx.message.content,
+		"author": message.author.id,
+		"message_id": message.id,
+		"message": message.clean_content,
+		"message_full": message.content,
 		"command_error": type(error).__name__,
 		"error": str(error),
 		"traceback": trace
@@ -126,7 +126,7 @@ def report_error(ctx, error):
 	if settings.error_logging:
 		write_json(error_file, error_list)
 	trace_string = "\n".join(trace)
-	print(f"\nError on: {ctx.message.clean_content}\n{trace_string}\n")
+	print(f"\nError on: {message.clean_content}\n{trace_string}\n")
 
 
 if __name__ == '__main__':
