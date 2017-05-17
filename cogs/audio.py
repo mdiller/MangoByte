@@ -510,7 +510,7 @@ class Audio(MangoCog):
 
 	#function called when this event occurs
 	async def on_voice_state_update(self, member, before, after):
-		if before == after:
+		if before and after and before.channel == after.channel:
 			return # if the member didnt change channels, dont worry about it
 		if before and before.channel:
 			beforeplayer = await self.audioplayer(before.channel, error_on_none=False)
