@@ -11,7 +11,7 @@ from collections import OrderedDict
 class Settings:
 	def __init__(self):
 		self.path = "settings.json"
-		self.defaults = OrderedDict([  ("token", ""), ("ttslang", "en-au") ])
+		self.defaults = OrderedDict([  ("token", ""), ("ttslang", "en-au"), ("error_logging", False) ])
 		if not os.path.exists(self.path):
 			self.json_data = self.defaults
 			self.save_settings()
@@ -35,6 +35,10 @@ class Settings:
 	@property
 	def resourcedir(self):
 		return "resource/" # self.json_data["resourcedir"]
+
+	@property
+	def error_logging(self):
+		return self.json_data.get("error_logging", False)
 
 	@property
 	def ttslang(self):

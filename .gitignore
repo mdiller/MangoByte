@@ -94,6 +94,7 @@ ENV/
 
 botdata.json
 settings.json
+errors.json
 tmpfile
 
 resource/temp

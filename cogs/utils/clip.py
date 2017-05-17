@@ -87,6 +87,7 @@ class LocalClip(Clip):
 		return "local"
 
 	async def get_info(self):
+		raise ValueError("FlerbenShmergen")
 		result = ""
 		if self.text != "":
 			result += f"\"{self.text}\""

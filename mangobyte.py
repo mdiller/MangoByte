@@ -4,6 +4,7 @@ from cogs.utils.settings import Settings
 from cogs.utils.helpers import *
 from cogs.utils.helpformatter import MangoHelpFormatter
 from cogs.utils.loggingdb import create_session
+import traceback
 import asyncio
 import string
 from discord.ext import commands
@@ -13,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 
 botdata = BotData()
 settings = Settings()
-loggingdb_session = create_session(settings.resourcedir + "loggingdb.db")
+loggingdb_session = create_session(settings.resource("loggingdb.db"))
 
 from cogs.utils.clip import *# This has to be done after loading settings
 
@@ -95,8 +96,37 @@ async def on_command_error(ctx, error):
 		await ctx.channel.send(error.original.message)
 	else:
 		await ctx.channel.send("Uh-oh, sumthin dun gone wrong 😱")
-		print("errored while executing command {0}: {1}".format(ctx.command, error))
+		report_error(ctx, error)
+
+error_file = "errors.json"
+
+def report_error(ctx, error):
+	if os.path.isfile(error_file):
+		error_list = read_json(error_file)
+	else:
+		error_list = []
+
+	try:
 		raise error.original
+	except:
+		trace = traceback.format_exc().replace("\"", "'").split("\n")
+		if len(trace) >= 6:
+			del trace[1:5]
+		trace = [x for x in trace if x] # removes empty lines
+
+	error_list.append({
+		"author": ctx.message.author.id,
+		"message_id": ctx.message.id,
+		"message": ctx.message.clean_content,
+		"message_full": ctx.message.content,
+		"command_error": type(error).__name__,
+		"error": str(error),
+		"traceback": trace
+	})
+	if settings.error_logging:
+		write_json(error_file, error_list)
+	trace_string = "\n".join(trace)
+	print(f"\nError on: {ctx.message.clean_content}\n{trace_string}\n")
 
 
 if __name__ == '__main__':

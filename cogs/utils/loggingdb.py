@@ -38,7 +38,7 @@ def convert_message(msg):
 	message.timestamp = msg.created_at
 	message.content = msg.content
 	message.clean_content = msg.clean_content
-	message.mentions = "|".join(map(lambda u: u.id, msg.mentions))
+	message.mentions = "|".join(map(lambda u: str(u.id), msg.mentions))
 	return message
 
 
