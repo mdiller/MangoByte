@@ -51,7 +51,8 @@ Before installing and running your own instance of mangobyte, you will first nee
 * Pip
 * [taglib](http://taglib.org/) (just run `apt-get install libtag1-dev` if on ubuntu)
 * [dotabase](https://github.com/mdiller/dotabase)
-* [discord.py](https://github.com/Rapptz/discord.py) (The rewrite version)
+* The rewrite version of [discord.py](https://github.com/Rapptz/discord.py):
+	`python3.6 -m pip install -U git+https://github.com/Rapptz/discord.py@rewrite#egg=discord.py[voice]`
 
 Now make sure to run `python3.6 -m pip install -r requirements.txt` to install the rest of the needed packages.
 
