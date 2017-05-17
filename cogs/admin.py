@@ -33,25 +33,25 @@ class Admin(MangoCog):
 	async def botban(self, ctx, user: discord.Member):
 		"""Bans the user from using commands"""
 		if checks.is_owner_check(user):
-			await ctx.channel.send("Ya can't ban mah owner, man. 😠")
+			await ctx.send("Ya can't ban mah owner, man. 😠")
 			return
 		if checks.is_admin_check(ctx.message.channel, user):
-			await ctx.channel.send("Ya can't ban other admins")
+			await ctx.send("Ya can't ban other admins")
 			return
 		if user.id == self.bot.user.id:
-			await ctx.channel.send("Lol you can't ban me, silly")
+			await ctx.send("Lol you can't ban me, silly")
 			return
 		botdata.guildinfo(ctx.message.guild).botban(user)
-		await ctx.channel.send("{} has henceforth been banned from using commands 😤".format(user.mention))
+		await ctx.send("{} has henceforth been banned from using commands 😤".format(user.mention))
 
 	@commands.command()
 	async def botunban(self, ctx, user: discord.Member):
 		"""Unbans the user, allowing them to use commands"""
 		if checks.is_owner_check(user) or user == self.bot.user:
-			await ctx.channel.send("Ha ha. Very funny.")
+			await ctx.send("Ha ha. Very funny.")
 			return
 		botdata.guildinfo(ctx.message.guild).botunban(user)
-		await ctx.channel.send("{} is free of their restraints and may once again use commands".format(user.mention))
+		await ctx.send("{} is free of their restraints and may once again use commands".format(user.mention))
 
 	@commands.command()
 	async def summon(self, ctx, channel : discord.VoiceChannel = None):
@@ -92,7 +92,7 @@ class Admin(MangoCog):
 		`{cmdpfx}ttschannel #tts`
 		"""
 		botdata.guildinfo(channel.guild.id).ttschannel = channel.id
-		await ctx.channel.send(f"{channel.mention} has been set as the tts channel!")
+		await ctx.send(f"{channel.mention} has been set as the tts channel!")
 
 	@commands.command()
 	async def unttschannel(self, ctx):
@@ -101,10 +101,10 @@ class Admin(MangoCog):
 		See `{cmdpfx}ttschannel` for more info on what this is about
 		"""
 		if not botdata.guildinfo(ctx.message.guild.id).ttschannel:
-			await ctx.channel.send("TTS Channel has not been set. Try `?ttschannel <name of channel>`")
+			await ctx.send("TTS Channel has not been set. Try `?ttschannel <name of channel>`")
 			return
 		botdata.guildinfo(ctx.message.guild.id).ttschannel = None
-		await ctx.channel.send("TTS Channel removed")
+		await ctx.send("TTS Channel removed")
 
 
 def setup(bot):

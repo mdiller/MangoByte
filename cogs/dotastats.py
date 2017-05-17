@@ -313,7 +313,7 @@ class DotaStats(MangoCog):
 		embed = discord.Embed(description=story, color=self.embed_color)
 		embed.set_author(name="Story of Match {}".format(game["match_id"]), url="https://www.opendota.com/matches/{}".format(game["match_id"]))
 		embed.set_footer(text="For more information, try ?match {}".format(game["match_id"]))
-		await ctx.channel.send(embed=embed)
+		await ctx.send(embed=embed)
 
 	# prints the stats for the given player's latest game
 	async def player_match_stats(self, steamid, matchid, ctx):
@@ -355,7 +355,7 @@ class DotaStats(MangoCog):
 		embed.set_image(url=f"attachment://{match_image.filename}")
 		embed.set_footer(text="Started")
 
-		await ctx.channel.send(embed=embed, file=match_image)
+		await ctx.send(embed=embed, file=match_image)
 
 	@commands.command(aliases=["register"])
 	async def setsteam(self, ctx, steam_id : int, user: discord.User=None):
@@ -373,7 +373,7 @@ class DotaStats(MangoCog):
 			user = ctx.message.author
 		else:
 			if not checks.is_owner_check(ctx.message.author):
-				await ctx.channel.send("You aint the boss of me 😠")
+				await ctx.send("You aint the boss of me 😠")
 				return
 
 		if steam_id > 76561197960265728:
@@ -387,7 +387,7 @@ class DotaStats(MangoCog):
 		userinfo = botdata.userinfo(user.id)
 		userinfo.steam32 = steam_id
 
-		await ctx.channel.send("Linked to {}".format(player['profile']['personaname']))
+		await ctx.send("Linked to {}".format(player['profile']['personaname']))
 
 	@commands.command(aliases=["lastgame"])
 	async def lastmatch(self, ctx, player=None):
@@ -406,7 +406,7 @@ class DotaStats(MangoCog):
 		try:
 			game = await get_match(match_id)
 		except UserError:
-			await ctx.channel.send("Looks like thats not a valid match id")
+			await ctx.send("Looks like thats not a valid match id")
 			return
 
 		description = ("Game ended in {0} \n"
@@ -423,7 +423,7 @@ class DotaStats(MangoCog):
 
 		embed.set_image(url=f"attachment://{match_image.filename}")
 		embed.set_footer(text="Started")
-		await ctx.channel.send(embed=embed, file=match_image)
+		await ctx.send(embed=embed, file=match_image)
 
 	@commands.command()
 	async def matchstory(self, ctx, match_id : int, perspective="radiant"):
@@ -439,7 +439,7 @@ class DotaStats(MangoCog):
 		try:
 			game = await get_match(match_id, False)
 		except UserError:
-			await ctx.channel.send("Looks like thats not a valid match id")
+			await ctx.send("Looks like thats not a valid match id")
 			return
 
 		await self.tell_match_story(game, is_radiant, ctx)
@@ -456,7 +456,7 @@ class DotaStats(MangoCog):
 			match_id = (await opendota_query("/players/{}/matches?limit=1".format(steamid)))[0]['match_id']
 			game = await get_match(match_id, False)
 		except UserError:
-			await ctx.channel.send("I can't find the last game this player played")
+			await ctx.send("I can't find the last game this player played")
 			return
 		if player is None:
 			player = ctx.message.author.mention
@@ -584,7 +584,7 @@ class DotaStats(MangoCog):
 
 		embed.set_footer(text=f"For more info, try ?playerstats {player_mention}")
 
-		await ctx.channel.send(embed=embed)
+		await ctx.send(embed=embed)
 
 	@commands.command()
 	async def playerstats(self, ctx, *, player=None):
@@ -612,7 +612,7 @@ class DotaStats(MangoCog):
 
 		await thinker.stop_thinking(ctx.message)
 		if len(matches) < 2:
-			await ctx.channel.send("Not enough parsed matches!")
+			await ctx.send("Not enough parsed matches!")
 			return
 
 		embed = discord.Embed(description=f"*The following are averages and percentages based on the last {len(matches)} parsed matches*", color=self.embed_color)
@@ -709,7 +709,7 @@ class DotaStats(MangoCog):
 
 		# in a group
 
-		await ctx.channel.send(embed=embed)
+		await ctx.send(embed=embed)
 
 	@commands.command()
 	async def herostats(self, ctx, *, hero):
@@ -779,7 +779,7 @@ class DotaStats(MangoCog):
 
 		hero = self.lookup_hero(hero_text)
 		if not hero:
-			await ctx.channel.send(f"I'm not sure what hero \"*{hero_text}*\" is.")
+			await ctx.send(f"I'm not sure what hero \"*{hero_text}*\" is.")
 			return
 
 		projections = [ "kills", "deaths", "assists", "hero_id", "version", "lane_role" ]
@@ -799,9 +799,9 @@ class DotaStats(MangoCog):
 
 		if len(matches) == 0:
 			if not chosen_lane:
-				await ctx.channel.send(f"Looks like you haven't played {hero.localized_name}")
+				await ctx.send(f"Looks like you haven't played {hero.localized_name}")
 			else:
-				await ctx.channel.send(f"Looks like you haven't played any parsed matches as {hero.localized_name} in {chosen_lane['name']}")
+				await ctx.send(f"Looks like you haven't played any parsed matches as {hero.localized_name} in {chosen_lane['name']}")
 			return
 
 		lane_parsed_count = len(list(filter(lambda p: p['lane_role'] is not None, matches)))
@@ -865,7 +865,7 @@ class DotaStats(MangoCog):
 					values.append(f"{lane}: **{lanes[lane]}%**")
 			embed.add_field(name=f"Laning ({lane_parsed_count} parsed match{'es' if lane_parsed_count > 1 else ''})", value="\n".join(values))
 
-		await ctx.channel.send(embed=embed)
+		await ctx.send(embed=embed)
 
 	@commands.command()
 	async def opendota(self, ctx, *, query):
@@ -887,7 +887,7 @@ class DotaStats(MangoCog):
 		filename = re.search("/([/0-9a-zA-Z]+)", query).group(1).replace("/", "_")
 		filename = settings.resource(f"temp/{filename}.json")
 		helpers.write_json(filename, data)
-		await ctx.channel.send(file=discord.File(filename))
+		await ctx.send(file=discord.File(filename))
 		os.remove(filename)
 
 
@@ -910,7 +910,7 @@ class DotaStats(MangoCog):
 
 		filename = settings.resource(f"temp/query_results.json")
 		helpers.write_json(filename, data)
-		await ctx.channel.send(file=discord.File(filename))
+		await ctx.send(file=discord.File(filename))
 		os.remove(filename)
 
 

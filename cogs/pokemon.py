@@ -136,7 +136,7 @@ class Pokemon(MangoCog):
 		embed.add_field(name="Weight", value=f"{data['weight'] / 10} kg")
 		embed.add_field(name="Height", value=f"{data['height'] / 10} m")
 
-		await ctx.channel.send(embed=embed)
+		await ctx.send(embed=embed)
 
 	@commands.command()
 	async def shiny(self, ctx, *, pokemon):
@@ -152,11 +152,11 @@ class Pokemon(MangoCog):
 			data, species_data = await self.get_pokemon_data(pokemon)
 
 		if not data["sprites"].get("front_shiny"):
-			await ctx.channel.send("This pokemon doesn't have a shiny version")
+			await ctx.send("This pokemon doesn't have a shiny version")
 
 		embed = discord.Embed(color=poke_color(species_data["color"]["name"]))
 		embed.set_image(url=data["sprites"].get("front_shiny"))
-		await ctx.channel.send(embed=embed)
+		await ctx.send(embed=embed)
 	
 
 def setup(bot):

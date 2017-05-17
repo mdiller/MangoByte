@@ -179,7 +179,7 @@ class Dotabase(MangoCog):
 		query = await self.dota_keyphrase_query(keyphrase)
 
 		if query is None:
-			await ctx.channel.send("No responses found! 😱")
+			await ctx.send("No responses found! 😱")
 		else:
 			await self.play_response_query(query, ctx)
 
@@ -389,7 +389,7 @@ class Dotabase(MangoCog):
 		roles = hero.roles.split("|")
 		embed.add_field(name=f"Role{'s' if len(roles) > 1 else ''}", value=', '.join(roles))
 
-		await ctx.channel.send(embed=embed)
+		await ctx.send(embed=embed)
 
 		query = session.query(Response).filter(Response.hero_id == hero.id).filter(or_(Response.criteria.like("Spawn %"), Response.criteria.like("Spawn%")))
 		if query.count() > 0:

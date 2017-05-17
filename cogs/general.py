@@ -30,23 +30,23 @@ class General(MangoCog):
 
 		Pongs... a number of times.... within reason. *glares at blanedale*"""
 		if count < 1:
-			await ctx.channel.send("thats not enough pings. stahp trying to break me.😠")
+			await ctx.send("thats not enough pings. stahp trying to break me.😠")
 			return
 		if count > 20:
-			await ctx.channel.send("thats too many pings. stahp trying to break me.😠")
+			await ctx.send("thats too many pings. stahp trying to break me.😠")
 			return
 
 		ping_string = ""
 		for i in range(0, count):
 			ping_string += "pong "
-		await ctx.channel.send(ping_string)
+		await ctx.send(ping_string)
 
 	@commands.command()
 	async def echo(self, ctx, *, message : str):
 		"""Echo...
 
 		I would hurl words into this darkness and wait for an echo, and if an echo sounded, no matter how faintly, I would send other words to tell, to march, to fight, to create a sense of the hunger for life that gnaws in us all"""
-		await ctx.channel.send(message)
+		await ctx.send(message)
 
 	@commands.command()
 	async def changelog(self, ctx):
@@ -81,7 +81,7 @@ class General(MangoCog):
 			embed = discord.Embed(description=description, color=discord.Color.green())
 
 		embed.set_author(name="Changelog", url=f"{commit_url}/commits/master")
-		await ctx.channel.send(embed=embed)
+		await ctx.send(embed=embed)
 
 	@commands.command()
 	async def info(self, ctx):
@@ -114,14 +114,14 @@ class General(MangoCog):
 
 		embed.set_footer(text="This MangoByte managed by {}".format(owner.name), icon_url=owner.avatar_url)
 
-		await ctx.channel.send(embed=embed)
+		await ctx.send(embed=embed)
 
 	@commands.command()
 	async def lasagna(self, ctx):
 		"""A baked Italian dish
 
 		Contains wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce."""
-		await ctx.channel.send(file=discord.File(settings.resource("images/lasagna.jpg")))
+		await ctx.send(file=discord.File(settings.resource("images/lasagna.jpg")))
 
 	@commands.command()
 	async def help(self, ctx, command : str=None):
@@ -144,11 +144,11 @@ class General(MangoCog):
 			else:
 				command = self.bot.all_commands.get(name)
 				if command is None:
-					await ctx.channel.send(self.bot.command_not_found.format(name))
+					await ctx.send(self.bot.command_not_found.format(name))
 					return
 			embed = await self.bot.formatter.format_as_embed(ctx, command)
 
-		await ctx.channel.send(embed=embed)
+		await ctx.send(embed=embed)
 
 	@commands.command()
 	async def scramble(self, ctx, *, message : str):
@@ -168,7 +168,7 @@ class General(MangoCog):
 		for word in message.split(" "):
 			results.append(scramble_word(word))
 
-		await ctx.channel.send(" ".join(results))
+		await ctx.send(" ".join(results))
 
 	@commands.command(aliases=["define", "lookup", "wikipedia", "whatis"])
 	async def wiki(self, ctx, *, query : str):
@@ -221,7 +221,7 @@ class General(MangoCog):
 
 		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 
-		await ctx.channel.send(embed=embed)
+		await ctx.send(embed=embed)
 
 	@commands.command(hidden=True, aliases=["restapi"])
 	async def restget(self, ctx, url):
@@ -235,7 +235,7 @@ class General(MangoCog):
 					raise UserError(f"Rest API call failed with status code: {r.status}")
 		filename = settings.resource("temp/response.json")
 		write_json(filename, data)
-		await ctx.channel.send(discord.File(filename))
+		await ctx.send(discord.File(filename))
 		os.remove(filename)
 
 	@commands.command()
@@ -245,7 +245,7 @@ class General(MangoCog):
 		for check in self.questions:
 			if re.search(check["regex"], question):
 				clip = await self.get_clip(f"dota:{random.choice(check['responses'])}")
-				await ctx.channel.send(clip.text)
+				await ctx.send(clip.text)
 				try:
 					await self.play_clip(clip, ctx)
 				except AudioPlayerNotFoundError:

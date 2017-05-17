@@ -103,7 +103,7 @@ class AudioPlayer:
 	async def queue_clip(self, clip):
 		if(self.voice is None):
 			print("tried to talk while not in voice channel")
-			await ctx.channel.send("not in voice channel m8")
+			await ctx.send("not in voice channel m8")
 			return
 
 		self.clipqueue.put(clip)
@@ -200,7 +200,7 @@ class Audio(MangoCog):
 			try:
 				await self.play_clip(f"local:{clip}", ctx)
 			except ClipNotFound:
-				await ctx.channel.send(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
+				await ctx.send(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
 		else:
 			await self.play_clip(clip, ctx)
 
@@ -249,7 +249,7 @@ class Audio(MangoCog):
 			for clip in clips:
 				message += "`{}` ".format(clip)
 
-		await ctx.channel.send(message)
+		await ctx.send(message)
 
 	@commands.command()
 	async def playurl(self, ctx, mp3url : str):
@@ -279,11 +279,11 @@ class Audio(MangoCog):
 		"""
 		last_clip = (await self.audioplayer(ctx)).last_clip
 		if last_clip == None:
-			await ctx.channel.send("Nobody said anythin' yet")
+			await ctx.send("Nobody said anythin' yet")
 			return
 
 		# If its not a temp file
-		await ctx.channel.send("Replaying " + last_clip.clipid)
+		await ctx.send("Replaying " + last_clip.clipid)
 		await self.play_clip(last_clip, ctx)
 
 	@commands.command()
@@ -298,7 +298,7 @@ class Audio(MangoCog):
 		"""
 		if clipid is None:
 			if (await self.audioplayer(ctx)).last_clip == None:
-				await ctx.channel.send("Nobody said anythin' yet")
+				await ctx.send("Nobody said anythin' yet")
 				return
 			clipid = (await self.audioplayer(ctx)).last_clip.clipid
 
@@ -322,11 +322,11 @@ class Audio(MangoCog):
 			content += f"\n\n{clip_info}"
 
 		try:
-			await ctx.channel.send(content, file=discord.File(clip.audiopath, filename=filename))
+			await ctx.send(content, file=discord.File(clip.audiopath, filename=filename))
 		except FileNotFoundError as e:
 			# The file is probably actually a url
 			fp = urllib.request.urlopen(clip.audiopath)
-			await ctx.channel.send(content, file=discord.File(fp, filename=filename))
+			await ctx.send(content, file=discord.File(fp, filename=filename))
 			fp.close()
 
 
@@ -345,16 +345,16 @@ class Audio(MangoCog):
 			user = ctx.message.author
 		else:
 			if not checks.is_owner_check(ctx.message.author):
-				await ctx.channel.send("You aint the boss of me 😠")
+				await ctx.send("You aint the boss of me 😠")
 				return
 
 		if clipname is None:
 			intro = botdata.userinfo(user.id).intro
 			if intro is None or intro == "":
-				await ctx.channel.send("Yer intro isn't set. Try doin somethin' like `?setintro dota:gyro_items_01`")
+				await ctx.send("Yer intro isn't set. Try doin somethin' like `?setintro dota:gyro_items_01`")
 				return
 			else:
-				await ctx.channel.send("Your intro is: {}".format(intro))
+				await ctx.send("Your intro is: {}".format(intro))
 				await self.play_clip("tts:your intro is", ctx)
 				await self.play_clip(intro, ctx)
 				return
@@ -364,11 +364,11 @@ class Audio(MangoCog):
 		audiolength = clip.audiolength
 
 		if audiolength > 3.0:
-			await ctx.channel.send("Dat clip is " + str(audiolength) + " seconds long, and intros gotta be less than 3.")
+			await ctx.send("Dat clip is " + str(audiolength) + " seconds long, and intros gotta be less than 3.")
 			return
 
 		botdata.userinfo(user.id).intro = clip.clipid
-		await ctx.channel.send("Yer intro is now " + clip.clipid)
+		await ctx.send("Yer intro is now " + clip.clipid)
 
 
 	@commands.command()
@@ -385,16 +385,16 @@ class Audio(MangoCog):
 			user = ctx.message.author
 		else:
 			if not checks.is_owner_check(ctx.message.author):
-				await ctx.channel.send("You aint the boss of me 😠")
+				await ctx.send("You aint the boss of me 😠")
 				return
 
 		if clipname is None:
 			outro = botdata.userinfo(user.id).outro
 			if outro is None or outro == "":
-				await ctx.channel.send("Yer outro isn't set. Try doin somethin' like `?setoutro dota:troll_lose_03`")
+				await ctx.send("Yer outro isn't set. Try doin somethin' like `?setoutro dota:troll_lose_03`")
 				return
 			else:
-				await ctx.channel.send("Your outro is: {}".format(outro))
+				await ctx.send("Your outro is: {}".format(outro))
 				await self.play_clip("tts:your outro is", ctx)
 				await self.play_clip(outro, ctx)
 				return
@@ -404,11 +404,11 @@ class Audio(MangoCog):
 		audiolength = clip.audiolength
 
 		if audiolength > 3.0:
-			await ctx.channel.send("Dat clip is " + str(audiolength) + " seconds long, and outros gotta be less than 3.")
+			await ctx.send("Dat clip is " + str(audiolength) + " seconds long, and outros gotta be less than 3.")
 			return
 
 		botdata.userinfo(user.id).outro = clip.clipid
-		await ctx.channel.send("Yer outro is now " + clip.clipid)
+		await ctx.send("Yer outro is now " + clip.clipid)
 
 
 	@commands.command()
@@ -444,13 +444,13 @@ class Audio(MangoCog):
 			try:
 				clip = await self.get_clip(f"local:{clip}")
 			except ClipNotFound:
-				await ctx.channel.send(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
+				await ctx.send(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
 				return
 		else:
 			clip = await self.get_clip(clip)
 		text = clip.text.lower()
 		if text == "":
-			await ctx.channel.send(f"I can't read this clip for tts 😕. Try a different one.")
+			await ctx.send(f"I can't read this clip for tts 😕. Try a different one.")
 			return
 
 		await self.play_clip(f"tts:{text}", ctx)
