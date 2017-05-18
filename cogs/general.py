@@ -1,12 +1,10 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands.bot import _mention_pattern, _mentions_transforms
-from __main__ import settings, botdata, invite_link
+from __main__ import settings, botdata, invite_link, httpgetter
 from cogs.utils.helpers import *
 from cogs.utils import checks
 from cogs.audio import AudioPlayerNotFoundError
-import asyncio
-import aiohttp
 import string
 import random
 import datetime
@@ -189,12 +187,8 @@ class General(MangoCog):
 				return getWikiPage(e.options[0])
 
 		page = getWikiPage(query)
-
 		
-		async with aiohttp.ClientSession() as session:
-			async with session.get(page.url) as r:
-				if r.status == 200:
-					page_html = await r.text()
+		page_html = await httpgetter.get(page.url, "text")
 
 		sentances = page.summary.split(".")
 		summary = sentances[0]
@@ -227,12 +221,8 @@ class General(MangoCog):
 	async def restget(self, ctx, url):
 		"""Gets a json response from a rest api and returns it"""
 		await ctx.channel.trigger_typing()
-		async with aiohttp.ClientSession() as session:
-			async with session.get(url) as r:
-				if r.status == 200:
-					data = json.loads(await r.text(), object_pairs_hook=OrderedDict)
-				else:
-					raise UserError(f"Rest API call failed with status code: {r.status}")
+		data = await httpgetter.get(url)
+
 		filename = settings.resource("temp/response.json")
 		write_json(filename, data)
 		await ctx.send(discord.File(filename))

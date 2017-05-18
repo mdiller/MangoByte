@@ -1,11 +1,10 @@
-from __main__ import settings, botdata
+from __main__ import settings, botdata, httpgetter
 import aiohttp
 import asyncio
 import async_timeout
 import sys
 from PIL import Image, ImageDraw
 from .tabledraw import Table, ImageCell, TextCell, ColorCell
-from io import BytesIO
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -22,14 +21,10 @@ def init_dota_info(hero_info, item_info):
 	item_infos = item_info
 
 async def get_hero_image(hero_id):
-	async with aiohttp.ClientSession() as session:
-		async with session.get(hero_infos[hero_id]["image"]) as r:
-			return Image.open(BytesIO(await r.read()))
+	return Image.open(await httpgetter.get(hero_infos[hero_id]["image"], "bytes"))
 
 async def get_item_image(item_id):
-	async with aiohttp.ClientSession() as session:
-		async with session.get(item_infos[item_id]["icon"]) as r:
-			return Image.open(BytesIO(await r.read()))
+	return Image.open(await httpgetter.get(item_infos[item_id]["icon"], "bytes"))
 
 # async def get_hero_image(hero_id):
 # 	return Image.open(hero_infos[hero_id]["image"])

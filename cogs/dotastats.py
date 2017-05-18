@@ -1,10 +1,9 @@
 import discord
 from discord.ext import commands
-from __main__ import settings, botdata, thinker
+from __main__ import settings, botdata, thinker, httpgetter
 from cogs.utils import checks
 from cogs.utils import helpers
 from cogs.utils import drawdota
-import aiohttp
 import asyncio
 import async_timeout
 import string
@@ -19,29 +18,20 @@ import statistics
 from types import *
 from .mangocog import *
 
-async def opendota_query(querystring, rate_limit=True):
-	url = "https://api.opendota.com/api" + querystring
-	if rate_limit:
-		await asyncio.sleep(0.2)
-	async with aiohttp.ClientSession() as session:
-		async with session.get(url) as r:
-			if r.status == 200:
-				return json.loads(await r.text(), object_pairs_hook=OrderedDict)
-			elif r.status == 404:
-				raise UserError("Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com")
-			elif r.status == 521:
-				raise UserError("Looks like the OpenDota API is down or somethin, so ya gotta wait a sec")
-			else:
-				print("OpenDota api errored on GET: '{}'".format(url))
-				raise UserError("OpenDota said we did things wrong 😢. status code: {}".format(r.status))
+async def opendota_query(querystring):
+	return await httpgetter.get(f"https://api.opendota.com/api{querystring}", errors = {
+		404: "Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com",
+		521: "Looks like the OpenDota API is down or somethin, so ya gotta wait a sec",
+		"default": "OpenDota said we did things wrong 😢. status code: {}"
+	})
 
 # rate_limit = false if this is the only query we're sending
-async def get_match(match_id, rate_limit=True):
+async def get_match(match_id):
 	match_file = settings.resource(f"cache/match_{match_id}.json")
 	if os.path.isfile(match_file):
 		return helpers.read_json(match_file)
 	else:
-		match = await opendota_query("/matches/{}".format(match_id), rate_limit)
+		match = await opendota_query("/matches/{}".format(match_id))
 		if match.get("version", None) is not None:
 			if not os.path.exists(os.path.dirname(match_file)):
 				os.makedirs(os.path.dirname(match_file))
@@ -121,7 +111,7 @@ async def get_check_steamid(steamid, ctx=None):
 			steamid -= 76561197960265728
 
 		# Don't have to rate limit here because this will be first query ran
-		player = await opendota_query("/players/{}".format(steamid), rate_limit=False)
+		player = await opendota_query(f"/players/{steamid}")
 
 		if player.get("profile") is None:
 			raise UserError("Either this person doesn't play dota, or they haven't enabled public match data")
@@ -379,7 +369,7 @@ class DotaStats(MangoCog):
 		if steam_id > 76561197960265728:
 			steam_id -= 76561197960265728
 
-		player = await opendota_query("/players/{}".format(steam_id), False)
+		player = await opendota_query(f"/players/{steam_id}")
 
 		if player.get("profile") is None:
 			raise UserError("Either thats a bad id, you don't play dota, or ya haven't enabled public match data")
@@ -395,7 +385,7 @@ class DotaStats(MangoCog):
 		await ctx.channel.trigger_typing()
 
 		steamid = await get_check_steamid(player, ctx)
-		matchid = (await opendota_query("/players/{}/matches?limit=1".format(steamid), False))[0]["match_id"]
+		matchid = (await opendota_query(f"/players/{steamid}/matches?limit=1"))[0]["match_id"]
 		await self.player_match_stats(steamid, matchid, ctx)
 
 	@commands.command(aliases=["matchdetails"])
@@ -453,7 +443,7 @@ class DotaStats(MangoCog):
 
 		steamid = await get_check_steamid(player, ctx)
 		try:
-			match_id = (await opendota_query("/players/{}/matches?limit=1".format(steamid)))[0]['match_id']
+			match_id = (await opendota_query(f"/players/{steamid}/matches?limit=1"))[0]['match_id']
 			game = await get_match(match_id, False)
 		except UserError:
 			await ctx.send("I can't find the last game this player played")
@@ -481,7 +471,7 @@ class DotaStats(MangoCog):
 
 		await ctx.channel.trigger_typing()
 
-		playerinfo = await opendota_query(f"/players/{steam32}", False)
+		playerinfo = await opendota_query(f"/players/{steam32}")
 		matches = await opendota_query(f"/players/{steam32}/matches")
 
 		gamesplayed = len(matches)

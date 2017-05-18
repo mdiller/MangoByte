@@ -58,3 +58,17 @@ class Thinker():
 			for message in self.messages:
 				self.messages[message] += 1
 			await asyncio.sleep(1)
+
+
+class HttpError(UserError):
+	"""An http error with an error code"""
+	def __init__(self, message, err):
+		super().__init__(message.format(err))
+		self.err = err
+
+
+class Http404Error(HttpError):
+	"""An http error with a 404 error code"""
+	def __init__(self, message):
+		super().__init__(message, 404)
+	

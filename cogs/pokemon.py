@@ -1,35 +1,20 @@
 import discord
 from discord.ext import commands
-from __main__ import settings, botdata
+from __main__ import settings, botdata, httpgetter
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
 from cogs.utils import checks
 from .mangocog import *
-import aiohttp
-import asyncio
 import os
 import re
 
-
-
-class Pokemon404Error(UserError):
-	def __init__(self):
-		self.message = "Pokemon not found"
-
-async def pokeapi_query(querystring, fullurl=False):
+async def pokeapi_query(url, fullurl=False):
 	if not fullurl:
-		url = "http://pokeapi.co/api/v2" + querystring
-	else:
-		url = querystring
-	async with aiohttp.ClientSession() as session:
-		async with session.get(url) as r:
-			if r.status == 200:
-				return json.loads(await r.text(), object_pairs_hook=OrderedDict)
-			elif r.status == 404:
-				raise Pokemon404Error()
-			else:
-				print("pokeapi errored on GET: '{}'".format(url))
-				raise UserError("pokeapi said we did things wrong 😢. status code: {}".format(r.status))
+		url = f"http://pokeapi.co/api/v2{url}"
+	return await httpgetter.get(url, cache=True, errors={
+		404: "Pokemon not found",
+		"default": "pokeapi said we did things wrong 😢. status code: {}"
+	})
 
 def poke_color(color):
 	return {
@@ -84,7 +69,7 @@ class Pokemon(MangoCog):
 		try:
 			form_data = await pokeapi_query(f"/pokemon-form/{pokemon}/")
 			data = await pokeapi_query(form_data["pokemon"]["url"], True)
-		except Pokemon404Error as e:
+		except Http404Error as e:
 			form_data = None
 			data = await pokeapi_query(f"/pokemon/{pokemon}/")
 		species_data = await pokeapi_query(data["species"]["url"], True)
