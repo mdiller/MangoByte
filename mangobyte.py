@@ -100,11 +100,11 @@ async def on_command_error(ctx, error):
 		await ctx.send(error.original.message)
 	else:
 		await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
-		report_error(ctx.message, error)
+		report_error(ctx.message, error, skip_lines=4)
 
 error_file = "errors.json"
 
-def report_error(message, error):
+def report_error(message, error, skip_lines=2):
 	if os.path.isfile(error_file):
 		error_list = read_json(error_file)
 	else:
@@ -114,8 +114,8 @@ def report_error(message, error):
 		raise error.original
 	except:
 		trace = traceback.format_exc().replace("\"", "'").split("\n")
-		if len(trace) >= 6:
-			del trace[1:5]
+		if skip_lines > 0 and len(trace) >= (2 + skip_lines):
+			del trace[1:(skip_lines + 1)]
 		trace = [x for x in trace if x] # removes empty lines
 
 	error_list.append({
