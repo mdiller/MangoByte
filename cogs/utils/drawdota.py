@@ -21,10 +21,10 @@ def init_dota_info(hero_info, item_info):
 	item_infos = item_info
 
 async def get_hero_image(hero_id):
-	return Image.open(await httpgetter.get(hero_infos[hero_id]["image"], "bytes"))
+	return Image.open(await httpgetter.get(hero_infos[hero_id]["image"], "bytes", cache=True))
 
 async def get_item_image(item_id):
-	return Image.open(await httpgetter.get(item_infos[item_id]["icon"], "bytes"))
+	return Image.open(await httpgetter.get(item_infos[item_id]["icon"], "bytes", cache=True))
 
 # async def get_hero_image(hero_id):
 # 	return Image.open(hero_infos[hero_id]["image"])

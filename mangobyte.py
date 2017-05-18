@@ -4,7 +4,6 @@ from cogs.utils.settings import Settings
 from cogs.utils.helpers import *
 from cogs.utils.helpformatter import MangoHelpFormatter
 from cogs.utils.loggingdb import create_session
-from cogs.utils.httpgetter import HttpGetter
 import traceback
 import asyncio
 import string
@@ -15,10 +14,12 @@ logging.basicConfig(level=logging.INFO)
 
 botdata = BotData()
 settings = Settings()
-httpgetter = HttpGetter()
 loggingdb_session = create_session(settings.resource("loggingdb.db"))
 
-from cogs.utils.clip import *# This has to be done after loading settings
+# This have to be done after loading settings
+from cogs.utils.clip import *
+from cogs.utils.httpgetter import HttpGetter
+httpgetter = HttpGetter()
 
 description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 				For more information about me, try `{cmdpfx}info`"""
