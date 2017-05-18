@@ -76,6 +76,12 @@ class Cache:
 			self.cache["count"] += 1
 			self.save_cache()
 
+	async def remove(self, url):
+		with (await self.lock):
+			filename = self.cache_dir + self.files.pop(url)
+			self.save_cache()
+			if os.path.isfile(filename):
+				os.remove(filename)
 
 
 class HttpGetter:

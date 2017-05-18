@@ -18,8 +18,8 @@ import statistics
 from types import *
 from .mangocog import *
 
-async def opendota_query(querystring):
-	return await httpgetter.get(f"https://api.opendota.com/api{querystring}", errors = {
+async def opendota_query(querystring, cache=False):
+	return await httpgetter.get(f"https://api.opendota.com/api{querystring}", cache=cache, errors = {
 		404: "Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com",
 		521: "Looks like the OpenDota API is down or somethin, so ya gotta wait a sec",
 		"default": "OpenDota said we did things wrong 😢. status code: {}"
@@ -27,16 +27,14 @@ async def opendota_query(querystring):
 
 # rate_limit = false if this is the only query we're sending
 async def get_match(match_id):
-	match_file = settings.resource(f"cache/match_{match_id}.json")
-	if os.path.isfile(match_file):
-		return helpers.read_json(match_file)
-	else:
-		match = await opendota_query("/matches/{}".format(match_id))
-		if match.get("version", None) is not None:
-			if not os.path.exists(os.path.dirname(match_file)):
-				os.makedirs(os.path.dirname(match_file))
-			helpers.write_json(match_file, match)
-		return match
+	url = f"https://api.opendota.com/api/matches/{match_id}"
+	cached_data = httpgetter.cache.get(url, "json")
+	if cached_data:
+		if cached_data["version"]:
+			return cached_data
+		else:
+			await httpgetter.cache.remove(url)
+	return await opendota_query(f"/matches/{match_id}", cache=True)
 
 async def get_match_image(match):
 	filename = settings.resource(f"temp/match_{match['match_id']}.png")
@@ -306,8 +304,8 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed)
 
 	# prints the stats for the given player's latest game
-	async def player_match_stats(self, steamid, matchid, ctx):
-		game = await get_match(matchid)
+	async def player_match_stats(self, steamid, match_id, ctx):
+		game = await get_match(match_id)
 
 		# Finds the player in the game which has our matching steam32 id
 		player = next(p for p in game['players'] if p['account_id'] == steamid)
@@ -323,7 +321,7 @@ class DotaStats(MangoCog):
 					"More info at [DotaBuff](https://www.dotabuff.com/matches/{3}), "
 					"[OpenDota](https://www.opendota.com/matches/{3}), or "
 					"[Stratz](https://www.stratz.com/match/{3})"
-					.format(winstatus, hero_name, get_pretty_duration(game['duration'], postfix=False), matchid))
+					.format(winstatus, hero_name, get_pretty_duration(game['duration'], postfix=False), match_id))
 
 		embed = discord.Embed(description=description, color=self.embed_color, timestamp=datetime.datetime.utcfromtimestamp(game['start_time']))
 
@@ -385,8 +383,8 @@ class DotaStats(MangoCog):
 		await ctx.channel.trigger_typing()
 
 		steamid = await get_check_steamid(player, ctx)
-		matchid = (await opendota_query(f"/players/{steamid}/matches?limit=1"))[0]["match_id"]
-		await self.player_match_stats(steamid, matchid, ctx)
+		match_id = (await opendota_query(f"/players/{steamid}/matches?limit=1"))[0]["match_id"]
+		await self.player_match_stats(steamid, match_id, ctx)
 
 	@commands.command(aliases=["matchdetails"])
 	async def match(self, ctx, match_id : int):
@@ -638,7 +636,7 @@ class DotaStats(MangoCog):
 		longest_message_heading = "Longest Chat Message"
 		message_count = 0
 		longest_message = None
-		longest_message_matchid = None
+		longest_message_match_id = None
 		for match in matches:
 			player = next(p for p in match['players'] if p['account_id'] == steam32)
 			for message in match['chat']:
@@ -646,11 +644,11 @@ class DotaStats(MangoCog):
 					message_count += 1
 					if longest_message is None or len(longest_message) <= len(message['key']):
 						longest_message = message['key']
-						longest_message_matchid = match['match_id']
+						longest_message_match_id = match['match_id']
 		message_count = int(round(message_count / len(matches)))
 		if longest_message is not None:
 			longest_message = f"\"{longest_message}\""
-			longest_message_heading = f"[{longest_message_heading}](https://www.opendota.com/matches/{longest_message_matchid}/chat)"
+			longest_message_heading = f"[{longest_message_heading}](https://www.opendota.com/matches/{longest_message_match_id}/chat)"
 
 		embed.add_field(name="General", value=(
 			f"Winrate: {percent('win')}%\n"
@@ -864,7 +862,7 @@ class DotaStats(MangoCog):
 		You can use this to get a json file with details about players or matches etc.
 		Examples:
 		`{cmdpfx}opendota /players/{steamid}`
-		`{cmdpfx}opendota /matches/{matchid}`
+		`{cmdpfx}opendota /matches/{match_id}`
 
 		For more options and a better explanation, check out their [documentation](https://docs.opendota.com)"""
 		query = query.replace("/", " ")
