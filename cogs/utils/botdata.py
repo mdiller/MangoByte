@@ -39,7 +39,12 @@ class UserInfo:
 
 	@property
 	def steam32(self):
-		return self.get_val("steam32")
+		val = self.get_val("steam32")
+		if (not val) and self.json_data:
+			if self.json_data.get("steam64"):
+				return self.json_data.get("steam64") - 76561197960265728
+		return val
+
 
 	@steam32.setter
 	def steam32(self, value):
