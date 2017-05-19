@@ -19,7 +19,7 @@ from types import *
 from .mangocog import *
 
 class SteamNotLinkedError(UserError):
-	def __init__(self, user):
+	def __init__(self, user=None):
 		self.is_author = user is None
 		self.user = user
 		if not self.is_author:

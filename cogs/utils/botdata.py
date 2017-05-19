@@ -8,59 +8,58 @@ class UserInfo:
 	def __init__(self, botdata, userid):
 		self.botdata = botdata
 		self.discord = userid
-		if(self.json_data is None):
-			self.botdata.json_data['userinfo'].append(OrderedDict([
-				("discord", self.discord),
-				("steam64", None),
-				("intro", ""),
-				("outro", "")
-			]))
-			self.botdata.save_data()
+		self.defaults = OrderedDict([
+			("discord", self.discord),
+			("steam32", None),
+			("intro", ""),
+			("outro", "")
+		])
+
+	def get_val(self, key):
+		if self.json_data:
+			return self.json_data.get(key, self.defaults.get(key))
+		return self.defaults.get(key)
+
+	def set_val(self, key, val):
+		if not self.json_data:
+			self.botdata.json_data['userinfo'].append(self.defaults)
+		self.json_data[key] = val
 
 	@property
 	def json_data(self):
 		for user in self.botdata.json_data['userinfo']:
-			if (user['discord'] == self.discord):
+			if user['discord'] == self.discord:
 				return user
 		# Should only happen when loading a userinfo for the first time
 		return None
 
 	@property
 	def steam64(self):
-		return self.json_data.get("steam64", None)
-
-	@steam64.setter
-	def steam64(self, value):
-		self.json_data["steam64"] = value
-		self.botdata.save_data()
+		return self.steam32 + 76561197960265728
 
 	@property
 	def steam32(self):
-		if self.steam64 is None:
-			return None
-		return self.steam64 - 76561197960265728
+		return self.get_val("steam32")
 
 	@steam32.setter
 	def steam32(self, value):
-		self.steam64 = value + 76561197960265728
+		self.set_val("steam32", value)
 		
 	@property
 	def intro(self):
-		return self.json_data.get("intro", "")
+		return self.get_val("intro")
 
 	@intro.setter
 	def intro(self, value):
-		self.json_data["intro"] = value
-		self.botdata.save_data()
+		self.set_val("intro", value)
 
 	@property
 	def outro(self):
-		return self.json_data.get("outro", "")
+		return self.get_val("outro")
 
 	@outro.setter
 	def outro(self, value):
-		self.json_data["outro"] = value
-		self.botdata.save_data()
+		self.set_val("outro", value)
 
 	
 class GuildInfo:
