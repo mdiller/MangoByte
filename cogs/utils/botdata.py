@@ -24,6 +24,7 @@ class UserInfo:
 		if not self.json_data:
 			self.botdata.json_data['userinfo'].append(self.defaults)
 		self.json_data[key] = val
+		self.botdata.save_data()
 
 	@property
 	def json_data(self):

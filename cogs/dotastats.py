@@ -869,11 +869,14 @@ class DotaStats(MangoCog):
 		"""Statistics of games played with a friend"""
 		await ctx.channel.trigger_typing()
 		author_id = botdata.userinfo(ctx.message.author.id).steam32
+		if not author_id:
+			raise SteamNotLinkedError()
+
 		friend_id, friend_mention = await get_check_steamid(player, ctx, mention=True)
 		author_mention = ctx.message.author.mention
 
-		if not author_id:
-			raise SteamNotLinkedError()
+		if author_id == friend_id:
+			raise UserError("🙄 ...Try giving me someone other than yourself...")
 
 		author_info = await opendota_query(f"/players/{author_id}")
 		friend_info = await opendota_query(f"/players/{friend_id}")
