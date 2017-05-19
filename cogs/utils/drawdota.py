@@ -5,6 +5,7 @@ import async_timeout
 import sys
 from PIL import Image, ImageDraw
 from .tabledraw import Table, ImageCell, TextCell, ColorCell
+from io import BytesIO
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -114,7 +115,7 @@ async def draw_match_table(match):
 			await add_player_row(table, player, is_parsed)
 	return table.render()
 
-async def create_match_image(filename, match):
+async def create_match_image(match):
 	table_border = 10
 	table_image = await draw_match_table(match)
 
@@ -132,7 +133,28 @@ async def create_match_image(filename, match):
 	temp_image.paste(team_icon, (0, 0))
 	image = Image.alpha_composite(image, temp_image)
 
-	image.save(filename)
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
 
-	return filename
+	return fp
 
+async def combine_image_halves(img_url1, img_url2):
+	img1 = Image.open(await httpgetter.get(img_url1, "bytes", cache=True)).convert("RGBA")
+	img2 = Image.open(await httpgetter.get(img_url2, "bytes", cache=True)).convert("RGBA")
+
+	pixels1 = img1.load()
+	pixels2 = img2.load()
+
+	width = img1.size[0]
+	height = img1.size[1]
+
+	for j in range(height):
+		for i in range(abs(width - j), width):
+			pixels1[i,j] = pixels2[i,j]
+
+	fp = BytesIO()
+	img1.save(fp, format="PNG")
+	fp.seek(0)
+
+	return fp

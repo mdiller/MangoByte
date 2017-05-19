@@ -18,6 +18,15 @@ import statistics
 from types import *
 from .mangocog import *
 
+class SteamNotLinkedError(UserError):
+	def __init__(self, user):
+		self.is_author = user is None
+		self.user = user
+		if not self.is_author:
+			super().__init__(f"{user.name} doesn't have a steam account linked. They should try `?help setsteam` to see how to link their steam account.")
+		else:
+			super().__init__("Yer steam account isn't linked to yer discord account yet.\nTry doin `?help setsteam` to see how to link a steam account.")
+
 async def opendota_query(querystring, cache=False):
 	return await httpgetter.get(f"https://api.opendota.com/api{querystring}", cache=cache, errors = {
 		404: "Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com",
@@ -35,11 +44,6 @@ async def get_match(match_id):
 		else:
 			await httpgetter.cache.remove(url)
 	return await opendota_query(f"/matches/{match_id}", cache=True)
-
-async def get_match_image(match):
-	filename = settings.resource(f"temp/match_{match['match_id']}.png")
-	await drawdota.create_match_image(filename, match)
-	return filename
 
 def s_if_plural(text, n):
 	return text + "s" if n > 1 else text
@@ -125,9 +129,9 @@ async def get_check_steamid(steamid, ctx=None):
 	userinfo = botdata.userinfo(steamid.id)
 	if userinfo.steam32 is None:
 		if is_author:
-			raise UserError("Yer steam account isn't linked to yer discord account yet.\nTry doin `?help setsteam` to see how to link a steam account.")
+			raise SteamNotLinkedError()
 		else:
-			raise UserError(f"{steamid.name} doesn't have a steam account linked. They should try `?help setsteam` to see how to link their steam account.")
+			raise SteamNotLinkedError(steamid)
 	return userinfo.steam32
 
 
@@ -339,7 +343,7 @@ class DotaStats(MangoCog):
 			"Denies: {denies}\n"
 			"Level: {level}\n".format(**player)))
 
-		match_image = discord.File(await get_match_image(game), "match.png")
+		match_image = discord.File(await drawdota.create_match_image(game), "match.png")
 		embed.set_image(url=f"attachment://{match_image.filename}")
 		embed.set_footer(text="Started")
 
@@ -407,7 +411,7 @@ class DotaStats(MangoCog):
 							timestamp=datetime.datetime.utcfromtimestamp(game['start_time']), color=self.embed_color)
 		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
 
-		match_image = discord.File(await get_match_image(game), filename="matchimage.png")
+		match_image = discord.File(await drawdota.create_match_image(game), filename="matchimage.png")
 
 		embed.set_image(url=f"attachment://{match_image.filename}")
 		embed.set_footer(text="Started")
@@ -856,6 +860,57 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed)
 
 	@commands.command()
+	async def friend(self, ctx, player):
+		"""Info about your stats when playing with a friend"""
+		await ctx.channel.trigger_typing()
+		author_id = botdata.userinfo(ctx.message.author.id).steam32
+		friend_id = await get_check_steamid(player, ctx)
+
+		if not author_id:
+			raise SteamNotLinkedError()
+
+		author_info = await opendota_query(f"/players/{author_id}")
+		friend_info = await opendota_query(f"/players/{friend_id}")
+
+		def on_same_team(match):
+			heroes = match["heroes"]
+			player1 = heroes[next(x for x in heroes if heroes[x].get("account_id") == author_id)]
+			player2 = heroes[next(x for x in heroes if heroes[x].get("account_id") == friend_id)]
+			return (player1["player_slot"] < 128) == (player2["player_slot"] < 128)
+		def won_match(match):
+			heroes = match["heroes"]
+			player = heroes[next(x for x in heroes if heroes[x].get("account_id") == author_id)]
+			return (player["player_slot"] < 128) == match["radiant_win"]
+
+		url = f"/players/{author_id}/matches?included_account_id={friend_id}"
+		matches = await opendota_query(url)
+		matches = list(filter(on_same_team, matches))
+		if len(matches) == 0:
+			raise UserError("You haven't played any matches with them!")
+
+		winrate = len(list(filter(won_match, matches))) / len(matches)
+		last_match = matches[0]
+		first_match = matches[-1]
+
+		embed = discord.Embed(description=(
+			f"[Games Played](https://www.opendota.com{url}): {len(matches)}\n"
+			f"Winrate: {winrate:.2%}\n"
+			f"First Match: [{first_match['match_id']}](https://www.opendota.com/matches/{first_match['match_id']})\n"
+			f"Most Recent Match: [{last_match['match_id']}](https://www.opendota.com/matches/{last_match['match_id']})"), color=self.embed_color)
+
+		# do pil combination of author avatar and friend avatar
+
+		embed.set_author(
+			name=f"{author_info['profile']['personaname']} + {friend_info['profile']['personaname']}", 
+			url=f"https://www.opendota.com{url}")
+
+		image = discord.File(await drawdota.combine_image_halves(author_info['profile']['avatarfull'], friend_info['profile']['avatarfull']), "profile.png")
+		embed.set_thumbnail(url=f"attachment://{image.filename}")
+
+		await ctx.send(embed=embed, file=image)
+
+
+	@commands.command()
 	async def opendota(self, ctx, *, query):
 		"""Queries the opendota api
 
@@ -891,7 +946,6 @@ class DotaStats(MangoCog):
 		You can check out their [create_tables script](https://github.com/odota/core/blob/master/sql/create_tables.sql) to get an idea of the structure of the database
 		"""
 		query = "/explorer?sql={}".format(urllib.parse.quote(sql, safe=''))
-		print(query)
 
 		with ctx.channel.typing():
 			data = await opendota_query(query)
