@@ -59,23 +59,26 @@ def pretty_list(l, none=None):
 		l[-1] = "and " + str(l[-1])
 		return ", ".join(l)
 
-def get_pretty_time(unixtime):
-	if unixtime == 0:
+def get_pretty_time(seconds):
+	seconds = abs(seconds)
+	if seconds == 0:
 		return None
-	is_after = unixtime > 0
-	unixtime = abs(unixtime)
-	time = {"days": (unixtime // 86400) % 86400, "hours": (unixtime // 3600) % 3600, "minutes": (unixtime // 60) % 60, "seconds": unixtime % 60}
-	format_arr = []
-	if time["days"] > 0:
-		format_arr.append(s_if_plural("{days} day", time["days"]))
-	if time["hours"] > 0:
-		format_arr.append(s_if_plural("{hours} hour", time["hours"]))
-	if time["minutes"] > 0:
-		format_arr.append(s_if_plural("{minutes} minute", time["minutes"]))
-	if time["seconds"] > 0:
-		format_arr.append(s_if_plural("{seconds} second", time["seconds"]))
-	format_str = pretty_list(format_arr)
-	return format_str.format(**time)
+	times = [
+		["{t} second{s}", 60],
+		["{t} minute{s}", 60],
+		["{t} hour{s}", 24],
+		["{t} day{s}", 30.416666666666], # Won't be exactly correct
+		["{t} month{s}", 12],
+		["{t} year{s}", 100],
+	]
+	result = []
+	divisor = 1
+	for time in times:
+		t = int((seconds // divisor) % time[1])
+		if t > 0:
+			result.insert(0, time[0].format(t=t, s="s" if t > 1 else ""))
+		divisor *= time[1]
+	return pretty_list(result)
 
 def get_pretty_duration(duration, postfix=True):
 	if duration == 0:
@@ -97,42 +100,49 @@ def is_parsed(match_json):
 	return match_json.get("version", None) is not None
 
 # gets the steam32 id from the user or steamid and checks that it is valid before returning
-async def get_check_steamid(steamid, ctx=None):
-	is_author = steamid is None
+# If ref is specified, returns either a link or a discord user mention, depending on the input
+async def get_check_steamid(player, ctx, mention=False):
+	is_author = player is None
 	if is_author:
-		steamid = ctx.message.author
+		player = ctx.message.author
 
 	try:
-		steamid = int(steamid)
+		player = int(player)
 	except (ValueError, TypeError):
 		pass # This either this is a discord user or an invalid argument
 
 
-	if isinstance(steamid, int):
-		if steamid > 76561197960265728:
-			steamid -= 76561197960265728
+	if isinstance(player, int):
+		if player > 76561197960265728:
+			player -= 76561197960265728
 
 		# Don't have to rate limit here because this will be first query ran
-		player = await opendota_query(f"/players/{steamid}")
+		player_info = await opendota_query(f"/players/{player}")
 
-		if player.get("profile") is None:
+		if player_info.get("profile") is None:
 			raise UserError("Either this person doesn't play dota, or they haven't enabled public match data")
-		return steamid
+		if mention:
+			return player, f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{player})"
+		else:
+			return player
 
-
-	if not isinstance(steamid, discord.User):
+	if not isinstance(player, discord.User):
 		try:
-			steamid = await commands.MemberConverter().convert(ctx, str(steamid))
+			player = await commands.MemberConverter().convert(ctx, str(player))
 		except commands.BadArgument:
-			raise UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me a steamid")
+			raise UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me a player")
 
-	userinfo = botdata.userinfo(steamid.id)
+	userinfo = botdata.userinfo(player.id)
 	if userinfo.steam32 is None:
 		if is_author:
 			raise SteamNotLinkedError()
 		else:
-			raise SteamNotLinkedError(steamid)
-	return userinfo.steam32
+			raise SteamNotLinkedError(player)
+
+	if mention:
+		return userinfo.steam32, player.mention
+	else:
+		return userinfo.steam32
 
 
 def format_teamfight(teamfight):
@@ -429,7 +439,7 @@ class DotaStats(MangoCog):
 		else:
 			raise UserError("Perspective must be either radiant or dire")
 		try:
-			game = await get_match(match_id, False)
+			game = await get_match(match_id)
 		except UserError:
 			await ctx.send("Looks like thats not a valid match id")
 			return
@@ -443,10 +453,10 @@ class DotaStats(MangoCog):
 		Input must be either a discord user, a steam32 id, or a steam64 id"""
 		await ctx.channel.trigger_typing()
 
-		steamid = await get_check_steamid(player, ctx)
+		steamid, perspective = await get_check_steamid(player, ctx, mention=True)
 		try:
 			match_id = (await opendota_query(f"/players/{steamid}/matches?limit=1"))[0]['match_id']
-			game = await get_match(match_id, False)
+			game = await get_match(match_id)
 		except UserError:
 			await ctx.send("I can't find the last game this player played")
 			return
@@ -454,14 +464,9 @@ class DotaStats(MangoCog):
 			player = ctx.message.author.mention
 
 		player_data = next(p for p in game['players'] if p['account_id'] == steamid)
-		is_radiant = player_data['isRadiant']
-		if player.startswith('<'):
-			perspective = player
-		else:
-			perspective = "[{personaname}](https://www.opendota.com/players/{account_id})".format(**player_data)
-		perspective += "({0}, {1})".format(self.get_pretty_hero(player_data), "Radiant" if is_radiant else "Dire")
+		perspective += "({0}, {1})".format(self.get_pretty_hero(player_data), "Radiant" if player_data['isRadiant'] else "Dire")
 
-		await self.tell_match_story(game, is_radiant, ctx, perspective)
+		await self.tell_match_story(game, player_data['isRadiant'], ctx, perspective)
 
 
 	@commands.command(aliases=["whois"])
@@ -860,11 +865,12 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed)
 
 	@commands.command()
-	async def friend(self, ctx, player):
-		"""Info about your stats when playing with a friend"""
+	async def friendstats(self, ctx, player):
+		"""Statistics of games played with a friend"""
 		await ctx.channel.trigger_typing()
 		author_id = botdata.userinfo(ctx.message.author.id).steam32
-		friend_id = await get_check_steamid(player, ctx)
+		friend_id, friend_mention = await get_check_steamid(player, ctx, mention=True)
+		author_mention = ctx.message.author.mention
 
 		if not author_id:
 			raise SteamNotLinkedError()
@@ -889,16 +895,27 @@ class DotaStats(MangoCog):
 			raise UserError("You haven't played any matches with them!")
 
 		winrate = len(list(filter(won_match, matches))) / len(matches)
-		last_match = matches[0]
-		first_match = matches[-1]
+
+		def format_match(match):
+			heroes = match["heroes"]
+			author = heroes[next(x for x in heroes if heroes[x].get("account_id") == author_id)]
+			friend = heroes[next(x for x in heroes if heroes[x].get("account_id") == friend_id)]
+			timediff = time.time() - match['start_time']
+			timediff -= timediff % 60
+			if timediff > (60 * 60 * 24 * 30):
+				timediff -= timediff % (60 * 60)
+			return (
+				f"{get_pretty_time(timediff)} ago, "
+				f"you [{'won' if won_match(match) else 'lost'} a match](https://www.opendota.com/matches/{match['match_id']}) where "
+				f"{author_mention} played **{self.hero_info[author['hero_id']]['name']}**, and "
+				f"{friend_mention} played **{self.hero_info[friend['hero_id']]['name']}**")
 
 		embed = discord.Embed(description=(
 			f"[Games Played](https://www.opendota.com{url}): {len(matches)}\n"
-			f"Winrate: {winrate:.2%}\n"
-			f"First Match: [{first_match['match_id']}](https://www.opendota.com/matches/{first_match['match_id']})\n"
-			f"Most Recent Match: [{last_match['match_id']}](https://www.opendota.com/matches/{last_match['match_id']})"), color=self.embed_color)
+			f"Winrate: {winrate:.2%}\n"), color=self.embed_color)
 
-		# do pil combination of author avatar and friend avatar
+		embed.add_field(name="First Match", value=format_match(matches[-1]))
+		embed.add_field(name="Most Recent Match", value=format_match(matches[0]))
 
 		embed.set_author(
 			name=f"{author_info['profile']['personaname']} + {friend_info['profile']['personaname']}", 
