@@ -101,5 +101,6 @@ resource/temp
 resource/cache
 
 resource/clips/*
+resource/images/chesstemp.png
 !resource/clips/dota/
 !resource/clips/spongebob/

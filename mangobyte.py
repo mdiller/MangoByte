@@ -138,6 +138,7 @@ if __name__ == '__main__':
 	bot.load_extension("cogs.audio")
 	bot.load_extension("cogs.dotabase")
 	bot.load_extension("cogs.dotastats")
+	bot.load_extension("cogs.playchess")
 	bot.load_extension("cogs.pokemon")
 	bot.load_extension("cogs.admin")
 	bot.run(settings.token)
