@@ -37,7 +37,7 @@ class MangoHelpFormatter(HelpFormatter):
 			if show_all:
 				embed = self.embed_description(self.command.description + "\n\nTo get more information about a specific command, try `{cmdpfx}help <command>`")
 				embed.set_author(name=self.command.user.name, icon_url=self.command.user.avatar_url, url="https://github.com/mdiller/MangoByte")
-				data = sorted(self.filter_command_list(), key=category)
+				data = sorted(await self.filter_command_list(), key=category)
 				for category, commands in itertools.groupby(data, key=category):
 					commands = list(commands)
 					if len(commands) > 0:
