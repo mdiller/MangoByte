@@ -26,7 +26,7 @@ class Admin(MangoCog):
 			return False # All admin commands should be guild specific and not work on PM channels
 		if checks.is_owner_check(ctx.message.author):
 			return True
-		perms = channel.permissions_for(ctx.message.author)
+		perms = ctx.channel.permissions_for(ctx.message.author)
 		return perms.administrator
 
 	@commands.command()
