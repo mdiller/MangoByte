@@ -109,9 +109,9 @@ class HttpGetter:
 					raise ValueError(f"Invalid return type '{return_type}'")
 
 			elif r.status == 404:
-				raise Http404Error(status_errors.get(404, default_error))
+				raise Http404Error(errors.get(404, default_error))
 			else:
-				raise HttpError(status_errors.get(r.status, default_error), r.status)
+				raise HttpError(errors.get(r.status, default_error), r.status)
 
 
 
