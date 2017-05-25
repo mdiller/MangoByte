@@ -779,7 +779,7 @@ class DotaStats(MangoCog):
 			await ctx.send(f"I'm not sure what hero \"*{hero_text}*\" is.")
 			return
 
-		projections = [ "kills", "deaths", "assists", "hero_id", "version", "lane_role" ]
+		projections = [ "kills", "deaths", "assists", "hero_id", "version", "lane_role", "is_roaming" ]
 		projections = map(lambda p: f"project={p}", projections)
 		projections = "&".join(projections)
 
