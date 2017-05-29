@@ -760,17 +760,14 @@ class DotaStats(MangoCog):
 
 		words = hero.lower().replace("lane", "").split(" ")
 
-		chosen_lane = None
-		for i in range(len(words)):
-			for lane in lane_args:
-				if words[i] in lane["keywords"]:
-					words.pop(i)
-					i -= 1
-					if chosen_lane is None:
-						chosen_lane = lane
-					else:
-						raise UserError("Only specify one lane plz")
+		def find_lane():
+			for i in range(len(words)):
+				for lane in lane_args:
+					if words[i] in lane["keywords"]:
+						words.pop(i)
+						return lane
 
+		chosen_lane = find_lane()
 
 		hero_text = " ".join(words)
 
