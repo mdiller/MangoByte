@@ -398,6 +398,24 @@ class Dotabase(MangoCog):
 			except AudioPlayerNotFoundError:
 				pass
 
+	@commands.command(aliases=[ "dotaemoticon" ])
+	async def dotaemoji(self, ctx, *, emoji : str):
+		"""Gets a gif of the given dota emoji"""
+
+		query = session.query(Emoticon).filter(Emoticon.name == emoji)
+		if query.count() < 1:
+			raise UserError("I can't find an emoji with that name")
+		emoticon = query.first()
+
+		embed = discord.Embed()
+		embed.set_author(name=emoticon.name)
+
+		fp = await drawdota.dota_emoji_gif(self.vpkurl + emoticon.url, emoticon.frames, emoticon.ms_per_frame)
+		image_gif = discord.File(fp, f"{emoticon.name.replace('_', '')}.gif")
+		embed.set_image(url=f"attachment://{image_gif.filename}")
+
+		await ctx.send(embed=embed, file=image_gif)
+
 		
 
 

@@ -146,8 +146,7 @@ async def combine_image_halves(img_url1, img_url2):
 	pixels1 = img1.load()
 	pixels2 = img2.load()
 
-	width = img1.size[0]
-	height = img1.size[1]
+	width, height = img1.size
 
 	for j in range(height):
 		for i in range(abs(width - j), width):
@@ -155,6 +154,24 @@ async def combine_image_halves(img_url1, img_url2):
 
 	fp = BytesIO()
 	img1.save(fp, format="PNG")
+	fp.seek(0)
+
+	return fp
+
+# pass in url of tiled image as stored in vpk
+async def dota_emoji_gif(img_url, frame_count, ms_per_frame):
+	img = Image.open(await httpgetter.get(img_url, "bytes", cache=True)).convert("RGBA")
+	frames = []
+	width, height = img.size
+	frame_width = int(width / frame_count)
+
+	for i in range(frame_count):
+		box = (i * frame_width, 0, (i + 1) * frame_width, height)
+		frames.append(img.crop(box))
+
+
+	fp = BytesIO()
+	frames[0].save(fp, save_all=True, format="GIF", append_images=frames, duration=ms_per_frame, transparency=0)
 	fp.seek(0)
 
 	return fp
