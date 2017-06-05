@@ -136,10 +136,54 @@ class GuildInfo:
 
 
 
+class ChessInfo:
+        def __init__(self, botdata, playerid, opponentid, bot):
+            self.botdata = botdata
+            self.playerid = playerid
+            self.opponentid = opponentid
+            self.bot = bot
+            if(self.json_data is None):
+                if(bot is True):
+                    self.botdata.json_data['chessinfo'].append(OrderedDict([("playerid", self.playerid),("opponentid", self.opponentid),("fen", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"), ("turn", self.playerid), ("bot",self.bot)]))
+                else:
+                    side = random.choice([True, False])
+                    if (side is True):
+                        self.botdata.json_data['chessinfo'].append(OrderedDict([("playerid", self.playerid),("opponentid", self.opponentid),("fen", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"), ("turn", self.playerid), ("bot", self.bot)]))
+                    else:
+                        self.botdata.json_data['chessinfo'].append(OrderedDict([("playerid", self.opponentid),("opponentid", self.playerid),("fen", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"), ("turn", self.opponentid), ("bot", self.bot)]))
+                self.botdata.save_data()
+
+        @property
+        def json_data(self):
+            for game in self.botdata.json_data['chessinfo']:
+                if ((game['playerid'] == self.playerid and game['opponentid'] == self.opponentid) or (game['playerid'] == self.opponentid and game['opponentid'] == self.playerid)):
+                    return game
+                # Should only happen when loading a game for the first time
+            return None
+
+        @property
+        def fen(self):
+            return self.json_data.get("fen", None)
+
+        @fen.setter
+        def fen(self, value):
+            self.json_data["fen"] = value
+            self.botdata.save_data()
+
+        @property
+        def turn(self):
+            return self.json_data.get("turn", None)
+
+        @turn.setter
+        def turn(self, value):
+            self.json_data['turn'] = value
+            self.botdata.save_data()
+
+
 class BotData:
 	def __init__(self):
 		self.path = "botdata.json"
-		self.defaults = OrderedDict([ ("userinfo" , []), ("guildinfo" , []) ])
+		self.defaults = OrderedDict([ ("userinfo" , []), ("guildinfo" , []), ("chessinfo", []) ])
 		if not os.path.exists(self.path):
 			self.json_data = self.defaults
 			self.save_data()
@@ -172,4 +216,6 @@ class BotData:
 			guildinfos.append(GuildInfo(self, data['id']))
 		return guildinfos
 
+	def chessinfo(self,playerid,opponentid,bot):
+		return ChessInfo(self,playerid,opponentid,bot)
 
