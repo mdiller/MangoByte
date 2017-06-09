@@ -334,7 +334,7 @@ class DotaStats(MangoCog):
 		description = ("{0} a game as {1} in {2} \n"
 					"More info at [DotaBuff](https://www.dotabuff.com/matches/{3}), "
 					"[OpenDota](https://www.opendota.com/matches/{3}), or "
-					"[Stratz](https://www.stratz.com/match/{3})"
+					"[STRATZ](https://www.stratz.com/match/{3})"
 					.format(winstatus, hero_name, get_pretty_duration(game['duration'], postfix=False), match_id))
 
 		embed = discord.Embed(description=description, color=self.embed_color, timestamp=datetime.datetime.utcfromtimestamp(game['start_time']))
@@ -414,7 +414,7 @@ class DotaStats(MangoCog):
 		description = ("Game ended in {0} \n"
 					"More info at [DotaBuff](https://www.dotabuff.com/matches/{1}), "
 					"[OpenDota](https://www.opendota.com/matches/{1}), or "
-					"[Stratz](https://www.stratz.com/match/{1})"
+					"[STRATZ](https://www.stratz.com/match/{1})"
 					.format(get_pretty_duration(game['duration'], postfix=False), match_id))
 
 		embed = discord.Embed(description=description, 
@@ -558,7 +558,7 @@ class DotaStats(MangoCog):
 			f"[Steam]({playerinfo['profile']['profileurl']})\n"
 			f"[OpenDota](https://www.opendota.com/players/{steam32})\n"
 			f"[DotaBuff](https://www.dotabuff.com/players/{steam32})\n"
-			f"[Stratz](https://www.stratz.com/player/{steam32})"))
+			f"[STRATZ](https://www.stratz.com/player/{steam32})"))
 
 		embed.add_field(name="Heroes", value=(
 			f"[Recent Favs](https://www.opendota.com/players/{steam32}/heroes?date=60) {recent_favs}\n"
