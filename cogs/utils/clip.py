@@ -56,7 +56,7 @@ class Clip(object):
 
 	@property
 	def audiolength(self):
-		return float(run_command(["ffprobe", "-i", self.audiopath, "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0"]))
+		return round(float(run_command(["ffprobe", "-i", self.audiopath, "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0"])), 2)
 
 	async def get_info(self):
 		return self.text if self.text is not None else ""
