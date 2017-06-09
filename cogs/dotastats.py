@@ -184,7 +184,8 @@ class DotaStats(MangoCog):
 			net_gain = 0
 			our_dead = []
 			their_dead = []
-			for i in range(0, len(teamfight['players'])):
+			num_players = min([ len(teamfight['players']), len(game['players']) ])
+			for i in range(0, num_players):
 				deadtext = self.get_pretty_hero(game['players'][i])
 				if teamfight['players'][i]['deaths'] == 0:
 					deadtext = None
