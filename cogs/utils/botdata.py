@@ -6,66 +6,33 @@ from collections import OrderedDict
 
 class UserInfo:
 	def __init__(self, botdata, userid):
-		self.botdata = botdata
-		self.discord = userid
-		self.defaults = OrderedDict([
-			("discord", self.discord),
+		self.__dict__["botdata"] = botdata
+		self.__dict__["discord"] = userid
+		self.__dict__["defaults"] = OrderedDict([
+			("discord", self.__dict__["discord"]),
 			("steam32", None),
 			("intro", ""),
 			("outro", "")
 		])
 
-	def get_val(self, key):
-		if self.json_data:
-			return self.json_data.get(key, self.defaults.get(key))
-		return self.defaults.get(key)
-
-	def set_val(self, key, val):
-		if not self.json_data:
-			self.botdata.json_data['userinfo'].append(self.defaults)
-		self.json_data[key] = val
-		self.botdata.save_data()
-
 	@property
 	def json_data(self):
-		for user in self.botdata.json_data['userinfo']:
-			if user['discord'] == self.discord:
+		for user in self.__dict__["botdata"].json_data['userinfo']:
+			if user['discord'] == self.__dict__["discord"]:
 				return user
 		# Should only happen when loading a userinfo for the first time
 		return None
 
-	@property
-	def steam64(self):
-		return self.steam32 + 76561197960265728
+	def __getattr__(self, key):
+		if self.json_data:
+			return self.json_data.get(key, self.__dict__["defaults"].get(key))
+		return self.__dict__["defaults"].get(key)
 
-	@property
-	def steam32(self):
-		val = self.get_val("steam32")
-		if (not val) and self.json_data:
-			if self.json_data.get("steam64"):
-				return self.json_data.get("steam64") - 76561197960265728
-		return val
-
-
-	@steam32.setter
-	def steam32(self, value):
-		self.set_val("steam32", value)
-		
-	@property
-	def intro(self):
-		return self.get_val("intro")
-
-	@intro.setter
-	def intro(self, value):
-		self.set_val("intro", value)
-
-	@property
-	def outro(self):
-		return self.get_val("outro")
-
-	@outro.setter
-	def outro(self, value):
-		self.set_val("outro", value)
+	def __setattr__(self, key, val):
+		if not self.json_data:
+			self.__dict__["botdata"].json_data['userinfo'].append(self.__dict__["defaults"])
+		self.json_data[key] = val
+		self.botdata.save_data()
 
 	
 class GuildInfo:
