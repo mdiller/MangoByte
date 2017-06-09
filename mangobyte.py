@@ -100,7 +100,9 @@ async def on_command_error(ctx, error):
 		await ctx.send(error.original.message)
 	else:
 		await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
-		report_error(ctx.message, error, skip_lines=4)
+		trace_string = report_error(ctx.message, error, skip_lines=4)
+		if settings.debug:
+			await ctx.send(f"```{trace_string}```")
 
 error_file = "errors.json"
 
@@ -131,6 +133,7 @@ def report_error(message, error, skip_lines=2):
 		write_json(error_file, error_list)
 	trace_string = "\n".join(trace)
 	print(f"\nError on: {message.clean_content}\n{trace_string}\n")
+	return trace_string
 
 
 if __name__ == '__main__':

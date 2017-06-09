@@ -110,7 +110,7 @@ class General(MangoCog):
 
 		owner = (await self.bot.application_info()).owner
 
-		embed.set_footer(text="This MangoByte managed by {}".format(owner.name), icon_url=owner.avatar_url)
+		embed.set_footer(text="MangoByte developed by {}".format(owner.name), icon_url=owner.avatar_url)
 
 		await ctx.send(embed=embed)
 
