@@ -51,7 +51,9 @@ class MangoHelpFormatter(HelpFormatter):
 			# This is a cog
 			embed = self.embed_description(inspect.getdoc(self.command))
 			embed.set_author(name=self.command.__class__.__name__)
-			embed.add_field(name="Commands", value=self.list_commands(await self.filter_command_list()))
+			command_list = self.list_commands(await self.filter_command_list())
+			print(command_list)
+			embed.add_field(name="Commands", value=command_list if command_list else "empty")
 
 		return embed
 
