@@ -4,35 +4,60 @@ import discord
 from collections import OrderedDict
 
 
-class UserInfo:
-	def __init__(self, botdata, userid):
-		self.__dict__["botdata"] = botdata
-		self.__dict__["discord"] = userid
-		self.__dict__["defaults"] = OrderedDict([
-			("discord", self.__dict__["discord"]),
-			("steam32", None),
-			("intro", ""),
-			("outro", "")
-		])
+class BotDataItem:
+	def __init__(self, botdata, list_key, primary_keys, defaults):
+		self.__dict__.update({
+			"_botdata": botdata,
+			"_list_key": list_key,
+			"_primary_keys": primary_keys,
+			"defaults": defaults
+		})
 
 	@property
 	def json_data(self):
-		for user in self.__dict__["botdata"].json_data['userinfo']:
-			if user['discord'] == self.__dict__["discord"]:
-				return user
-		# Should only happen when loading a userinfo for the first time
+		for item in self._botdata.json_data[self._list_key]:
+			if all(item.get(key) == self._primary_keys[key] for key in self._primary_keys):
+				return item
 		return None
 
 	def __getattr__(self, key):
+		if key in self._primary_keys:
+			return self._primary_keys[key]
+		if key not in self.defaults:
+			raise ValueError(f"Tried to get invalid '{key}' in {self._list_key}")
 		if self.json_data:
-			return self.json_data.get(key, self.__dict__["defaults"].get(key))
-		return self.__dict__["defaults"].get(key)
+			return self.json_data.get(key, self.defaults.get(key))
+		return self.defaults.get(key)
 
 	def __setattr__(self, key, val):
-		if not self.json_data:
-			self.__dict__["botdata"].json_data['userinfo'].append(self.__dict__["defaults"])
-		self.json_data[key] = val
-		self.botdata.save_data()
+		if key in self._primary_keys:
+			raise ValueError("You can't set a primary key")
+		if key not in self.defaults:
+			raise ValueError(f"Tried to set invalid '{key}' in {self._list_key}")
+
+		# recreate to order correctly
+		newdict = OrderedDict(self._primary_keys)
+		for k in self.defaults:
+			if k == key:
+				if val != self.defaults[key]:
+					newdict[k] = val
+			elif self.json_data and k in self.json_data:
+				newdict[k] = self.json_data[k]
+		# now save to json
+		if self.json_data:
+			index = self._botdata.json_data[self._list_key].index(self.json_data)
+			self._botdata.json_data[self._list_key][index] = newdict
+		else:
+			self._botdata.json_data[self._list_key].append(newdict)
+		self._botdata.save_data()
+
+class UserInfo(BotDataItem):
+	def __init__(self, botdata, discord):
+		BotDataItem.__init__(self, botdata, "userinfo", { "discord": discord }, OrderedDict([
+			("steam32", None),
+			("intro", ""),
+			("outro", "")
+		]))
 
 	
 class GuildInfo:
