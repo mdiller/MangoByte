@@ -3,6 +3,24 @@ from discord.ext.commands import *
 
 
 class MangoHelpFormatter(HelpFormatter):
+	async def filter_command_list(self):
+		"""Same as one from original formatter, but doesnt check to see if the checks fail"""
+
+		def sane_no_suspension_point_predicate(tup):
+			cmd = tup[1]
+			if self.is_cog():
+				# filter commands that don't exist to this cog.
+				if cmd.instance is not self.command:
+					return False
+
+			if cmd.hidden and not self.show_hidden:
+				return False
+			return True
+
+		iterator = self.command.all_commands.items() if not self.is_cog() else self.context.bot.all_commands.items()
+		
+		return filter(sane_no_suspension_point_predicate, iterator)
+
 	def list_commands(self, commands):
 		results = []
 		for name, command in commands:
@@ -13,7 +31,10 @@ class MangoHelpFormatter(HelpFormatter):
 			entry = '`{0:<{width}} {1}`'.format(name, command.short_doc, width=self.max_name_size)
 			shortened = self.shorten(entry)
 			results.append(entry)
-		return "\n".join(results)
+		if results:
+			return "\n".join(results)
+		else:
+			return "`<empty>`"
 
 	def cog_short_doc(self, cog):
 		return re.sub("\{cmdpfx\}", self.command.command_prefix, inspect.getdoc(cog).split('\n')[0])
@@ -51,9 +72,7 @@ class MangoHelpFormatter(HelpFormatter):
 			# This is a cog
 			embed = self.embed_description(inspect.getdoc(self.command))
 			embed.set_author(name=self.command.__class__.__name__)
-			command_list = self.list_commands(await self.filter_command_list())
-			print(command_list)
-			embed.add_field(name="Commands", value=command_list if command_list else "empty")
+			embed.add_field(name="Commands", value=self.list_commands(await self.filter_command_list()))
 
 		return embed
 
