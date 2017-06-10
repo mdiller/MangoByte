@@ -2,9 +2,9 @@ import discord
 from discord.ext import commands
 from __main__ import settings, botdata
 from cogs.utils.helpers import *
+from cogs.utils.botdata import GuildInfo
 from cogs.utils import checks
 from .mangocog import *
-
 
 class Admin(MangoCog):
 	"""Administrative commands
@@ -81,30 +81,77 @@ class Admin(MangoCog):
 			raise UserError("You must have the Audio cog enabled to do this")
 		await audio.disconnect(ctx.message.guild)
 		botdata.guildinfo(ctx.message.guild.id).voicechannel = None
+	
+
+	config_aliases = {
+		True: [ "enable", "enabled", "true", "yes" ],
+		False: [ "disable", "disabled", "false", "no" ],
+		"default": [ "reset", "clear", "none", "null" ]
+	}
+
+	async def config_get(self, var, value):
+		embed = discord.Embed(description=var["description"])
+		embed.set_author(name=var["key"])
+		if var["type"] == bool:
+			embed.add_field(name="Value", value="enabled" if value else "disabled")
+		elif var["type"] == discord.TextChannel:
+			embed.add_field(name="Value", value=f"<#{value}>" if value else "None")
+		else:
+			raise ValueError("I don't know how to parse this type")
+		embed.add_field(name="Example", value=f"`?config {var['key']} {var['example']}`")
+		return embed
+
+	async def config_set_parse(self, ctx, var, value):
+		if value in [ "default", "reset", "clear", "none", "null" ]:
+			return None # signifies default value
+
+		if var["type"] == bool:
+			if value.lower() in [ "enable", "enabled", "true", "yes" ]:
+				return True
+			elif value.lower() in [ "disable", "disabled", "false", "no" ]:
+				return False
+			else:
+				raise UserError("Invalid input. Give me something like `enable` or `disable`")
+		elif var["type"] == discord.TextChannel:
+			try:
+				channel = await commands.TextChannelConverter().convert(ctx, value)
+				return channel.id
+			except commands.BadArgument:
+				raise UserError("Invalid input. Give me a channel reference like `#general`")
+		else:
+			raise ValueError("I don't know how to parse this type")
+		embed.add_field(name="Example", value=f"`?config {var['key']} {var['example']}`")
+		return embed
 
 	@commands.command()
-	async def ttschannel(self, ctx, channel : discord.TextChannel):
-		"""Sets a channel as the "TTS Channel"
+	async def config(self, ctx, name, value = None):
+		"""Configures the bot's settings for this server
 
-		If someone types in this channel, mangobyte will automatically interpret it as a `{cmdpfx}smarttts` command
+		Below are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `?config <settingname>`, and you can configure a setting by typing `?config <settingname> <value>`
 
-		**Example:** (If your channel name is tts)
-		`{cmdpfx}ttschannel #tts`
+		**Settings:**
+		`reactions`
+		`ttschannel`
+
+		**Examples:**
+		`{cmdpfx}config reactions`
+		`{cmdpfx}config ttschannel #tts`
 		"""
-		botdata.guildinfo(channel.guild.id).ttschannel = channel.id
-		await ctx.send(f"{channel.mention} has been set as the tts channel!")
+		var = next((v for v in GuildInfo.variables if v["key"] == name), None)
+		if not var:
+			vars_list = "\n".join(map(lambda v: f"`{v['key']}`", GuildInfo.variables))
+			await ctx.send(f"There is no config setting called '{name}'. Try one of these:\n{vars_list}")
 
-	@commands.command()
-	async def unttschannel(self, ctx):
-		"""Un-sets the "TTS Channel"
+		
+		if not value: # We are just getting a value
+			value = botdata.guildinfo(ctx.guild)[var["key"]]
+			await ctx.send(embed=await self.config_get(var, value))
+		else: # We are setting a value
+			value = await self.config_set_parse(ctx, var, value)
+			botdata.guildinfo(ctx.guild)[var["key"]] = value
+			await ctx.message.add_reaction("✅")
 
-		See `{cmdpfx}ttschannel` for more info on what this is about
-		"""
-		if not botdata.guildinfo(ctx.message.guild.id).ttschannel:
-			await ctx.send("TTS Channel has not been set. Try `?ttschannel <name of channel>`")
-			return
-		botdata.guildinfo(ctx.message.guild.id).ttschannel = None
-		await ctx.send("TTS Channel removed")
+
 
 
 def setup(bot):

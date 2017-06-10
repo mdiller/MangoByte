@@ -3,6 +3,9 @@ import os
 import discord
 from collections import OrderedDict
 
+class ListVar:
+	def __init__(self, t):
+		self.type = t
 
 class BotDataItem:
 	def __init__(self, botdata, list_key, primary_keys, defaults):
@@ -75,17 +78,34 @@ class UserInfo(BotDataItem):
 			("intro", ""),
 			("outro", "")
 		]))
-
 	
 class GuildInfo(BotDataItem):
 	def __init__(self, botdata, guildid):
-		BotDataItem.__init__(self, botdata, "guildinfo", { "id": guildid }, OrderedDict([
+		defaults = OrderedDict([ 
 			("voicechannel", None),
-			("reactions", False),
 			("invalidcommands", False),
-			("banned_users", []),
-			("ttschannel", None)
-		]))
+			("banned_users", [])
+		])
+		for var in self.variables:
+			defaults[var["key"]] = var["default"]
+		BotDataItem.__init__(self, botdata, "guildinfo", { "id": guildid }, defaults)
+
+	variables = [
+		{
+			"key": "reactions",
+			"default": None,
+			"type": bool,
+			"description": "Allows mangobyte to react to users messages depending on what they are saying",
+			"example": "enable"
+		},
+		{
+			"key": "ttschannel",
+			"default": None,
+			"type": discord.TextChannel,
+			"description": "If someone types in the given channel, mangobyte will automatically interpret it as a `?smarttts` command, and say it in the voicechannel that they are in.",
+			"example": "#tts"
+		}
+	]
 
 	def is_banned(self, user):
 		return user.id in self.banned_users

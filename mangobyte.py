@@ -29,7 +29,10 @@ bot.remove_command("help")
 thinker = Thinker(bot)
 invite_link = "https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968"
 
-deprecated_commands = {}
+deprecated_commands = {
+	"ttschannel": "config ttschannel",
+	"unttschannel": "config ttschannel none"
+}
 
 @bot.event
 async def on_ready():
@@ -144,4 +147,5 @@ if __name__ == '__main__':
 	bot.load_extension("cogs.pokemon")
 	bot.load_extension("cogs.admin")
 	bot.run(settings.token)
+
 
