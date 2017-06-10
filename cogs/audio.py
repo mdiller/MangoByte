@@ -179,9 +179,6 @@ class Audio(MangoCog):
 			audioplayer = AudioPlayer(self.bot, channel.guild)
 			await audioplayer.connect(channel)
 			self.audioplayers.append(audioplayer)
-			clip = await self.get_clip("local:bothello")
-			clip.volume = 0.1
-			await self.play_clip(clip, channel)
 
 	async def disconnect(self, guild):
 		audioplayer = await self.audioplayer(guild)
