@@ -51,6 +51,23 @@ class BotDataItem:
 			self._botdata.json_data[self._list_key].append(newdict)
 		self._botdata.save_data()
 
+	__getitem__ = __getattr__
+	__setitem__ = __setattr__
+
+	# adds an item to a list variable, like banned_users
+	def add_list_item(self, key, item):
+		if item not in self[key]:
+			new_list = list(self[key])
+			new_list.append(item)
+			self[key] = new_list
+
+	# removes an item from a list variable, like banned_users
+	def remove_list_item(self, key, item):
+		if item in self[key]:
+			new_list = list(self[key])
+			new_list.remove(item)
+			self[key] = new_list
+
 class UserInfo(BotDataItem):
 	def __init__(self, botdata, discord):
 		BotDataItem.__init__(self, botdata, "userinfo", { "discord": discord }, OrderedDict([
@@ -60,71 +77,24 @@ class UserInfo(BotDataItem):
 		]))
 
 	
-class GuildInfo:
+class GuildInfo(BotDataItem):
 	def __init__(self, botdata, guildid):
-		self.botdata = botdata
-		self.id = guildid
-		if(self.json_data is None):
-			self.botdata.json_data['guildinfo'].append(OrderedDict([
-				("id", self.id),
-				("voicechannel", None),
-				("reactions", False),
-				("invalidcommands", False),
-				("banned_users", []),
-				("ttschannel", [])
-			]))
-			self.botdata.save_data()
-
-	@property
-	def json_data(self):
-		for guild in self.botdata.json_data['guildinfo']:
-			if (guild['id'] == self.id):
-				return guild
-		# Should only happen when loading a guildinfo for the first time
-		return None
-
-	@property
-	def voicechannel(self):
-		return self.json_data.get("voicechannel", None)
-
-	@voicechannel.setter
-	def voicechannel(self, value):
-		self.json_data["voicechannel"] = value
-		self.botdata.save_data()
-
-	@property
-	def ttschannel(self):
-		return self.json_data.get("ttschannel", None)
-
-	@ttschannel.setter
-	def ttschannel(self, value):
-		self.json_data["ttschannel"] = value
-		self.botdata.save_data()
-
-	@property
-	def reactions(self):
-		return self.json_data.get("reactions", False)
-
-	@property
-	def invalidcommands(self):
-		return self.json_data.get("invalidcommands", False)
+		BotDataItem.__init__(self, botdata, "guildinfo", { "id": guildid }, OrderedDict([
+			("voicechannel", None),
+			("reactions", False),
+			("invalidcommands", False),
+			("banned_users", []),
+			("ttschannel", None)
+		]))
 
 	def is_banned(self, user):
-		return user.id in self.json_data.get("banned_users", [])
+		return user.id in self.banned_users
 
 	def botban(self, user):
-		if self.json_data.get("banned_users") is None:
-			self.json_data["banned_users"] = []
-		if user.id not in self.json_data["banned_users"]:
-			self.json_data["banned_users"].append(user.id)
-			self.botdata.save_data()
+		self.add_list_item("banned_users", user.id)
 
 	def botunban(self, user):
-		if self.json_data.get("banned_users") is None:
-			self.json_data["banned_users"] = []
-		if user.id in self.json_data["banned_users"]:
-			self.json_data["banned_users"].remove(user.id)
-			self.botdata.save_data()
+		self.remove_list_item("banned_users", user.id)
 
 
 
