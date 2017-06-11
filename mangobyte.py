@@ -23,11 +23,12 @@ httpgetter = HttpGetter()
 
 description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 				For more information about me, try `{cmdpfx}info`"""
+permissions = 314432
 
 bot = commands.Bot(command_prefix='?', formatter=MangoHelpFormatter(), description=description)
 bot.remove_command("help")
 thinker = Thinker(bot)
-invite_link = "https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968"
+invite_link = f"https://discordapp.com/oauth2/authorize?permissions={permissions}&scope=bot&client_id=213476188037971968"
 
 deprecated_commands = {
 	"ttschannel": "config ttschannel",
@@ -98,7 +99,8 @@ async def on_command_error(ctx, error):
 			f"Ya gotta do it like this:\n`{signature}`\n\n"
 			f"Try `?help {ctx.command}` for a more detailed description of the command"))
 	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.Forbidden):
-		await ctx.send(f"Looks like I'm missing permissions 😢. Have an admin giff me back my permissions, or re-invite me to the server using this invite link: {invite_link}")
+		await print_missing_perms(ctx, error)
+		# await ctx.send(f"Looks like I'm missing permissions 😢. Have an admin giff me back my permissions, or re-invite me to the server using this invite link: {invite_link}")
 	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
 		await ctx.send(error.original.message)
 	else:
@@ -108,6 +110,25 @@ async def on_command_error(ctx, error):
 			await ctx.send(f"```{trace_string}```")
 
 error_file = "errors.json"
+
+async def print_missing_perms(ctx, error):
+	if not (ctx.guild):
+		await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
+		trace_string = report_error(ctx.message, error, skip_lines=0)
+	my_perms = ctx.channel.permissions_for(ctx.guild.me)
+	perms_strings = read_json(settings.resource("json/permissions.json"))
+	perms = []
+	for i in range(0, 32):
+		if ((permissions >> i) & 1) and not my_perms._bit(i):
+			words = perms_strings["0x{:08x}".format(1 << i)].split("_")
+			for i in range(0, len(words)):
+				words[i] = f"**{words[i][0] + words[i][1:].lower()}**"
+			perms.append(" ".join(words))
+	if perms:
+		await ctx.send("Looks like I'm missin' these permissions 😢:\n" + "\n".join(perms))
+	else:
+		await ctx.send(f"Looks like I'm missing permissions 😢. Have an admin giff me back my permissions, or re-invite me to the server using this invite link: {invite_link}")
+
 
 def report_error(message, error, skip_lines=2):
 	if os.path.isfile(error_file):
