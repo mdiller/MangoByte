@@ -553,7 +553,7 @@ class DotaStats(MangoCog):
 		embed.add_field(name="General", value=(
 			f"Winrate of **{winrate}** over **{gamesplayed}** games\n"
 			f"Solo MMR: {solommr}\n"
-			f"Estimated MMR: **{playerinfo.get('mmr_estimate').get('estimate')}** *(based players in recently played games)*"))
+			f"Estimated MMR: **{playerinfo.get('mmr_estimate').get('estimate')}** *(based on players in recently played games)*"))
 
 		embed.add_field(name="Profiles", value=(
 			f"[Steam]({playerinfo['profile']['profileurl']})\n"
