@@ -9,7 +9,9 @@ from .mangocog import *
 class Admin(MangoCog):
 	"""Administrative commands
 	
-	Primarily used to stop people from ruining stuff, and to configure mangobyte to do different things."""
+	Primarily used to stop people from ruining stuff, and to configure mangobyte to do different things.
+
+	Only admins or people with the correct role can use these commands. To set a role as the 'Bot Admin' role, try `{cmdpfx}config botadmin`"""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 
@@ -22,12 +24,7 @@ class Admin(MangoCog):
 
 	def __local_check(self, ctx):
 		"""Checks to make sure the user has admin privilages"""
-		if isinstance(ctx.channel, discord.abc.PrivateChannel):
-			return False # All admin commands should be guild specific and not work on PM channels
-		if checks.is_owner_check(ctx.message.author):
-			return True
-		perms = ctx.channel.permissions_for(ctx.message.author)
-		return perms.administrator
+		return checks.is_admin_check(ctx.message.channel, ctx)
 
 	@commands.command()
 	async def botban(self, ctx, user: discord.Member):
@@ -96,6 +93,8 @@ class Admin(MangoCog):
 			embed.add_field(name="Value", value="enabled" if value else "disabled")
 		elif var["type"] == discord.TextChannel:
 			embed.add_field(name="Value", value=f"<#{value}>" if value else "None")
+		elif var["type"] == discord.Role:
+			embed.add_field(name="Value", value=f"<@&{value}>" if value else "None")
 		else:
 			raise ValueError("I don't know how to parse this type")
 		embed.add_field(name="Example", value=f"`?config {var['key']} {var['example']}`")
@@ -103,7 +102,7 @@ class Admin(MangoCog):
 
 	async def config_set_parse(self, ctx, var, value):
 		if value in [ "default", "reset", "clear", "none", "null" ]:
-			return None # signifies default value
+			return var["default"]
 
 		if var["type"] == bool:
 			if value.lower() in [ "enable", "enabled", "true", "yes" ]:
@@ -118,6 +117,12 @@ class Admin(MangoCog):
 				return channel.id
 			except commands.BadArgument:
 				raise UserError("Invalid input. Give me a channel reference like `#general`")
+		elif var["type"] == discord.Role:
+			try:
+				channel = await commands.RoleConverter().convert(ctx, value)
+				return channel.id
+			except commands.BadArgument:
+				raise UserError("Invalid input. Give me a role reference like `@BotAdmin`")
 		else:
 			raise ValueError("I don't know how to parse this type")
 		embed.add_field(name="Example", value=f"`?config {var['key']} {var['example']}`")
@@ -129,18 +134,13 @@ class Admin(MangoCog):
 
 		Below are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `?config <settingname>`, and you can configure a setting by typing `?config <settingname> <value>`
 
-		**Settings:**
-		`reactions`
-		`ttschannel`
-
-		**Examples:**
-		`{cmdpfx}config reactions`
-		`{cmdpfx}config ttschannel #tts`
+		{config_help}
 		"""
 		var = next((v for v in GuildInfo.variables if v["key"] == name), None)
 		if not var:
 			vars_list = "\n".join(map(lambda v: f"`{v['key']}`", GuildInfo.variables))
 			await ctx.send(f"There is no config setting called '{name}'. Try one of these:\n{vars_list}")
+			return
 
 		
 		if not value: # We are just getting a value
@@ -150,8 +150,6 @@ class Admin(MangoCog):
 			value = await self.config_set_parse(ctx, var, value)
 			botdata.guildinfo(ctx.guild)[var["key"]] = value
 			await ctx.message.add_reaction("✅")
-
-
 
 
 def setup(bot):

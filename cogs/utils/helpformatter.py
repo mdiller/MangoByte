@@ -1,6 +1,20 @@
 import discord, itertools, inspect, re
 from discord.ext.commands import *
+from .botdata import GuildInfo
 
+def get_config_help():
+	keys = []
+	examples = []
+	for var in GuildInfo.variables:
+		keys.append(f"`{var['key']}`")
+		examples.append(f"`{'{cmdpfx}'}config {var['key']} {var['example']}`")
+	keys = "\n".join(keys)
+	examples = "\n".join(examples)
+	return (
+		f"**Settings:**\n"
+		f"{keys}\n\n"
+		f"**Examples**\n"
+		f"{examples}")
 
 class MangoHelpFormatter(HelpFormatter):
 	async def filter_command_list(self):
@@ -36,8 +50,13 @@ class MangoHelpFormatter(HelpFormatter):
 		else:
 			return "`<empty>`"
 
+	def fill_template(self, text):
+		text = re.sub("\{config_help\}", get_config_help(), text)
+		text = re.sub("\{cmdpfx\}", self.context.bot.command_prefix, text)
+		return text
+
 	def cog_short_doc(self, cog):
-		return re.sub("\{cmdpfx\}", self.command.command_prefix, inspect.getdoc(cog).split('\n')[0])
+		return self.fill_template(inspect.getdoc(cog).split('\n')[0])
 
 	async def format_as_embed(self, context, command_or_bot, show_all=False):
 		self.context = context
@@ -107,5 +126,5 @@ class MangoHelpFormatter(HelpFormatter):
 	def embed_description(self, description):
 		if not description:
 			return discord.Embed()
-		description = re.sub("\{cmdpfx\}", self.context.bot.command_prefix, description)
+		description = self.fill_template(description)
 		return discord.Embed(description=description, color=discord.Color.blue())

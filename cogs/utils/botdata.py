@@ -102,8 +102,15 @@ class GuildInfo(BotDataItem):
 			"key": "ttschannel",
 			"default": None,
 			"type": discord.TextChannel,
-			"description": "If someone types in the given channel, mangobyte will automatically interpret it as a `?smarttts` command, and say it in the voicechannel that they are in.",
+			"description": "If someone types in the given channel, mangobyte will automatically interpret it as a `?smarttts` command, and say it in the voicechannel that they are in",
 			"example": "#tts"
+		},
+		{
+			"key": "botadmin",
+			"default": None,
+			"type": discord.Role,
+			"description": "Users who have the specified role will be able to use commands from the admin section. To set this role, do `?config botadmin <role>` where <role> is an @mention of a role in the server",
+			"example": "@BotAdmin"
 		}
 	]
 
