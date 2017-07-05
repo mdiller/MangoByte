@@ -173,6 +173,7 @@ class DotaStats(MangoCog):
 			raise ImportError("The Dotabase cog must be added before the DotaStats cog")
 		self.hero_info = dotabase.get_hero_infos()
 		self.lookup_hero = dotabase.lookup_hero
+		self.chat_wheel_info = dotabase.get_chat_wheel_infos()
 
 	def get_pretty_hero(self, player):
 		dotabase = self.bot.get_cog("Dotabase")
@@ -643,6 +644,8 @@ class DotaStats(MangoCog):
 			count = round((count * 100) / len(player_matches), round_place)
 			return int(count) if round_place == 0 else count
 
+		chat_wheel_counts = {}
+		chat_wheel_total = 0
 		longest_message_heading = "Longest Chat Message"
 		message_count = 0
 		longest_message = None
@@ -651,14 +654,30 @@ class DotaStats(MangoCog):
 			player = next(p for p in match['players'] if p['account_id'] == steam32)
 			for message in match['chat']:
 				if message.get('player_slot', -1) == player['player_slot']:
-					message_count += 1
-					if longest_message is None or len(longest_message) <= len(message['key']):
-						longest_message = message['key']
-						longest_message_match_id = match['match_id']
+					if message["type"] == "chat":
+						message_count += 1
+						if longest_message is None or len(longest_message) <= len(message['key']):
+							longest_message = message['key']
+							longest_message_match_id = match['match_id']
+					elif message["type"] == "chatwheel":
+						msg_id = int(message['key'])
+						chat_wheel_counts[msg_id] = chat_wheel_counts.get(msg_id, 0) + 1
+						chat_wheel_total += 1
+
 		message_count = int(round(message_count / len(matches)))
 		if longest_message is not None:
 			longest_message = f"\"{longest_message}\""
 			longest_message_heading = f"[{longest_message_heading}](https://www.opendota.com/matches/{longest_message_match_id}/chat)"
+
+		chat_wheel_text = "*No chat wheel usage found*"
+		if chat_wheel_counts != {}:
+			lines = []
+			chat_wheel_counts = sorted(chat_wheel_counts.items(), key=lambda m: m[1], reverse=True)
+			for i in range(0, min(3, len(chat_wheel_counts))):
+				msg_id, count = chat_wheel_counts[i]
+				message = self.chat_wheel_info[msg_id]
+				lines.append(f"{message['is_sound']} {message['message']}")
+			chat_wheel_text = "\n".join(lines)
 
 		embed.add_field(name="General", value=(
 			f"Winrate: {percent('win')}%\n"
@@ -701,6 +720,8 @@ class DotaStats(MangoCog):
 			f"TPs used: {avg(lambda p: p['item_uses'].get('tpscroll', 0))}"))
 
 		embed.add_field(name="Communication", value=(
+			f"Chat Wheel *(most commonly used)*:\n"
+			f"{chat_wheel_text}\n\n"
 			f"Pings: {avg('pings')}\n"
 			f"Chat Messages: {message_count}\n"
 			f"{longest_message_heading}: {longest_message}"))

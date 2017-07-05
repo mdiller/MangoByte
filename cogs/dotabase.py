@@ -142,6 +142,16 @@ class Dotabase(MangoCog):
 			}
 		return result
 
+	def get_chat_wheel_infos(self):
+		result = {}
+		for message in session.query(ChatWheelMessage):
+			result[message.id] = {
+				"name": message.name,
+				"message": message.message,
+				"is_sound": message.sound != None,
+			}
+		return result
+
 	async def play_response(self, response, ctx):
 		await self.play_clip("dota:" + response.name, ctx)
 
