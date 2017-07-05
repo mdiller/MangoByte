@@ -716,15 +716,10 @@ class DotaStats(MangoCog):
 			f"Jungle: {percent(lambda p: p['lane_role'] == 4 and not p.get('is_roaming'))}%\n"
 			f"Roaming: {percent(lambda p: p.get('is_roaming'))}%\n"))
 
-		embed.add_field(name="Other", value=(
-			f"Trees eaten: {avg(lambda p: p['item_uses'].get('tango', 0))}\n"
-			f"TPs used: {avg(lambda p: p['item_uses'].get('tpscroll', 0))}"))
+		embed.add_field(name="Chat Wheel", value=chat_wheel_text)
 
-		embed.add_field(name="Communication", value=(
-			f"Chat Wheel *(most commonly used)*:\n"
-			f"{chat_wheel_text}\n"
-			f"Pings: {avg('pings')}\n"
-			f"Chat Messages: {message_count}\n"
+		embed.add_field(name="All Chat", value=(
+			f"Messages per Game: {message_count}\n"
 			f"{longest_message_heading}: {longest_message}"))
 
 		# in a group
