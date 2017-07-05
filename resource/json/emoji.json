@@ -28,5 +28,7 @@
 	"hero_turn_rate": "<:hero_turn_rate:312024659040272395>",
 	"hero_armor": "<:hero_armor:312025149899800579>",
 	"hero_damage": "<:hero_damage:312025241515720709>",
-	"hero_vision_range": "<:hero_vision_range:312026060055117824>"
+	"hero_vision_range": "<:hero_vision_range:312026060055117824>",
+	"chat_wheel_text": "<:chat_wheel_text:332050717386866690>",
+	"chat_wheel_sound": "<:chat_wheel_sound:332050865626152961>"
 }

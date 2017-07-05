@@ -676,7 +676,8 @@ class DotaStats(MangoCog):
 			for i in range(0, min(3, len(chat_wheel_counts))):
 				msg_id, count = chat_wheel_counts[i]
 				message = self.chat_wheel_info[msg_id]
-				lines.append(f"{message['is_sound']} {message['message']}")
+				icon = self.get_emoji("chat_wheel_sound" if message['is_sound'] else "chat_wheel_text")
+				lines.append(f"{icon} {message['message']}")
 			chat_wheel_text = "\n".join(lines)
 
 		embed.add_field(name="General", value=(
@@ -721,7 +722,7 @@ class DotaStats(MangoCog):
 
 		embed.add_field(name="Communication", value=(
 			f"Chat Wheel *(most commonly used)*:\n"
-			f"{chat_wheel_text}\n\n"
+			f"{chat_wheel_text}\n"
 			f"Pings: {avg('pings')}\n"
 			f"Chat Messages: {message_count}\n"
 			f"{longest_message_heading}: {longest_message}"))
