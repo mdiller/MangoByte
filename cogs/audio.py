@@ -522,7 +522,7 @@ class Audio(MangoCog):
 	async def on_voice_state_update(self, member, before, after):
 		if before and after and before.channel == after.channel:
 			return # if the member didnt change channels, dont worry about it
-		if before and before.channel:
+		if before and before.channel and botdata.guildinfo(before.channel.guild).outros:
 			beforeplayer = await self.audioplayer(before.channel, error_on_none=False)
 			if beforeplayer is not None and beforeplayer.voice.channel.id == before.channel.id:
 				text = (await self.fix_name(member.name)) + " has left!"
@@ -536,7 +536,7 @@ class Audio(MangoCog):
 				await asyncio.sleep(0.5)
 				await self.play_clip(outroclip, before.channel)
 				await self.play_clip("tts:" + text, before.channel)
-		if after and after.channel:
+		if after and after.channel and botdata.guildinfo(after.channel.guild).intros:
 			afterplayer = await self.audioplayer(after.channel, error_on_none=False)
 			if afterplayer is not None and afterplayer.voice.channel.id == after.channel.id:
 				if member.id == self.bot.user.id:

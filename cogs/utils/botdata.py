@@ -93,7 +93,7 @@ class GuildInfo(BotDataItem):
 	variables = [
 		{
 			"key": "reactions",
-			"default": None,
+			"default": False,
 			"type": bool,
 			"description": "Allows mangobyte to react to users messages depending on what they are saying",
 			"example": "enable"
@@ -111,6 +111,20 @@ class GuildInfo(BotDataItem):
 			"type": discord.Role,
 			"description": "Users who have the specified role will be able to use commands from the admin section. To set this role, do `?config botadmin <role>` where <role> is an @mention of a role in the server",
 			"example": "@BotAdmin"
+		},
+		{
+			"key": "intros",
+			"default": True,
+			"type": bool,
+			"description": "Allows mangobyte to announce users when they enter the voice channel that mangobyte is currently in",
+			"example": "disable"
+		},
+		{
+			"key": "outros",
+			"default": True,
+			"type": bool,
+			"description": "Allows mangobyte to announce when users leave the voice channel that mangobyte is currently in",
+			"example": "disable"
 		}
 	]
 
