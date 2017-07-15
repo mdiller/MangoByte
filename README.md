@@ -8,6 +8,10 @@ The following is a list of the commands that mangobyte has to offer
 
 ![Commands List](https://cdn.discordapp.com/attachments/283425638633963530/335882259913637898/help_all.png)
 
+Example of `?lastgame` command:
+
+![Lastgame Command](https://cdn.discordapp.com/attachments/283425638633963530/335918712366432267/lastgame.gif)
+
 ## Installation
 
 I would recommend simply inviting mangobyte to your server via the [Invite Link](https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968), but if you want to contribute to mangobyte or just like running things, the following is how you can install and run your own instance of mangobyte.
