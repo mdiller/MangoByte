@@ -30,5 +30,7 @@
 	"hero_damage": "<:hero_damage:312025241515720709>",
 	"hero_vision_range": "<:hero_vision_range:312026060055117824>",
 	"chat_wheel_text": "<:chat_wheel_text:332050717386866690>",
-	"chat_wheel_sound": "<:chat_wheel_sound:332050865626152961>"
+	"chat_wheel_sound": "<:chat_wheel_sound:332050865626152961>",
+	"mana_cost": "<:mana_cost:335986508714475520>",
+	"cooldown": "<:cooldown:335985500408250368>"
 }

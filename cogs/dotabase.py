@@ -120,6 +120,23 @@ class Dotabase(MangoCog):
 				return self.hero_aliases[hero]
 		return None
 
+	def lookup_ability(self, text):
+		if isinstance(text, int) or text.isdigit():
+			return session.query(Ability).filter(Ability.id == int(text)).first()
+		def clean_input(t):
+			return re.sub(r'[^a-z1-9\s]', r'', str(t).lower())
+		text = clean_input(text)
+		if text == "":
+			return None
+		for ability in session.query(Ability):
+			if clean_input(ability.localized_name) == text:
+				return ability
+		for ability in session.query(Ability):
+			if clean_input(ability.localized_name).startswith(text):
+				return ability
+		return None
+
+
 	def get_hero_infos(self):
 		result = {}
 		for hero in session.query(Hero):
@@ -408,6 +425,41 @@ class Dotabase(MangoCog):
 			except AudioPlayerNotFoundError:
 				pass
 
+	@commands.command(aliases=["spell"])
+	async def ability(self, ctx, *, ability : str):
+		"""Gets information about a specific hero ability
+
+		**Examples:**
+		`{cmdpfx}ability rocket flare`
+		`{cmdpfx}ability laser`
+		`{cmdpfx}ability sprout`"""
+
+		ability = self.lookup_ability(ability)
+
+		if ability is None:
+			raise UserError("I couldn't find an ability by that name")
+
+
+		description = ability.description
+
+		description = re.sub(r"(Upgradable by Aghanim's Scepter).?", r"**\1**", description)
+		embed = discord.Embed(description=description)
+
+		embed.set_author(name=ability.localized_name)
+
+		embed.set_thumbnail(url=f"{self.vpkurl}{ability.icon}")
+
+		def clean_values(values):
+			values = values.split(" ")
+			return " | ".join(values)
+
+		if ability.mana_cost and ability.mana_cost != "0":
+			embed.add_field(name="Mana", value=f"{self.get_emoji('mana_cost')} {clean_values(ability.mana_cost)}\n")
+
+		if ability.cooldown and ability.cooldown != "0":
+			embed.add_field(name="Cooldown", value=f"{self.get_emoji('cooldown')} {clean_values(ability.cooldown)}\n")
+
+		await ctx.send(embed=embed)
 		
 
 
