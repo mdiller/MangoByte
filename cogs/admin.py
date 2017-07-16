@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from __main__ import settings, botdata
+from __main__ import settings, botdata, httpgetter
 from cogs.utils.helpers import *
 from cogs.utils.botdata import GuildInfo
 from cogs.utils import checks
@@ -150,6 +150,20 @@ class Admin(MangoCog):
 			value = await self.config_set_parse(ctx, var, value)
 			botdata.guildinfo(ctx.guild)[var["key"]] = value
 			await ctx.message.add_reaction("✅")
+
+	@checks.is_owner()
+	@commands.command()
+	async def updateemoji(self, ctx):
+		"""Updates the emoji information for the bot"""
+		emoji_json = read_json(settings.resource("json/emoji.json"))
+		with ctx.channel.typing():
+			for emoji in ctx.guild.emojis:
+				imgpath = settings.resource(f"images/emojis/{emoji.name}.png")
+				with open(imgpath, 'wb+') as f:
+					f.write((await httpgetter.get(emoji.url, return_type="bytes")).read())
+				emoji_json[emoji.name] = f"<:{emoji.name}:{emoji.id}>"
+		write_json(settings.resource("json/emoji.json"), emoji_json)
+		await ctx.send("done!")
 
 
 def setup(bot):
