@@ -152,7 +152,7 @@ class Admin(MangoCog):
 			await ctx.message.add_reaction("✅")
 
 	@checks.is_owner()
-	@commands.command()
+	@commands.command(hidden=True)
 	async def updateemoji(self, ctx):
 		"""Updates the emoji information for the bot"""
 		emoji_json = read_json(settings.resource("json/emoji.json"))
