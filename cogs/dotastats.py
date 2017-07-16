@@ -130,7 +130,7 @@ async def get_check_steamid(player, ctx, mention=False):
 		try:
 			player = await commands.MemberConverter().convert(ctx, str(player))
 		except commands.BadArgument:
-			raise UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me a player")
+			raise UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me a their steam id")
 
 	userinfo = botdata.userinfo(player.id)
 	if userinfo.steam32 is None:
