@@ -191,6 +191,9 @@ class Dotabase(MangoCog):
 					return message
 				if loose_fit:
 					for string in strings:
+						if text.replace(" ", "") == string.replace(" ", ""):
+							return message
+					for string in strings:
 						if text in string:
 							return message
 		return None
@@ -377,13 +380,13 @@ class Dotabase(MangoCog):
 	async def chatwheel(self, ctx, *, text):
 		"""Plays the given chat wheel sound
 
-		Try `{cmdpfx}chatwheel help` or `{cmdpfx}chatwheel list` and i will PM you a list of all of the chat wheel sounds
+		Try `{cmdpfx}chatwheel help` or `{cmdpfx}chatwheel list` and I will PM you a list of all of the chat wheel sounds
 
 		**Examples:**
 		`{cmdpfx}chatwheel disastah`
 		`{cmdpfx}chatwheel Wan Bu Liao La`
 		`{cmdpfx}chatwheel 玩不了啦`
-		`{cmdpfx}chatwheel eto g g`
+		`{cmdpfx}chatwheel ehto gg`
 		`{cmdpfx}chatwheel Это ГГ`"""
 		if text.lower() in [ "help", "list" ]:
 			sounds = []
