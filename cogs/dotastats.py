@@ -604,6 +604,8 @@ class DotaStats(MangoCog):
 					match = await get_match(matches_info[i]['match_id'])
 					player_matches.append(next(p for p in match['players'] if p['account_id'] == steam32))
 					matches.append(match)
+					
+					player_matches[-1]['party_size'] = 0
 					for player in match['players']:
 						if player['party_id'] == player_matches[-1]['party_id']:
 							player_matches[-1]['party_size'] = player_matches[-1].get('party_size', 0) + 1
