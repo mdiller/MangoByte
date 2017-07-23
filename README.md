@@ -1,4 +1,4 @@
-# MangoByte<img align="right" src="mangobyte.png"/>
+# MangoByte<img align="right" src="/resource/images/readme/mangobyte.png"/>
 A discord bot that provides the ability to play audio clips, play dota responses, answer questions, randomly react to messages, and a few other cool things. I'm using the [discord.py](https://github.com/Rapptz/discord.py) python wrapper for the [Discord API](https://discordapp.com/developers). I'm also making use of [dotabase](https://github.com/mdiller/dotabase), which is an open source repository (created by yours truly) containing data about the game [Dota 2](http://www.dota2.com).
 
 You can invite mangobyte to your server via this [Invite Link](https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968), or you can try it out on my [Help Server](https://discord.gg/d6WWHxx).
@@ -6,11 +6,11 @@ You can invite mangobyte to your server via this [Invite Link](https://discordap
 ## Commands
 The following is a list of the commands that mangobyte has to offer
 
-![Commands List](https://cdn.discordapp.com/attachments/283425638633963530/335882259913637898/help_all.png)
+![Commands List](/resource/images/readme/help_all.png)
 
 Example of `?lastgame` command:
 
-![Lastgame Command](https://cdn.discordapp.com/attachments/283425638633963530/335918712366432267/lastgame.gif)
+![Lastgame Command](/resource/images/readme/lastgame.gif)
 
 ## Installation
 
