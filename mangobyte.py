@@ -79,42 +79,45 @@ async def on_command_error(ctx, error):
 	if ctx.message in thinker.messages:
 		await thinker.stop_thinking(ctx.message)
 
-	if isinstance(error, commands.CommandNotFound):
-		cmd = ctx.message.content[1:].split(" ")[0]
-		if cmd in deprecated_commands:
-			await ctx.send(f"You shouldn't use `?{cmd}` anymore. It's *deprecated*. Try `?{deprecated_commands[cmd]}` instead.")
-			return
-		elif cmd == "" or cmd.startswith("?") or cmd.startswith("!"):
-			return # These were probably not meant to be commands
+	try:
+		if isinstance(error, commands.CommandNotFound):
+			cmd = ctx.message.content[1:].split(" ")[0]
+			if cmd in deprecated_commands:
+				await ctx.send(f"You shouldn't use `?{cmd}` anymore. It's *deprecated*. Try `?{deprecated_commands[cmd]}` instead.")
+				return
+			elif cmd == "" or cmd.startswith("?") or cmd.startswith("!"):
+				return # These were probably not meant to be commands
 
-		if cmd.lower() in bot.commands:
-			new_message = ctx.message
-			new_message.content = "?" + cmd.lower() + ctx.message.content[len(cmd) + 1:]
-			await bot.process_commands(new_message)
-		elif await invalid_command_reporting(ctx):
-			await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands.") 
-	elif isinstance(error, commands.CheckFailure):
-		print("(suppressed)")
-		return # The user does not have permissions
-	elif isinstance(error, commands.MissingRequiredArgument):
-		await ctx.send(embed=await bot.formatter.format_as_embed(ctx, ctx.command))
-	elif isinstance(error, commands.BadArgument):
-		signature = await get_cmd_signature(ctx)
-		await ctx.send((
-			"Thats the wrong type of argument for that command.\n\n"
-			f"Ya gotta do it like this:\n`{signature}`\n\n"
-			f"Try `?help {ctx.command}` for a more detailed description of the command"))
-	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.Forbidden):
-		await print_missing_perms(ctx, error)
-	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.HTTPException):
-		await ctx.send("Looks like there was a problem with discord just then. Try again in a bit.")
-	elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
-		await ctx.send(error.original.message)
-	else:
-		await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
-		trace_string = report_error(ctx.message, error, skip_lines=4)
-		if settings.debug:
-			await ctx.send(f"```{trace_string}```")
+			if cmd.lower() in bot.commands:
+				new_message = ctx.message
+				new_message.content = "?" + cmd.lower() + ctx.message.content[len(cmd) + 1:]
+				await bot.process_commands(new_message)
+			elif await invalid_command_reporting(ctx):
+				await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands.") 
+		elif isinstance(error, commands.CheckFailure):
+			print("(suppressed)")
+			return # The user does not have permissions
+		elif isinstance(error, commands.MissingRequiredArgument):
+			await ctx.send(embed=await bot.formatter.format_as_embed(ctx, ctx.command))
+		elif isinstance(error, commands.BadArgument):
+			signature = await get_cmd_signature(ctx)
+			await ctx.send((
+				"Thats the wrong type of argument for that command.\n\n"
+				f"Ya gotta do it like this:\n`{signature}`\n\n"
+				f"Try `?help {ctx.command}` for a more detailed description of the command"))
+		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.Forbidden):
+			await print_missing_perms(ctx, error)
+		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.HTTPException):
+			await ctx.send("Looks like there was a problem with discord just then. Try again in a bit.")
+		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
+			await ctx.send(error.original.message)
+		else:
+			await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
+			trace_string = report_error(ctx.message, error, skip_lines=4)
+			if settings.debug:
+				await ctx.send(f"```{trace_string}```")
+	except discord.errors.Forbidden:
+		await ctx.author.send("Looks like I don't have permission to talk in that channel, sorry")
 
 error_file = "errors.json"
 
