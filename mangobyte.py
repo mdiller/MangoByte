@@ -46,9 +46,12 @@ async def on_ready():
 	for guildinfo in botdata.guildinfo_list():
 		if guildinfo.voicechannel is not None:
 			try:
+				print(f"connecting voice to: {guildinfo.voicechannel}")
 				await cog.connect_voice(guildinfo.voicechannel)
 			except UserError as e:
-				if e.message != "channel not found":
+				if e.message == "channel not found":
+					guildinfo.voicechannel = None
+				else:
 					raise
 	
 	for guild in bot.guilds:
