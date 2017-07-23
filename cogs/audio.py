@@ -202,6 +202,12 @@ class Audio(MangoCog):
 			try:
 				await self.play_clip(f"local:{clip}", ctx)
 			except ClipNotFound:
+				dotabase = self.bot.get_cog("Dotabase")
+				if dotabase:
+					chat_clip = dotabase.get_chatwheel_sound_clip(clip)
+					if chat_clip:
+						await self.play_clip(chat_clip, ctx)
+						return
 				await ctx.send(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
 		else:
 			await self.play_clip(clip, ctx)
@@ -466,7 +472,7 @@ class Audio(MangoCog):
 	async def smarttts(self, ctx, *, message : str):
 		"""Automatically find the best fit for the tts given
 
-		First checks local clips (like `{cmdpfx}play`), then checks to see if it is an mp3/wav url, then checks if there is an exact match for a dota response clip, and if none of the above is found, does a simple tts clip"""
+		First checks local clips (like `{cmdpfx}play`), then checks to see if it is an mp3/wav url, then checks if it's a dota chatwheel message, then checks if there is an exact match for a dota response clip, and if none of the above is found, does a simple tts clip"""
 		await self.do_smarttts(message, ctx)
 
 	async def do_smarttts(self, message, ctx):
@@ -483,6 +489,10 @@ class Audio(MangoCog):
 			return
 		dotabase = self.bot.get_cog("Dotabase")
 		if dotabase:
+			clip = dotabase.get_chatwheel_sound_clip(message)
+			if clip:
+				await self.play_clip(clip, ctx)
+				return
 			query = await dotabase.smart_dota_query(message.split(" "), [], exact=True)
 			if query:
 				await dotabase.play_response_query(query, ctx)

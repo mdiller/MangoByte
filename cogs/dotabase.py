@@ -182,6 +182,8 @@ class Dotabase(MangoCog):
 			t = re.sub(r"[?!',！？.-]", "", t.lower())
 			return re.sub(r"[_，]", " ", t)
 		text = simplify(text)
+		if text == "":
+			return None
 		for message in session.query(ChatWheelMessage):
 			if message.sound:
 				if message.id == text:
