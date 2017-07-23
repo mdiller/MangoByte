@@ -107,7 +107,7 @@ async def on_command_error(ctx, error):
 				f"Try `?help {ctx.command}` for a more detailed description of the command"))
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.Forbidden):
 			await print_missing_perms(ctx, error)
-		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.HTTPException):
+		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.HTTPException) and error.original.code == 500:
 			await ctx.send("Looks like there was a problem with discord just then. Try again in a bit.")
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
 			await ctx.send(error.original.message)
