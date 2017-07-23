@@ -1,6 +1,6 @@
 aiohttp>=1.0.5
 async_timeout>=1.1.0
-discord.py>=0.16.5
+discord.py==1.0.0a1284
 gTTS>=1.1.8
 SQLAlchemy>=1.0.15
 Pillow==4.0.0
