@@ -166,8 +166,34 @@ class Dotabase(MangoCog):
 				"name": message.name,
 				"message": message.message,
 				"is_sound": message.sound != None,
+				"sound": self.vpkurl + message.sound if message.sound else None
 			}
 		return result
+
+	def get_chatwheel_sound_clip(self, text):
+		message = self.get_chatwheel_sound(text)
+		if message:
+			return f"url:{self.vpkurl}{message.sound}"
+		else:
+			return None
+
+	def get_chatwheel_sound(self, text, loose_fit=False):
+		def simplify(t):
+			t = re.sub(r"[?!',！？.-]", "", t.lower())
+			return re.sub(r"[_，]", " ", t)
+		text = simplify(text)
+		for message in session.query(ChatWheelMessage):
+			if message.sound:
+				if message.id == text:
+					return message
+				strings = list(map(simplify, [ message.name, message.message, message.label ]))
+				if text in strings:
+					return message
+				if loose_fit:
+					for string in strings:
+						if text in string:
+							return message
+		return None
 
 	async def play_response(self, response, ctx):
 		await self.play_clip("dota:" + response.name, ctx)
@@ -347,6 +373,33 @@ class Dotabase(MangoCog):
 		else:
 			raise UserError("Don't know what hero yer talkin about")
 
+	@commands.command()
+	async def chatwheel(self, ctx, *, text):
+		"""Plays the given chat wheel sound
+
+		Try `{cmdpfx}chatwheel help` or `{cmdpfx}chatwheel list` and i will PM you a list of all of the chat wheel sounds
+
+		**Examples:**
+		`{cmdpfx}chatwheel disastah`
+		`{cmdpfx}chatwheel Wan Bu Liao La`
+		`{cmdpfx}chatwheel 玩不了啦`
+		`{cmdpfx}chatwheel eto g g`
+		`{cmdpfx}chatwheel Это ГГ`"""
+		if text.lower() in [ "help", "list" ]:
+			sounds = []
+			for message in session.query(ChatWheelMessage):
+				if message.sound:
+					sounds.append(f"{self.get_emoji('chat_wheel_sound')} {message.message}")
+			embed = discord.Embed(description="\n".join(sounds))
+			embed.set_author(name="Chat Wheel Sounds")
+			await ctx.author.send(embed=embed)
+			return
+
+		message = self.get_chatwheel_sound(text, True)
+		if message is None:
+			raise UserError(f"Couldn't find chat wheel sound '{text}'")
+
+		await self.play_clip(f"url:{self.vpkurl}{message.sound}", ctx)
 
 	@commands.command()
 	async def hero(self, ctx, *, hero : str):
