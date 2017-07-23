@@ -186,8 +186,6 @@ class Dotabase(MangoCog):
 			return None
 		for message in session.query(ChatWheelMessage):
 			if message.sound:
-				if message.id == text:
-					return message
 				strings = list(map(simplify, [ message.name, message.message, message.label ]))
 				if text in strings:
 					return message
