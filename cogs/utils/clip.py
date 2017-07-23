@@ -15,7 +15,7 @@ import requests
 def get_clipfile(clipname):
 	for root, dirs, files in os.walk(settings.resource("clips/")):
 		for file in files:
-			if re.search("^" + clipname + "\.(mp3|wav)$", file):
+			if re.search(f"^{re.escape(clipname)}\.(mp3|wav)$", file):
 				return os.path.join(root, file)
 	return None
 
