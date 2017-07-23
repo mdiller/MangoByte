@@ -53,11 +53,14 @@ async def on_ready():
 					guildinfo.voicechannel = None
 				else:
 					raise
+			except asyncio.TimeoutError:
+				guildinfo.voicechannel = None
 	
+	new_nick = bot.user.name + " v" + get_version()
 	for guild in bot.guilds:
 		if guild.me.guild_permissions.change_nickname:
-			if guild.me.nick is None or guild.me.nick.startswith(bot.user.name):
-				await guild.me.edit(nick=bot.user.name + " v" + get_version())
+			if guild.me.nick is None or (guild.me.nick.startswith(bot.user.name) and guild.me.nick != new_nick):
+				await guild.me.edit(nick=new_nick)
 
 async def get_cmd_signature(ctx):
 	bot.formatter.context = ctx
