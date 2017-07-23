@@ -9,6 +9,7 @@ import re
 import os
 import random
 import html
+import requests
 
 # Clip helper functions
 def get_clipfile(clipname):
@@ -23,8 +24,10 @@ def tts_save(filename, text):
 	try:
 		tts = gTTS(text=text, lang=settings.ttslang)
 		tts.save(filename)
-	except AttributeError as e:
+	except AttributeError:
 		raise UserError("Whoops. Looks like gtts is broken right now.")
+	except (RecursionError, requests.exceptions.HTTPError):
+		raise UserError("There was a problem converting that via gtts")
 
 class ClipNotFound(UserError):
 	def __init__(self, cliptype, clipname):
