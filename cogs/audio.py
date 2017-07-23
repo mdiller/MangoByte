@@ -311,9 +311,14 @@ class Audio(MangoCog):
 
 		await ctx.channel.trigger_typing()
 
-		filename = clip.name
+		if clip.type() == "url":
+			filename = clip.name.split("/")[-1]
+		else:
+			filename = clip.name
 
-		if re.search(r"[^a-zA-Z0-9_]", filename):
+		filename = re.sub(r"[^a-zA-Z0-9]", "", filename)
+
+		if filename == "" or len(filename) > 32:
 			filename = clip.type()
 
 		filename += os.path.splitext(clip.audiopath)[1]
