@@ -1,10 +1,12 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands.bot import _mention_pattern, _mentions_transforms
-from __main__ import settings, botdata, invite_link, httpgetter
+from __main__ import settings, botdata, invite_link, httpgetter, loggingdb_session
 from cogs.utils.helpers import *
 from cogs.utils import checks
 from cogs.audio import AudioPlayerNotFoundError
+from sqlalchemy import func
+import cogs.utils.loggingdb as loggingdb
 import string
 import random
 import datetime
@@ -111,6 +113,43 @@ class General(MangoCog):
 		owner = (await self.bot.application_info()).owner
 
 		embed.set_footer(text="MangoByte developed by {}".format(owner.name), icon_url=owner.avatar_url)
+
+		await ctx.send(embed=embed)
+
+	@commands.command()
+	async def invite(self, ctx):
+		"""Prints the invite link"""
+		await ctx.send(invite_link)
+
+	@commands.command()
+	async def botstats(self, ctx):
+		"""Displays some bot statistics"""
+		embed = discord.Embed(color=discord.Color.green())
+
+		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url)
+
+		embed.add_field(name="Servers/Guilds", value="{:,}".format(len(self.bot.guilds)))
+		embed.add_field(name="Registered Users", value="{:,}".format(len(list(filter(lambda user: user.steam32, botdata.userinfo_list())))))
+
+		commands = loggingdb_session.query(loggingdb.Message).filter(loggingdb.Message.command != None)
+		commands_weekly = commands.filter(loggingdb.Message.timestamp > datetime.datetime.utcnow() - datetime.timedelta(weeks=1))
+		embed.add_field(name="Commands", value=f"{commands.count():,}")
+		embed.add_field(name="Commands (This Week)", value=f"{commands_weekly.count():,}")
+
+
+		top_commands = loggingdb_session.query(loggingdb.Message.command, func.count(loggingdb.Message.command)).filter(loggingdb.Message.command != None).group_by(loggingdb.Message.command).order_by(func.count(loggingdb.Message.command).desc())
+		if top_commands.count() >= 3:
+			embed.add_field(name="Top Commands", value=(
+				f"`?{top_commands[0][0]}`\n"
+				f"`?{top_commands[1][0]}`\n"
+				f"`?{top_commands[2][0]}`\n"))
+
+		top_commands_weekly = top_commands.filter(loggingdb.Message.timestamp > datetime.datetime.utcnow() - datetime.timedelta(weeks=1))
+		if top_commands_weekly.count() >= 3:
+			embed.add_field(name="Top Commands (This Week)", value=(
+				f"`?{top_commands_weekly[0][0]}`\n"
+				f"`?{top_commands_weekly[1][0]}`\n"
+				f"`?{top_commands_weekly[2][0]}`\n"))
 
 		await ctx.send(embed=embed)
 
@@ -245,9 +284,6 @@ class General(MangoCog):
 		
 
 	async def on_message(self, message):
-		if message.content.startswith("?"):
-			await self.log_message(message)
-
 		if message.guild is not None and not botdata.guildinfo(message.guild.id).reactions:
 			return
 
@@ -266,6 +302,14 @@ class General(MangoCog):
 			if match and (random.random() < check.get("chance", 1.0)):
 				await message.add_reaction(random.choice(check["reaction"]))
 				break
+
+	async def on_command(self, ctx):
+		msg = loggingdb.convert_message(ctx)
+		loggingdb_session.add(msg)
+		loggingdb_session.commit()
+		print(msg)
+
+
 
 def setup(bot):
 	bot.add_cog(General(bot))

@@ -3,7 +3,7 @@ from cogs.utils.botdata import BotData
 from cogs.utils.settings import Settings
 from cogs.utils.helpers import *
 from cogs.utils.helpformatter import MangoHelpFormatter
-from cogs.utils.loggingdb import create_session
+import cogs.utils.loggingdb as loggingdb
 import traceback
 import asyncio
 import string
@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 
 botdata = BotData()
 settings = Settings()
-loggingdb_session = create_session(settings.resource("loggingdb.db"))
+loggingdb_session = loggingdb.create_session(settings.resource("loggingdb.db"))
 
 # This have to be done after loading settings
 from cogs.utils.clip import *
@@ -107,7 +107,7 @@ async def on_command_error(ctx, error):
 				f"Try `?help {ctx.command}` for a more detailed description of the command"))
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.Forbidden):
 			await print_missing_perms(ctx, error)
-		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.HTTPException) and error.original.code == 500:
+		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.HTTPException):
 			await ctx.send("Looks like there was a problem with discord just then. Try again in a bit.")
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
 			await ctx.send(error.original.message)

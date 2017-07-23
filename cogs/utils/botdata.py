@@ -175,4 +175,10 @@ class BotData:
 			guildinfos.append(GuildInfo(self, data['id']))
 		return guildinfos
 
+	def userinfo_list(self):
+		userinfos = []
+		for data in self.json_data['userinfo']:
+			userinfos.append(UserInfo(self, data["discord"]))
+		return userinfos
+
 

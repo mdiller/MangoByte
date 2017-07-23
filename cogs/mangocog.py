@@ -1,7 +1,6 @@
 from __main__ import settings, botdata, loggingdb_session
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
-from cogs.utils.loggingdb import convert_message
 
 
 
@@ -12,12 +11,6 @@ class MangoCog:
 
 	def get_emoji(self, key):
 		return self.emoji_dict.get(key, f":{key}:")
-
-	async def log_message(self, message):
-		msg = convert_message(message)
-		loggingdb_session.add(msg)
-		loggingdb_session.commit()
-		print(msg)
 
 	async def get_clip_try_types(self, clipid, trytypes=""):
 		trytypes = trytypes.split("|")
