@@ -32,7 +32,8 @@ invite_link = f"https://discordapp.com/oauth2/authorize?permissions={permissions
 
 deprecated_commands = {
 	"ttschannel": "config ttschannel",
-	"unttschannel": "config ttschannel none"
+	"unttschannel": "config ttschannel none",
+	"opendotasql": "https://www.opendota.com/explorer"
 }
 
 @bot.event

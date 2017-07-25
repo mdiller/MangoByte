@@ -4,7 +4,6 @@ import re
 import aiohttp
 from io import BytesIO
 
-default_error = "Http request failed with a {} error"
 default_cache = { "count": 0, "files": {} }
 
 class Cache:
@@ -83,6 +82,12 @@ class Cache:
 			if os.path.isfile(filename):
 				os.remove(filename)
 
+def raise_error(code, errors):
+	template = errors.get(code, errors.get("default", "Http request failed with a {} error"))
+	if code == 404:
+		raise Http404Error(template)
+	else:
+		raise HttpError(template, code)
 
 class HttpGetter:
 	def __init__(self):
@@ -107,11 +112,22 @@ class HttpGetter:
 					return BytesIO(await r.read())
 				else:
 					raise ValueError(f"Invalid return type '{return_type}'")
-
-			elif r.status == 404:
-				raise Http404Error(errors.get(404, default_error))
 			else:
-				raise HttpError(errors.get(r.status, default_error), r.status)
+				raise_error(r.status, errors)
+
+	async def post(self, url, return_type="json", errors={}):
+		async with self.session.post(url) as r:
+			if r.status == 200:
+				if return_type == "json":
+					return json.loads(await r.text(), object_pairs_hook=OrderedDict)
+				elif return_type == "text":
+					return await r.text()
+				elif return_type == "bytes":
+					return BytesIO(await r.read())
+				else:
+					raise ValueError(f"Invalid return type '{return_type}'")
+			else:
+				raise_error(r.status, errors)
 
 
 

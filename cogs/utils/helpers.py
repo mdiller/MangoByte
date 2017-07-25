@@ -62,9 +62,9 @@ class Thinker():
 
 class HttpError(UserError):
 	"""An http error with an error code"""
-	def __init__(self, message, err):
-		super().__init__(message.format(err))
-		self.err = err
+	def __init__(self, message, code):
+		super().__init__(message.format(code))
+		self.code = code
 
 
 class Http404Error(HttpError):

@@ -15,6 +15,7 @@ import urllib
 import functools
 import time
 import statistics
+import random
 from types import *
 from .mangocog import *
 
@@ -27,12 +28,19 @@ class SteamNotLinkedError(UserError):
 		else:
 			super().__init__("Yer steam account isn't linked to yer discord account yet.\nTry doin `?help setsteam` to see how to link a steam account.")
 
+class MatchNotParsedError(UserError):
+	def __init__(self, match_id, action=None):
+		self.action = action if action else "do that"
+		super().__init__(f"This match must be parsed before I can {self.action}.\nTry `?parse {match_id}` to request a parse.")
+
+opendota_html_errors = {
+	404: "Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com",
+	521: "Looks like the OpenDota API is down or somethin, so ya gotta wait a sec",
+	"default": "OpenDota said we did things wrong 😢. status code: {}"
+}
+
 async def opendota_query(querystring, cache=False):
-	return await httpgetter.get(f"https://api.opendota.com/api{querystring}", cache=cache, errors = {
-		404: "Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com",
-		521: "Looks like the OpenDota API is down or somethin, so ya gotta wait a sec",
-		"default": "OpenDota said we did things wrong 😢. status code: {}"
-	})
+	return await httpgetter.get(f"https://api.opendota.com/api{querystring}", cache=cache, errors=opendota_html_errors)
 
 # rate_limit = false if this is the only query we're sending
 async def get_match(match_id):
@@ -292,7 +300,7 @@ class DotaStats(MangoCog):
 
 	async def tell_match_story(self, game, is_radiant, ctx, perspective=None):
 		if not is_parsed(game):
-			raise UserError("This game must be parsed before I can create a story")
+			raise MatchNotParsedError(game["match_id"], "create a story")
 
 		if not perspective:
 			perspective = "The Radiant" if is_radiant else "The Dire"
@@ -948,6 +956,57 @@ class DotaStats(MangoCog):
 
 
 	@commands.command()
+	async def parse(self, ctx, match_id : int):
+		"""Requests that OpenDota parses a match
+
+		The input should be the match_id of the match
+
+		Note that matches from more than a couple days ago may not be able to be parsed because replay files are not saved that long"""
+		await ctx.message.add_reaction("⏳")
+		await ctx.send("⏳ Requesting a parse...", delete_after=5)
+
+		try:
+			data = await httpgetter.post(f"https://api.opendota.com/api/request/{match_id}", errors=opendota_html_errors)
+		except HttpError as e:
+			await ctx.message.remove_reaction("⏳", self.bot.user)
+			if e.code == 400:
+				await ctx.send("❌ Looks like that's not a valid match id")
+				return
+			raise
+
+		if data.get("status") == "failed" or data.get("err") is not None:
+			await ctx.message.remove_reaction("⏳", self.bot.user)
+			await ctx.send(f"❌ There was an error requesting the parse for match {match_id}")
+			return
+
+		jobId = data["job"]["jobId"]
+		await asyncio.sleep(3)
+
+		while True:
+			data = await opendota_query(f"/request/{jobId}", False)
+			if data["state"] == "active":
+				await asyncio.sleep(3)
+			elif data["state"] == "completed":
+				await ctx.message.remove_reaction("⏳", self.bot.user)
+				await ctx.message.add_reaction("✅")
+				await ctx.send(f"✅ Parsing of match {match_id} complete!", delete_after=10)
+				return
+			elif data["state"] == "failed":
+				await ctx.message.remove_reaction("⏳", self.bot.user)
+				fail_message = f"❌ Parsing of match {match_id} failed!"
+				if (time.time() -  60 * 60 * 24 * 7 * 3) > data["data"]["payload"]["start_time"]: # older than three weeks
+					random.seed(match_id)
+					fail_message += f"\n\n{random.choice([ '👴', '👵' ])} This is likely because the match is more than a few weeks old, so the replay has probably expired"
+				await ctx.send(fail_message)
+				return
+			else:
+				await ctx.message.remove_reaction("⏳", self.bot.user)
+				raise ValueError(f"Unrecognized response state: {json.dumps(data)}")
+
+
+
+
+	@commands.command()
 	async def opendota(self, ctx, *, query):
 		"""Queries the opendota api
 
@@ -966,28 +1025,6 @@ class DotaStats(MangoCog):
 
 		filename = re.search("/([/0-9a-zA-Z]+)", query).group(1).replace("/", "_")
 		filename = settings.resource(f"temp/{filename}.json")
-		helpers.write_json(filename, data)
-		await ctx.send(file=discord.File(filename))
-		os.remove(filename)
-
-
-	@commands.command()
-	async def opendotasql(self, ctx, *, sql):
-		"""Submits an sql query to the opendota database
-
-		Example:
-		`{cmdpfx}opendotasql SELECT * FROM matches limit 10`
-
-		Note that you should always have a limit argument at the end, as the api will stall if you request too many rows
-
-		You can check out their [create_tables script](https://github.com/odota/core/blob/master/sql/create_tables.sql) to get an idea of the structure of the database
-		"""
-		query = "/explorer?sql={}".format(urllib.parse.quote(sql, safe=''))
-
-		with ctx.channel.typing():
-			data = await opendota_query(query)
-
-		filename = settings.resource(f"temp/query_results.json")
 		helpers.write_json(filename, data)
 		await ctx.send(file=discord.File(filename))
 		os.remove(filename)
