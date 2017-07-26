@@ -999,6 +999,10 @@ class DotaStats(MangoCog):
 					fail_message += f"\n\n{random.choice([ '👴', '👵' ])} This is likely because the match is more than a few weeks old, so the replay has probably expired"
 				await ctx.send(fail_message)
 				return
+			elif data["state"] == "waiting":
+				await ctx.message.remove_reaction("⏳", self.bot.user)
+				await ctx.send(f"❌ OpenDota said we gotta wait before parsing match {match_id}")
+				return
 			else:
 				await ctx.message.remove_reaction("⏳", self.bot.user)
 				raise ValueError(f"Unrecognized response state: {json.dumps(data)}")
