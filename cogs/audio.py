@@ -126,6 +126,15 @@ class Audio(MangoCog):
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 		self.audioplayers = []
+		self.local_clipinfo = self.init_local_clipinfo()
+
+	def init_local_clipinfo(self):
+		infofile = settings.resource("clips/clipinfo.json")
+		if not os.path.isfile(infofile):
+			with open(infofile, 'w+') as f:
+				f.write("{}")
+			return {}
+		return read_json(infofile)
 
 	# gets the audioplayer for the current guild/channel/context
 	async def audioplayer(self, ctx, error_on_none=True):

@@ -3,7 +3,6 @@ from __main__ import settings
 from .helpers import *
 from gtts import gTTS
 import urllib.request
-import taglib
 import discord
 import re
 import os
@@ -67,22 +66,22 @@ class Clip(object):
 
 class LocalClip(Clip):
 	def __init__(self, clipname, bot):
-		clipfile = get_clipfile(clipname)
-		if clipfile == None:
-			raise ClipNotFound(self.type(), clipname)
+		audio = bot.get_cog("Audio")
+		clipinfos = audio.local_clipinfo
 
-		self.author = None
-		self.source = None
-		text = ""
-
-		if clipfile.endswith(".mp3"):
-			filedata = taglib.File(clipfile)
-			if filedata.tags.get('ARTIST'):
-				self.author = filedata.tags['ARTIST'][0]
-			if filedata.tags.get('SOURCE'):
-				self.source = filedata.tags['SOURCE'][0]
-			if filedata.tags.get('COMMENT'):
-				text = filedata.tags['COMMENT'][0]
+		if clipname in clipinfos:
+			info = clipinfos[clipname]
+			self.author = info.get("author")
+			self.source = info.get("source")
+			text = info.get("text", "")
+			clipfile = settings.resource("clips/" + info.get("path"))
+		else:
+			clipfile = get_clipfile(clipname)
+			if clipfile == None:
+				raise ClipNotFound(self.type(), clipname)
+			self.author = None
+			self.source = None
+			text = ""
 
 		Clip.__init__(self, clipname, clipfile, text=text)
 

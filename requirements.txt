@@ -5,4 +5,3 @@ gTTS>=1.1.8
 SQLAlchemy>=1.0.15
 Pillow==4.0.0
 wikipedia==1.4.0
-pytaglib==1.4.0
