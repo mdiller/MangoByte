@@ -40,4 +40,4 @@ class MangoCog:
 			clip = await self.get_clip(clip)
 
 		audio = self.bot.get_cog("Audio")
-		await (await audio.audioplayer(ctx)).queue_clip(clip)
+		await (await audio.audioplayer(ctx)).queue_clip(clip, ctx)

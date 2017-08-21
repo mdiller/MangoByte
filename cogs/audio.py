@@ -105,7 +105,7 @@ class AudioPlayer:
 		self.last_clip = clip
 
 	# try queueing an mp3 to play
-	async def queue_clip(self, clip):
+	async def queue_clip(self, clip, ctx):
 		if(self.voice is None):
 			print("tried to talk while not in voice channel")
 			await ctx.send("not in voice channel m8")
