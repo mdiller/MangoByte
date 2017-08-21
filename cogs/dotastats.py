@@ -492,7 +492,10 @@ class DotaStats(MangoCog):
 		matches = await opendota_query(f"/players/{steam32}/matches")
 
 		gamesplayed = len(matches)
-		winrate = "{:.2%}".format(len(list(filter(lambda m: m['radiant_win'] == (m['player_slot'] < 128), matches))) / gamesplayed)
+		if gamesplayed > 0:
+			winrate = "{:.2%}".format(len(list(filter(lambda m: m['radiant_win'] == (m['player_slot'] < 128), matches))) / gamesplayed)
+		else:
+			winrate = "0%"
 		if playerinfo.get("solo_competitive_rank") is not None:
 			solommr = f"**{playerinfo['solo_competitive_rank']}**"
 		else:
@@ -984,7 +987,7 @@ class DotaStats(MangoCog):
 
 		while True:
 			data = await opendota_query(f"/request/{jobId}", False)
-			
+
 			if data is not None:
 				await asyncio.sleep(3)
 			else:
