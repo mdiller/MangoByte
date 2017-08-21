@@ -984,28 +984,14 @@ class DotaStats(MangoCog):
 
 		while True:
 			data = await opendota_query(f"/request/{jobId}", False)
-			if data["state"] == "active":
+			
+			if data is not None:
 				await asyncio.sleep(3)
-			elif data["state"] == "completed":
-				await ctx.message.remove_reaction("⏳", self.bot.user)
-				await ctx.message.add_reaction("✅")
-				await ctx.send(f"✅ Parsing of match {match_id} complete!", delete_after=10)
-				return
-			elif data["state"] == "failed":
-				await ctx.message.remove_reaction("⏳", self.bot.user)
-				fail_message = f"❌ Parsing of match {match_id} failed!"
-				if (time.time() -  60 * 60 * 24 * 7 * 3) > data["data"]["payload"]["start_time"]: # older than three weeks
-					random.seed(match_id)
-					fail_message += f"\n\n{random.choice([ '👴', '👵' ])} This is likely because the match is more than a few weeks old, so the replay has probably expired"
-				await ctx.send(fail_message)
-				return
-			elif data["state"] == "waiting":
-				await ctx.message.remove_reaction("⏳", self.bot.user)
-				await ctx.send(f"❌ OpenDota said we gotta wait before parsing match {match_id}")
-				return
 			else:
 				await ctx.message.remove_reaction("⏳", self.bot.user)
-				raise ValueError(f"Unrecognized response state: {json.dumps(data)}")
+				await ctx.message.add_reaction("✅")
+				await ctx.send(f"✅ Parsing of match {match_id} has completed!", delete_after=10)
+				return
 
 
 
