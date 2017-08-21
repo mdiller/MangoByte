@@ -544,6 +544,8 @@ class Audio(MangoCog):
 
 	#function called when this event occurs
 	async def on_voice_state_update(self, member, before, after):
+		if member.bot and member.id != self.bot.user.id:
+			return # ignore bots except for mahself
 		if before and after and before.channel == after.channel:
 			return # if the member didnt change channels, dont worry about it
 		if before and before.channel and botdata.guildinfo(before.channel.guild).outros:
