@@ -753,6 +753,8 @@ class DotaStats(MangoCog):
 
 		You can also give a lane, and then the command will return stats for games you played in that lane
 
+		If you @mention someone in the command, it will get their hero stats instead
+
 		Lanes can only be calculated for matches that have been parsed
 		"""
 		player = None
