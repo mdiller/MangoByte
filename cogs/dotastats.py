@@ -762,9 +762,13 @@ class DotaStats(MangoCog):
 		if len(ctx.message.mentions) > 0:
 			if len(ctx.message.mentions) > 1:
 				raise UserError("Only mention one person. Can't do stats on multiple people here.")
-			for i in range(len(words)):
+				return
+			i = 0
+			while i < len(words):
 				if re.match(r'<@!?([0-9]+)>$', words[i]):
 					words.pop(i)
+				else:
+					i += 1
 			player = ctx.message.mentions[0]
 
 		steam32 = await get_check_steamid(player, ctx)
@@ -812,6 +816,10 @@ class DotaStats(MangoCog):
 		chosen_lane = find_lane()
 
 		hero_text = " ".join(words)
+
+		if hero_text == "":
+			await ctx.send(f"You have to give me a hero")
+			return
 
 		hero = self.lookup_hero(hero_text)
 		if not hero:
