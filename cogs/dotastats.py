@@ -755,7 +755,20 @@ class DotaStats(MangoCog):
 
 		Lanes can only be calculated for matches that have been parsed
 		"""
-		steam32 = await get_check_steamid(None, ctx)
+		player = None
+
+		words = hero.lower().replace("lane", "").split(" ")
+
+		if len(ctx.message.mentions) > 0:
+			if len(ctx.message.mentions) > 1:
+				raise UserError("Only mention one person. Can't do stats on multiple people here.")
+			for i in range(len(words)):
+				if re.match(r'<@!?([0-9]+)>$', words[i]):
+					words.pop(i)
+			player = ctx.message.mentions[0]
+
+		steam32 = await get_check_steamid(player, ctx)
+
 
 		lane_args = [
 			{
@@ -788,8 +801,6 @@ class DotaStats(MangoCog):
 				"filter": lambda p: p.get('is_roaming')
 			}
 		]
-
-		words = hero.lower().replace("lane", "").split(" ")
 
 		def find_lane():
 			for i in range(len(words)):
