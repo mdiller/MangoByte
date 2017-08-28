@@ -320,9 +320,9 @@ class Audio(MangoCog):
 			clipid = (await self.audioplayer(ctx)).last_clip.clipid
 
 		try:
-			clip = await self.get_clip(f"local:{clipid}")
+			clip = await self.get_clip(f"local:{clipid}", ctx)
 		except ClipNotFound:
-			clip = await self.get_clip(clipid)
+			clip = await self.get_clip(clipid, ctx)
 
 		await ctx.channel.trigger_typing()
 
@@ -381,7 +381,7 @@ class Audio(MangoCog):
 				await self.play_clip(intro, ctx)
 				return
 
-		clip = await self.get_clip_try_types(clipname, "local|dota")
+		clip = await self.get_clip_try_types(clipname, "local|dota", ctx)
 
 		audiolength = clip.audiolength
 
@@ -421,7 +421,7 @@ class Audio(MangoCog):
 				await self.play_clip(outro, ctx)
 				return
 
-		clip = await self.get_clip_try_types(clipname, "local|dota")
+		clip = await self.get_clip_try_types(clipname, "local|dota", ctx)
 
 		audiolength = clip.audiolength
 
@@ -464,12 +464,12 @@ class Audio(MangoCog):
 		"""
 		if ":" not in clip:
 			try:
-				clip = await self.get_clip(f"local:{clip}")
+				clip = await self.get_clip(f"local:{clip}", ctx)
 			except ClipNotFound:
 				await ctx.send(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
 				return
 		else:
-			clip = await self.get_clip(clip)
+			clip = await self.get_clip(clip, ctx)
 		text = clip.text.lower()
 		if text == "":
 			await ctx.send(f"I can't read this clip for tts 😕. Try a different one.")

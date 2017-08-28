@@ -273,7 +273,7 @@ class General(MangoCog):
 		random.seed(question)
 		for check in self.questions:
 			if re.search(check["regex"], question):
-				clip = await self.get_clip(f"dota:{random.choice(check['responses'])}")
+				clip = await self.get_clip(f"dota:{random.choice(check['responses'])}", ctx)
 				await ctx.send(clip.text)
 				try:
 					await self.play_clip(clip, ctx)

@@ -41,10 +41,6 @@ class Settings:
 		return self.json_data.get("error_logging", False)
 
 	@property
-	def ttslang(self):
-		return self.json_data["ttslang"]
-
-	@property
 	def debug(self):
 	    return self.json_data.get("debug", False)
 	

@@ -172,8 +172,14 @@ class BotData:
 		return UserInfo(self, userid)
 
 	def guildinfo(self, guildid):
+		if isinstance(guildid, discord.ext.commands.Context):
+			guildid = guildid.message.guild
+		if isinstance(guildid, discord.abc.GuildChannel):
+			guildid = guildid.guild
 		if isinstance(guildid, discord.Guild):
 			guildid = guildid.id
+		if guildid is None:
+			return None
 		return GuildInfo(self, guildid)
 
 	def guildinfo_list(self):

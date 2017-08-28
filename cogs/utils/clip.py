@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from __main__ import settings
+from __main__ import settings, botdata
 from .helpers import *
 from gtts import gTTS
 import urllib.request
@@ -18,10 +18,10 @@ def get_clipfile(clipname):
 				return os.path.join(root, file)
 	return None
 
-def tts_save(filename, text):
+def tts_save(filename, text, lang="en-au"):
 	# run_command(["pico2wave", "--wave", filename, "-l", "en-GB", text])
 	try:
-		tts = gTTS(text=text, lang=settings.ttslang)
+		tts = gTTS(text=text, lang=lang)
 		tts.save(filename)
 	except AttributeError:
 		raise UserError("Whoops. Looks like gtts is broken right now.")
@@ -65,7 +65,7 @@ class Clip(object):
 
 
 class LocalClip(Clip):
-	def __init__(self, clipname, bot):
+	def __init__(self, clipname, bot, ctx):
 		audio = bot.get_cog("Audio")
 		clipinfos = audio.local_clipinfo
 
@@ -108,9 +108,13 @@ class LocalClip(Clip):
 
 
 class TtsClip(Clip):
-	def __init__(self, text, bot):
+	def __init__(self, text, bot, ctx):
 		tempfile = settings.resource("temp/{}.wav".format(int(random.random() * 1000000000)))
-		tts_save(tempfile, text)
+		data = botdata.guildinfo(ctx)
+		if data:
+			tts_save(tempfile, text, data.ttslang)
+		else:
+			tts_save(tempfile, text)
 		Clip.__init__(self, text, tempfile, text)
 
 	@classmethod
@@ -119,7 +123,7 @@ class TtsClip(Clip):
 
 
 class UrlClip(Clip):
-	def __init__(self, url, bot):
+	def __init__(self, url, bot, ctx):
 		# TODO: add checking for valid url for ffmpeg
 		if not re.match(r'^https?://.*\.(mp3|wav)$', url):
 			raise UserError("That's not a valid mp3 or wav url")
@@ -134,7 +138,7 @@ class UrlClip(Clip):
 		return "url"
 
 class DotaClip(Clip):
-	def __init__(self, responsename, bot):
+	def __init__(self, responsename, bot, ctx):
 		dotabase = bot.get_cog("Dotabase")
 		self.response = dotabase.get_response(responsename)
 		if self.response == None:

@@ -35,7 +35,6 @@ You should now be done! You can run mangobyte by calling `python3.6 mangobyte.py
 ```json
 {
 	"token": "<token here>",
-	"ttslang": "en-au",
 	"error_logging": false,
 	"debug": false
 }
