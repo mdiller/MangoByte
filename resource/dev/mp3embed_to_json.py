@@ -29,7 +29,8 @@ def grab_file_infos(clipinfos):
 		for file in files:
 			match = re.search(r"^(.+)\.(mp3|wav)$", file)
 			if match:
-				clipinfos[match.group(1)] = grab_info(os.path.join(root, file))
+				if match.group(1) not in clipinfos:
+					clipinfos[match.group(1)] = grab_info(os.path.join(root, file))
 
 def update_clipinfo(filename):
 	data = OrderedDict({})
