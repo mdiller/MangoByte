@@ -1,6 +1,6 @@
 import discord
-from cogs.utils.botdata import BotData
 from cogs.utils.settings import Settings
+from cogs.utils.botdata import BotData
 from cogs.utils.helpers import *
 from cogs.utils.helpformatter import MangoHelpFormatter
 import cogs.utils.loggingdb as loggingdb

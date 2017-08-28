@@ -125,6 +125,13 @@ class GuildInfo(BotDataItem):
 			"type": bool,
 			"description": "Allows mangobyte to announce when users leave the voice channel that mangobyte is currently in",
 			"example": "disable"
+		},
+		{
+			"key": "ttslang",
+			"default": "en-au",
+			"type": "GttsLang",
+			"description": "Sets the language/voice that mangobyte will use to speak using the `?tts` command. To see a list of all of the possible languages, check out [this file](https://github.com/mdiller/MangoByte/blob/master/resource/json/gtts_languages.json) in the github repo",
+			"example": "Russian"
 		}
 	]
 

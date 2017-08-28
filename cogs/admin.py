@@ -3,6 +3,7 @@ from discord.ext import commands
 from __main__ import settings, botdata, httpgetter
 from cogs.utils.helpers import *
 from cogs.utils.botdata import GuildInfo
+from cogs.utils.clip import GttsLang
 from cogs.utils import checks
 from .mangocog import *
 
@@ -95,6 +96,8 @@ class Admin(MangoCog):
 			embed.add_field(name="Value", value=f"<#{value}>" if value else "None")
 		elif var["type"] == discord.Role:
 			embed.add_field(name="Value", value=f"<@&{value}>" if value else "None")
+		elif var["type"] == "GttsLang":
+			embed.add_field(name="Value", value=GttsLang(value).pretty)
 		else:
 			raise ValueError("I don't know how to parse this type")
 		embed.add_field(name="Example", value=f"`?config {var['key']} {var['example']}`")
@@ -123,6 +126,12 @@ class Admin(MangoCog):
 				return channel.id
 			except commands.BadArgument:
 				raise UserError("Invalid input. Give me a role reference like `@BotAdmin`")
+		elif var["type"] == "GttsLang":
+			lang = GttsLang.get(value)
+			if lang is None:
+				raise UserError("Invalid input. See https://github.com/mdiller/MangoByte/blob/master/resource/json/gtts_languages.json for valid langs")
+			else:
+				return lang.lang
 		else:
 			raise ValueError("I don't know how to parse this type")
 		embed.add_field(name="Example", value=f"`?config {var['key']} {var['example']}`")

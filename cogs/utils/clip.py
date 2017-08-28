@@ -154,4 +154,28 @@ class DotaClip(Clip):
 
 		return text
 
+gtts_langs = read_json(settings.resource("json/gtts_languages.json"))
 
+class GttsLang():
+	def __init__(self, language):
+		language = language.lower()
+		self.lang = None
+		for lang in gtts_langs:
+			if lang.lower() == language or gtts_langs[lang].lower() == language:
+				self.lang = lang
+		if self.lang is None:
+			raise ValueError(f"'{language}' is not a valid gtts lang")
+
+	@property
+	def pretty(self):
+		return gtts_langs[self.lang]
+
+	def __repr__(self):
+		return self.lang
+
+	@classmethod
+	def get(cls, language):
+		try:
+			return GttsLang(language)
+		except ValueError:
+			return None
