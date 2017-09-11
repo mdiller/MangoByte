@@ -1,4 +1,5 @@
 import discord
+import youtube_dl
 from discord.ext import commands
 from __main__ import settings, botdata, httpgetter
 from cogs.utils.helpers import *
@@ -6,6 +7,14 @@ from cogs.utils.botdata import GuildInfo
 from cogs.utils.clip import GttsLang
 from cogs.utils import checks
 from .mangocog import *
+
+def gettime(timestr):
+	parts = timestr.split(":")
+	if len(parts) == 2:
+		return (int(parts[0]) * 60) + float(parts[1])
+	if len(parts) == 1:
+		return float(parts[0])
+	raise ValueError("Only minutes:seconds supported")
 
 class Admin(MangoCog):
 	"""Administrative commands
@@ -173,6 +182,60 @@ class Admin(MangoCog):
 				emoji_json[emoji.name] = f"<:{emoji.name}:{emoji.id}>"
 		write_json(settings.resource("json/emoji.json"), emoji_json)
 		await ctx.send("done!")
+
+
+	@checks.is_owner()
+	@commands.command(hidden=True)
+	async def addclip(self, ctx, url, clipname, start, end, start_fade=0.25, end_fade=0.25):
+		"""Adds a clip from youtube"""
+		outfile = settings.resource(f"clips/{clipname}.mp3")
+		start = gettime(start)
+		end = gettime(end)
+		duration = end - start
+
+		matches = [
+			re.match(r"https?://(?:www\.)?youtube\.com/watch\?v=([0-9a-zA-Z]*)", url),
+			re.match(r"https?://(?:www\.)?youtu\.be/([0-9a-zA-Z]*)", url),
+			re.match(r"([0-9a-zA-Z]*)", url)
+		]
+		youtube_id = None
+		for match in matches:
+			if match:
+				youtube_id = match.group(1)
+				break
+		if youtube_id is None:
+			raise UserError("This doesnt look like a youtube url or an id")
+
+		video_file = settings.resource(f"cache/youtube/{youtube_id}.mp3")
+
+		options = {
+			'format': 'bestaudio/best',
+			'extractaudio' : True,
+			'audioformat' : "mp3",
+			'outtmpl': video_file,
+			'source_address': '0.0.0.0',
+			'noplaylist' : True,
+			'nooverwrites': True,
+		}
+		if not os.path.exists(video_file):
+			with youtube_dl.YoutubeDL(options) as ydl:
+				ydl.download([youtube_id])
+
+		fadefilter = f"afade=t=in:ss=0:d={start_fade},afade=t=out:st={duration - end_fade}:d={end_fade}"
+
+		# Converting / Cropping
+		run_command(["ffmpeg", "-ss", str(start), "-t", str(duration), "-y", "-i", video_file, "-af", fadefilter, outfile ])
+
+		audio = self.bot.get_cog("Audio")
+		audio.local_clipinfo[clipname] = OrderedDict([
+			('path', f"{clipname}.mp3"),
+			('source', f"https://www.youtube.com/watch?v={youtube_id}"),
+			('start', start),
+			('end', end)
+		])
+
+		# Playing
+		await self.play_clip(f"local:{clipname}", ctx)
 
 
 def setup(bot):
