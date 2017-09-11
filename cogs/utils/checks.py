@@ -18,10 +18,10 @@ def is_owner():
 def is_admin_check(channel, ctx, user=None):
 	if user is None:
 		user = ctx.message.author
-	if isinstance(channel, discord.abc.PrivateChannel):
-		return False # All admin commands should be guild specific and not work on PM channels
 	if is_owner_check(user):
 		return True
+	if isinstance(channel, discord.abc.PrivateChannel):
+		return False # All admin commands should be guild specific and not work on PM channels
 	admin_role = botdata.guildinfo(ctx.message.guild).botadmin
 	if admin_role:
 		admin_role = discord.utils.get(ctx.guild.roles, id=admin_role)
