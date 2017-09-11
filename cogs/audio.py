@@ -136,6 +136,11 @@ class Audio(MangoCog):
 			return {}
 		return read_json(infofile)
 
+	def save_local_clipinfo(self):
+		infofile = settings.resource("clips/clipinfo.json")
+		write_json(infofile, self.local_clipinfo)
+
+
 	# gets the audioplayer for the current guild/channel/context
 	async def audioplayer(self, ctx, error_on_none=True):
 		# TODO: ACCOUNT FOR WHEN THIS MESSAGE IS A PM

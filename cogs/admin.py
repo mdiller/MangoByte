@@ -233,10 +233,26 @@ class Admin(MangoCog):
 			('start', start),
 			('end', end)
 		])
+		audio.save_local_clipinfo()
 
 		# Playing
 		await self.play_clip(f"local:{clipname}", ctx)
 
+	@checks.is_owner()
+	@commands.command(hidden=True)
+	async def editclipinfo(self, ctx, clipname, text="", author=""):
+		"""allows editing of a clips info"""
+		audio = self.bot.get_cog("Audio")
+		if clipname not in audio.local_clipinfo:
+			raise UserError("That clip doesn't exist")
+
+		if text and text != "":
+			audio.local_clipinfo[clipname]["text"] = text
+
+		if author and author != "":
+			audio.local_clipinfo[clipname]["author"] = author
+
+		audio.save_local_clipinfo()
 
 def setup(bot):
 	bot.add_cog(Admin(bot))
