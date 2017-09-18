@@ -555,7 +555,7 @@ class Audio(MangoCog):
 			return # if the member didnt change channels, dont worry about it
 		if before and before.channel and botdata.guildinfo(before.channel.guild).outros:
 			beforeplayer = await self.audioplayer(before.channel, error_on_none=False)
-			if beforeplayer is not None and beforeplayer.voice.channel.id == before.channel.id:
+			if beforeplayer is not None and beforeplayer.voice is not None and beforeplayer.voice.channel.id == before.channel.id:
 				text = (await self.fix_name(member.name)) + " has left!"
 				print(text)
 				outroclip = "local:farewell"
@@ -569,7 +569,7 @@ class Audio(MangoCog):
 				await self.play_clip("tts:" + text, before.channel)
 		if after and after.channel and botdata.guildinfo(after.channel.guild).intros:
 			afterplayer = await self.audioplayer(after.channel, error_on_none=False)
-			if afterplayer is not None and afterplayer.voice.channel.id == after.channel.id:
+			if afterplayer is not None and afterplayer.voice is not None and afterplayer.voice.channel.id == after.channel.id:
 				if member.id == self.bot.user.id:
 					botdata.guildinfo(after.channel.guild.id).voicechannel = after.channel.id
 
