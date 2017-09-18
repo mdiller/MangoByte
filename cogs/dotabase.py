@@ -71,14 +71,14 @@ def extract_var(words, variables):
 class Dotabase(MangoCog):
 	"""Dota hero responses and info
 
-	Interfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.me](http://dotabase.me) if you want to see a website that interfaces with dotabase."""
+	Interfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see a website that interfaces with dotabase."""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 		self.session = session
 		self.criteria_aliases = read_json(settings.resource("json/criteria_aliases.json"))
 		self.hero_aliases = {}
 		self.build_aliases()
-		self.vpkurl = "http://dotabase.me/dota-vpk"
+		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
 		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos())
 
 	def build_aliases(self):
@@ -230,7 +230,7 @@ class Dotabase(MangoCog):
 		`{cmdpfx}dota juggernaut bottling`
 		A few critera you can use are: kill, bottling, cooldown, acknowledge, immortality, nomana, and select
 
-		To search for a response without asking mangobyte, try using the [Response Searcher](http://dotabase.me/responses/) at Dotabase.me
+		To search for a response without asking mangobyte, try using the [Response Searcher](http://dotabase.dillerm.io/responses/)
 		ProTip: If you click the discord button next to the response in the above web app, it will copy to your clipboard in the format needed to play using the bot."""
 		query = await self.dota_keyphrase_query(keyphrase)
 
