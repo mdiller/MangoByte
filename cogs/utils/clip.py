@@ -125,6 +125,7 @@ class TtsClip(Clip):
 class UrlClip(Clip):
 	def __init__(self, url, bot, ctx):
 		# TODO: add checking for valid url for ffmpeg
+		url = re.sub(r"^https://", "http://", url)
 		if not re.match(r'^https?://.*\.(mp3|wav)$', url):
 			raise UserError("That's not a valid mp3 or wav url")
 		try:

@@ -108,8 +108,7 @@ class AudioPlayer:
 	async def queue_clip(self, clip, ctx):
 		if(self.voice is None):
 			print("tried to talk while not in voice channel")
-			await ctx.send("not in voice channel m8")
-			return
+			raise UserError("not in voice channel m8")
 
 		self.clipqueue.put(clip)
 
@@ -197,7 +196,8 @@ class Audio(MangoCog):
 	async def disconnect(self, guild):
 		audioplayer = await self.audioplayer(guild)
 		if audioplayer is not None:
-			await audioplayer.voice.disconnect()
+			if audioplayer.voice is not None:
+				await audioplayer.voice.disconnect()
 			self.audioplayers.remove(audioplayer)
 
 	@commands.command()
