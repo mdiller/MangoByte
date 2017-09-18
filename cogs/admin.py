@@ -1,5 +1,7 @@
 import discord
 import youtube_dl
+import asyncio
+import shutil
 from discord.ext import commands
 from __main__ import settings, botdata, httpgetter
 from cogs.utils.helpers import *
@@ -77,8 +79,12 @@ class Admin(MangoCog):
 		audio = self.bot.get_cog("Audio")
 		if not audio:
 			raise UserError("You must have the Audio cog enabled to do this")
-		await audio.connect_voice(channel)
-		botdata.guildinfo(channel.guild.id).voicechannel = channel.id
+		try:
+			await audio.connect_voice(channel)
+			botdata.guildinfo(channel.guild.id).voicechannel = channel.id
+		except asyncio.TimeoutError:
+			raise UserError("There was a timeout when attempting to do the `?summon`")
+
 
 	@commands.command()
 	async def unsummon(self, ctx):
@@ -239,20 +245,46 @@ class Admin(MangoCog):
 		await self.play_clip(f"local:{clipname}", ctx)
 
 	@checks.is_owner()
-	@commands.command(hidden=True)
-	async def editclipinfo(self, ctx, clipname, text="", author=""):
-		"""allows editing of a clips info"""
+	@commands.command(hidden=True, aliases=["editclip"])
+	async def editclipinfo(self, ctx, clipname, attribute, *, value):
+		"""Allows editing of a clip's info
+
+		warning: volume actually edits the clip, and is a multiplier (0.5 cuts in half, 2 doubles)
+
+		Example:
+		`{cmdpfx}editclipinfo wow text Waow!`"""
 		audio = self.bot.get_cog("Audio")
 		if clipname not in audio.local_clipinfo:
 			raise UserError("That clip doesn't exist")
 
-		if text and text != "":
-			audio.local_clipinfo[clipname]["text"] = text
+		attribs = [
+			"text",
+			"author",
+			"source",
+			"start",
+			"end"
+		]
 
-		if author and author != "":
-			audio.local_clipinfo[clipname]["author"] = author
+		if value is None or value == "":
+			raise UserError("Gotta gimme a value")
 
+		if attribute == "volume":
+			filename = settings.resource("clips/" + audio.local_clipinfo[clipname]["path"])
+			temp_file = settings.resource(f"temp/temp_{clipname}" + os.path.splitext(filename)[1])
+			run_command(["ffmpeg", "-i", filename, "-af", f"volume={value}", temp_file])
+			shutil.copyfile(temp_file, filename)
+			os.remove(temp_file)
+			await self.play_clip(f"local:{clipname}", ctx)
+			await ctx.message.add_reaction("✅")
+			return
+
+		if attribute not in attribs:
+			attribs_string = "\n".join(attribs)
+			raise UserError(f"Invalid attribute name, try one of these:```\n{attribs_string}\n```")
+
+		audio.local_clipinfo[clipname][attribute] = value
 		audio.save_local_clipinfo()
+		await ctx.message.add_reaction("✅")
 
 def setup(bot):
 	bot.add_cog(Admin(bot))
