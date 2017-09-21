@@ -85,7 +85,13 @@ class AudioPlayer:
 		if error:
 			print(f"Error on voice.play: {error.message}")
 		if not self.clipqueue.empty():
-			self.play_next_clip()
+			coro = self.play_next_clip()
+			fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
+			try:
+				fut.result()
+			except:
+				print(f"Error playing next clip")
+				pass
 
 	# gets the next clip from the clip queue
 	def next_clip(self):
@@ -94,9 +100,13 @@ class AudioPlayer:
 		raise ValueError("clip queue was empty when we tried to get the next one")
 
 	# plays the next clip in the queue
-	def play_next_clip(self):
+	async def play_next_clip(self):
 		clip = self.next_clip()
-		self.voice.play(discord.FFmpegPCMAudio(clip.audiopath), after=lambda e: self.done_talking(e))
+		audiofile = clip.audiopath
+		if re.match(r'^https?://.*\.(mp3|wav)$', audiofile): # cache any clips from urls
+			audiofile = await httpgetter.get(audiofile, "filename", True)
+
+		self.voice.play(discord.FFmpegPCMAudio(audiofile), after=self.done_talking)
 		self.voice.source = discord.PCMVolumeTransformer(self.voice.source)
 		self.voice.source.volume = clip.volume
 		print("playing: " + clip.audiopath)
@@ -113,7 +123,7 @@ class AudioPlayer:
 		self.clipqueue.put(clip)
 
 		if self.voice and not self.voice.is_playing():
-			self.play_next_clip()
+			await self.play_next_clip()
 
 
 

@@ -51,6 +51,8 @@ class Cache:
 		elif return_type == "bytes":
 			with open(filename, "rb") as f:
 				return BytesIO(f.read())
+		elif return_type == "filename":
+			return filename
 		else:
 			raise ValueError(f"Invalid return type '{return_type}'")
 
@@ -61,7 +63,7 @@ class Cache:
 				filename += ".json"
 			elif return_type == "text":
 				filename += ".txt"
-			elif return_type == "bytes":
+			elif return_type in ["filename", "bytes"]:
 				match = re.search(r"(\.[a-z0-9]{1,6})$", url.lower())
 				if match:
 					filename += match.group(1)
@@ -103,6 +105,8 @@ class HttpGetter:
 			if r.status == 200:
 				if cache:
 					await self.cache.save(url, return_type, r)
+					if return_type == "filename":
+						return self.cache.get_filename(url)
 
 				if return_type == "json":
 					return json.loads(await r.text(), object_pairs_hook=OrderedDict)

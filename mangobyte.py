@@ -17,9 +17,9 @@ settings = Settings()
 loggingdb_session = loggingdb.create_session(settings.resource("loggingdb.db"))
 
 # This have to be done after loading settings
-from cogs.utils.clip import *
 from cogs.utils.httpgetter import HttpGetter
 httpgetter = HttpGetter()
+from cogs.utils.clip import *
 
 description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 				For more information about me, try `{cmdpfx}info`"""

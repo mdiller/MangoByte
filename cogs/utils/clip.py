@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from __main__ import settings, botdata
+from __main__ import settings, botdata, httpgetter
 from .helpers import *
 from gtts import gTTS
 import urllib.request
