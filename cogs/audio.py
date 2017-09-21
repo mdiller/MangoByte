@@ -503,6 +503,10 @@ class Audio(MangoCog):
 			return
 		dotabase = self.bot.get_cog("Dotabase")
 		if dotabase:
+			if simple_message in [ "haha", "lol" ]:
+				await dotabase.hero_keyphrase_command(";laugh", None, ctx)
+				return
+
 			clip = dotabase.get_chatwheel_sound_clip(message)
 			if clip:
 				await self.play_clip(clip, ctx)
