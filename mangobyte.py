@@ -9,6 +9,7 @@ import asyncio
 import string
 from discord.ext import commands
 import logging
+import datetime
 
 logging.basicConfig(level=logging.INFO)
 
@@ -150,11 +151,14 @@ def report_error(message, error, skip_lines=2):
 			del trace[1:(skip_lines + 1)]
 		trace = [x for x in trace if x] # removes empty lines
 
+	now_time = datetime.datetime.now() - datetime.timedelta(hours=3)
+
 	error_list.append({
 		"author": message.author.id,
 		"message_id": message.id,
 		"message": message.clean_content,
 		"message_full": message.content,
+		"date": now_time.strftime("%b %d  %-I:%M %p"),
 		"command_error": type(error).__name__,
 		"error": str(error),
 		"traceback": trace
