@@ -10,14 +10,6 @@ import random
 import html
 import requests
 
-# Clip helper functions
-def get_clipfile(clipname):
-	for root, dirs, files in os.walk(settings.resource("clips/")):
-		for file in files:
-			if re.search(f"^{re.escape(clipname)}\.(mp3|wav)$", file):
-				return os.path.join(root, file)
-	return None
-
 def tts_save(filename, text, lang="en-au"):
 	# run_command(["pico2wave", "--wave", filename, "-l", "en-GB", text])
 	try:
@@ -69,19 +61,18 @@ class LocalClip(Clip):
 		audio = bot.get_cog("Audio")
 		clipinfos = audio.local_clipinfo
 
-		if clipname in clipinfos:
-			info = clipinfos[clipname]
-			self.author = info.get("author")
-			self.source = info.get("source")
-			text = info.get("text", "")
-			clipfile = settings.resource("clips/" + info.get("path"))
-		else:
-			clipfile = get_clipfile(clipname)
-			if clipfile == None:
-				raise ClipNotFound(self.type(), clipname)
-			self.author = None
-			self.source = None
-			text = ""
+		if not clipname in clipinfos:
+			raise ClipNotFound(self.type, clipname)
+
+		info = clipinfos[clipname]
+		self.author = info.get("author")
+		self.source = info.get("source")
+		self.tags = info.get("tags")
+		if self.tags:
+			self.tags = self.tags.split("|")
+
+		text = info.get("text", "")
+		clipfile = settings.resource("clips/" + info.get("path"))
 
 		Clip.__init__(self, clipname, clipfile, text=text)
 
@@ -102,7 +93,8 @@ class LocalClip(Clip):
 			result += "\n\n"
 		if self.source:
 			result += f"**Source:** {self.source}\n"
-		result += "*From the '{}' section*".format(os.path.basename(os.path.dirname(self.audiopath)))
+		if self.tags:
+			result += f"*Tags: {', '.join(self.tags)}*"
 		return result
 
 

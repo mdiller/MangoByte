@@ -26,24 +26,6 @@ class AudioPlayerNotFoundError(UserError):
 	def __init__(self, message):
 		self.message = message
 
-def get_clipdirs():
-	result = []
-	for root, dirs, files in os.walk(settings.resource("clips/")):
-		for d in dirs:
-			result.append(d)
-	result.sort()
-	return result
-
-# gets a list of all the mp3s in the indicated clipdir
-def get_playlist(clipdir):
-	clips = []
-	for root, dirs, files in os.walk(settings.resource("clips/" + clipdir)):
-		for file in files:
-			if file.endswith(".mp3") or file.endswith(".wav"):
-				clips.append(file[:-4])
-	clips.sort()
-	return clips
-
 def remove_if_temp(mp3name):
 	if os.path.isfile(mp3name):
 		if os.path.dirname(mp3name) == settings.resource("temp"):
@@ -139,11 +121,32 @@ class Audio(MangoCog):
 
 	def init_local_clipinfo(self):
 		infofile = settings.resource("clips/clipinfo.json")
-		if not os.path.isfile(infofile):
-			with open(infofile, 'w+') as f:
-				f.write("{}")
-			return {}
-		return read_json(infofile)
+		if os.path.isfile(infofile):
+			clipinfos = read_json(infofile)
+		else:
+			clipinfos = {}
+		clipsdir = settings.resource("clips/")
+		for root, dirs, files in os.walk(clipsdir):
+			for file in files:
+				match = re.search(r"clips/((?:.*/)?([^/]+)\.(?:mp3|wav))", os.path.join(root, file))
+				if match:
+					path = match.group(1)
+					name = match.group(2)
+					if name not in clipinfos:
+						found = False
+						for clipname in clipinfos:
+							if clipinfos[clipname]["path"] == path:
+								found = True
+								break
+						if not found:
+							info = { "path": path }
+							in_dir = re.search(r"(.+)/(?:.+)\.(?:mp3|wav)", path)
+							if in_dir:
+								info["tags"] = in_dir.group(1)
+							clipinfos[name] = info
+
+		write_json(infofile, clipinfos)
+		return clipinfos
 
 	def save_local_clipinfo(self):
 		infofile = settings.resource("clips/clipinfo.json")
@@ -238,48 +241,59 @@ class Audio(MangoCog):
 
 			
 
-	@commands.command()
-	async def playlist(self, ctx, section : str=None):
-		"""Lists the audio clips available for the play command
+	@commands.command(aliases=["playlist"])
+	async def clips(self, ctx, tag : str=None):
+		"""Lists the local audio clips available for the play command
 
-		Calling this command with no arguments gets you a list of sections and a list of all of the clips
+		Calling this command with no arguments gets you a list of all of the clips
 
-		To get the clips in a specific section, do `{cmdpfx}playlist <section>`
+		To get the clips that have a specific tag, do `{cmdpfx}clips <tag>`
 
-		You can also do `{cmdpfx}playlist new` to get the 10 newest clips"""
-		dirs = get_clipdirs()
+		To get a list of all of the possible clip tags, try `{cmdpfx}clips tags`
 
+		You can also do `{cmdpfx}clips new` to get the 10 newest clips"""
 		message = ""
 		clips = []
+		sort = True
 
-		if section is None:
-			message += "**Sections:**\n"
-			for section in dirs:
-				message += "`{}` ".format(section)
+		if tag is None:
 			message += "\n**Clips:**\n"
-			for section in dirs:
-				clips += get_playlist(section)
-		elif section in [ "recent", "latest", "new" ]:
+			for clipname in self.local_clipinfo:
+				clips.append(clipname)
+		elif tag in [ "recent", "latest", "new" ]:
 			clips = {}
-			for root, dirs, files in os.walk(settings.resource("clips/")):
-				for file in files:
-					if file.endswith(".mp3") or file.endswith(".wav"):
-						clips[file[:-4]] = os.path.getctime(os.path.join(root, file))
-			clips = sorted(clips.items(), key=lambda x: x[1], reverse=True)
-			for clip in clips[:10]:
-				message += f"`{clip[0]}`\n"
-			clips = []
-		elif section not in dirs:
-			message +=("Dats not a valid section. You can choose from one of these:\n")
-			for section in dirs:
-				message += "`{}` ".format(section)
+			for clipname in self.local_clipinfo:
+				clips[clipname] = os.path.getctime(settings.resource(f"clips/{self.local_clipinfo[clipname]['path']}"))
+			clips = list(map(lambda x: x[0], sorted(clips.items(), key=lambda x: x[1], reverse=True)))
+			clips = clips[:10]
+			sort = False
+		elif tag in [ "tags", "sections" ]:
+			message += "\n**Tags:**\n"
+			for clipname in self.local_clipinfo:
+				tags = self.local_clipinfo[clipname].get("tags")
+				if tags:
+					tags = tags.split("|")
+					for t in tags:
+						if t not in clips:
+							clips.append(t)
 		else:
-			clips = get_playlist(section)
+			for clipname in self.local_clipinfo:
+				tags = self.local_clipinfo[clipname].get("tags")
+				if tags:
+					tags = tags.split("|")
+					if tag in tags:
+						clips.append(clipname)
+			if not clips:
+				raise UserError("No clips not found for that tag")
 
 		if len(clips) > 0:
-			clips.sort()
+			if sort:
+				clips.sort()
+			clip_format = "`{}` "
+			if len(clips) <= 10:
+				clip_format = "`{}`\n"
 			for clip in clips:
-				message += "`{}` ".format(clip)
+				message += clip_format.format(clip)
 
 		await ctx.send(message)
 
