@@ -286,5 +286,23 @@ class Admin(MangoCog):
 		audio.save_local_clipinfo()
 		await ctx.message.add_reaction("✅")
 
+	@checks.is_owner()
+	@commands.command(hidden=True, aliases=["botdata"])
+	async def getbotdata(self, ctx, selector, identifier : int):
+		"""Gets info about a user or a server, depending on the selector given"""
+		if selector in ["user", "player", "member"]:
+			data = botdata.userinfo(identifier)
+			user = self.bot.get_user(identifier)
+
+			embed = discord.Embed(description=(user.mention + "\n```json\n" + json.dumps(data.json_data, indent='\t') + "\n```"))
+			embed.set_thumbnail(url=user.avatar_url)
+			if data.steam32:
+				embed.add_field(name="Profiles", value=(
+					f"[Steam](http://steamcommunity.com/id/{data.steam32})\n"
+					f"[OpenDota](https://www.opendota.com/players/{data.steam32})\n"))
+			await ctx.send(data.intro, embed=embed)
+		elif selector in ["server", "guild"]:
+			await ctx.send("hi")
+
 def setup(bot):
 	bot.add_cog(Admin(bot))
