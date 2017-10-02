@@ -308,11 +308,18 @@ class Admin(MangoCog):
 			guild = self.bot.get_guild(identifier)
 			if guild is None:
 				raise UserError("Couldn't find that guild")
+			invite = None
+			for channel in guild.text_channels:
+				if channel.permissions_for(guild.me).create_instant_invite:
+					invite = await channel.create_invite()
+					break
 
 			embed = discord.Embed(description=("```json\n" + json.dumps(data.json_data, indent='\t') + "\n```"))
 			embed.set_author(name=guild.name)
 			if guild.icon_url != "":
 				embed.set_thumbnail(url=guild.icon_url)
+			if invite:
+				embed.add_field(name="Invite", value=invite.url)
 			await ctx.send(embed=embed)
 
 def setup(bot):
