@@ -293,6 +293,8 @@ class Admin(MangoCog):
 		if selector in ["user", "player", "member"]:
 			data = botdata.userinfo(identifier)
 			user = self.bot.get_user(identifier)
+			if user is None:
+				raise UserError("Couldn't find that user")
 
 			embed = discord.Embed(description=(user.mention + "\n```json\n" + json.dumps(data.json_data, indent='\t') + "\n```"))
 			embed.set_thumbnail(url=user.avatar_url)
@@ -300,9 +302,18 @@ class Admin(MangoCog):
 				embed.add_field(name="Profiles", value=(
 					f"[Steam](http://steamcommunity.com/id/{data.steam32})\n"
 					f"[OpenDota](https://www.opendota.com/players/{data.steam32})\n"))
-			await ctx.send(data.intro, embed=embed)
+			await ctx.send(embed=embed)
 		elif selector in ["server", "guild"]:
-			await ctx.send("hi")
+			data = botdata.guildinfo(identifier)
+			guild = self.bot.get_guild(identifier)
+			if guild is None:
+				raise UserError("Couldn't find that guild")
+
+			embed = discord.Embed(description=("```json\n" + json.dumps(data.json_data, indent='\t') + "\n```"))
+			embed.set_author(name=guild.name)
+			if guild.icon_url != "":
+				embed.set_thumbnail(url=guild.icon_url)
+			await ctx.send(embed=embed)
 
 def setup(bot):
 	bot.add_cog(Admin(bot))
