@@ -11,6 +11,7 @@ import string
 import random
 import datetime
 import wikipedia
+from bs4 import BeautifulSoup, Tag
 import re
 from .mangocog import *
 
@@ -229,7 +230,32 @@ class General(MangoCog):
 		
 		page_html = await httpgetter.get(page.url, "text")
 
-		sentances = page.summary.split(".")
+		soup = BeautifulSoup(page_html, 'html.parser')
+
+		def tagsToMarkdown(tag):
+			if isinstance(tag, list):
+				result = ""
+				for i in tag:
+					result += tagsToMarkdown(i)
+				return result
+			elif isinstance(tag, str):
+				return tag
+			elif isinstance(tag, Tag):
+				if tag.name == "b":
+					return f"**{tagsToMarkdown(tag.contents)}**"
+				elif tag.name == "i":
+					return f"*{tagsToMarkdown(tag.contents)}*"
+				elif tag.name == "a":
+					return f"[{tagsToMarkdown(tag.contents)}]({tag['href']})"
+				else:
+					# raise ValueError(f"Unrecognized tag: {tag.name}")
+					return tagsToMarkdown(tag.contents)
+			
+			return str(tag)
+
+		summary = tagsToMarkdown(soup.find(id="mw-content-text").find("p").contents)
+
+		sentances = summary.split(".")
 		summary = sentances[0]
 		for i in range(1, len(sentances)):
 			# If this sentence is acutally a part of the last sentence OR our summary isn't long enough

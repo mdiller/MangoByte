@@ -1,5 +1,6 @@
 aiohttp>=1.0.5
 async_timeout>=1.1.0
+beautifulsoup4>=4.5.3
 discord.py==1.0.0a1284
 gTTS>=1.1.8
 SQLAlchemy>=1.0.15
