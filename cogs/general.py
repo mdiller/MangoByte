@@ -255,14 +255,16 @@ class General(MangoCog):
 
 		summary = tagsToMarkdown(soup.find(id="mw-content-text").find("p").contents)
 
-		sentances = summary.split(".")
-		summary = sentances[0]
-		for i in range(1, len(sentances)):
-			# If this sentence is acutally a part of the last sentence OR our summary isn't long enough
-			if not re.search(r"^ [a-z]", sentances[i]) and len(summary) > 50:
-				break
-			summary += "." + sentances[i]
-		summary += "."
+		def markdownLength(text):
+			text = re.sub(r"\[([^\[]*)]\([^\(]*\)", r"\1", text)
+			return len(text)
+
+		matches = re.finditer(r"([^\s\.]+\.)(\s|$)", summary)
+		if matches:
+			for match in list(matches):
+				if markdownLength(summary[0:match.end()]) > 50:
+					summary = summary[0:match.end()]
+					break
 
 		embed = discord.Embed(description=summary)
 		embed.set_author(name=page.title, url=page.url)
