@@ -13,6 +13,7 @@ import random
 import datetime
 import wikipedia
 from bs4 import BeautifulSoup, Tag
+from io import BytesIO
 import re
 from .mangocog import *
 
@@ -240,7 +241,9 @@ class General(MangoCog):
 		
 		page_html = await httpgetter.get(page.url, "text")
 
-		soup = BeautifulSoup(page_html, 'html.parser')
+		page_html = BeautifulSoup(page_html, 'html.parser')
+		page_html = page_html.find(id="mw-content-text")
+		page_html_text = page_html.prettify()
 
 		def tagsToMarkdown(tag, plaintext=False):
 			if isinstance(tag, list):
@@ -278,7 +281,7 @@ class General(MangoCog):
 			
 			return str(tag)
 
-		summary = tagsToMarkdown(soup.find(id="mw-content-text").find("p").contents)
+		summary = tagsToMarkdown(page_html.find("p").contents)
 
 		def markdownLength(text):
 			text = re.sub(r"\[([^\[]*)]\([^\(]*\)", r"\1", text)
@@ -299,25 +302,25 @@ class General(MangoCog):
 		best_image_index = -1
 		for image in page.images:
 			if re.search(r"\.(png|jpg|jpeg|gif|svg)$", image, re.IGNORECASE):
-				index = page_html.find(image.split('/')[-1])
+				index = page_html_text.find(image.split('/')[-1])
 				if (best_image_index == -1) or (index != -1 and index < best_image_index):
 					best_image = image
 					best_image_index = index
-		
+
 		if best_image:
 			if re.search(r"\.svg$", best_image, re.IGNORECASE):
-				is_svg = True
 				svg_text = await httpgetter.get(best_image, "text", cache=True)
-				best_image = settings.resource("temp/temp_{}.png".format(int(random.random() * 1000000000)))
-				svg2png(bytestring=svg_text, write_to=best_image)
-				svg_png_image = discord.File(best_image, "svg.png")
+				fp = BytesIO()
+				svg2png(bytestring=svg_text, write_to=fp)
+				fp.seek(0)
+				svg_png_image = discord.File(fp, "svg.png")
 				embed.set_image(url=f"attachment://{svg_png_image.filename}")
 			else:
 				embed.set_image(url=best_image)
 
 		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 
-		if is_svg:
+		if re.search(r"\.svg$", best_image, re.IGNORECASE):
 			await ctx.send(embed=embed, file=svg_png_image)
 		else:
 			await ctx.send(embed=embed)
