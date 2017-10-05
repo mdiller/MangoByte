@@ -246,7 +246,10 @@ class General(MangoCog):
 				elif tag.name == "i":
 					return f"*{tagsToMarkdown(tag.contents)}*"
 				elif tag.name == "a":
-					return f"[{tagsToMarkdown(tag.contents)}]({tag['href']})"
+					if tag['href'].startswith("#"):
+						return "" # dont include citations
+					href = re.sub("^/wiki/", "https://en.wikipedia.org/wiki/", tag['href'])
+					return f"[{tagsToMarkdown(tag.contents)}]({href})"
 				else:
 					# raise ValueError(f"Unrecognized tag: {tag.name}")
 					return tagsToMarkdown(tag.contents)
