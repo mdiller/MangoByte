@@ -6,6 +6,7 @@ from cogs.utils.helpers import *
 from cogs.utils import checks
 from cogs.audio import AudioPlayerNotFoundError
 from sqlalchemy import func
+from cairosvg import svg2png
 import cogs.utils.loggingdb as loggingdb
 import string
 import random
@@ -297,17 +298,29 @@ class General(MangoCog):
 		best_image = None
 		best_image_index = -1
 		for image in page.images:
-			if re.search("\.(png|jpg|jpeg|gif)$", image, re.IGNORECASE):
+			if re.search(r"\.(png|jpg|jpeg|gif|svg)$", image, re.IGNORECASE):
 				index = page_html.find(image.split('/')[-1])
 				if (best_image_index == -1) or (index != -1 and index < best_image_index):
 					best_image = image
 					best_image_index = index
+		
 		if best_image:
-			embed.set_image(url=best_image)
+			if re.search(r"\.svg$", best_image, re.IGNORECASE):
+				is_svg = True
+				svg_text = await httpgetter.get(best_image, "text", cache=True)
+				best_image = settings.resource("temp/temp_{}.png".format(int(random.random() * 1000000000)))
+				svg2png(bytestring=svg_text, write_to=best_image)
+				svg_png_image = discord.File(best_image, "svg.png")
+				embed.set_image(url=f"attachment://{svg_png_image.filename}")
+			else:
+				embed.set_image(url=best_image)
 
 		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 
-		await ctx.send(embed=embed)
+		if is_svg:
+			await ctx.send(embed=embed, file=svg_png_image)
+		else:
+			await ctx.send(embed=embed)
 
 	@commands.command(hidden=True, aliases=["restapi"])
 	async def restget(self, ctx, url):
