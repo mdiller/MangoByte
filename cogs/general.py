@@ -209,24 +209,31 @@ class General(MangoCog):
 		await ctx.send(" ".join(results))
 
 	@commands.command(aliases=["define", "lookup", "wikipedia", "whatis"])
-	async def wiki(self, ctx, *, query : str):
+	async def wiki(self, ctx, *, thing : str):
 		"""Looks up a thing on wikipedia
 		
 		Uses the [python Wikipedia API](https://wikipedia.readthedocs.io/en/latest/) to look up a thing. 
 
-		This api is a wrapper for the [MediaWiki API](https://www.mediawiki.org/wiki/API:Main_page), which is applicable to Wikipedia because Wikipedia is build ontop of MediaWiki
+		You can also try `{cmdpfx} wiki random` to get a random wiki page
+
+		**Example:**
+		`{cmdpfx}wiki potato`
 		"""
 		await ctx.channel.trigger_typing()
 
 		def getWikiPage(title):
 			try:
+				if title == "random":
+					return wikipedia.page(title=wikipedia.random(1), redirect=True, auto_suggest=True)
 				return wikipedia.page(title=title, redirect=True, auto_suggest=True)
 			except (wikipedia.exceptions.DisambiguationError, wikipedia.exceptions.PageError) as e:
+				if title == "random":
+					return getWikiPage(title)
 				if isinstance(e, wikipedia.exceptions.PageError) or len(e.options) == 0:
-					raise UserError(f"Couldn't find anythin' fer \"*{query}*\"")
+					raise UserError(f"Couldn't find anythin' fer \"*{thing}*\"")
 				return getWikiPage(e.options[0])
 
-		page = getWikiPage(query)
+		page = getWikiPage(thing)
 		
 		page_html = await httpgetter.get(page.url, "text")
 
@@ -270,7 +277,8 @@ class General(MangoCog):
 					break
 
 		embed = discord.Embed(description=summary)
-		embed.set_author(name=page.title, url=page.url)
+		embed.title = f"**{page.title}**"
+		embed.url = page.url
 
 		best_image = None
 		best_image_index = -1
