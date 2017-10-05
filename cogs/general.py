@@ -24,6 +24,8 @@ class General(MangoCog):
 		MangoCog.__init__(self, bot)
 		self.reactions = read_json(settings.resource("json/reactions.json"))
 		self.questions = read_json(settings.resource("json/questions.json"))
+		self.subscripts = read_json(settings.resource("json/subscripts.json"))
+		self.superscripts = read_json(settings.resource("json/superscripts.json"))
 
 	@commands.command()
 	async def ping(self, ctx, count : int=1):
@@ -239,26 +241,38 @@ class General(MangoCog):
 
 		soup = BeautifulSoup(page_html, 'html.parser')
 
-		def tagsToMarkdown(tag):
+		def tagsToMarkdown(tag, plaintext=False):
 			if isinstance(tag, list):
 				result = ""
 				for i in tag:
-					result += tagsToMarkdown(i)
+					result += tagsToMarkdown(i, plaintext)
 				return result
 			elif isinstance(tag, str):
 				return tag
 			elif isinstance(tag, Tag):
-				if tag.name == "b":
+				if plaintext:
+					return tagsToMarkdown(tag.contents, plaintext)
+				elif tag.name == "b":
 					return f"**{tagsToMarkdown(tag.contents)}**"
 				elif tag.name == "i":
 					return f"*{tagsToMarkdown(tag.contents)}*"
+				elif tag.name in [ "sub", "sup" ]:
+					if "reference" in tag.get("class", []):
+						return "" # dont include references
+					replacements = self.subscripts if tag.name == "sub" else self.superscripts
+					text = tagsToMarkdown(tag.contents, plaintext=True)
+					new_text = ""
+					for c in text:
+						new_text += replacements.get(c) if c in replacements else c
+					return new_text
 				elif tag.name == "a":
 					if tag['href'].startswith("#"):
-						return "" # dont include citations
+						return "" # dont include references
 					href = re.sub("^/wiki/", "https://en.wikipedia.org/wiki/", tag['href'])
+					href = re.sub(r"(\(|\))", r"\\\1", href)
 					return f"[{tagsToMarkdown(tag.contents)}]({href})"
 				else:
-					# raise ValueError(f"Unrecognized tag: {tag.name}")
+					# raise UserError(f"Unrecognized tag: {tag.name}")
 					return tagsToMarkdown(tag.contents)
 			
 			return str(tag)
