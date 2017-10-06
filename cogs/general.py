@@ -269,7 +269,9 @@ class General(MangoCog):
 						new_text += replacements.get(c) if c in replacements else c
 					return new_text
 				elif tag.name == "a":
-					if tag['href'].startswith("#"):
+					if tag.get("href") is None:
+						return tagsToMarkdown(tag.contents)
+					if tag["href"].startswith("#"):
 						return "" # dont include references
 					href = re.sub("^/wiki/", "https://en.wikipedia.org/wiki/", tag['href'])
 					href = re.sub(r"(\(|\))", r"\\\1", href)
@@ -297,7 +299,13 @@ class General(MangoCog):
 		embed.title = f"**{page.title}**"
 		embed.url = page.url
 
-		page_html.find(class_="mbox-image").decompose()
+		for image in page_html.find_all(class_="navbox"):
+			image.decompose()
+		for image in page_html.find_all(class_="mbox-image"):
+			image.decompose()
+		for image in page_html.find_all(class_="metadata plainlinks stub"):
+			image.decompose()
+
 		page_html_text = page_html.prettify()
 
 		best_image = None
@@ -305,13 +313,12 @@ class General(MangoCog):
 		for image in page.images:
 			if re.search(r"\.(png|jpg|jpeg|gif|svg)$", image, re.IGNORECASE):
 				index = page_html_text.find(image.split('/')[-1])
-				if (best_image_index == -1) or (index != -1 and index < best_image_index):
+				if index != -1 and (best_image_index == -1 or index < best_image_index):
 					best_image = image
 					best_image_index = index
 
 		if best_image:
 			if re.search(r"\.svg$", best_image, re.IGNORECASE):
-				print(best_image)
 				svg_text = await httpgetter.get(best_image, "text", cache=True)
 				fp = BytesIO()
 				svg2png(bytestring=svg_text, write_to=fp)
@@ -323,7 +330,7 @@ class General(MangoCog):
 
 		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 
-		if re.search(r"\.svg$", best_image, re.IGNORECASE):
+		if best_image and re.search(r"\.svg$", best_image, re.IGNORECASE):
 			await ctx.send(embed=embed, file=svg_png_image)
 		else:
 			await ctx.send(embed=embed)
