@@ -243,7 +243,6 @@ class General(MangoCog):
 
 		page_html = BeautifulSoup(page_html, 'html.parser')
 		page_html = page_html.find(id="mw-content-text")
-		page_html_text = page_html.prettify()
 
 		def tagsToMarkdown(tag, plaintext=False):
 			if isinstance(tag, list):
@@ -298,6 +297,9 @@ class General(MangoCog):
 		embed.title = f"**{page.title}**"
 		embed.url = page.url
 
+		page_html.find(class_="mbox-image").decompose()
+		page_html_text = page_html.prettify()
+
 		best_image = None
 		best_image_index = -1
 		for image in page.images:
@@ -309,6 +311,7 @@ class General(MangoCog):
 
 		if best_image:
 			if re.search(r"\.svg$", best_image, re.IGNORECASE):
+				print(best_image)
 				svg_text = await httpgetter.get(best_image, "text", cache=True)
 				fp = BytesIO()
 				svg2png(bytestring=svg_text, write_to=fp)
