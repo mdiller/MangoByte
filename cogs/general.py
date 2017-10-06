@@ -311,6 +311,8 @@ class General(MangoCog):
 		best_image = None
 		best_image_index = -1
 		for image in page.images:
+			if "Wikisource-logo" in image:
+				continue
 			if re.search(r"\.(png|jpg|jpeg|gif|svg)$", image, re.IGNORECASE):
 				index = page_html_text.find(image.split('/')[-1])
 				if index != -1 and (best_image_index == -1 or index < best_image_index):
