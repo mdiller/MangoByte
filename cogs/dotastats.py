@@ -1029,9 +1029,9 @@ class DotaStats(MangoCog):
 		embed.title = f"Laning"
 		embed.url = f"https://www.opendota.com/matches/{match_id}/laning"
 
-		# image = discord.File(await drawdota.combine_image_halves(author_info['profile']['avatarfull'], friend_info['profile']['avatarfull']), "profile.png")
-		# embed.set_image(url=f"attachment://{image.filename}")
-		await ctx.send(embed=embed)
+		image = discord.File(await drawdota.create_lanes_map(match), "map.png")
+		embed.set_image(url=f"attachment://{image.filename}")
+		await ctx.send(embed=embed, file=image)
 
 
 	@commands.command()

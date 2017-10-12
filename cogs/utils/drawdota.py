@@ -24,14 +24,11 @@ def init_dota_info(hero_info, item_info):
 async def get_hero_image(hero_id):
 	return Image.open(await httpgetter.get(hero_infos[hero_id]["image"], "bytes", cache=True))
 
+async def get_hero_icon(hero_id):
+	return Image.open(await httpgetter.get(hero_infos[hero_id]["icon"], "bytes", cache=True))
+
 async def get_item_image(item_id):
 	return Image.open(await httpgetter.get(item_infos[item_id]["icon"], "bytes", cache=True))
-
-# async def get_hero_image(hero_id):
-# 	return Image.open(hero_infos[hero_id]["image"])
-
-# async def get_item_image(item_id):
-# 	return Image.open(item_infos[item_id]["icon"])
 
 async def get_item_images(player):
 	images = []
@@ -61,6 +58,12 @@ def get_lane(player):
 		return f"{lane_role_dict[player['lane_role']]}({lane_dict[player['lane']]})"
 	else:
 		return lane_role_dict[player.get('lane_role')]
+
+# pastes image 2 onto image 1, preserving alpha/transparency
+def paste_image(image1, image2, x, y):
+	temp_image = Image.new("RGBA", image1.size)
+	temp_image.paste(image2, (x, y))
+	return Image.alpha_composite(image1, temp_image)
 
 async def add_player_row(table, player, is_parsed):
 	row = [
@@ -159,6 +162,31 @@ async def combine_image_halves(img_url1, img_url2):
 
 	return fp
 
+# places a hero icon on the map at the indicated x/y using the dota coordinant system
+# scale is how much to scale the icon
+async def place_hero_on_map(map_image, hero_id, x, y, icon_scale=1):
+	scale = map_image.width / 128
+	x = (x - 64) * scale
+	y = (128 - (y - 64)) * scale
+	icon = await get_hero_icon(hero_id)
+	if icon_scale != 1:
+		icon = icon.resize((int(icon.width * icon_scale), int(icon.height * icon_scale)), Image.ANTIALIAS)
+	return paste_image(map_image, icon, int(x - (icon.width / 2)), int(y - (icon.height / 2)))
+
 
 async def create_lanes_map(match):
-	return "hi"
+	image = Image.open(settings.resource("images/dota_map.png"))
+
+	# image = await place_hero_on_map(image, 34, 10, 10, icon_scale=1.5)
+	player = match["players"][0]
+	for x in player["lane_pos"]:
+		for y in player["lane_pos"][x]:
+			image = await place_hero_on_map(image, player["hero_id"], int(x), int(y), icon_scale=1.5)
+
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
+
+	return fp
+
+	
