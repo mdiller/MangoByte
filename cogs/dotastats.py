@@ -121,7 +121,7 @@ def is_parsed(match_json):
 
 # gets the steam32 id from the user or steamid and checks that it is valid before returning
 # If ref is specified, returns either a link or a discord user mention, depending on the input
-async def get_check_steamid(player, ctx, mention=False):
+async def get_check_steamid(player, ctx, mention=False, no_error=False):
 	is_author = player is None
 	if is_author:
 		player = ctx.message.author
@@ -150,10 +150,14 @@ async def get_check_steamid(player, ctx, mention=False):
 		try:
 			player = await commands.MemberConverter().convert(ctx, str(player))
 		except commands.BadArgument:
+			if no_error:
+				return None
 			raise UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me a their steam id")
 
 	userinfo = botdata.userinfo(player.id)
 	if userinfo.steam32 is None:
+		if no_error:
+			return None
 		if is_author:
 			raise SteamNotLinkedError()
 		else:
@@ -449,23 +453,32 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed, file=match_image)
 
 	@commands.command()
-	async def matchstory(self, ctx, match_id : int, perspective="radiant"):
+	async def matchstory(self, ctx, match_id : int, perspective=None):
 		"""Tells the story of the match from the given perspective"""
 		await ctx.channel.trigger_typing()
 
-		if perspective.lower() == "radiant":
+		steamid = await get_check_steamid(None, ctx, no_error=True)
+
+		match = await get_match(match_id)
+
+		if perspective is None:
+			player_data = next(p for p in match['players'] if p['account_id'] == steamid)
+			if steamid is not None and player_data is not None:
+				is_radiant = player_data['isRadiant']
+				perspective = "{2}({0}, {1})".format(self.get_pretty_hero(player_data), "Radiant" if is_radiant else "Dire", ctx.message.author.mention)
+			else:
+				is_radiant = True
+		elif perspective.lower() == "radiant":
 			is_radiant = True
+			perspective = None
 		elif perspective.lower() == "dire":
 			is_radiant = False
+			perspective = None
 		else:
 			raise UserError("Perspective must be either radiant or dire")
-		try:
-			game = await get_match(match_id)
-		except UserError:
-			await ctx.send("Looks like thats not a valid match id")
-			return
+		
 
-		await self.tell_match_story(game, is_radiant, ctx)
+		await self.tell_match_story(match, is_radiant, ctx, perspective)
 
 	@commands.command(aliases=["lastgamestory"])
 	async def lastmatchstory(self, ctx, player=None):
