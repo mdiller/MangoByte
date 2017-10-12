@@ -33,6 +33,10 @@ class MatchNotParsedError(UserError):
 		self.action = action if action else "do that"
 		super().__init__(f"This match must be parsed before I can {self.action}.\nTry `?parse {match_id}` to request a parse.")
 
+class InvalidMatchIdError(UserError):
+	def __init__(self, match_id):
+		super().__init__(f"Sorry, looks like `{match_id}` isn't a valid match id")
+
 opendota_html_errors = {
 	404: "Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com",
 	521: "Looks like the OpenDota API is down or somethin, so ya gotta wait a sec",
@@ -46,12 +50,20 @@ async def opendota_query(querystring, cache=False):
 async def get_match(match_id):
 	url = f"https://api.opendota.com/api/matches/{match_id}"
 	cached_data = httpgetter.cache.get(url, "json")
+	
 	if cached_data:
 		if cached_data["version"]:
 			return cached_data
 		else:
 			await httpgetter.cache.remove(url)
-	return await opendota_query(f"/matches/{match_id}", cache=True)
+
+	try:
+		return await opendota_query(f"/matches/{match_id}", cache=True)
+	except HttpError as e:
+		if e.code == 404:
+			raise InvalidMatchIdError(match_id)
+		else:
+			raise
 
 def s_if_plural(text, n):
 	return text + "s" if n > 1 else text
@@ -296,6 +308,9 @@ class DotaStats(MangoCog):
 		lanes = {1: "bottom", 2: "middle", 3: "top"}
 		for laneid in lanes:
 			story += "• {0[us]} {0[won_lost]} {1} lane vs {0[them]}\n".format(await self.get_lane_story(game['players'], laneid, is_radiant), lanes[laneid])
+		roamers = [self.get_pretty_hero(p) for p in game['players'] if p.get('is_roaming')]
+		if roamers:
+			story += f"• {pretty_list(roamers)} roamed\n"
 		return story
 
 	async def tell_match_story(self, game, is_radiant, ctx, perspective=None):
@@ -415,11 +430,7 @@ class DotaStats(MangoCog):
 		"""Gets a summary of the dota match with the given id"""
 		await ctx.channel.trigger_typing()
 
-		try:
-			game = await get_match(match_id)
-		except UserError:
-			await ctx.send("Looks like thats not a valid match id")
-			return
+		game = await get_match(match_id)
 
 		description = ("Game ended in {0} \n"
 					"More info at [DotaBuff](https://www.dotabuff.com/matches/{1}), "
@@ -977,6 +988,37 @@ class DotaStats(MangoCog):
 		embed.set_thumbnail(url=f"attachment://{image.filename}")
 
 		await ctx.send(embed=embed, file=image)
+
+
+	@commands.command(aliases=["lanes"])
+	async def laning(self, ctx, match_id : int = None):
+		try:
+			steamid = await get_check_steamid(None, ctx)
+		except SteamNotLinkedError:
+			steamid = None
+			pass
+		if match_id is None:
+			if steamid is None:
+				raise SteamNotLinkedError()
+			match_id = (await opendota_query(f"/players/{steamid}/matches?limit=1"))[0]["match_id"]
+		
+		match = await get_match(match_id)
+		if not is_parsed(match):
+			raise MatchNotParsedError(match_id, "get laning info")
+
+		player_data = None
+		if steamid:
+			player_data = next(p for p in match['players'] if p['account_id'] == steamid)
+		perspective = player_data.get("isRadiant") if player_data else True
+
+		embed = discord.Embed(description=await self.get_lane_stories(match, perspective))
+
+		embed.title = f"Laning"
+		embed.url = f"https://www.opendota.com/matches/{match_id}/laning"
+
+		# image = discord.File(await drawdota.combine_image_halves(author_info['profile']['avatarfull'], friend_info['profile']['avatarfull']), "profile.png")
+		# embed.set_image(url=f"attachment://{image.filename}")
+		await ctx.send(embed=embed)
 
 
 	@commands.command()

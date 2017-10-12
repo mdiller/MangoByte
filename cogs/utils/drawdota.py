@@ -158,3 +158,7 @@ async def combine_image_halves(img_url1, img_url2):
 	fp.seek(0)
 
 	return fp
+
+
+async def create_lanes_map(match):
+	return "hi"
