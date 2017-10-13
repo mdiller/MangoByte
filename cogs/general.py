@@ -345,7 +345,7 @@ class General(MangoCog):
 
 		filename = settings.resource("temp/response.json")
 		write_json(filename, data)
-		await ctx.send(discord.File(filename))
+		await ctx.send(file=discord.File(filename))
 		os.remove(filename)
 
 	@commands.command()
