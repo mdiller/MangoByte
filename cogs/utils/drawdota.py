@@ -4,9 +4,11 @@ import asyncio
 import async_timeout
 import sys
 import subprocess
+import os
 from PIL import Image, ImageDraw
 from .tabledraw import Table, ImageCell, TextCell, ColorCell
 from io import BytesIO
+from .helpers import run_command
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -163,39 +165,39 @@ async def combine_image_halves(img_url1, img_url2):
 
 	return fp
 
-async def save_gif(frames, ms_per_frame=100):
-	fp = BytesIO()
-	frames[0].save(fp, save_all=True, format="GIF", append_images=frames, duration=ms_per_frame, transparency=0)
-	fp.seek(0)
-	print(f"bytes: {fp.getbuffer().nbytes / 1000000:.2f} MB")
+async def save_gif(uri, frames, ms_per_frame=100):
+	filename = await httpgetter.cache.new(uri, "gif")
 
-	fp_optimized = BytesIO()
+	frames[0].save(filename, save_all=True, format="GIF", append_images=frames, duration=ms_per_frame, transparency=0)
 
-	gifsicle = ["gifsicle", "-O3", "-o", "-"]
-	returncode = subprocess.call(gifsicle, stdin=fp, stdout=fp_optimized).decode("utf-8")
-	fp.close()
+	# if need further, try doing O3 only after colors instead of before
+	optimization = [
+		["-O3"],
+		["--colors", "256"],
+		["--colors", "128"],
+		["-O3"],
+	]
+	size_limit = 8
 
-	if returncode != 0:
-		raise ValueError("gifsicle failed to optimize")
-	print(f"bytes: {fp.getbuffer().nbytes / 1000000:.2f} MB")
+	print(f"optimizing: {uri}")
+	file_size = os.path.getsize(filename) / 1000000
+	print(f"bytes: {file_size} MB")
+	i = 0
 
-	fp_optimized.seek(0)
-	return fp_optimized
+	while file_size >= size_limit and i < len(optimization):
+		try:
+			output = run_command(["gifsicle", filename, "-o", filename] + optimization[i])
+		except:
+			await httpgetter.cache.remove(uri)
+			raise
+		file_size = os.path.getsize(filename) / 1000000
+		print(f"bytes: {file_size} MB")
+		i += 1
 
+	if file_size >= size_limit:
+		raise ValueError(f"couldn't optimize {uri} far enough")
 
-	# increment = 1
-	# file_size = 10
-	# while file_size > 8:
-	# 	fp = BytesIO()
-	# 	frames[0].save(fp, save_all=True, format="GIF", append_images=frames[0::increment], duration=ms_per_second * increment, transparency=0)
-	# 	file_size = fp.getbuffer().nbytes / 1000000
-	# 	print(f"bytes: {file_size:.2f} MB")
-	# 	increment += 1
-	# fp.seek(0)
-	# return fp
-	# gifsicle -O3 -o out.gif --colors 256 input.gif
-
-
+	return filename
 
 
 # places an icon on the map at the indicated x/y using the dota coordinant system
@@ -208,48 +210,52 @@ async def place_icon_on_map(map_image, icon, x, y):
 
 
 async def create_lanes_gif(match):
-	ms_per_second = 100
+	uri = f"match_gif:{match['id']}"
 
+	filename = httpgetter.cache.get_filename(uri)
+	if filename:
+		return filename
+
+	ms_per_second = 100
 	map_image = Image.open(settings.resource("images/dota_map.png"))
 	map_image = map_image.resize((256, 256), Image.ANTIALIAS)
 	frames = [map_image]
 
-	# start_time = -89
-	# end_time = 600
-	# if match["duration"] < end_time:
-	# 	end_time = match["duration"]
+	start_time = -89
+	end_time = 600
+	if match["duration"] < end_time:
+		end_time = match["duration"]
 
-	# positions = []
-	# for player in match["players"]:
-	# 	events = player["playerUpdatePositionEvents"]
-	# 	scale = 0.75
-	# 	icon = await get_hero_icon(player["hero"])
-	# 	icon = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
-	# 	data = { 
-	# 		"icon": icon,
-	# 		"x": 0,
-	# 		"y": 0
-	# 	}
+	positions = []
+	for player in match["players"]:
+		events = player["playerUpdatePositionEvents"]
+		scale = 0.75
+		icon = await get_hero_icon(player["hero"])
+		icon = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
+		data = { 
+			"icon": icon,
+			"x": 0,
+			"y": 0
+		}
 		
-	# 	for t in range(start_time, end_time):
-	# 		event = next((e for e in events if e["time"] == t), None)
-	# 		if event:
-	# 			data["x"] = event["x"]
-	# 			data["y"] = event["y"]
-	# 		data[t] = { "x": data["x"], "y": data["y"] }
-	# 	positions.append(data)
+		for t in range(start_time, end_time):
+			event = next((e for e in events if e["time"] == t), None)
+			if event:
+				data["x"] = event["x"]
+				data["y"] = event["y"]
+			data[t] = { "x": data["x"], "y": data["y"] }
+		positions.append(data)
 
 
-	# for t in range(start_time, end_time):
-	# 	image = map_image.copy()
-	# 	for player in positions:
-	# 		image = await place_icon_on_map(image, player["icon"], player[t]["x"], player[t]["y"])
+	for t in range(start_time, end_time):
+		image = map_image.copy()
+		for player in positions:
+			image = await place_icon_on_map(image, player["icon"], player[t]["x"], player[t]["y"])
 
-	# 	frames.append(image)
+		frames.append(image)
 
-	# frames.append(map_image)
+	frames.append(map_image)
 
-	fp = await save_gif(frames, ms_per_second)
+	filename = await save_gif(uri, frames, ms_per_second)
 
-	# gifsicle -O3 -o out.gif --colors 256 input.gif
-	return fp
+	return filename

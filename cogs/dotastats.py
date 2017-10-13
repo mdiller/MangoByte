@@ -1019,6 +1019,9 @@ class DotaStats(MangoCog):
 
 	@commands.command(aliases=["lanes"])
 	async def laning(self, ctx, match_id : int = None):
+		"""Gets a short description and generates a gif of the laning stage
+
+		If no match id is given and the user has a steam account connected, use the most recent game"""
 		await ctx.channel.trigger_typing()
 		try:
 			steamid = await get_check_steamid(None, ctx)
@@ -1048,9 +1051,10 @@ class DotaStats(MangoCog):
 		embed.title = f"Laning"
 		embed.url = f"https://www.opendota.com/matches/{match_id}/laning"
 
-		image = discord.File(await drawdota.create_lanes_gif(stratz_match), "map.gif")
-		embed.set_image(url=f"attachment://{image.filename}")
-		await ctx.send(embed=embed, file=image)
+		async with ctx.channel.typing():
+			image = discord.File(await drawdota.create_lanes_gif(stratz_match), "map.gif")
+			embed.set_image(url=f"attachment://{image.filename}")
+			await ctx.send(embed=embed, file=image)
 
 
 	@commands.command()

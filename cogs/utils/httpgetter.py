@@ -30,17 +30,17 @@ class Cache:
 		write_json(self.index_file, self.cache)
 
 	# Returns the filename of the cached url if it exists, otherwise None
-	def get_filename(self, url):
-		if url not in self.files:
+	def get_filename(self, uri):
+		if uri not in self.files:
 			return None
-		filename = self.cache_dir + self.files[url]
+		filename = self.cache_dir + self.files[uri]
 		if not os.path.isfile(filename):
 			return None
 		return filename
 
 	# Returns the file if it exists, otherwise None
-	def get(self, url, return_type):
-		filename = self.get_filename(url)
+	def get(self, uri, return_type):
+		filename = self.get_filename(uri)
 		if not filename:
 			return None
 		if return_type == "json":
@@ -88,9 +88,9 @@ class Cache:
 			f.write(await response.read())
 
 
-	async def remove(self, url):
+	async def remove(self, uri):
 		with (await self.lock):
-			filename = self.cache_dir + self.files.pop(url)
+			filename = self.cache_dir + self.files.pop(uri)
 			self.save_cache()
 			if os.path.isfile(filename):
 				os.remove(filename)

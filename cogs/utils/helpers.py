@@ -11,8 +11,18 @@ def findfile(name, path):
 			return os.path.join(root, name)
 	return None
 
-def run_command(commandarray):
-	return subprocess.check_output(commandarray, stderr=subprocess.STDOUT).decode("utf-8")
+def run_command(commandarray, returnerror=False):
+	try:
+		output = subprocess.check_output(commandarray).decode("utf-8")
+		if returnerror:
+			return (output, 0)
+		else:
+			return output
+	except subprocess.CalledProcessError as e:
+		if returnerror:
+			return (e.output, e.returncode)
+		else:
+			raise
 
 # Gets mangobytes version from git commit number
 def get_version():
