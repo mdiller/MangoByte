@@ -56,26 +56,37 @@ class Cache:
 		else:
 			raise ValueError(f"Invalid return type '{return_type}'")
 
-	async def save(self, url, return_type, response):
+	#creates a new entry in the cache and returns the filename of the new entry
+	async def new(self, uri, extension=None):
 		with (await self.lock):
+			if uri in self.files:
+				return self.cache_dir + self.files[uri]
 			filename = f"{self.cache['count']:0>4}"
-			if return_type == "json":
-				filename += ".json"
-			elif return_type == "text":
-				filename += ".txt"
-			elif return_type in ["filename", "bytes"]:
-				match = re.search(r"(\.[a-z0-9]{1,6})$", url.lower())
-				if match:
-					filename += match.group(1)
-			else:
-				raise ValueError(f"Invalid return type '{return_type}'")
-
-			with open(self.cache_dir + filename, "wb+") as f:
-				f.write(await response.read())
-
-			self.files[url] = filename
+			if extension:
+				filename = f"{filename}.{extension}"
+			self.files[uri] = filename
 			self.cache["count"] += 1
 			self.save_cache()
+		return self.cache_dir + filename
+
+
+	async def save(self, url, return_type, response):
+		extension = None
+		if return_type == "json":
+			extension = "json"
+		elif return_type == "text":
+			extension = "txt"
+		elif return_type in ["filename", "bytes"]:
+			match = re.search(r"\.([a-z0-9]{1,6})$", url.lower())
+			if match:
+				extension = match.group(1)
+		else:
+			raise ValueError(f"Invalid return type '{return_type}'")
+
+		filename = await self.new(url, extension)
+		with open(filename, "wb+") as f:
+			f.write(await response.read())
+
 
 	async def remove(self, url):
 		with (await self.lock):
