@@ -65,6 +65,20 @@ async def get_match(match_id):
 		else:
 			raise
 
+
+# rate_limit = false if this is the only query we're sending
+async def get_stratz_match(match_id):
+	url = f"https://api.stratz.com/api/v1/match/{match_id}"
+	cached_data = httpgetter.cache.get(url, "json")
+	
+	if cached_data:
+		if cached_data.get("parsedDate"):
+			return cached_data
+		else:
+			await httpgetter.cache.remove(url)
+
+	return await httpgetter.get(url, cache=True)
+
 def s_if_plural(text, n):
 	return text + "s" if n > 1 else text
 
@@ -1005,6 +1019,7 @@ class DotaStats(MangoCog):
 
 	@commands.command(aliases=["lanes"])
 	async def laning(self, ctx, match_id : int = None):
+		await ctx.channel.trigger_typing()
 		try:
 			steamid = await get_check_steamid(None, ctx)
 		except SteamNotLinkedError:
@@ -1019,6 +1034,10 @@ class DotaStats(MangoCog):
 		if not is_parsed(match):
 			raise MatchNotParsedError(match_id, "get laning info")
 
+		stratz_match = await get_stratz_match(match_id)
+		if not is_parsed(match):
+			raise UserError(f"It looks like match `{match_id}` hasn't been parsed by STRATZ")
+
 		player_data = None
 		if steamid:
 			player_data = next(p for p in match['players'] if p['account_id'] == steamid)
@@ -1029,7 +1048,7 @@ class DotaStats(MangoCog):
 		embed.title = f"Laning"
 		embed.url = f"https://www.opendota.com/matches/{match_id}/laning"
 
-		image = discord.File(await drawdota.create_lanes_map(match), "map.png")
+		image = discord.File(await drawdota.create_lanes_gif(stratz_match), "map.gif")
 		embed.set_image(url=f"attachment://{image.filename}")
 		await ctx.send(embed=embed, file=image)
 

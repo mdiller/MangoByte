@@ -189,4 +189,42 @@ async def create_lanes_map(match):
 
 	return fp
 
+async def create_lanes_gif(match):
+	ms_per_second = 100
+
+	map_image = Image.open(settings.resource("images/dota_map.png"))
+	map_image = map_image.resize((256, 256), Image.ANTIALIAS)
+	frames = [map_image]
+
+	done = False
+	i = 0
+	while not done:
+		image = map_image.copy()
+		for player in match["players"]:
+			point = player["playerUpdatePositionEvents"][i]
+			if point["time"] >= 600:
+				done = True
+				break
+			image = await place_hero_on_map(image, player["hero"], point["x"], point["y"], icon_scale=0.75)
+		if not done:
+			frames.append(image)
+		i += 1
+
+	frames.append(map_image)
+
+	print(map_image.info)
+
+	increment = 1
+	file_size = 10
+	while file_size > 8:
+		fp = BytesIO()
+		frames[0].save(fp, save_all=True, format="GIF", append_images=frames[0::increment], duration=ms_per_second * increment, optimize=True)
+		file_size = fp.getbuffer().nbytes / 1000000
+		print(f"bytes: {file_size:.2f} MB")
+		increment += 1
+
+	fp.seek(0)
+	return fp
+
+
 	
