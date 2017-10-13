@@ -6,6 +6,7 @@ import sys
 from PIL import Image, ImageDraw
 from .tabledraw import Table, ImageCell, TextCell, ColorCell
 from io import BytesIO
+import json
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -164,30 +165,12 @@ async def combine_image_halves(img_url1, img_url2):
 
 # places a hero icon on the map at the indicated x/y using the dota coordinant system
 # scale is how much to scale the icon
-async def place_hero_on_map(map_image, hero_id, x, y, icon_scale=1):
+async def place_hero_on_map(map_image, icon, x, y):
 	scale = map_image.width / 128
 	x = (x - 64) * scale
 	y = (128 - (y - 64)) * scale
-	icon = await get_hero_icon(hero_id)
-	if icon_scale != 1:
-		icon = icon.resize((int(icon.width * icon_scale), int(icon.height * icon_scale)), Image.ANTIALIAS)
 	return paste_image(map_image, icon, int(x - (icon.width / 2)), int(y - (icon.height / 2)))
 
-
-async def create_lanes_map(match):
-	image = Image.open(settings.resource("images/dota_map.png"))
-
-	# image = await place_hero_on_map(image, 34, 10, 10, icon_scale=1.5)
-	player = match["players"][0]
-	for x in player["lane_pos"]:
-		for y in player["lane_pos"][x]:
-			image = await place_hero_on_map(image, player["hero_id"], int(x), int(y), icon_scale=1.5)
-
-	fp = BytesIO()
-	image.save(fp, format="PNG")
-	fp.seek(0)
-
-	return fp
 
 async def create_lanes_gif(match):
 	ms_per_second = 100
@@ -196,23 +179,40 @@ async def create_lanes_gif(match):
 	map_image = map_image.resize((256, 256), Image.ANTIALIAS)
 	frames = [map_image]
 
-	done = False
-	i = 0
-	while not done:
+	start_time = -89
+	end_time = 600
+	if match["duration"] < end_time:
+		end_time = match["duration"]
+
+	positions = []
+	for player in match["players"]:
+		events = player["playerUpdatePositionEvents"]
+		scale = 0.75
+		icon = await get_hero_icon(player["hero"])
+		icon = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
+		data = { 
+			"icon": icon,
+			"x": 0,
+			"y": 0
+		}
+		
+		for t in range(start_time, end_time):
+			event = next((e for e in events if e["time"] == t), None)
+			if event:
+				data["x"] = event["x"]
+				data["y"] = event["y"]
+			data[t] = { "x": data["x"], "y": data["y"] }
+		positions.append(data)
+
+
+	for t in range(start_time, end_time):
 		image = map_image.copy()
-		for player in match["players"]:
-			point = player["playerUpdatePositionEvents"][i]
-			if point["time"] >= 600:
-				done = True
-				break
-			image = await place_hero_on_map(image, player["hero"], point["x"], point["y"], icon_scale=0.75)
-		if not done:
-			frames.append(image)
-		i += 1
+		for player in positions:
+			image = await place_hero_on_map(image, player["icon"], player[t]["x"], player[t]["y"])
+
+		frames.append(image)
 
 	frames.append(map_image)
-
-	print(map_image.info)
 
 	increment = 1
 	file_size = 10
