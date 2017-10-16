@@ -266,7 +266,7 @@ async def create_lanes_gif(match):
 		image = paste_image(image, clock_bg_image, (image.width // 2) - (clock_bg_image.width // 2), 0)
 		draw = ImageDraw.Draw(image)
 		clock_text = get_pretty_time(abs(t))
-		clock_pos = ((image.width // 2) - (font.getsize(clock_text)[0] // 2), 0)		
+		clock_pos = ((image.width // 2) - (font.getsize(clock_text)[0] // 2), -1)		
 		draw.text(clock_pos, clock_text, font=font, fill="#ffffff")
 
 		image.save(process.stdin, "gif")
