@@ -257,8 +257,6 @@ async def create_lanes_gif(match):
 
 	process = subprocess.Popen(["gifsicle", "--multifile", "--conserve-memory", "-O3", "-", "-o", filename], stdin=subprocess.PIPE, bufsize=-1)
 
-	map_image.save(process.stdin, "gif")
-
 	for t in range(start_time, end_time):
 		image = map_image.copy()
 		for player in positions:
@@ -273,8 +271,6 @@ async def create_lanes_gif(match):
 
 		image.save(process.stdin, "gif")
 		image.close()
-
-	map_image.save(process.stdin, "gif")
 
 	process.stdin.close()
 	process.wait()
