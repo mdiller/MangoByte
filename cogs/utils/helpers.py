@@ -24,6 +24,16 @@ def run_command(commandarray, returnerror=False):
 		else:
 			raise
 
+
+def get_pretty_time(s):
+	seconds = s % 60
+	minutes = ((s % 3600) - seconds) // 60
+	hours = (s - (minutes * 60) - seconds) // 3600
+	if hours:
+		return f"{hours}:{minutes:0>2}:{seconds:0>2}"
+	else:
+		return f"{minutes}:{seconds:0>2}"
+
 # Gets mangobytes version from git commit number
 def get_version():
 	return run_command(["git", "rev-list", "--count", "master"])

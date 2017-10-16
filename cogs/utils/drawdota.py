@@ -6,10 +6,10 @@ import sys
 import subprocess
 import os
 import numpy
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from .tabledraw import Table, ImageCell, TextCell, ColorCell
 from io import BytesIO
-from .helpers import run_command
+from .helpers import run_command, get_pretty_time
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -213,6 +213,9 @@ async def create_lanes_gif(match):
 	map_image = Image.open(settings.resource("images/dota_map.png"))
 	map_image = map_image.resize((256, 256), Image.ANTIALIAS)
 
+	clock_bg_image = Image.open(settings.resource("images/clock_background.png"))
+	font = ImageFont.truetype(settings.resource("images/table_font.ttf"), 16)
+
 	start_time = -89
 	end_time = 600
 	if match["duration"] < end_time:
@@ -261,6 +264,12 @@ async def create_lanes_gif(match):
 		for player in positions:
 			icon = player["icon"].convert("LA") if player[t]["dead"] else player["icon"]
 			image = await place_icon_on_map(image, icon, player[t]["x"], player[t]["y"])
+
+		image = paste_image(image, clock_bg_image, (image.width // 2) - (clock_bg_image.width // 2), 0)
+		draw = ImageDraw.Draw(image)
+		clock_text = get_pretty_time(abs(t))
+		clock_pos = ((image.width // 2) - (font.getsize(clock_text)[0] // 2), 0)		
+		draw.text(clock_pos, clock_text, font=font, fill="#ffffff")
 
 		image.save(process.stdin, "gif")
 		image.close()
