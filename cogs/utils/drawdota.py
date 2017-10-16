@@ -203,9 +203,9 @@ async def place_icon_on_map(map_image, icon, x, y):
 async def create_lanes_gif(match):
 	uri = f"match_gif:{match['id']}"
 
-	# filename = httpgetter.cache.get_filename(uri)
-	# if filename:
-	# 	return filename
+	filename = httpgetter.cache.get_filename(uri)
+	if filename:
+		return filename
 
 	filename = await httpgetter.cache.new(uri, "gif")
 

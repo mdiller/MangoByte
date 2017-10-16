@@ -1052,9 +1052,13 @@ class DotaStats(MangoCog):
 		embed.url = f"https://www.opendota.com/matches/{match_id}/laning"
 
 		async with ctx.channel.typing():
-			image = discord.File(await drawdota.create_lanes_gif(stratz_match), "map.gif")
-			embed.set_image(url=f"attachment://{image.filename}")
-			await ctx.send(embed=embed, file=image)
+			await thinker.think(ctx.message)
+			try:
+				image = discord.File(await drawdota.create_lanes_gif(stratz_match), "map.gif")
+				embed.set_image(url=f"attachment://{image.filename}")
+				await ctx.send(embed=embed, file=image)
+			finally:
+				await thinker.stop_thinking(ctx.message)
 
 
 	@commands.command()
