@@ -5,6 +5,7 @@ import async_timeout
 import sys
 import subprocess
 import os
+import numpy
 from PIL import Image, ImageDraw
 from .tabledraw import Table, ImageCell, TextCell, ColorCell
 from io import BytesIO
@@ -190,7 +191,6 @@ async def optimize_gif(uri, filename):
 	if file_size >= size_limit:
 		raise ValueError(f"couldn't optimize {uri} far enough")
 
-
 # places an icon on the map at the indicated x/y using the dota coordinant system
 # scale is how much to scale the icon
 async def place_icon_on_map(map_image, icon, x, y):
@@ -220,22 +220,35 @@ async def create_lanes_gif(match):
 
 	positions = []
 	for player in match["players"]:
-		events = player["playerUpdatePositionEvents"]
+		positionEvents = player["playerUpdatePositionEvents"]
+		deathEvents = player["deathEvents"]
 		scale = 0.75
 		icon = await get_hero_icon(player["hero"])
+
 		icon = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
-		data = { 
-			"icon": icon,
-			"x": 0,
-			"y": 0
+		x = 0
+		y = 0
+		data = {
+			"icon": icon
 		}
 		
 		for t in range(start_time, end_time):
-			event = next((e for e in events if e["time"] == t), None)
+			event = next((e for e in positionEvents if e["time"] == t), None)
 			if event:
-				data["x"] = event["x"]
-				data["y"] = event["y"]
-			data[t] = { "x": data["x"], "y": data["y"] }
+				x = event["x"]
+				y = event["y"]
+			data[t] = { "x": x, "y": y }
+
+		death_timer = 0
+		for t in range(start_time, end_time):
+			event = next((e for e in deathEvents if e["time"] == t), None)
+			if event:
+				death_timer = event["timeDead"]
+			data[t]["dead"] = death_timer > 0
+			if death_timer > 0:
+				death_timer -= 1
+
+
 		positions.append(data)
 
 
@@ -246,7 +259,8 @@ async def create_lanes_gif(match):
 	for t in range(start_time, end_time):
 		image = map_image.copy()
 		for player in positions:
-			image = await place_icon_on_map(image, player["icon"], player[t]["x"], player[t]["y"])
+			icon = player["icon"].convert("LA") if player[t]["dead"] else player["icon"]
+			image = await place_icon_on_map(image, icon, player[t]["x"], player[t]["y"])
 
 		image.save(process.stdin, "gif")
 		image.close()
