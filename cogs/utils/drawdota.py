@@ -63,6 +63,7 @@ def get_lane(player):
 		return lane_role_dict[player.get('lane_role')]
 
 # pastes image 2 onto image 1, preserving alpha/transparency
+# this will close the first image that was passed in, as it is assumed that this will replace it
 def paste_image(image1, image2, x, y):
 	temp_image = Image.new("RGBA", image1.size)
 	temp_image.paste(image2, (x, y))
@@ -165,14 +166,10 @@ async def combine_image_halves(img_url1, img_url2):
 
 	return fp
 
-async def save_gif(uri, frames, ms_per_frame=100):
-	filename = await httpgetter.cache.new(uri, "gif")
-
-	frames[0].save(filename, save_all=True, format="GIF", append_images=frames, duration=ms_per_frame, transparency=0)
+async def optimize_gif(uri, filename):
 
 	# if need further, try doing O3 only after colors instead of before
 	optimization = [
-		["-O3"],
 		["--colors", "256"],
 		["--colors", "128"],
 		["-O3"],
@@ -185,19 +182,13 @@ async def save_gif(uri, frames, ms_per_frame=100):
 	i = 0
 
 	while file_size >= size_limit and i < len(optimization):
-		try:
-			output = run_command(["gifsicle", filename, "-o", filename] + optimization[i])
-		except:
-			await httpgetter.cache.remove(uri)
-			raise
+		output = run_command(["gifsicle", filename, "-o", filename] + optimization[i])
 		file_size = os.path.getsize(filename) / 1000000
 		print(f"bytes: {file_size} MB")
 		i += 1
 
 	if file_size >= size_limit:
 		raise ValueError(f"couldn't optimize {uri} far enough")
-
-	return filename
 
 
 # places an icon on the map at the indicated x/y using the dota coordinant system
@@ -212,14 +203,15 @@ async def place_icon_on_map(map_image, icon, x, y):
 async def create_lanes_gif(match):
 	uri = f"match_gif:{match['id']}"
 
-	filename = httpgetter.cache.get_filename(uri)
-	if filename:
-		return filename
+	# filename = httpgetter.cache.get_filename(uri)
+	# if filename:
+	# 	return filename
+
+	filename = await httpgetter.cache.new(uri, "gif")
 
 	ms_per_second = 100
 	map_image = Image.open(settings.resource("images/dota_map.png"))
 	map_image = map_image.resize((256, 256), Image.ANTIALIAS)
-	frames = [map_image]
 
 	start_time = -89
 	end_time = 600
@@ -247,15 +239,26 @@ async def create_lanes_gif(match):
 		positions.append(data)
 
 
+	process = subprocess.Popen(["gifsicle", "--multifile", "--conserve-memory", "-O3", "-", "-o", filename], stdin=subprocess.PIPE, bufsize=-1)
+
+	map_image.save(process.stdin, "gif")
+
 	for t in range(start_time, end_time):
 		image = map_image.copy()
 		for player in positions:
 			image = await place_icon_on_map(image, player["icon"], player[t]["x"], player[t]["y"])
 
-		frames.append(image)
+		image.save(process.stdin, "gif")
+		image.close()
 
-	frames.append(map_image)
+	map_image.save(process.stdin, "gif")
 
-	filename = await save_gif(uri, frames, ms_per_second)
+	process.stdin.close()
+	process.wait()
+
+	await optimize_gif(uri, filename)
 
 	return filename
+
+	# filename = await save_gif(uri, frames, ms_per_second)
+	# return filename
