@@ -1033,6 +1033,7 @@ class DotaStats(MangoCog):
 				raise SteamNotLinkedError()
 			match_id = (await opendota_query(f"/players/{steamid}/matches?limit=1"))[0]["match_id"]
 		
+
 		match = await get_match(match_id)
 		if not is_parsed(match):
 			raise MatchNotParsedError(match_id, "get laning info")
@@ -1043,13 +1044,14 @@ class DotaStats(MangoCog):
 
 		player_data = None
 		if steamid:
-			player_data = next(p for p in match['players'] if p['account_id'] == steamid)
+			player_data = next((p for p in match['players'] if p['account_id'] == steamid), None)
 		perspective = player_data.get("isRadiant") if player_data else True
 
 		embed = discord.Embed(description=await self.get_lane_stories(match, perspective))
 
 		embed.title = f"Laning"
 		embed.url = f"https://www.opendota.com/matches/{match_id}/laning"
+
 
 		async with ctx.channel.typing():
 			await thinker.think(ctx.message)
