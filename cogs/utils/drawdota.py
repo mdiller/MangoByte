@@ -287,7 +287,7 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 
 
 
-	process = subprocess.Popen(["gifsicle", "--multifile", "--conserve-memory", "-O3", "-", "-o", filename], stdin=subprocess.PIPE, bufsize=-1)
+	process = subprocess.Popen(["gifsicle", "--multifile", "-d", str(ms_per_second // 10), "--conserve-memory", "-O3", "-", "-o", filename], stdin=subprocess.PIPE, bufsize=-1)
 
 	for t in range(start_time, end_time + 1):
 		image = map_image.copy()
