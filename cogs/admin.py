@@ -10,14 +10,6 @@ from cogs.utils.clip import GttsLang
 from cogs.utils import checks
 from .mangocog import *
 
-def gettime(timestr):
-	parts = timestr.split(":")
-	if len(parts) == 2:
-		return (int(parts[0]) * 60) + float(parts[1])
-	if len(parts) == 1:
-		return float(parts[0])
-	raise ValueError("Only minutes:seconds supported")
-
 class Admin(MangoCog):
 	"""Administrative commands
 	
@@ -195,8 +187,8 @@ class Admin(MangoCog):
 	async def addclip(self, ctx, url, clipname, start, end, start_fade=0.25, end_fade=0.25):
 		"""Adds a clip from youtube"""
 		outfile = settings.resource(f"clips/{clipname}.mp3")
-		start = gettime(start)
-		end = gettime(end)
+		start = helpers.get_time(start)
+		end = helpers.get_time(end)
 		duration = end - start
 
 		matches = [

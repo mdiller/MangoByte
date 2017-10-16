@@ -130,8 +130,12 @@ def format_duration_simple(duration):
 		return f"{int((duration / 60) % 60)}:{duration % 60:02}"
 
 
-def is_parsed(match_json):
-	return match_json.get("version", None) is not None
+def is_parsed(match):
+	return match.get("version", None) is not None
+
+
+def is_stratz_parsed(match):
+	return match.get("parsedDate") and match["players"][0].get("playerUpdatePositionEvents")
 
 # gets the steam32 id from the user or steamid and checks that it is valid before returning
 # If ref is specified, returns either a link or a discord user mention, depending on the input
@@ -1016,6 +1020,39 @@ class DotaStats(MangoCog):
 
 		await ctx.send(embed=embed, file=image)
 
+	@commands.command(aliases=["dota_gif"])
+	async def dotagif(self, ctx, match_id : int, start, end, ms_per_second : int = 100):
+		"""Creates a gif of a specific part of a dota match
+
+		The part of the match that you specify must be less than 10 minutes long
+
+		**Example:**
+		`{cmdpfx}dotagif 3370877768 28:37 30:30`"""
+		await ctx.channel.trigger_typing()
+
+		match = await get_match(match_id)
+		if not is_parsed(match):
+			raise MatchNotParsedError(match_id, "get laning info")
+
+		stratz_match = await get_stratz_match(match_id)
+		if not is_stratz_parsed(stratz_match):
+			raise UserError(f"It looks like match `{match_id}` hasn't been parsed by STRATZ")
+
+
+		start = int(helpers.get_time(start))
+		end = int(helpers.get_time(end))
+
+		if end - start > 600:
+			raise UserError("The length of this clip must be less than 10 minutes")
+
+
+		async with ctx.channel.typing():
+			await thinker.think(ctx.message)
+			try:
+				image = discord.File(await drawdota.create_dota_gif(match, stratz_match, start, end, ms_per_second), "map.gif")
+				await ctx.send(file=image)
+			finally:
+				await thinker.stop_thinking(ctx.message)
 
 	@commands.command(aliases=["lanes"])
 	async def laning(self, ctx, match_id : int = None):
@@ -1039,7 +1076,7 @@ class DotaStats(MangoCog):
 			raise MatchNotParsedError(match_id, "get laning info")
 
 		stratz_match = await get_stratz_match(match_id)
-		if not stratz_match.get("parsedDate"):
+		if not is_stratz_parsed(stratz_match):
 			raise UserError(f"It looks like match `{match_id}` hasn't been parsed by STRATZ")
 
 		player_data = None
@@ -1056,7 +1093,7 @@ class DotaStats(MangoCog):
 		async with ctx.channel.typing():
 			await thinker.think(ctx.message)
 			try:
-				image = discord.File(await drawdota.create_lanes_gif(match, stratz_match), "map.gif")
+				image = discord.File(await drawdota.create_dota_gif(match, stratz_match, -89, 600, 100), "map.gif")
 				embed.set_image(url=f"attachment://{image.filename}")
 				await ctx.send(embed=embed, file=image)
 			finally:

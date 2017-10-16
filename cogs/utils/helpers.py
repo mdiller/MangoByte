@@ -24,6 +24,26 @@ def run_command(commandarray, returnerror=False):
 		else:
 			raise
 
+def get_time(timestr):
+	negative = "-" in timestr
+	timestr = timestr.replace("-", "")
+	parts = timestr.split(":")
+	result = None
+
+	if len(parts) == 3:
+		result = (int(parts[0]) * 3600) + (int(parts[1]) * 60) + float(parts[2])
+	elif len(parts) == 2:
+		result = (int(parts[0]) * 60) + float(parts[1])
+	elif len(parts) == 1:
+		result = float(parts[0])
+
+	if result is not None:
+		if negative:
+			return 0 - result
+		else:
+			return result
+	else:
+		raise UserError(f"{timestr} is an invalid format for time. Time should be formatted as `minutes:seconds`.")
 
 def get_pretty_time(s):
 	seconds = s % 60

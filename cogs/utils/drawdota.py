@@ -200,9 +200,13 @@ async def place_icon_on_map(map_image, icon, x, y):
 	return paste_image(map_image, icon, int(x - (icon.width / 2)), int(y - (icon.height / 2)))
 
 
-async def create_lanes_gif(match, stratz_match, ms_per_second=100):
-	uri = f"match_gif:{match['match_id']}"
+async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_second=100):
+	uri = f"match_gif:{match['match_id']}:{start_time}:{end_time}:{ms_per_second}"
 
+	if end_time - start_time <= 0:
+		raise UserError("Incorrect start and end times for creating a gif!")
+
+	print(uri)
 	filename = httpgetter.cache.get_filename(uri)
 	if filename and not settings.debug:
 		return filename
@@ -217,9 +221,10 @@ async def create_lanes_gif(match, stratz_match, ms_per_second=100):
 	clock_bg_image = Image.open(settings.resource("images/clock_background.png"))
 	font = ImageFont.truetype(settings.resource("images/table_font.ttf"), 16)
 
-	start_time = -89
-	end_time = 600
-	if match["duration"] < end_time:
+	match_start = -89
+	if start_time < match_start:
+		start_time = match_start
+	if end_time > match["duration"]:
 		end_time = match["duration"]
 
 	players = []
@@ -236,19 +241,21 @@ async def create_lanes_gif(match, stratz_match, ms_per_second=100):
 			"icon": icon
 		}
 		
-		for t in range(start_time, end_time):
+		for t in range(match_start, end_time + 1):
 			event = next((e for e in positionEvents if e["time"] == t), None)
 			if event:
 				x = event["x"]
 				y = event["y"]
-			data[t] = { "x": x, "y": y }
+			if t >= start_time:
+				data[t] = { "x": x, "y": y }
 
 		death_timer = 0
-		for t in range(start_time, end_time):
+		for t in range(match_start, end_time + 1):
 			event = next((e for e in deathEvents if e["time"] == t), None)
 			if event:
 				death_timer = event["timeDead"]
-			data[t]["dead"] = death_timer > 0
+			if t >= start_time:
+				data[t]["dead"] = death_timer > 0
 			if death_timer > 0:
 				death_timer -= 1
 
@@ -282,7 +289,7 @@ async def create_lanes_gif(match, stratz_match, ms_per_second=100):
 
 	process = subprocess.Popen(["gifsicle", "--multifile", "--conserve-memory", "-O3", "-", "-o", filename], stdin=subprocess.PIPE, bufsize=-1)
 
-	for t in range(start_time, end_time):
+	for t in range(start_time, end_time + 1):
 		image = map_image.copy()
 		for building in buildings:
 			if t < building.get("death", t + 1):
