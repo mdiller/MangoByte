@@ -1056,7 +1056,7 @@ class DotaStats(MangoCog):
 		async with ctx.channel.typing():
 			await thinker.think(ctx.message)
 			try:
-				image = discord.File(await drawdota.create_lanes_gif(stratz_match), "map.gif")
+				image = discord.File(await drawdota.create_lanes_gif(match, stratz_match), "map.gif")
 				embed.set_image(url=f"attachment://{image.filename}")
 				await ctx.send(embed=embed, file=image)
 			finally:

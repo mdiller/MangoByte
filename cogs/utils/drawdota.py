@@ -9,7 +9,7 @@ import numpy
 from PIL import Image, ImageDraw, ImageFont
 from .tabledraw import Table, ImageCell, TextCell, ColorCell
 from io import BytesIO
-from .helpers import run_command, get_pretty_time
+from .helpers import run_command, get_pretty_time, read_json
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -200,16 +200,17 @@ async def place_icon_on_map(map_image, icon, x, y):
 	return paste_image(map_image, icon, int(x - (icon.width / 2)), int(y - (icon.height / 2)))
 
 
-async def create_lanes_gif(match):
-	uri = f"match_gif:{match['id']}"
+async def create_lanes_gif(match, stratz_match, ms_per_second=100):
+	uri = f"match_gif:{match['match_id']}"
 
 	filename = httpgetter.cache.get_filename(uri)
-	if filename:
+	if filename and not settings.debug:
 		return filename
 
 	filename = await httpgetter.cache.new(uri, "gif")
 
-	ms_per_second = 100
+	building_data = read_json(settings.resource("json/building_data.json"))
+
 	map_image = Image.open(settings.resource("images/dota_map.png"))
 	map_image = map_image.resize((256, 256), Image.ANTIALIAS)
 
@@ -221,8 +222,8 @@ async def create_lanes_gif(match):
 	if match["duration"] < end_time:
 		end_time = match["duration"]
 
-	positions = []
-	for player in match["players"]:
+	players = []
+	for player in stratz_match["players"]:
 		positionEvents = player["playerUpdatePositionEvents"]
 		deathEvents = player["deathEvents"]
 		scale = 0.75
@@ -251,15 +252,42 @@ async def create_lanes_gif(match):
 			if death_timer > 0:
 				death_timer -= 1
 
+		players.append(data)
 
-		positions.append(data)
+	objectiveEvents = match["objectives"]
+	buildings = []
+	for b in building_data:
+		icon = Image.open(settings.resource(f"images/{b['icon']}"))
+		size = {
+			"tower": int(map_image.width * (16 / 300)),
+			"barracks": int(map_image.width * (12 / 300)),
+			"ancient": int(map_image.width * (25 / 300))
+		}[b["type"]]
+		icon = icon.resize((size, size), Image.ANTIALIAS)
+
+		building = {
+			"icon": icon,
+			"x": b["x"],
+			"y": b["y"]
+		}
+		event = next((e for e in objectiveEvents if e.get("key") == b["key"]), None)
+		if event:
+			building["death"] = event["time"]
+		buildings.append(building)
+
+	#sort from top right to bottom left for drawing
+	buildings = sorted(buildings, key=lambda b: b["x"] + b["y"], reverse=True)
+
 
 
 	process = subprocess.Popen(["gifsicle", "--multifile", "--conserve-memory", "-O3", "-", "-o", filename], stdin=subprocess.PIPE, bufsize=-1)
 
 	for t in range(start_time, end_time):
 		image = map_image.copy()
-		for player in positions:
+		for building in buildings:
+			if t < building.get("death", t + 1):
+				image = await place_icon_on_map(image, building["icon"], building["x"], building["y"])
+		for player in players:
 			icon = player["icon"].convert("LA") if player[t]["dead"] else player["icon"]
 			image = await place_icon_on_map(image, icon, player[t]["x"], player[t]["y"])
 
