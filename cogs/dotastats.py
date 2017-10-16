@@ -1039,7 +1039,7 @@ class DotaStats(MangoCog):
 			raise MatchNotParsedError(match_id, "get laning info")
 
 		stratz_match = await get_stratz_match(match_id)
-		if not is_parsed(match):
+		if not stratz_match.get("parsedDate"):
 			raise UserError(f"It looks like match `{match_id}` hasn't been parsed by STRATZ")
 
 		player_data = None
