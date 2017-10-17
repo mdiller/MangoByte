@@ -1026,6 +1026,8 @@ class DotaStats(MangoCog):
 
 		The part of the match that you specify must be less than 10 minutes long
 
+		`ms_per_second` is how many miliseconds between frames of the gif (each frame is 1 dota second)
+
 		**Example:**
 		`{cmdpfx}dotagif 3370877768 28:37 30:30`"""
 		await ctx.channel.trigger_typing()
@@ -1045,6 +1047,9 @@ class DotaStats(MangoCog):
 		if end - start > 600:
 			raise UserError("The length of this clip must be less than 10 minutes")
 
+		if ms_per_second < 1 or ms_per_second > 655350:
+			raise UserError("That is outside the bounds of the `ms_per_second` value")
+		
 
 		async with ctx.channel.typing():
 			await thinker.think(ctx.message)
