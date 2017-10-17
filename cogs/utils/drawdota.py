@@ -70,6 +70,25 @@ def paste_image(image1, image2, x, y):
 	temp_image.paste(image2, (x, y))
 	return Image.alpha_composite(image1, temp_image)
 
+# colors an image with one single color for all the pixes that are currently not transparent
+def color_image(image, color):
+	image = image.copy()
+	pixels = image.load()
+
+	for y in range(image.height):
+		for x in range(image.width):
+			if pixels[x, y][3] > 128:
+				pixels[x, y] = color
+	return image
+
+def outline_image(image, thickness, color):
+	background = color_image(image, color)
+	background = background.resize((image.width + (thickness * 2), image.height + (thickness * 2)), Image.ANTIALIAS)
+
+	image = paste_image(background, image, thickness, thickness)
+	return image
+
+
 async def add_player_row(table, player, is_parsed):
 	row = [
 		ColorCell(width=5, color=("green" if player["isRadiant"] else "red")),
@@ -172,6 +191,7 @@ async def optimize_gif(uri, filename):
 	# if need further, try doing O3 only after colors instead of before
 	optimization = [
 		["--colors", "256"],
+		["-O3"],
 		["--colors", "128"],
 		["-O3"],
 	]
@@ -183,7 +203,7 @@ async def optimize_gif(uri, filename):
 	i = 0
 
 	while file_size >= size_limit and i < len(optimization):
-		output = run_command(["gifsicle", filename, "-o", filename] + optimization[i])
+		output = run_command(["gifsicle", "--conserve-memory", filename, "-o", filename] + optimization[i])
 		file_size = os.path.getsize(filename) / 1000000
 		print(f"bytes: {file_size} MB")
 		i += 1
@@ -206,7 +226,6 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 	if end_time - start_time <= 0:
 		raise UserError("Incorrect start and end times for creating a gif!")
 
-	print(uri)
 	filename = httpgetter.cache.get_filename(uri)
 	if filename and not settings.debug:
 		return filename
@@ -233,8 +252,8 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 		deathEvents = player["deathEvents"]
 		scale = 0.75
 		icon = await get_hero_icon(player["hero"])
-
 		icon = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
+		# icon = outline_image(icon, 2, (0, 255, 0) if player["isRadiant"] else (255, 0, 0))
 		x = 0
 		y = 0
 		data = {
