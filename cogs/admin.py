@@ -187,14 +187,14 @@ class Admin(MangoCog):
 	async def addclip(self, ctx, url, clipname, start, end, start_fade=0.25, end_fade=0.25):
 		"""Adds a clip from youtube"""
 		outfile = settings.resource(f"clips/{clipname}.mp3")
-		start = helpers.get_time(start)
-		end = helpers.get_time(end)
+		start = get_time(start)
+		end = get_time(end)
 		duration = end - start
 
 		matches = [
-			re.match(r"https?://(?:www\.)?youtube\.com/watch\?v=([0-9a-zA-Z]*)", url),
-			re.match(r"https?://(?:www\.)?youtu\.be/([0-9a-zA-Z]*)", url),
-			re.match(r"([0-9a-zA-Z]*)", url)
+			re.match(r"https?://(?:www\.)?youtube\.com/watch\?v=([^/]*)", url),
+			re.match(r"https?://(?:www\.)?youtu\.be/([^/]*)", url),
+			re.match(r"([^/]*)", url)
 		]
 		youtube_id = None
 		for match in matches:
