@@ -282,7 +282,7 @@ class General(MangoCog):
 			
 			return str(tag)
 
-		summary = tagsToMarkdown(page_html.find("p").contents)
+		summary = tagsToMarkdown(page_html.find("div").find("p", recursive=False).contents)
 
 		def markdownLength(text):
 			text = re.sub(r"\[([^\[]*)]\([^\(]*\)", r"\1", text)
@@ -291,7 +291,7 @@ class General(MangoCog):
 		matches = re.finditer(r"([^\s\.]+\.)(\s|$)", summary)
 		if matches:
 			for match in list(matches):
-				if markdownLength(summary[0:match.end()]) > 50:
+				if markdownLength(summary[0:match.end()]) > 70:
 					summary = summary[0:match.end()]
 					break
 
