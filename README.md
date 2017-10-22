@@ -3,14 +3,18 @@ A discord bot that provides the ability to play audio clips, play dota responses
 
 You can invite mangobyte to your server via this [Invite Link](https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968), or you can try it out on my [Help Server](https://discord.gg/d6WWHxx).
 
-## Commands
-The following is a list of the commands that mangobyte has to offer
+## Examples
+These are some images giving an idea of what mangobyte can do
 
 ![Commands List](/resource/images/readme/help_all.png)
 
 Example of `?lastgame` command:
 
 ![Lastgame Command](/resource/images/readme/lastgame.gif)
+
+Example of a gif you can create with `?laning` or `?dotagif`:
+
+![DotaGif Command](/resource/images/readme/dotagif.gif)
 
 ## Installation
 
