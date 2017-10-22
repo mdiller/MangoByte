@@ -1,20 +1,21 @@
 # MangoByte<img align="right" src="/resource/images/readme/mangobyte.png"/>
-A discord bot that provides the ability to play audio clips, play dota responses, answer questions, randomly react to messages, and a few other cool things. I'm using the [discord.py](https://github.com/Rapptz/discord.py) python wrapper for the [Discord API](https://discordapp.com/developers). I'm also making use of [dotabase](https://github.com/mdiller/dotabase), which is an open source repository (created by yours truly) containing data about the game [Dota 2](http://www.dota2.com).
+A discord bot that provides the ability to play audio clips, play dota responses, answer questions, randomly react to messages, and a large number of other actions. I'm using the [discord.py](https://github.com/Rapptz/discord.py) python wrapper for the [Discord API](https://discordapp.com/developers). I'm also making use of [dotabase](https://github.com/mdiller/dotabase), which is an open source repository (created by yours truly) containing data about the game [Dota 2](http://www.dota2.com).
 
 You can invite mangobyte to your server via this [Invite Link](https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968), or you can try it out on my [Help Server](https://discord.gg/d6WWHxx).
 
 ## Examples
-These are some images giving an idea of what mangobyte can do
 
-![Commands List](/resource/images/readme/help_all.png)
+Example of a gif you can create with `?laning` or `?dotagif`:
+
+![DotaGif Command](/resource/images/readme/dotagif.gif)
 
 Example of `?lastgame` command:
 
 ![Lastgame Command](/resource/images/readme/lastgame.gif)
 
-Example of a gif you can create with `?laning` or `?dotagif`:
+This is the long list of all of the commands. You can get this from `?help all`
 
-![DotaGif Command](/resource/images/readme/dotagif.gif)
+![Commands List](/resource/images/readme/help_all.png)
 
 ## Installation
 
