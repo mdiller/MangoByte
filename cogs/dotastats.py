@@ -1061,7 +1061,7 @@ class DotaStats(MangoCog):
 
 	@commands.command(aliases=["lanes"])
 	async def laning(self, ctx, match_id : int = None):
-		"""Gets a short description and generates a gif of the laning stage
+		"""Creates a short description and a gif of the laning stage
 
 		If no match id is given and the user has a steam account connected, use the most recent game"""
 		await ctx.channel.trigger_typing()
