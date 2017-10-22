@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from __main__ import settings, botdata, thinker, httpgetter
 from cogs.utils import checks
-from cogs.utils import helpers
+from cogs.utils.helpers import *
 from cogs.utils import drawdota
 import asyncio
 import async_timeout
@@ -1041,8 +1041,8 @@ class DotaStats(MangoCog):
 			raise UserError(f"It looks like match `{match_id}` hasn't been parsed by STRATZ")
 
 
-		start = int(helpers.get_time(start))
-		end = int(helpers.get_time(end))
+		start = int(get_time(start))
+		end = int(get_time(end))
 
 		if end - start > 600:
 			raise UserError("The length of this clip must be less than 10 minutes")
@@ -1165,7 +1165,7 @@ class DotaStats(MangoCog):
 
 		filename = re.search("/([/0-9a-zA-Z]+)", query).group(1).replace("/", "_")
 		filename = settings.resource(f"temp/{filename}.json")
-		helpers.write_json(filename, data)
+		write_json(filename, data)
 		await ctx.send(file=discord.File(filename))
 		os.remove(filename)
 

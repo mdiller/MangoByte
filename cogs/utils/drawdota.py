@@ -9,7 +9,7 @@ import numpy
 from PIL import Image, ImageDraw, ImageFont
 from .tabledraw import Table, ImageCell, TextCell, ColorCell
 from io import BytesIO
-from .helpers import run_command, get_pretty_time, read_json
+from .helpers import run_command, get_pretty_time, read_json, UserError
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -83,7 +83,7 @@ def color_image(image, color):
 
 def outline_image(image, thickness, color):
 	background = color_image(image, color)
-	background = background.resize((image.width + (thickness * 2), image.height + (thickness * 2)), Image.ANTIALIAS)
+	background = background.resize((image.width + (thickness * 2), image.height + (thickness * 2)))
 
 	image = paste_image(background, image, thickness, thickness)
 	return image
