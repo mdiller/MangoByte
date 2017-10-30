@@ -30,6 +30,10 @@
 		"reaction": "🥔"
 	},
 	{
+		"regex": "^no inv(ite)?\\??$",
+		"reaction": "😒"
+	},
+	{
 		"regex": "pizza",
 		"word": true,
 		"reaction": "🍕"

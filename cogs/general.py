@@ -262,8 +262,10 @@ class General(MangoCog):
 				elif tag.name in [ "sub", "sup" ]:
 					if "reference" in tag.get("class", []):
 						return "" # dont include references
-					replacements = self.subscripts if tag.name == "sub" else self.superscripts
 					text = tagsToMarkdown(tag.contents, plaintext=True)
+					if len(text) and text[0] == "[" and text[-1] == "]":
+						return "" # this is a references thing you cant fool me
+					replacements = self.subscripts if tag.name == "sub" else self.superscripts
 					new_text = ""
 					for c in text:
 						new_text += replacements.get(c) if c in replacements else c
