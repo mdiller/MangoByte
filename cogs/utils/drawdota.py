@@ -223,8 +223,11 @@ async def place_icon_on_map(map_image, icon, x, y):
 async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_second=100):
 	uri = f"match_gif:{match['match_id']}:{start_time}:{end_time}:{ms_per_second}"
 
-	if end_time - start_time <= 0:
-		raise UserError("Incorrect start and end times for creating a gif!")
+	reverse = end_time < start_time
+	if reverse:
+		temp = start_time
+		start_time = end_time
+		end_time = temp
 
 	filename = httpgetter.cache.get_filename(uri)
 	if filename and not settings.debug:
@@ -308,7 +311,12 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 
 	process = subprocess.Popen(["gifsicle", "--multifile", "-d", str(ms_per_second // 10), "--conserve-memory", "-O3", "-", "-o", filename], stdin=subprocess.PIPE, bufsize=-1)
 
-	for t in range(start_time, end_time + 1):
+	time_range = range(start_time, end_time + 1)
+
+	if reverse:
+		time_range = range(end_time, start_time - 1, -1)
+
+	for t in time_range:
 		image = map_image.copy()
 		for building in buildings:
 			if t < building.get("death", t + 1):
