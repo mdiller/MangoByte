@@ -148,7 +148,9 @@ class DotaClip(Clip):
 		self.response = dotabase.get_response(responsename)
 		if self.response == None:
 			raise ClipNotFound(self.type(), responsename)
-		return await Clip.init(self, responsename, dotabase.vpkurl + self.response.mp3, text=self.response.text, volume=0.4)
+
+		filename = await httpgetter.get(dotabase.vpkurl + self.response.mp3, "filename", cache=True)
+		return await Clip.init(self, responsename, filename, text=self.response.text, volume=0.4)
 
 	@classmethod
 	def type(cls):
