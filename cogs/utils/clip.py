@@ -132,15 +132,11 @@ class TtsClip(Clip):
 
 class UrlClip(Clip):
 	async def init(self, url, bot, ctx):
-		# TODO: add checking for valid url for ffmpeg
-		url = re.sub(r"^https://", "http://", url)
 		if not re.match(r'^https?://.*\.(mp3|wav)$', url):
 			raise UserError("That's not a valid mp3 or wav url")
-		try:
-			urllib.request.urlopen(url)
-		except (urllib.error.URLError, urllib.error.HTTPError):
-			raise UserError("There was a problem opening this URL")
-		return await Clip.init(self, url, url)
+
+		filename = await httpgetter.get(url, "filename", cache=True)
+		return await Clip.init(self, url, filename)
 
 	@classmethod
 	def type(cls):

@@ -84,11 +84,8 @@ class AudioPlayer:
 	# plays the next clip in the queue
 	async def play_next_clip(self):
 		clip = self.next_clip()
-		audiofile = clip.audiopath
-		if re.match(r'^https?://.*\.(mp3|wav)$', audiofile): # cache any clips from urls
-			audiofile = await httpgetter.get(audiofile, "filename", True)
 
-		self.voice.play(discord.FFmpegPCMAudio(audiofile), after=self.done_talking)
+		self.voice.play(discord.FFmpegPCMAudio(clip.audiopath), after=self.done_talking)
 		self.voice.source = discord.PCMVolumeTransformer(self.voice.source)
 		self.voice.source.volume = clip.volume
 		print("playing: " + clip.audiopath)
