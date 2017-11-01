@@ -81,6 +81,13 @@ async def get_stratz_match(match_id):
 		500: "Looks like something wrong with the STRATZ api"
 	})
 
+async def get_lastmatch_id(steamid):
+	matches = await opendota_query(f"/players/{steamid}/recentmatches")
+	if matches:
+		return matches[0]["match_id"]
+	else:
+		raise UserError("Couldn't find any recent matches for you. Try enabling the \"Expose Public Match Data\" option in dota")
+
 def s_if_plural(text, n):
 	return text + "s" if n > 1 else text
 
@@ -446,7 +453,7 @@ class DotaStats(MangoCog):
 		await ctx.channel.trigger_typing()
 
 		steamid = await get_check_steamid(player, ctx)
-		match_id = (await opendota_query(f"/players/{steamid}/matches?limit=1"))[0]["match_id"]
+		match_id = await get_lastmatch_id(steamid)
 		await self.player_match_stats(steamid, match_id, ctx)
 
 	@commands.command(aliases=["matchdetails"])
@@ -1075,7 +1082,7 @@ class DotaStats(MangoCog):
 		if match_id is None:
 			if steamid is None:
 				raise SteamNotLinkedError()
-			match_id = (await opendota_query(f"/players/{steamid}/matches?limit=1"))[0]["match_id"]
+			match_id = await get_lastmatch_id(steamid)
 		
 
 		match = await get_match(match_id)
