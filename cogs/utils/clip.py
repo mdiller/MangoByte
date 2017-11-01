@@ -28,12 +28,20 @@ class MissingClipType(UserError):
 	def __init__(self, clipid):
 		self.message = "Yer clipid '{}' is missin a proper cliptype".format(clipid)
 
+# For this class and all its subclasses, we need to have
+# init be asynchronous. because of this, we are simply making
+# it a method that should always be called after initializing
+# the object. therefore, to initialize a clip, do something
+# like this:
+# await Clip().init(<stuffhere>)
+
 class Clip(object):
-	def __init__(self, clipname, audiopath, text="", volume=0.6):
+	async def init(self, clipname, audiopath, text="", volume=0.6):
 		self.name = clipname
 		self.audiopath = audiopath
 		self.text = text
 		self.volume = volume
+		return self
 
 	@classmethod
 	@abstractmethod
@@ -57,7 +65,7 @@ class Clip(object):
 
 
 class LocalClip(Clip):
-	def __init__(self, clipname, bot, ctx):
+	async def init(self, clipname, bot, ctx):
 		audio = bot.get_cog("Audio")
 		clipinfos = audio.local_clipinfo
 
@@ -74,7 +82,7 @@ class LocalClip(Clip):
 		text = info.get("text", "")
 		clipfile = settings.resource("clips/" + info.get("path"))
 
-		Clip.__init__(self, clipname, clipfile, text=text)
+		return await Clip.init(self, clipname, clipfile, text=text)
 
 	@classmethod
 	def type(cls):
@@ -100,14 +108,14 @@ class LocalClip(Clip):
 
 
 class TtsClip(Clip):
-	def __init__(self, text, bot, ctx):
+	async def init(self, text, bot, ctx):
 		tempfile = settings.resource("temp/{}.wav".format(int(random.random() * 1000000000)))
 		data = botdata.guildinfo(ctx)
 		if data:
 			tts_save(tempfile, text, data.ttslang)
 		else:
 			tts_save(tempfile, text)
-		Clip.__init__(self, text, tempfile, text)
+		return await Clip.init(self, text, tempfile, text)
 
 	@classmethod
 	def type(cls):
@@ -115,7 +123,7 @@ class TtsClip(Clip):
 
 
 class UrlClip(Clip):
-	def __init__(self, url, bot, ctx):
+	async def init(self, url, bot, ctx):
 		# TODO: add checking for valid url for ffmpeg
 		url = re.sub(r"^https://", "http://", url)
 		if not re.match(r'^https?://.*\.(mp3|wav)$', url):
@@ -124,19 +132,19 @@ class UrlClip(Clip):
 			urllib.request.urlopen(url)
 		except (urllib.error.URLError, urllib.error.HTTPError):
 			raise UserError("There was a problem opening this URL")
-		Clip.__init__(self, url, url)
+		return await Clip.init(self, url, url)
 
 	@classmethod
 	def type(cls):
 		return "url"
 
 class DotaClip(Clip):
-	def __init__(self, responsename, bot, ctx):
+	async def init(self, responsename, bot, ctx):
 		dotabase = bot.get_cog("Dotabase")
 		self.response = dotabase.get_response(responsename)
 		if self.response == None:
 			raise ClipNotFound(self.type(), responsename)
-		Clip.__init__(self, responsename, dotabase.vpkurl + self.response.mp3, text=self.response.text, volume=0.4)
+		return await Clip.init(self, responsename, dotabase.vpkurl + self.response.mp3, text=self.response.text, volume=0.4)
 
 	@classmethod
 	def type(cls):

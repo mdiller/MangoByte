@@ -32,7 +32,7 @@ class MangoCog:
 		if not match:
 			raise MissingClipType(clipid)
 
-		return cliptypes[match.group(1)](match.group(2), self.bot, ctx)
+		return await cliptypes[match.group(1)]().init(match.group(2), self.bot, ctx)
 
 
 	async def play_clip(self, clip, ctx):
