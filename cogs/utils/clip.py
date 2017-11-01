@@ -10,7 +10,7 @@ import random
 import html
 import requests
 
-def tts_save(filename, text, lang="en-au"):
+def tts_save(filename, text, lang):
 	# run_command(["pico2wave", "--wave", filename, "-l", "en-GB", text])
 	try:
 		tts = gTTS(text=text, lang=lang)
@@ -34,6 +34,8 @@ class MissingClipType(UserError):
 # the object. therefore, to initialize a clip, do something
 # like this:
 # await Clip().init(<stuffhere>)
+# instead of:
+# Clip(<stuffhere>)
 
 class Clip(object):
 	async def init(self, clipname, audiopath, text="", volume=0.6):
@@ -109,13 +111,19 @@ class LocalClip(Clip):
 
 class TtsClip(Clip):
 	async def init(self, text, bot, ctx):
-		tempfile = settings.resource("temp/{}.wav".format(int(random.random() * 1000000000)))
 		data = botdata.guildinfo(ctx)
-		if data:
-			tts_save(tempfile, text, data.ttslang)
-		else:
-			tts_save(tempfile, text)
-		return await Clip.init(self, text, tempfile, text)
+		ttslang = "en-au" if not data else data.ttslang
+		uri = f"clip_tts_{ttslang}:{text}"
+
+		filename = httpgetter.cache.get_filename(uri)
+		if not filename:
+			filename = await httpgetter.cache.new(uri, "wav")
+			try:
+				tts_save(filename, text, ttslang)
+			except:
+				await httpgetter.cache.remove(uri)
+				raise
+		return await Clip.init(self, text, filename, text)
 
 	@classmethod
 	def type(cls):
