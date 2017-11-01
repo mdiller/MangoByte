@@ -30,7 +30,7 @@
 		"reaction": "🥔"
 	},
 	{
-		"regex": "^no inv(ite)?\\??$",
+		"regex": "^(wtf )?no inv(ite)?\\??$",
 		"reaction": "😒"
 	},
 	{
