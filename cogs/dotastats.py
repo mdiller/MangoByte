@@ -222,6 +222,7 @@ class DotaStats(MangoCog):
 		dotabase = self.bot.get_cog("Dotabase")
 		if not dotabase:
 			raise ImportError("The Dotabase cog must be added before the DotaStats cog")
+		self.dota_game_strings = read_json(settings.resource("json/dota_game_strings.json"))
 		self.hero_info = dotabase.get_hero_infos()
 		self.lookup_hero = dotabase.lookup_hero
 		self.chat_wheel_info = dotabase.get_chat_wheel_infos()
@@ -373,48 +374,6 @@ class DotaStats(MangoCog):
 		embed.set_footer(text="For more information, try ?match {}".format(game["match_id"]))
 		await ctx.send(embed=embed)
 
-	# prints the stats for the given player's latest game
-	async def player_match_stats(self, steamid, match_id, ctx):
-		game = await get_match(match_id)
-
-		# Finds the player in the game which has our matching steam32 id
-		player = next(p for p in game['players'] if p['account_id'] == steamid)
-		if player is None:
-			raise ValueError("wtf they're not in their own game")
-
-		dotabase = self.bot.get_cog("Dotabase")
-		hero_name = self.hero_info[player['hero_id']]['name']
-
-		winstatus = "Won" if player["win"] != 0 else "Lost"
-
-		description = ("{0} a game as {1} in {2} \n"
-					"More info at [DotaBuff](https://www.dotabuff.com/matches/{3}), "
-					"[OpenDota](https://www.opendota.com/matches/{3}), or "
-					"[STRATZ](https://www.stratz.com/match/{3})"
-					.format(winstatus, hero_name, get_pretty_duration(game['duration'], postfix=False), match_id))
-
-		embed = discord.Embed(description=description, color=self.embed_color, timestamp=datetime.datetime.utcfromtimestamp(game['start_time']))
-
-		embed.set_author(name=player['personaname'], icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
-
-		embed.add_field(name="Damage", value=(
-			"KDA: **{kills}**/**{deaths}**/**{assists}**\n"
-			"Hero Damage: {hero_damage:,}\n"
-			"Hero Healing: {hero_healing:,}\n"
-			"Tower Damage: {tower_damage:,}\n".format(**player)))
-
-		embed.add_field(name="Economy", value=(
-			"Net Worth: {total_gold:,}\n"
-			"Last Hits: {last_hits:,}\n"
-			"Denies: {denies}\n"
-			"Level: {level}\n".format(**player)))
-
-		match_image = discord.File(await drawdota.create_match_image(game), "match.png")
-		embed.set_image(url=f"attachment://{match_image.filename}")
-		embed.set_footer(text="Started")
-
-		await ctx.send(embed=embed, file=match_image)
-
 	@commands.command(aliases=["register"])
 	async def setsteam(self, ctx, steam_id : int, user: discord.User=None):
 		"""Links a discord user to their steam/dota account
@@ -447,6 +406,51 @@ class DotaStats(MangoCog):
 
 		await ctx.send("Linked to {}".format(player['profile']['personaname']))
 
+	# prints the stats for the given player's latest game
+	async def player_match_stats(self, steamid, match_id, ctx):
+		match = await get_match(match_id)
+
+		# Finds the player in the game which has our matching steam32 id
+		player = next(p for p in match['players'] if p['account_id'] == steamid)
+		if player is None:
+			raise ValueError("wtf they're not in their own game")
+
+		dotabase = self.bot.get_cog("Dotabase")
+		hero_name = self.hero_info[player['hero_id']]['name']
+
+		winstatus = "Won" if player["win"] != 0 else "Lost"
+
+		description = ("{0} a game as {1} in {2} \n"
+					"More info at [DotaBuff](https://www.dotabuff.com/matches/{3}), "
+					"[OpenDota](https://www.opendota.com/matches/{3}), or "
+					"[STRATZ](https://www.stratz.com/match/{3})"
+					.format(winstatus, hero_name, get_pretty_duration(match['duration'], postfix=False), match_id))
+
+		embed = discord.Embed(description=description, color=self.embed_color, timestamp=datetime.datetime.utcfromtimestamp(match['start_time']))
+
+		embed.set_author(name=player['personaname'], icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
+
+		embed.add_field(name="Game Mode", value=self.dota_game_strings[f"game_mode_{match['game_mode']}"])
+		embed.add_field(name="Lobby Type", value=self.dota_game_strings[f"lobby_type_{match['lobby_type']}"])
+
+		embed.add_field(name="Damage", value=(
+			"KDA: **{kills}**/**{deaths}**/**{assists}**\n"
+			"Hero Damage: {hero_damage:,}\n"
+			"Hero Healing: {hero_healing:,}\n"
+			"Tower Damage: {tower_damage:,}\n".format(**player)))
+
+		embed.add_field(name="Economy", value=(
+			"Net Worth: {total_gold:,}\n"
+			"Last Hits: {last_hits:,}\n"
+			"Denies: {denies}\n"
+			"Level: {level}\n".format(**player)))
+
+		match_image = discord.File(await drawdota.create_match_image(match), "match.png")
+		embed.set_image(url=f"attachment://{match_image.filename}")
+		embed.set_footer(text="Started")
+
+		await ctx.send(embed=embed, file=match_image)
+
 	@commands.command(aliases=["lastgame"])
 	async def lastmatch(self, ctx, player=None):
 		"""Gets info about the player's last dota game"""
@@ -461,19 +465,22 @@ class DotaStats(MangoCog):
 		"""Gets a summary of the dota match with the given id"""
 		await ctx.channel.trigger_typing()
 
-		game = await get_match(match_id)
+		match = await get_match(match_id)
 
 		description = ("Game ended in {0} \n"
 					"More info at [DotaBuff](https://www.dotabuff.com/matches/{1}), "
 					"[OpenDota](https://www.opendota.com/matches/{1}), or "
 					"[STRATZ](https://www.stratz.com/match/{1})"
-					.format(get_pretty_duration(game['duration'], postfix=False), match_id))
+					.format(get_pretty_duration(match['duration'], postfix=False), match_id))
 
 		embed = discord.Embed(description=description, 
-							timestamp=datetime.datetime.utcfromtimestamp(game['start_time']), color=self.embed_color)
+							timestamp=datetime.datetime.utcfromtimestamp(match['start_time']), color=self.embed_color)
 		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
 
-		match_image = discord.File(await drawdota.create_match_image(game), filename="matchimage.png")
+		embed.add_field(name="Game Mode", value=self.dota_game_strings[f"game_mode_{match['game_mode']}"])
+		embed.add_field(name="Lobby Type", value=self.dota_game_strings[f"lobby_type_{match['lobby_type']}"])
+
+		match_image = discord.File(await drawdota.create_match_image(match), filename="matchimage.png")
 
 		embed.set_image(url=f"attachment://{match_image.filename}")
 		embed.set_footer(text="Started")
