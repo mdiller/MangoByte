@@ -418,20 +418,21 @@ class DotaStats(MangoCog):
 		dotabase = self.bot.get_cog("Dotabase")
 		hero_name = self.hero_info[player['hero_id']]['name']
 
+		duration = get_pretty_duration(match['duration'], postfix=False)
 		winstatus = "Won" if player["win"] != 0 else "Lost"
+		game_mode = self.dota_game_strings[f"game_mode_{match['game_mode']}"]
+		lobby_type = self.dota_game_strings[f"lobby_type_{match['lobby_type']}"] + " "
+		if lobby_type == "Normal ":
+			lobby_type = ""
 
-		description = ("{0} a game as {1} in {2} \n"
-					"More info at [DotaBuff](https://www.dotabuff.com/matches/{3}), "
-					"[OpenDota](https://www.opendota.com/matches/{3}), or "
-					"[STRATZ](https://www.stratz.com/match/{3})"
-					.format(winstatus, hero_name, get_pretty_duration(match['duration'], postfix=False), match_id))
+		description = (f"{winstatus} a {lobby_type}**{game_mode}** match as {hero_name} in {duration}. "
+					f"More info at [DotaBuff](https://www.dotabuff.com/matches/{match_id}), "
+					f"[OpenDota](https://www.opendota.com/matches/{match_id}), or "
+					f"[STRATZ](https://www.stratz.com/match/{match_id})")
 
 		embed = discord.Embed(description=description, color=self.embed_color, timestamp=datetime.datetime.utcfromtimestamp(match['start_time']))
 
 		embed.set_author(name=player['personaname'], icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
-
-		embed.add_field(name="Game Mode", value=self.dota_game_strings[f"game_mode_{match['game_mode']}"])
-		embed.add_field(name="Lobby Type", value=self.dota_game_strings[f"lobby_type_{match['lobby_type']}"])
 
 		embed.add_field(name="Damage", value=(
 			"KDA: **{kills}**/**{deaths}**/**{assists}**\n"
@@ -466,12 +467,16 @@ class DotaStats(MangoCog):
 		await ctx.channel.trigger_typing()
 
 		match = await get_match(match_id)
+		duration = get_pretty_duration(match['duration'], postfix=False)
+		game_mode = self.dota_game_strings[f"game_mode_{match['game_mode']}"]
+		lobby_type = self.dota_game_strings[f"lobby_type_{match['lobby_type']}"] + " "
+		if lobby_type == "Normal ":
+			lobby_type = ""
 
-		description = ("Game ended in {0} \n"
-					"More info at [DotaBuff](https://www.dotabuff.com/matches/{1}), "
-					"[OpenDota](https://www.opendota.com/matches/{1}), or "
-					"[STRATZ](https://www.stratz.com/match/{1})"
-					.format(get_pretty_duration(match['duration'], postfix=False), match_id))
+		description = (f"This {lobby_type}**{game_mode}** match ended in {duration} \n"
+					f"More info at [DotaBuff](https://www.dotabuff.com/matches/{match_id}), "
+					f"[OpenDota](https://www.opendota.com/matches/{match_id}), or "
+					f"[STRATZ](https://www.stratz.com/match/{match_id})")
 
 		embed = discord.Embed(description=description, 
 							timestamp=datetime.datetime.utcfromtimestamp(match['start_time']), color=self.embed_color)
