@@ -237,10 +237,10 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 
 	building_data = read_json(settings.resource("json/building_data.json"))
 
-	map_image = Image.open(settings.resource("images/dota_map.png"))
+	map_image = Image.open(settings.resource("images/map/dota_map.png"))
 	map_image = map_image.resize((256, 256), Image.ANTIALIAS)
 
-	clock_bg_image = Image.open(settings.resource("images/clock_background.png"))
+	clock_bg_image = Image.open(settings.resource("images/map/clock_background.png"))
 	font = ImageFont.truetype(settings.resource("images/table_font.ttf"), 16)
 
 	match_start = -89
@@ -286,7 +286,7 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 	objectiveEvents = match["objectives"]
 	buildings = []
 	for b in building_data:
-		icon = Image.open(settings.resource(f"images/{b['icon']}"))
+		icon = Image.open(settings.resource(f"images/map/{b['icon']}"))
 		size = {
 			"tower": int(map_image.width * (16 / 300)),
 			"barracks": int(map_image.width * (12 / 300)),
@@ -307,6 +307,30 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 	#sort from top right to bottom left for drawing
 	buildings = sorted(buildings, key=lambda b: b["x"] + b["y"], reverse=True)
 
+	# runes
+	current_runes = {}
+	runes = {}
+	for t in range(match_start, end_time + 1):
+		events = filter(lambda e: e["time"] == t, stratz_match["runeEvents"])
+		for e in filter(lambda e: e["time"] == t and e["action"] == 0, stratz_match["runeEvents"]):
+			current_runes[e["id"]] = {
+				"type": e["runeType"],
+				"x": e["x"],
+				"y": e["y"]
+			}
+		if t >= start_time and current_runes:
+			runes[t] = current_runes.copy()
+		for e in filter(lambda e: e["time"] == t and e["action"] == 1, stratz_match["runeEvents"]):
+			if e["id"] in current_runes:
+				del current_runes[e["id"]]
+	# rune icons
+	rune_icons = {}
+	for i in range(0, 7):
+		scale = 0.5
+		icon = Image.open(settings.resource(f"images/map/rune_{i}.png"))
+		rune_icons[i] = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
+
+
 
 
 	process = subprocess.Popen(["gifsicle", "--multifile", "-d", str(ms_per_second // 10), "--conserve-memory", "-O3", "-", "-o", filename], stdin=subprocess.PIPE, bufsize=-1)
@@ -324,6 +348,9 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 		for player in players:
 			icon = player["icon"].convert("LA") if player[t]["dead"] else player["icon"]
 			image = await place_icon_on_map(image, icon, player[t]["x"], player[t]["y"])
+		for rune in runes.get(t, {}):
+			rune = runes[t][rune]
+			image = await place_icon_on_map(image, rune_icons[rune["type"]], rune["x"], rune["y"])
 
 		image = paste_image(image, clock_bg_image, (image.width // 2) - (clock_bg_image.width // 2), 0)
 		draw = ImageDraw.Draw(image)
