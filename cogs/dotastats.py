@@ -77,7 +77,9 @@ async def get_stratz_match(match_id):
 		else:
 			await httpgetter.cache.remove(url)
 
-	return await httpgetter.get(url, cache=True)
+	return await httpgetter.get(url, cache=True, errors={
+		500: "Looks like something wrong with the STRATZ api"
+	})
 
 def s_if_plural(text, n):
 	return text + "s" if n > 1 else text
