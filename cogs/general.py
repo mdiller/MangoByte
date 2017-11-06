@@ -15,6 +15,7 @@ import wikipedia
 from bs4 import BeautifulSoup, Tag
 from io import BytesIO
 import re
+import praw
 from .mangocog import *
 
 
@@ -338,6 +339,43 @@ class General(MangoCog):
 			await ctx.send(embed=embed, file=svg_png_image)
 		else:
 			await ctx.send(embed=embed)
+
+	@commands.command()
+	async def reddit(self, ctx, url_or_id):
+		"""Gets a reddit submission and returns a nice embed of it"""
+		if settings.reddit is None:
+			raise UserError("This MangoByte has not been configured to get reddit submissions. Gotta add your info to `settings.json`")
+
+		await ctx.channel.trigger_typing()
+
+		reddit = praw.Reddit(client_id=settings.reddit["client_id"],
+			client_secret=settings.reddit["client_secret"],
+			user_agent=settings.reddit["user_agent"])
+
+		try:
+			if re.search("https?://", url_or_id):
+				submission = reddit.submission(url=url_or_id)
+			else:
+				submission = reddit.submission(id=url_or_id)
+		except:
+			raise UserError("Couldn't properly find that reddit submission")
+
+		character_limit = 600
+		description = submission.selftext
+		if len(description) > character_limit:
+			description = f"{description[0:character_limit]}...\n[Read More]({submission.shortlink})"
+
+		embed = discord.Embed(description=description)
+		embed.set_footer(text=f"/r/{submission.subreddit}")
+
+		embed.title = f"**{submission.title}**"
+		embed.url = submission.shortlink
+
+		if submission.url.split(".")[-1] in ["gif", "png", "jpg", "jpeg"]:
+			embed.set_image(url=submission.url)
+
+		await ctx.send(embed=embed)
+
 
 	@commands.command(hidden=True, aliases=["restapi"])
 	async def restget(self, ctx, url):

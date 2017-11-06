@@ -42,8 +42,11 @@ class Settings:
 
 	@property
 	def debug(self):
-	    return self.json_data.get("debug", False)
-	
+		return self.json_data.get("debug", False)
+
+	@property
+	def reddit(self):
+		return self.json_data.get("reddit", None)
 
 	def resource(self, dir):
 		return os.path.join(self.resourcedir, dir)
