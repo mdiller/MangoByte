@@ -314,5 +314,30 @@ class Admin(MangoCog):
 				embed.add_field(name="Invite", value=invite.url)
 			await ctx.send(embed=embed)
 
+	@checks.is_owner()
+	@commands.command(hidden=True)
+	async def clearcache(self, ctx, uri):
+		"""Clears the cache at the given uri
+
+		or clears everything from cache if given the 'all' keyword"""
+		try:
+			await httpgetter.cache.remove(uri)
+		except KeyError:
+			raise UserError("Couldn't find a cached version of that")
+
+		await ctx.message.add_reaction("✅")
+
+	@checks.is_owner()
+	@commands.command(hidden=True)
+	async def getcache(self, ctx, uri):
+		"""Gets the file in the cache that is pointed to by the uri"""
+		filename = httpgetter.cache.get_filename(uri)
+
+		if filename is None:
+			raise UserError("Couldn't find a file at that uri")
+
+		await ctx.send(file=discord.File(filename))
+
+
 def setup(bot):
 	bot.add_cog(Admin(bot))
