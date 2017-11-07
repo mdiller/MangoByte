@@ -353,7 +353,9 @@ class General(MangoCog):
 			user_agent=settings.reddit["user_agent"])
 
 		try:
-			if re.search("https?://", url_or_id):
+			if re.search(r"(redd\.it|reddit.com)", url_or_id):
+				if not re.search(r"https?://", url_or_id):
+					url_or_id = "http://" + url_or_id
 				submission = reddit.submission(url=url_or_id)
 			else:
 				submission = reddit.submission(id=url_or_id)
@@ -362,17 +364,24 @@ class General(MangoCog):
 
 		character_limit = 600
 		description = submission.selftext
+		description = re.sub(r"\n(?:\*|-) (.*)", r"\n• \1", description)
+
 		if len(description) > character_limit:
 			description = f"{description[0:character_limit]}...\n[Read More]({submission.shortlink})"
 
-		embed = discord.Embed(description=description)
+		embed = discord.Embed(description=description, color=discord.Color(int("ff4500", 16)))
 		embed.set_footer(text=f"/r/{submission.subreddit}")
 
-		embed.title = f"**{submission.title}**"
+		embed.title = submission.title
 		embed.url = submission.shortlink
 
-		if submission.url.split(".")[-1] in ["gif", "png", "jpg", "jpeg"]:
-			embed.set_image(url=submission.url)
+		url_ext = submission.url.split(".")[-1]
+
+		if url_ext in ["gifv", "gif", "png", "jpg", "jpeg"]:
+			image_url = submission.url
+			if url_ext == "gifv":
+				image_url = image_url.replace(".gifv", ".gif")
+			embed.set_image(url=image_url)
 
 		await ctx.send(embed=embed)
 
