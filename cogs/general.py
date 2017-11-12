@@ -236,6 +236,8 @@ class General(MangoCog):
 					return getWikiPage(title)
 				if isinstance(e, wikipedia.exceptions.PageError) or len(e.options) == 0:
 					raise UserError(f"Couldn't find anythin' fer \"*{thing}*\"")
+				if e.options[0] == title:
+					raise UserError("Can't find things on wiki for that")
 				return getWikiPage(e.options[0])
 
 		page = getWikiPage(thing)
