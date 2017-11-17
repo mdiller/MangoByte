@@ -1,238 +1,238 @@
 [
 	{
 		"key": "npc_dota_goodguys_tower4_bot",
-		"icon": "goodguys_rax.png",
+		"icon": "goodguys_tower_angle.png",
 		"type": "tower",
-		"x": 86.77,
-		"y": 87.63
+		"x": 86.5,
+		"y": 87.5
 	},
 	{
 		"key": "npc_dota_goodguys_tower4_top",
-		"icon": "goodguys_rax.png",
+		"icon": "goodguys_tower_angle.png",
 		"type": "tower",
-		"x": 81.65,
-		"y": 91.47
+		"x": 82,
+		"y": 91
 	},
 	{
 		"key": "npc_dota_goodguys_tower3_bot",
-		"icon": "goodguys_rax.png",
+		"icon": "goodguys_tower.png",
 		"type": "tower",
-		"x": 96.85,
-		"y": 81.71
+		"x": 95,
+		"y": 81
 	},
 	{
 		"key": "npc_dota_goodguys_tower2_bot",
-		"icon": "goodguys_rax.png",
+		"icon": "goodguys_tower.png",
 		"type": "tower",
 		"x": 126.29,
 		"y": 79.79
 	},
 	{
 		"key": "npc_dota_goodguys_tower1_bot",
-		"icon": "goodguys_rax.png",
+		"icon": "goodguys_tower.png",
 		"type": "tower",
 		"x": 167.25,
 		"y": 82.35
 	},
 	{
 		"key": "npc_dota_goodguys_tower3_mid",
-		"icon": "goodguys_rax_angle.png",
+		"icon": "goodguys_tower_angle.png",
 		"type": "tower",
 		"x": 90.45,
 		"y": 97.71
 	},
 	{
 		"key": "npc_dota_goodguys_tower2_mid",
-		"icon": "goodguys_rax_angle.png",
+		"icon": "goodguys_tower_angle.png",
 		"type": "tower",
 		"x": 101.97,
 		"y": 107.95
 	},
 	{
 		"key": "npc_dota_goodguys_tower1_mid",
-		"icon": "goodguys_rax_angle.png",
+		"icon": "goodguys_tower_angle.png",
 		"type": "tower",
 		"x": 116.05,
 		"y": 119.47
 	},
 	{
 		"key": "npc_dota_goodguys_tower3_top",
-		"icon": "goodguys_rax.png",
+		"icon": "goodguys_tower.png",
 		"type": "tower",
 		"x": 76.37,
 		"y": 101.55
 	},
 	{
 		"key": "npc_dota_goodguys_tower2_top",
-		"icon": "goodguys_rax.png",
+		"icon": "goodguys_tower.png",
 		"type": "tower",
 		"x": 77.65,
 		"y": 123.31
 	},
 	{
 		"key": "npc_dota_goodguys_tower1_top",
-		"icon": "goodguys_rax.png",
+		"icon": "goodguys_tower.png",
 		"type": "tower",
 		"x": 77.65,
 		"y": 143.79
 	},
 	{
 		"key": "npc_dota_goodguys_range_rax_bot",
-		"icon": "goodguys_tower.png",
+		"icon": "goodguys_rax.png",
 		"type": "barracks",
 		"x": 92.16,
 		"y": 83.9
 	},
 	{
 		"key": "npc_dota_goodguys_melee_rax_bot",
-		"icon": "goodguys_tower.png",
+		"icon": "goodguys_rax.png",
 		"type": "barracks",
 		"x": 92.16,
 		"y": 78.78
 	},
 	{
 		"key": "npc_dota_goodguys_range_rax_mid",
-		"icon": "goodguys_tower_angle.png",
+		"icon": "goodguys_rax_angle.png",
 		"type": "barracks",
 		"x": 85.76,
 		"y": 96.7
 	},
 	{
 		"key": "npc_dota_goodguys_melee_rax_mid",
-		"icon": "goodguys_tower_angle.png",
+		"icon": "goodguys_rax_angle.png",
 		"type": "barracks",
 		"x": 89.6,
 		"y": 93.5
 	},
 	{
 		"key": "npc_dota_goodguys_range_rax_top",
-		"icon": "goodguys_tower.png",
+		"icon": "goodguys_rax.png",
 		"type": "barracks",
 		"x": 73.6,
 		"y": 96.7
 	},
 	{
 		"key": "npc_dota_goodguys_melee_rax_top",
-		"icon": "goodguys_tower.png",
+		"icon": "goodguys_rax.png",
 		"type": "barracks",
 		"x": 78.72,
 		"y": 96.7
 	},
 	{
 		"key": "npc_dota_badguys_tower4_bot",
-		"icon": "badguys_rax.png",
+		"icon": "badguys_tower_angle.png",
 		"type": "tower",
-		"x": 170.93,
-		"y": 164.11
+		"x": 172,
+		"y": 164
 	},
 	{
 		"key": "npc_dota_badguys_tower4_top",
-		"icon": "badguys_rax.png",
+		"icon": "badguys_tower_angle.png",
 		"type": "tower",
-		"x": 167.09,
-		"y": 167.95
+		"x": 167.5,
+		"y": 167.5
 	},
 	{
 		"key": "npc_dota_badguys_tower3_bot",
-		"icon": "badguys_rax.png",
+		"icon": "badguys_tower.png",
 		"type": "tower",
 		"x": 177.49,
 		"y": 152.75
 	},
 	{
 		"key": "npc_dota_badguys_tower2_bot",
-		"icon": "badguys_rax.png",
+		"icon": "badguys_tower.png",
 		"type": "tower",
 		"x": 177.49,
 		"y": 130.99
 	},
 	{
 		"key": "npc_dota_badguys_tower1_bot",
-		"icon": "badguys_rax.png",
+		"icon": "badguys_tower.png",
 		"type": "tower",
 		"x": 177.49,
 		"y": 111.79
 	},
 	{
 		"key": "npc_dota_badguys_tower3_mid",
-		"icon": "badguys_rax_angle.png",
+		"icon": "badguys_tower_angle.png",
 		"type": "tower",
 		"x": 160.85,
 		"y": 157.87
 	},
 	{
 		"key": "npc_dota_badguys_tower2_mid",
-		"icon": "badguys_rax_angle.png",
+		"icon": "badguys_tower_angle.png",
 		"type": "tower",
 		"x": 148.05,
 		"y": 145.07
 	},
 	{
 		"key": "npc_dota_badguys_tower1_mid",
-		"icon": "badguys_rax_angle.png",
+		"icon": "badguys_tower_angle.png",
 		"type": "tower",
 		"x": 135.25,
 		"y": 132.27
 	},
 	{
 		"key": "npc_dota_badguys_tower3_top",
-		"icon": "badguys_rax.png",
+		"icon": "badguys_tower.png",
 		"type": "tower",
 		"x": 157.01,
 		"y": 174.51
 	},
 	{
 		"key": "npc_dota_badguys_tower2_top",
-		"icon": "badguys_rax.png",
+		"icon": "badguys_tower.png",
 		"type": "tower",
 		"x": 123.73,
 		"y": 175.79
 	},
 	{
 		"key": "npc_dota_badguys_tower1_top",
-		"icon": "badguys_rax.png",
+		"icon": "badguys_tower.png",
 		"type": "tower",
 		"x": 86.61,
 		"y": 175.79
 	},
 	{
 		"key": "npc_dota_badguys_range_rax_bot",
-		"icon": "badguys_tower.png",
+		"icon": "badguys_rax.png",
 		"type": "barracks",
 		"x": 174.72,
 		"y": 156.22
 	},
 	{
 		"key": "npc_dota_badguys_melee_rax_bot",
-		"icon": "badguys_tower.png",
+		"icon": "badguys_rax.png",
 		"type": "barracks",
 		"x": 179.84,
 		"y": 156.22
 	},
 	{
 		"key": "npc_dota_badguys_range_rax_mid",
-		"icon": "badguys_tower_angle.png",
+		"icon": "badguys_rax_angle.png",
 		"type": "barracks",
 		"x": 161.92,
 		"y": 161.98
 	},
 	{
 		"key": "npc_dota_badguys_melee_rax_mid",
-		"icon": "badguys_tower_angle.png",
+		"icon": "badguys_rax_angle.png",
 		"type": "barracks",
 		"x": 165.76,
 		"y": 158.78
 	},
 	{
 		"key": "npc_dota_badguys_range_rax_top",
-		"icon": "badguys_tower.png",
+		"icon": "badguys_rax.png",
 		"type": "barracks",
 		"x": 161.28,
 		"y": 176.7
 	},
 	{
 		"key": "npc_dota_badguys_melee_rax_top",
-		"icon": "badguys_tower.png",
+		"icon": "badguys_rax.png",
 		"type": "barracks",
 		"x": 161.28,
 		"y": 171.58
