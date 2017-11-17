@@ -3,15 +3,15 @@
 		"key": "npc_dota_goodguys_tower4_bot",
 		"icon": "goodguys_rax.png",
 		"type": "tower",
-		"x": 82.77,
-		"y": 83.63
+		"x": 86.77,
+		"y": 87.63
 	},
 	{
 		"key": "npc_dota_goodguys_tower4_top",
 		"icon": "goodguys_rax.png",
 		"type": "tower",
-		"x": 77.65,
-		"y": 87.47
+		"x": 81.65,
+		"y": 91.47
 	},
 	{
 		"key": "npc_dota_goodguys_tower3_bot",
@@ -77,7 +77,7 @@
 		"y": 143.79
 	},
 	{
-		"key": "npc_dota_goodguys_ranged_rax_bot",
+		"key": "npc_dota_goodguys_range_rax_bot",
 		"icon": "goodguys_tower.png",
 		"type": "barracks",
 		"x": 92.16,
@@ -91,7 +91,7 @@
 		"y": 78.78
 	},
 	{
-		"key": "npc_dota_goodguys_ranged_rax_mid",
+		"key": "npc_dota_goodguys_range_rax_mid",
 		"icon": "goodguys_tower_angle.png",
 		"type": "barracks",
 		"x": 85.76,
@@ -105,7 +105,7 @@
 		"y": 93.5
 	},
 	{
-		"key": "npc_dota_goodguys_ranged_rax_top",
+		"key": "npc_dota_goodguys_range_rax_top",
 		"icon": "goodguys_tower.png",
 		"type": "barracks",
 		"x": 73.6,
@@ -122,15 +122,15 @@
 		"key": "npc_dota_badguys_tower4_bot",
 		"icon": "badguys_rax.png",
 		"type": "tower",
-		"x": 174.93,
-		"y": 168.11
+		"x": 170.93,
+		"y": 164.11
 	},
 	{
 		"key": "npc_dota_badguys_tower4_top",
 		"icon": "badguys_rax.png",
 		"type": "tower",
-		"x": 171.09,
-		"y": 171.95
+		"x": 167.09,
+		"y": 167.95
 	},
 	{
 		"key": "npc_dota_badguys_tower3_bot",
@@ -196,7 +196,7 @@
 		"y": 175.79
 	},
 	{
-		"key": "npc_dota_badguys_ranged_rax_bot",
+		"key": "npc_dota_badguys_range_rax_bot",
 		"icon": "badguys_tower.png",
 		"type": "barracks",
 		"x": 174.72,
@@ -210,7 +210,7 @@
 		"y": 156.22
 	},
 	{
-		"key": "npc_dota_badguys_ranged_rax_mid",
+		"key": "npc_dota_badguys_range_rax_mid",
 		"icon": "badguys_tower_angle.png",
 		"type": "barracks",
 		"x": 161.92,
@@ -224,7 +224,7 @@
 		"y": 158.78
 	},
 	{
-		"key": "npc_dota_badguys_ranged_rax_top",
+		"key": "npc_dota_badguys_range_rax_top",
 		"icon": "badguys_tower.png",
 		"type": "barracks",
 		"x": 161.28,
@@ -241,14 +241,14 @@
 		"key": "npc_dota_goodguys_fort",
 		"icon": "goodguys_fort.png",
 		"type": "ancient",
-		"x": 75.73,
-		"y": 80.43
+		"x": 79.73,
+		"y": 84.43
 	},
 	{
 		"key": "npc_dota_badguys_fort",
 		"icon": "badguys_fort.png",
 		"type": "ancient",
-		"x": 176.85,
-		"y": 175.15
+		"x": 172.85,
+		"y": 171.15
 	}
 ]
