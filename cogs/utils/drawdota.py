@@ -90,6 +90,20 @@ def color_image(image, color):
 				pixels[x, y] = color
 	return image
 
+# removes semi transparent areas of an image and replaces them with either transparent or the given color
+def remove_semi_transparent(image, color):
+	image = image.copy()
+	pixels = image.load()
+
+	for y in range(image.height):
+		for x in range(image.width):
+			if pixels[x, y][3] > 128:
+				p = pixels[x, y]
+				pixels[x, y] = (p[0], p[1], p[2])
+			else:
+				pixels[x, y] = color
+	return image
+
 def outline_image(image, thickness, color):
 	background = color_image(image, color)
 	background = background.resize((image.width + (thickness * 2), image.height + (thickness * 2)))
@@ -377,5 +391,33 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 
 	return filename
 
-	# filename = await save_gif(uri, frames, ms_per_second)
-	# return filename
+async def create_dota_emoticon(emoticon, url):
+	uri = f"dota_emoticon:{emoticon.name}"
+	filename = httpgetter.cache.get_filename(uri)
+	if filename and not settings.debug:
+		return filename
+
+	filename = await httpgetter.cache.new(uri, "gif")
+
+	image = Image.open(await httpgetter.get(url, "bytes", cache=True))
+	image = remove_semi_transparent(image, (255, 255, 255, 0))
+
+	frame_width = image.width / emoticon.frames
+
+	process = subprocess.Popen(["gifsicle", 
+		"--multifile", 
+		"-d", str(emoticon.ms_per_frame // 10), 
+		"-U", "--disposal=bg",
+		"--loopcount=0",
+		"--transparent", "0",
+		"-", "-o", filename], stdin=subprocess.PIPE, bufsize=-1)
+
+	for i in range(0, emoticon.frames):
+		box = (i * frame_width, 0, (i + 1) * frame_width, image.height)
+		frame = image.crop(box)
+		frame.save(process.stdin, "gif")
+
+	process.stdin.close()
+	process.wait()
+
+	return filename

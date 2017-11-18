@@ -495,7 +495,6 @@ class Dotabase(MangoCog):
 		if ability is None:
 			raise UserError("I couldn't find an ability by that name")
 
-
 		description = ability.description
 
 		description = re.sub(r"(Upgradable by Aghanim's Scepter).?", r"**\1**", description)
@@ -516,7 +515,26 @@ class Dotabase(MangoCog):
 			embed.add_field(name="Cooldown", value=f"{self.get_emoji('cooldown')} {clean_values(ability.cooldown)}\n")
 
 		await ctx.send(embed=embed)
-		
+
+	@commands.command(aliases=["emoji"])
+	async def emoticon(self, ctx, name):
+		"""Gets the gif of a dota emoticon
+
+		**Examples:**
+		`{cmdpfx}emoticon pup`
+		`{cmdpfx}emoticon stunned`
+		`{cmdpfx}emoticon naga_song"""
+		await ctx.channel.trigger_typing()
+
+		emoticon = session.query(Emoticon).filter(Emoticon.name == name).first()
+
+		if not emoticon:
+			raise UserError(f"Couldn't find an emoticon with the name '{name}'")
+
+		url = self.vpkurl + emoticon.url
+		image = discord.File(await drawdota.create_dota_emoticon(emoticon, url), f"{name}.gif")
+
+		await ctx.send(file=image)
 
 
 def setup(bot):
