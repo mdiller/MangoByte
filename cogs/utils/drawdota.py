@@ -9,7 +9,7 @@ import numpy
 from PIL import Image, ImageDraw, ImageFont
 from .tabledraw import Table, ImageCell, TextCell, ColorCell
 from io import BytesIO
-from .helpers import run_command, get_pretty_time, read_json, UserError
+from .helpers import run_command, get_pretty_time, read_json, UserError, format_duration_simple
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -449,4 +449,46 @@ async def dota_rank_icon(rank_tier):
 	return filename
 
 
+async def draw_matches_table(matches, game_strings):
+	border_size = 10
+	table = Table(background=background_color)
+	# Header
+	headers = [
+		TextCell("Hero", padding=0),
+		TextCell("Match ID"),
+		TextCell("Result"),
+		TextCell("K", horizontal_align="center"),
+		TextCell("D", horizontal_align="center"),
+		TextCell("A", horizontal_align="center"),
+		TextCell("Duration"),
+		TextCell("Type")
+	]
+	table.add_row(headers)
+	for cell in table.rows[0]:
+		cell.background = trim_color
+
+	for match in matches:
+		won_match = bool(match["radiant_win"]) == bool(match["player_slot"] < 128)
+		game_mode = game_strings[f"game_mode_{match['game_mode']}"]
+		lobby_type = game_strings[f"lobby_type_{match['lobby_type']}"]
+		table.add_row([
+			ImageCell(img=await get_hero_image(match["hero_id"]), height=48),
+			TextCell(match.get("match_id")),
+			TextCell("Win" if won_match else "Loss", color=("green" if won_match else "red"), horizontal_align="center"),
+			TextCell(match.get("kills")),
+			TextCell(match.get("deaths")),
+			TextCell(match.get("assists")),
+			TextCell(format_duration_simple(match.get("duration")), horizontal_align="center"),
+			TextCell(f"{game_mode} / {lobby_type}")
+		])
+	image = table.render()
+
+	border_image = Image.new('RGBA', (image.size[0] + (border_size * 2), image.size[1] + border_size), color=trim_color)
+	image = paste_image(border_image, image, border_size, 0)
+
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
+
+	return fp
 

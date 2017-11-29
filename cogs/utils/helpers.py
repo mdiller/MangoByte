@@ -54,6 +54,13 @@ def get_pretty_time(s):
 	else:
 		return f"{minutes}:{seconds:0>2}"
 
+
+def format_duration_simple(duration):
+	if duration >= 3600:
+		return f"{int(duration / 3600)}:{int((duration / 60) % 60):02}:{duration % 60:02}"
+	else:
+		return f"{int((duration / 60) % 60)}:{duration % 60:02}"
+
 # Gets mangobytes version from git commit number
 def get_version():
 	return run_command(["git", "rev-list", "--count", "master"])

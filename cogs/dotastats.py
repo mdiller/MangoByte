@@ -132,12 +132,6 @@ def get_pretty_duration(duration, postfix=True):
 		result += " in" if is_after else " before the game started"
 	return result
 
-def format_duration_simple(duration):
-	if duration >= 3600:
-		return f"{int(duration / 3600)}:{int((duration / 60) % 60):02}:{duration % 60:02}"
-	else:
-		return f"{int((duration / 60) % 60)}:{duration % 60:02}"
-
 
 def is_parsed(match):
 	return match.get("version", None) is not None
@@ -541,6 +535,40 @@ class DotaStats(MangoCog):
 
 		await self.tell_match_story(game, player_data['isRadiant'], ctx, perspective)
 
+	@commands.command(aliases=["recentmatches", "recent"])
+	async def matches(self, ctx, matchcount=10, player=None):
+		"""Gets a list of your recent matches
+
+		Specifiy a `matchcount` to get a specific number of matches. Default is 10
+		You can also mention a user to get their recent matches
+
+		**Example:**
+		`{cmdpfx}matches 5 @PlayerPerson`"""
+		steam32 = await get_check_steamid(player, ctx)
+
+		await ctx.channel.trigger_typing()
+
+		matches = await opendota_query(f"/players/{steam32}/recentmatches")
+
+		if matchcount < 1:
+			raise UserError("Gotta have a matchcount of 1 or more")
+		if matchcount > 20:
+			raise UserError("Sorries, 20 is the maximum number of matches for this command")
+		if not matches:
+			raise UserError("Looks like this player hasn't played any matches")
+
+		matches = matches[:matchcount]
+
+		embed = discord.Embed()
+
+		embed.title = "Recent Matches"
+		embed.url = f"https://www.opendota.com/players/{steam32}"
+
+		matches_image = await drawdota.draw_matches_table(matches, self.dota_game_strings)
+		matches_image = discord.File(matches_image, "matches.png")
+		embed.set_image(url=f"attachment://{matches_image.filename}")
+
+		await ctx.send(embed=embed, file=matches_image)
 
 	@commands.command(aliases=["whois"])
 	async def profile(self, ctx, player=None):
