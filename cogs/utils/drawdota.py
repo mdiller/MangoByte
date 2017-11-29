@@ -421,3 +421,32 @@ async def create_dota_emoticon(emoticon, url):
 	process.wait()
 
 	return filename
+
+
+async def dota_rank_icon(rank_tier):
+	if rank_tier is None:
+		rank_tier = 0
+
+	uri = f"dota_rank:{rank_tier}"
+	filename = httpgetter.cache.get_filename(uri)
+	if filename and not settings.debug:
+		return filename
+
+	filename = await httpgetter.cache.new(uri, "png")
+
+	badge_num = rank_tier // 10
+	stars_num = min(rank_tier % 10, 5)
+
+	image = Image.open(settings.resource(f"images/ranks/rank_{badge_num}.png"))
+
+	if stars_num > 0:
+		stars_image = Image.open(settings.resource(f"images/ranks/stars_{stars_num}.png"))
+		image = paste_image(image, stars_image, 0, 0)
+
+
+	image.save(filename, "png")
+
+	return filename
+
+
+

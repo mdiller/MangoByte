@@ -657,7 +657,11 @@ class DotaStats(MangoCog):
 
 		embed.set_footer(text=f"For more info, try ?playerstats {player_mention}")
 
-		await ctx.send(embed=embed)
+		rank_icon = await drawdota.dota_rank_icon(playerinfo.get("rank_tier"))
+		rank_icon = discord.File(rank_icon, "rank.png")
+		embed.set_thumbnail(url=f"attachment://{rank_icon.filename}")
+
+		await ctx.send(embed=embed, file=rank_icon)
 
 	@commands.command()
 	async def playerstats(self, ctx, *, player=None):
