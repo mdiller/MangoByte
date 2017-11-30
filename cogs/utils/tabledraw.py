@@ -43,6 +43,7 @@ class TextCell(Cell):
 		self.color = kwargs.get('color', '#ffffff')
 		self.background = kwargs.get('background')
 		self.font = ImageFont.truetype(table_font, kwargs.get("font_size", 28))
+		self.wrap = kwargs.get('wrap', False)
 
 		self.horizontal_align = kwargs.get('horizontal_align', 'left') # left center right
 		self.vertical_align = kwargs.get('vertical_align', 'middle') # top middle bottom
@@ -58,18 +59,45 @@ class TextCell(Cell):
 		if self.background:
 			draw.rectangle([x, y, x + width - 1, y + height - 1], fill=self.background)
 
-		x_loc = {
-			'left': x + self.padding[3],
-			'center': int(x + (width / 2) - (self.text_size[0] / 2)),
-			'right': x + width - self.padding[1] - self.text_size[0]
-		}[self.horizontal_align]
-		y_loc = {
-			'top': y + self.padding[0],
-			'middle': int(y + (height / 2) - (self.font.size / 2) - 5),
-			'bottom': y + height - self.padding[2] - self.font.size
-		}[self.vertical_align]
 
-		draw.text((x_loc, y_loc), self.text, font=self.font, fill=self.color)
+		actual_width = (width - self.padding[3]) - self.padding[1]
+		words = self.text.split(" ")
+		if self.wrap:
+			lines = [words[0]]
+			words = words[1:]
+			i = 0
+			for word in words:
+				if self.font.getsize(lines[i] + " " + word)[0] < actual_width:
+					lines[i] += " " + word
+				else:
+					i += 1
+					lines.append(word)
+		else:
+			lines = [ " ".join(words) ]
+
+		line_padding = 5
+
+		total_height = self.font.size + ((len(lines) - 1) * (line_padding + self.font.size))
+
+		for i in range(0, len(lines)):
+			text_size = self.font.getsize(lines[i])
+			x_loc = {
+				'left': x + self.padding[3],
+				'center': int(x + (width / 2) - (text_size[0] / 2)),
+				'right': x + width - self.padding[1] - text_size[0]
+			}[self.horizontal_align]
+
+			y_diff = i * (self.font.size + line_padding)
+
+			y_loc = {
+				'top': y + self.padding[0] + y_diff,
+				'middle': int(y + (height / 2) - (total_height / 2) + y_diff - 5),
+				'bottom': y + height - self.padding[2] - (total_height - y_diff)
+			}[self.vertical_align]
+
+
+			draw.text((x_loc, y_loc), lines[i], font=self.font, fill=self.color)
+
 
 
 class ImageCell(Cell):

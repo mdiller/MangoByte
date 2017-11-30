@@ -481,6 +481,24 @@ class Dotabase(MangoCog):
 			except AudioPlayerNotFoundError:
 				pass
 
+	@commands.command()
+	async def talents(self, ctx, *, hero : str):
+		"""Gets the talents of a specific hero
+
+		You can give this command almost any variant of the hero's name, or the hero's id, in the same format as `{cmdpfx}hero`
+
+		**Examples:**
+		`{cmdpfx}talents shadow fiend`"""
+		hero = self.lookup_hero(hero)
+		if not hero:
+			raise UserError("That doesn't look like a hero")
+
+		image = await drawdota.draw_hero_talents(hero.talents)
+		image = discord.File(image, f"talents.png")
+
+		await ctx.send(file=image)
+
+
 	@commands.command(aliases=["spell"])
 	async def ability(self, ctx, *, ability : str):
 		"""Gets information about a specific hero ability

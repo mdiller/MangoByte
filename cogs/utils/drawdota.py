@@ -492,3 +492,45 @@ async def draw_matches_table(matches, game_strings):
 
 	return fp
 
+
+# given talents as they are stored in dotabase
+async def draw_hero_talents(talents):
+	talents = talents.split("|")
+	talent_rows = [
+		[ talents[7], talents[6] ],
+		[ talents[5], talents[4] ],
+		[ talents[3], talents[2] ],
+		[ talents[1], talents[0] ]
+	]
+
+	image = Image.open(settings.resource("images/talents.png"))
+	draw = ImageDraw.Draw(image)
+	width = 693
+	height = 445
+
+	box_width = 306
+	box_height = 73
+	box_margin_y = 14
+
+	start_y = 70
+	start_x_left = 14
+	start_x_right = 370
+	start_x = [ start_x_left, start_x_right ]
+
+	for i in range(0, 4):
+		for j in range(0, 2):
+			x = start_x[j]
+			y = start_y + (i * (box_height + box_margin_y))
+			text = talent_rows[i][j]
+
+			cell = TextCell(text, color="#cca770", font_size=20, wrap=True, padding=[ 0, 15, 0, 15 ], horizontal_align="center")
+			cell.render(draw, image, x, y, box_width, box_height)
+
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
+
+	return fp
+
+
+	
