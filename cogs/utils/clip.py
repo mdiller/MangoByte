@@ -132,8 +132,8 @@ class TtsClip(Clip):
 
 class UrlClip(Clip):
 	async def init(self, url, bot, ctx):
-		if not re.match(r'^https?://.*\.(mp3|wav)$', url):
-			raise UserError("That's not a valid mp3 or wav url")
+		if not re.match(f'^https?://.*\.({audio_extensions})$', url):
+			raise UserError("That's not a valid audio url")
 
 		filename = await httpgetter.get(url, "filename", cache=True)
 		return await Clip.init(self, url, filename)

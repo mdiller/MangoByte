@@ -125,7 +125,7 @@ class Audio(MangoCog):
 		clipsdir = settings.resource("clips/")
 		for root, dirs, files in os.walk(clipsdir):
 			for file in files:
-				match = re.search(r"clips/((?:.*/)?([^/]+)\.(?:mp3|wav))", os.path.join(root, file))
+				match = re.search(f"clips/((?:.*/)?([^/]+)\.(?:{audio_extensions}))", os.path.join(root, file))
 				if match:
 					path = match.group(1)
 					name = match.group(2)
@@ -137,7 +137,7 @@ class Audio(MangoCog):
 								break
 						if not found:
 							info = { "path": path }
-							in_dir = re.search(r"(.+)/(?:.+)\.(?:mp3|wav)", path)
+							in_dir = re.search(f"(.+)/(?:.+)\.(?:{audio_extensions})", path)
 							if in_dir:
 								info["tags"] = in_dir.group(1)
 							clipinfos[name] = info
@@ -507,7 +507,7 @@ class Audio(MangoCog):
 	async def smarttts(self, ctx, *, message : str):
 		"""Automatically find the best fit for the tts given
 
-		First checks local clips (like `{cmdpfx}play`), then checks to see if it is an mp3/wav url, then checks if it's a dota chatwheel message, then checks if there is an exact match for a dota response clip, and if none of the above is found, does a simple tts clip"""
+		First checks local clips (like `{cmdpfx}play`), then checks to see if it is an audio url, then checks if it's a dota chatwheel message, then checks if there is an exact match for a dota response clip, and if none of the above is found, does a simple tts clip"""
 		await self.do_smarttts(message, ctx)
 
 	async def do_smarttts(self, message, ctx):
@@ -519,7 +519,7 @@ class Audio(MangoCog):
 			return # Clip played successfully so we're done
 		except ClipNotFound:
 			pass
-		if re.match(r'^https?://.*\.(mp3|wav)$', message):
+		if re.match(f'^https?://.*\.({audio_extensions})$', message):
 			await self.play_clip(f"url:{message}", ctx)
 			return
 		dotabase = self.bot.get_cog("Dotabase")

@@ -5,6 +5,8 @@ import subprocess
 import asyncio
 from collections import OrderedDict
 
+audio_extensions = "mp3|wav|ogg"
+
 def findfile(name, path):
 	for root, dirs, files in os.walk(path):
 		if name in files:

@@ -90,6 +90,23 @@ class Pokemon(MangoCog):
 
 		return data, species_data
 
+	# returns True on success, False on failure
+	async def play_pokecry(self, ctx, poke_id, namestring, old=False):
+		is_mega = "mega" in str(namestring).lower()
+
+		name = str(poke_id)
+		if old:
+			name = f"old/{name}"
+		if is_mega:
+			name = f"{name}-mega"
+
+		try:
+			clip = await self.play_clip(f"url:http://dillerm.io/pokemon/cries/{name}.ogg", ctx)
+		except Http404Error:
+			return False
+
+		return True
+
 
 	@commands.command(aliases=["pokemon"])
 	async def pokedex(self, ctx, *, pokemon):
@@ -112,7 +129,9 @@ class Pokemon(MangoCog):
 		flavor_text = flavor_text.replace("\n", " ")
 
 		embed = discord.Embed(description=flavor_text, color=poke_color(species_data["color"]["name"]))
-		embed.set_author(name=data["localized_name"] + f" #{data['id']}", url=data["wiki_url"])
+		embed.title = data["localized_name"] + f" #{data['id']}"
+		embed.url = data["wiki_url"]
+
 		embed.set_thumbnail(url=data["sprites"]["front_default"])
 
 		embed.add_field(name=f"Type{'s' if len(types) > 1 else ''}", value=f"{''.join(types)}")
@@ -120,6 +139,9 @@ class Pokemon(MangoCog):
 			embed.add_field(name="Habitat", value=f"{species_data['habitat']['name']}")
 		embed.add_field(name="Weight", value=f"{data['weight'] / 10} kg")
 		embed.add_field(name="Height", value=f"{data['height'] / 10} m")
+
+		# fails silently if there's no cry for this pokemon
+		await self.play_pokecry(ctx, data["id"], pokemon)
 
 		await ctx.send(embed=embed)
 
@@ -141,8 +163,39 @@ class Pokemon(MangoCog):
 
 		embed = discord.Embed(color=poke_color(species_data["color"]["name"]))
 		embed.set_image(url=data["sprites"].get("front_shiny"))
+
+		# fails silently if there's no cry for this pokemon
+		await self.play_pokecry(ctx, data["id"], pokemon)
+
 		await ctx.send(embed=embed)
 	
+	@commands.command(aliases=["cry"])
+	async def pokecry(self, ctx, *, pokemon):
+		"""Plays the pokemon's sound effect
+
+		Audio files for these pokemon cries were gotten from [Veekun](https://veekun.com/dex/downloads). Veekun does not have the cries for Generation VII yet, so I won't be able to play those.
+
+		Most pokemon have a new cry and an old cry. To get the old cry instead of the new one, add 'old' to the end of your command (see example below.)
+
+		**Example:**
+		`{cmdpfx}pokecry pikachu`
+		`{cmdpfx}pokecry bulbasaur old`"""
+		words = pokemon.split(" ")
+		old = "old" in words
+		if old:
+			words.remove("old") 
+		pokemon = " ".join(words)
+
+		data, species_data = await self.get_pokemon_data(pokemon)
+
+		if data["id"] > 721:
+			raise UserError("Sorry, I don't have the cries for pokemon in Generation VII yet")
+
+		success = await self.play_pokecry(ctx, data["id"], pokemon, old=old)
+
+		if not success:
+			raise UserError(f"Couldn't find the cry for {data['localized_name']}")
+
 
 def setup(bot):
 	bot.add_cog(Pokemon(bot))
