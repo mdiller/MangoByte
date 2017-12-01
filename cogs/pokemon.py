@@ -101,7 +101,9 @@ class Pokemon(MangoCog):
 			name = f"{name}-mega"
 
 		try:
-			clip = await self.play_clip(f"url:http://dillerm.io/pokemon/cries/{name}.ogg", ctx)
+			clip = await self.get_clip(f"url:http://dillerm.io/pokemon/cries/{name}.ogg", ctx)
+			clip.volume = 0.1
+			await self.play_clip(clip, ctx)
 		except Http404Error:
 			return False
 
