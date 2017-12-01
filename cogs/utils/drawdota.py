@@ -494,8 +494,8 @@ async def draw_matches_table(matches, game_strings):
 
 
 # given talents as they are stored in dotabase
-async def draw_hero_talents(talents):
-	talents = talents.split("|")
+async def draw_hero_talents(hero):
+	talents = hero.talents.split("|")
 	talent_rows = [
 		[ talents[7], talents[6] ],
 		[ talents[5], talents[4] ],
@@ -505,8 +505,14 @@ async def draw_hero_talents(talents):
 
 	image = Image.open(settings.resource("images/talents.png"))
 	draw = ImageDraw.Draw(image)
-	width = 693
-	height = 445
+
+	header_x = 19
+	header_y = 17
+	header_width = 655
+	header_height = 51
+
+	cell = TextCell(hero.localized_name, color="#dddddd", font_size=28, horizontal_align="center")
+	cell.render(draw, image, header_x, header_y, header_width, header_height)
 
 	box_width = 306
 	box_height = 73

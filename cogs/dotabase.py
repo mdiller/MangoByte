@@ -493,7 +493,7 @@ class Dotabase(MangoCog):
 		if not hero:
 			raise UserError("That doesn't look like a hero")
 
-		image = await drawdota.draw_hero_talents(hero.talents)
+		image = await drawdota.draw_hero_talents(hero)
 		image = discord.File(image, f"{hero.name}_talents.png")
 
 		await ctx.send(file=image)
