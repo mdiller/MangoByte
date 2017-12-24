@@ -423,7 +423,7 @@ async def create_dota_emoticon(emoticon, url):
 	return filename
 
 
-async def dota_rank_icon(rank_tier):
+async def dota_rank_icon(rank_tier, leaderboard_rank):
 	if rank_tier is None:
 		rank_tier = 0
 
@@ -436,12 +436,32 @@ async def dota_rank_icon(rank_tier):
 
 	badge_num = rank_tier // 10
 	stars_num = min(rank_tier % 10, 5)
+	modifier = ""
 
-	image = Image.open(settings.resource(f"images/ranks/rank_{badge_num}.png"))
+	if badge_num == 7 and leaderboard_rank:
+		stars_num = 0
+		if leaderboard_rank == 1:
+			modifier = "c"
+		elif leaderboard_rank <= 100:
+			modifier = "b"
+		else:
+			modifier = "a"
+
+	image = Image.open(settings.resource(f"images/ranks/rank_{badge_num}{modifier}.png"))
 
 	if stars_num > 0:
 		stars_image = Image.open(settings.resource(f"images/ranks/stars_{stars_num}.png"))
 		image = paste_image(image, stars_image, 0, 0)
+
+
+	if leaderboard_rank:
+		draw = ImageDraw.Draw(image)
+
+		box_width = 256
+		box_height = 50
+
+		cell = TextCell(leaderboard_rank, color="#feffe5", font_size=50, horizontal_align="center")
+		cell.render(draw, image, 0, 256 - box_height, box_width, box_height)
 
 
 	image.save(filename, "png")

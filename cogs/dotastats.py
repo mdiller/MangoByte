@@ -685,7 +685,7 @@ class DotaStats(MangoCog):
 
 		embed.set_footer(text=f"For more info, try ?playerstats {player_mention}")
 
-		rank_icon = await drawdota.dota_rank_icon(playerinfo.get("rank_tier"))
+		rank_icon = await drawdota.dota_rank_icon(playerinfo.get("rank_tier"), playerinfo.get("leaderboard_rank"))
 		rank_icon = discord.File(rank_icon, "rank.png")
 		embed.set_thumbnail(url=f"attachment://{rank_icon.filename}")
 
