@@ -536,6 +536,16 @@ class Audio(MangoCog):
 			if query:
 				await dotabase.play_response_query(query, ctx)
 				return
+
+		for clipname in self.local_clipinfo:
+			clip = self.local_clipinfo[clipname]
+			simple_text = re.sub(r'[^a-z0-9\s_]', r'', clip.get("text", "").lower())
+			if simple_text == "":
+				continue
+			if simple_message == simple_text:
+				await self.play_clip(f"local:{clipname}", ctx)
+				return
+
 		await self.do_tts(message, ctx)
 
 	async def on_message(self, message):
