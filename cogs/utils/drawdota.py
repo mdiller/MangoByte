@@ -427,7 +427,8 @@ async def dota_rank_icon(rank_tier, leaderboard_rank):
 	if rank_tier is None:
 		rank_tier = 0
 
-	uri = f"dota_rank:{rank_tier}"
+	uri = f"dota_rank:{rank_tier}_{leaderboard_rank}"
+	print(uri)
 	filename = httpgetter.cache.get_filename(uri)
 	if filename and not settings.debug:
 		return filename
