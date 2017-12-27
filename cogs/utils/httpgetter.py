@@ -95,7 +95,8 @@ class Cache:
 			if os.path.isfile(filename):
 				os.remove(filename)
 
-def raise_error(code, errors):
+def raise_error(url, code, errors):
+	print(f"http {code} error on: {url}")
 	template = errors.get(code, errors.get("default", "Http request failed with a {} error"))
 	if code == 404:
 		raise Http404Error(template)
@@ -128,7 +129,7 @@ class HttpGetter:
 				else:
 					raise ValueError(f"Invalid return type '{return_type}'")
 			else:
-				raise_error(r.status, errors)
+				raise_error(url, r.status, errors)
 
 	async def post(self, url, return_type="json", errors={}):
 		async with self.session.post(url) as r:
@@ -142,7 +143,7 @@ class HttpGetter:
 				else:
 					raise ValueError(f"Invalid return type '{return_type}'")
 			else:
-				raise_error(r.status, errors)
+				raise_error(url, r.status, errors)
 
 
 
