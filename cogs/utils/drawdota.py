@@ -274,8 +274,9 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 
 	players = []
 	for player in stratz_match["players"]:
-		positionEvents = player["playerUpdatePositionEvents"]
-		deathEvents = player["deathEvents"]
+		eventData = player["eventData"]
+		positionEvents = eventData["playerUpdatePositionEvents"]
+		deathEvents = eventData["deathEvents"]
 		scale = 0.75
 		icon = await get_hero_icon(player["hero"])
 		icon = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
@@ -331,11 +332,12 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 	buildings = sorted(buildings, key=lambda b: b["x"] + b["y"], reverse=True)
 
 	# runes
+	runeEvents = stratz_match["eventData"]["runeEvents"]
 	current_runes = {}
 	runes = {}
 	for t in range(match_start, end_time + 1):
-		events = filter(lambda e: e["time"] == t, stratz_match["runeEvents"])
-		for e in filter(lambda e: e["time"] == t and e["action"] == 0, stratz_match["runeEvents"]):
+		events = filter(lambda e: e["time"] == t, runeEvents)
+		for e in filter(lambda e: e["time"] == t and e["action"] == 0, runeEvents):
 			current_runes[e["id"]] = {
 				"type": e["runeType"],
 				"x": e["x"],
@@ -343,7 +345,7 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 			}
 		if t >= start_time and current_runes:
 			runes[t] = current_runes.copy()
-		for e in filter(lambda e: e["time"] == t and e["action"] == 1, stratz_match["runeEvents"]):
+		for e in filter(lambda e: e["time"] == t and e["action"] == 1, runeEvents):
 			if e["id"] in current_runes:
 				del current_runes[e["id"]]
 	# rune icons

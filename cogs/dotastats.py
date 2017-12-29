@@ -68,11 +68,11 @@ async def get_match(match_id):
 
 # rate_limit = false if this is the only query we're sending
 async def get_stratz_match(match_id):
-	url = f"https://api.stratz.com/api/v1/match/{match_id}"
+	url = f"https://apibeta.stratz.com/api/v1/match/{match_id}"
 	cached_data = httpgetter.cache.get(url, "json")
 	
 	if cached_data:
-		if cached_data.get("parsedDate"):
+		if is_stratz_parsed(cached_data):
 			return cached_data
 		else:
 			await httpgetter.cache.remove(url)
@@ -138,7 +138,7 @@ def is_parsed(match):
 
 
 def is_stratz_parsed(match):
-	return match.get("parsedDate") and match["players"][0].get("playerUpdatePositionEvents")
+	return match.get("parsedDate") and match["players"][0].get("eventData") and match["players"][0].get("eventData").get("playerUpdatePositionEvents")
 
 # gets the steam32 id from the user or steamid and checks that it is valid before returning
 # If ref is specified, returns either a link or a discord user mention, depending on the input
