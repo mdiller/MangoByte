@@ -442,7 +442,7 @@ class DotaStats(MangoCog):
 
 		match_image = discord.File(await drawdota.create_match_image(match), "match.png")
 		embed.set_image(url=f"attachment://{match_image.filename}")
-		embed.set_footer(text="Started")
+		embed.set_footer(text=str(match_id))
 
 		await ctx.send(embed=embed, file=match_image)
 
@@ -482,7 +482,7 @@ class DotaStats(MangoCog):
 		match_image = discord.File(await drawdota.create_match_image(match), filename="matchimage.png")
 
 		embed.set_image(url=f"attachment://{match_image.filename}")
-		embed.set_footer(text="Started")
+		embed.set_footer(text=str(match_id))
 		await ctx.send(embed=embed, file=match_image)
 
 	@commands.command()
