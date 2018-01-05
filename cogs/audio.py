@@ -17,6 +17,9 @@ from ctypes.util import find_library
 
 discord.opus.load_opus(find_library('opus'))
 
+
+intro_outro_length = 4.5
+
 class TtsChannelError(Exception):
 	def __init__(self, error):
 		self.message = "Errored in the tts channel"
@@ -377,8 +380,6 @@ class Audio(MangoCog):
 			await ctx.send(content, file=discord.File(fp, filename=filename))
 			fp.close()
 
-
-
 	@commands.command()
 	async def setintro(self, ctx, clipname : str=None, user: discord.User=None):
 		"""Sets your intro clip
@@ -411,8 +412,8 @@ class Audio(MangoCog):
 
 		audiolength = clip.audiolength
 
-		if audiolength > 3.1:
-			await ctx.send(f"Dat clip is {audiolength:.1f} seconds long, and intros gotta be less than 3.")
+		if audiolength > intro_outro_length + 0.1:
+			await ctx.send(f"Dat clip is {audiolength:.1f} seconds long, and intros gotta be less than {intro_outro_length}.")
 			return
 
 		botdata.userinfo(user.id).intro = clip.clipid
@@ -451,8 +452,8 @@ class Audio(MangoCog):
 
 		audiolength = clip.audiolength
 
-		if audiolength > 3.1:
-			await ctx.send(f"Dat clip is {audiolength:.1f} seconds long, and outros gotta be less than 3.")
+		if audiolength >  intro_outro_length + 0.1:
+			await ctx.send(f"Dat clip is {audiolength:.1f} seconds long, and outros gotta be less than {intro_outro_length}.")
 			return
 
 		botdata.userinfo(user.id).outro = clip.clipid
