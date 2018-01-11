@@ -68,7 +68,7 @@ async def get_match(match_id):
 
 # rate_limit = false if this is the only query we're sending
 async def get_stratz_match(match_id):
-	url = f"https://apibeta.stratz.com/api/v1/match/{match_id}"
+	url = f"https://api.stratz.com/api/v1/match/{match_id}"
 	cached_data = httpgetter.cache.get(url, "json")
 	
 	if cached_data:
