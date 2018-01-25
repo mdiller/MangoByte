@@ -62,6 +62,8 @@ class Admin(MangoCog):
 		**Example:**
 		`{cmdpfx}summon General`"""
 		if not channel:
+			if not ctx.message.guild:
+				raise UserError("You have to say that in a server")
 			if not ctx.message.author.voice:
 				raise UserError("You are not currently in a voice channel")
 			channel = ctx.message.author.voice.channel
@@ -84,6 +86,8 @@ class Admin(MangoCog):
 		audio = self.bot.get_cog("Audio")
 		if not audio:
 			raise UserError("You must have the Audio cog enabled to do this")
+		if not ctx.message.guild:
+			raise UserError("You have to say that in a server")
 		await audio.disconnect(ctx.message.guild)
 		botdata.guildinfo(ctx.message.guild.id).voicechannel = None
 	
