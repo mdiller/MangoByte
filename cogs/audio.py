@@ -555,6 +555,8 @@ class Audio(MangoCog):
 				return # banned users cant talk
 			ttschannel = botdata.guildinfo(message.guild.id).ttschannel
 			if ttschannel == message.channel.id:
+				if message.content.startswith("//") or message.content.startswith("#"):
+					return # commented out stuff should be ignored
 				try:
 					await self.do_smarttts(message.clean_content, message.guild)
 				except UserError as e:

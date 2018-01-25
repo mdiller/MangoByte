@@ -102,7 +102,7 @@ class GuildInfo(BotDataItem):
 			"key": "ttschannel",
 			"default": None,
 			"type": discord.TextChannel,
-			"description": "If someone types in the given channel, mangobyte will automatically interpret it as a `?smarttts` command, and say it in the voicechannel that they are in",
+			"description": "If someone types in the given channel, mangobyte will automatically interpret it as a `?smarttts` command, and say it in the voicechannel that they are in. To say something in this channel without doing a tts, try adding a `//` or `#` to the front of your message",
 			"example": "#tts"
 		},
 		{
