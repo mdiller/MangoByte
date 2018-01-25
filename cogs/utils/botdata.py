@@ -75,8 +75,10 @@ class UserInfo(BotDataItem):
 	def __init__(self, botdata, discord):
 		BotDataItem.__init__(self, botdata, "userinfo", { "discord": discord }, OrderedDict([
 			("steam32", None),
-			("intro", ""),
-			("outro", "")
+			("intro", "local:helloits"),
+			("outro", "local:farewell"),
+			("introtts", "it's"),
+			("outrotts", "has left!")
 		]))
 	
 class GuildInfo(BotDataItem):

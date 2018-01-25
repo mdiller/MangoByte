@@ -382,7 +382,7 @@ class DotaStats(MangoCog):
 
 		if user is None:
 			user = ctx.message.author
-		else:
+		elif user.id != ctx.message.author.id:
 			if not checks.is_owner_check(ctx.message.author):
 				await ctx.send("You aint the boss of me 😠")
 				return
