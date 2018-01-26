@@ -556,6 +556,40 @@ class Dotabase(MangoCog):
 
 		await ctx.send(file=image)
 
+	@commands.command(aliases=["addemoji"])
+	async def addemoticon(self, ctx, name):
+		"""Adds a dota emoticon as an animated emoji
+
+		This command will add the dota emoticon as an animated emoji to the server. Because it is an animated emoji, only discord nitro users will be able to use it.
+
+		Obviously, this command needs the 'Manage Emoji' permission to be able to work.
+
+		<a:pup:406270527766790145> <a:stunned:406274986769252353> <a:cocky:406274999951949835>
+
+		**Examples:**
+		`{cmdpfx}addemoticon pup`
+		`{cmdpfx}addemoticon stunned`
+		`{cmdpfx}addemoticon naga_song`"""
+
+		emoticon = session.query(Emoticon).filter(Emoticon.name == name).first()
+
+		if not emoticon:
+			raise UserError(f"Couldn't find an emoticon with the name '{name}'")
+
+		url = self.vpkurl + emoticon.url
+		image = await drawdota.create_dota_emoticon(emoticon, url)
+		with open(image, 'rb') as f:
+			image = f.read()
+
+		if not ctx.guild:
+			raise UserError("You have to be in a server to use this command")
+
+		if not ctx.guild.me.guild_permissions.manage_emojis:
+			raise UserError("An admin needs to give me the 'Manage Emojis' permission before I can do that")
+
+		await ctx.guild.create_custom_emoji(name=name, image=image, reason=f"Dota emoji created for {ctx.message.author.name}")
+
+		await ctx.message.add_reaction("✅")
 
 
 
