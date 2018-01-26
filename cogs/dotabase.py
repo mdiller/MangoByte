@@ -538,10 +538,12 @@ class Dotabase(MangoCog):
 	async def emoticon(self, ctx, name):
 		"""Gets the gif of a dota emoticon
 
+		<a:pup:406270527766790145> <a:stunned:406274986769252353> <a:cocky:406274999951949835>
+
 		**Examples:**
 		`{cmdpfx}emoticon pup`
 		`{cmdpfx}emoticon stunned`
-		`{cmdpfx}emoticon naga_song"""
+		`{cmdpfx}emoticon naga_song`"""
 		await ctx.channel.trigger_typing()
 
 		emoticon = session.query(Emoticon).filter(Emoticon.name == name).first()
@@ -553,6 +555,8 @@ class Dotabase(MangoCog):
 		image = discord.File(await drawdota.create_dota_emoticon(emoticon, url), f"{name}.gif")
 
 		await ctx.send(file=image)
+
+
 
 
 def setup(bot):
