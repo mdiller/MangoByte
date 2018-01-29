@@ -91,6 +91,17 @@ class Dotabase(MangoCog):
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name
 
+	def get_wiki_url(self, obj):
+		if isinstance(obj, Hero):
+			wikiurl = obj.localized_name
+		elif isinstance(obj, Ability):
+			wikiurl = f"{obj.hero.localized_name}#{obj.localized_name}"
+		elif isinstance(obj, Item):
+			wikiurl = obj.localized_name
+
+		wikiurl = wikiurl.replace(" ", "_").replace("'", "%27")
+		return f"http://dota2.gamepedia.com/{wikiurl}"
+
 	def lookup_hero(self, hero):
 		if not hero:
 			return None
@@ -120,22 +131,40 @@ class Dotabase(MangoCog):
 				return self.hero_aliases[hero]
 		return None
 
-	def lookup_ability(self, text):
+	def lookup_ability(self, text, full_check=True):
+		ability_query = session.query(Ability).filter(Ability.hero_id != None)
 		if isinstance(text, int) or text.isdigit():
-			return session.query(Ability).filter(Ability.id == int(text)).first()
+			return ability_query.filter(Ability.id == int(text)).first()
 		def clean_input(t):
 			return re.sub(r'[^a-z1-9\s]', r'', str(t).lower())
 		text = clean_input(text)
 		if text == "":
 			return None
-		for ability in session.query(Ability):
+		for ability in ability_query:
 			if clean_input(ability.localized_name) == text:
 				return ability
-		for ability in session.query(Ability):
-			if clean_input(ability.localized_name).startswith(text):
-				return ability
+		if full_check:
+			for ability in ability_query:
+				if clean_input(ability.localized_name).startswith(text):
+					return ability
 		return None
 
+	def lookup_item(self, text, full_check=True):
+		if isinstance(text, int) or text.isdigit():
+			return session.query(Item).filter(Item.id == int(text)).first()
+		def clean_input(t):
+			return re.sub(r'[^a-z1-9\s]', r'', str(t).lower())
+		text = clean_input(text)
+		if text == "":
+			return None
+		for item in session.query(Item):
+			if clean_input(item.localized_name) == text:
+				return item
+		if full_check:
+			for item in session.query(Item):
+				if clean_input(ability.localized_name).startswith(text):
+					return ability
+		return None
 
 	def get_hero_infos(self):
 		result = {}
@@ -436,8 +465,7 @@ class Dotabase(MangoCog):
 		else:
 			embed = discord.Embed(description=description)
 
-		wikiurl = hero.localized_name.replace(" ", "_").replace("'", "%27")
-		wikiurl = f"http://dota2.gamepedia.com/{wikiurl}"
+		wikiurl = self.get_wiki_url(hero)
 
 		embed.set_author(name=hero.localized_name, icon_url=f"{self.vpkurl}{hero.icon}", url=wikiurl)
 		embed.set_thumbnail(url=f"{self.vpkurl}{hero.portrait}")
@@ -518,7 +546,8 @@ class Dotabase(MangoCog):
 		description = re.sub(r"(Upgradable by Aghanim's Scepter).?", r"**\1**", description)
 		embed = discord.Embed(description=description)
 
-		embed.set_author(name=ability.localized_name)
+		embed.title = ability.localized_name
+		embed.url = self.get_wiki_url(ability)
 
 		embed.set_thumbnail(url=f"{self.vpkurl}{ability.icon}")
 
@@ -591,7 +620,63 @@ class Dotabase(MangoCog):
 
 		await ctx.message.add_reaction("✅")
 
+	@commands.command()
+	async def lore(self, ctx, *, name):
+		"""Gets the lore of a hero, ability, or item
 
+		**Examples:**
+		`{cmdpfx}lore bristleback`
+		`{cmdpfx}lore shadow blade`
+		`{cmdpfx}lore venomous gale`"""
+		lore_info = {}
+		found = False
+
+		item = self.lookup_item(name, False)
+		if item:
+			found = True
+			lore_info = {
+				"name": item.localized_name,
+				"icon": item.icon,
+				"lore": item.lore,
+				"object": item
+			}
+
+		if not found:
+			ability = self.lookup_ability(name, False)
+			if ability:
+				found = True
+				lore_info = {
+					"name": ability.localized_name,
+					"icon": ability.icon,
+					"lore": ability.lore,
+					"object": ability
+				}
+
+		if not found:
+			hero = self.lookup_hero(name)
+			if hero:
+				found = True
+				lore_info = {
+					"name": hero.localized_name,
+					"icon": hero.portrait,
+					"lore": hero.bio,
+					"object": hero
+				}
+
+		if not found:
+			raise UserError("I Couldn't find an ability hero or item by that name")
+
+		if lore_info["lore"] == "":
+			raise UserError("There is no in-game lore for that")
+
+		embed = discord.Embed(description=lore_info["lore"])
+
+		embed.title = lore_info["name"]
+		embed.url = self.get_wiki_url(lore_info["object"])
+
+		embed.set_thumbnail(url=f"{self.vpkurl}{lore_info['icon']}")
+
+		await ctx.send(embed=embed)
 
 def setup(bot):
 	bot.add_cog(Dotabase(bot))
