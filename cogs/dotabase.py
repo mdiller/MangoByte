@@ -563,6 +563,45 @@ class Dotabase(MangoCog):
 
 		await ctx.send(embed=embed)
 
+	@commands.command()
+	async def item(self, ctx, *, item : str):
+		"""Gets information about a specific item
+
+		**Examples:**
+		`{cmdpfx}item shadow blade`
+		`{cmdpfx}item tango`"""
+
+		item = self.lookup_item(item)
+
+		if item is None:
+			raise UserError("I couldn't find an item by that name")
+
+		description = item.description
+
+		description = re.sub(r"(Upgradable by Aghanim's Scepter).?", r"**\1**", description)
+		embed = discord.Embed(description=description)
+
+		embed.title = item.localized_name
+		embed.url = self.get_wiki_url(item)
+
+		embed.set_thumbnail(url=f"{self.vpkurl}{item.icon}")
+
+		def clean_values(values):
+			values = values.split(" ")
+			return " / ".join(values)
+
+		if item.mana_cost and item.mana_cost != "0":
+			embed.add_field(name="Mana", value=f"{self.get_emoji('mana_cost')} {clean_values(item.mana_cost)}\n")
+
+		if item.cooldown and item.cooldown != "0":
+			embed.add_field(name="Cooldown", value=f"{self.get_emoji('cooldown')} {clean_values(item.cooldown)}\n")
+
+		if item.cost and item.cost != "0":
+			embed.add_field(name="Cost", value=f"{self.get_emoji('gold')} {item.cost}\n")
+
+		await ctx.send(embed=embed)
+
+
 	@commands.command(aliases=["emoji"])
 	async def emoticon(self, ctx, name):
 		"""Gets the gif of a dota emoticon
