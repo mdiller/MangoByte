@@ -369,11 +369,13 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed)
 
 	@commands.command(aliases=["register"])
-	async def setsteam(self, ctx, steam_id : int, user: discord.User=None):
+	async def setsteam(self, ctx, steam_id, user: discord.User=None):
 		"""Links a discord user to their steam/dota account
 		*The user parameter can only be specified by the bot owner*
 		
 		You have to give this command either your steam32 or steam64 id. An easy way to find this is to look at the end of your dotabuff/opendota profile url.
+
+		To un-register, try `?setsteam none` or `?setsteam reset`
 
 		**Example:**
 		If my dotabuff url is https://www.dotabuff.com/players/70388657
@@ -386,6 +388,17 @@ class DotaStats(MangoCog):
 			if not checks.is_owner_check(ctx.message.author):
 				await ctx.send("You aint the boss of me 😠")
 				return
+
+		if steam_id.lower() in [ "none", "reset", "default" ]:
+			userinfo = botdata.userinfo(user.id)
+			userinfo.steam32 = None
+			await ctx.send("Steam ID has been unregistered")
+			return
+
+		steam_id = str(steam_id)
+		if not steam_id.isdigit():
+			raise UserError("You gotta give me a steam id here")
+		steam_id = int(steam_id)
 
 		if steam_id > 76561197960265728:
 			steam_id -= 76561197960265728
