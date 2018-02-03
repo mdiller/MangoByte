@@ -150,20 +150,23 @@ class Dotabase(MangoCog):
 		return None
 
 	def lookup_item(self, text, full_check=True):
+		item_query = session.query(Item)
+		if "recipe" not in text.lower():
+			item_query = item_query.filter(~Item.name.contains("recipe"))
 		if isinstance(text, int) or text.isdigit():
-			return session.query(Item).filter(Item.id == int(text)).first()
+			return item_query.filter(Item.id == int(text)).first()
 		def clean_input(t):
 			return re.sub(r'[^a-z1-9\s]', r'', str(t).lower())
 		text = clean_input(text)
 		if text == "":
 			return None
-		for item in session.query(Item):
+		for item in item_query:
 			if clean_input(item.localized_name) == text:
 				return item
 		if full_check:
-			for item in session.query(Item):
-				if clean_input(ability.localized_name).startswith(text):
-					return ability
+			for item in item_query:
+				if clean_input(item.localized_name).startswith(text):
+					return item
 		return None
 
 	def get_hero_infos(self):
@@ -577,8 +580,26 @@ class Dotabase(MangoCog):
 			raise UserError("I couldn't find an item by that name")
 
 		description = item.description
+		description = re.sub(r"(^|\n)# ([^\n]+)\n", r"\n__**\2**__\n", description)
+
+		description = description[1:]
 
 		description = re.sub(r"(Upgradable by Aghanim's Scepter).?", r"**\1**", description)
+
+		def clean_values(values):
+			values = values.split(" ")
+			return " / ".join(values)
+
+		if item.cost and item.cost != "0":
+			description += f"\n\n{self.get_emoji('gold')} {item.cost:,}\n"
+		if item.mana_cost and item.mana_cost != "0":
+			description += f"{self.get_emoji('mana_cost')} {clean_values(item.mana_cost)}  "
+		if item.cooldown and item.cooldown != "0":
+			description += f"{self.get_emoji('cooldown')} {clean_values(item.cooldown)}"
+
+		# check if active exists
+		## put both cooldown and mana in if they exist
+
 		embed = discord.Embed(description=description)
 
 		embed.title = item.localized_name
@@ -586,18 +607,15 @@ class Dotabase(MangoCog):
 
 		embed.set_thumbnail(url=f"{self.vpkurl}{item.icon}")
 
-		def clean_values(values):
-			values = values.split(" ")
-			return " / ".join(values)
+		# if not active_found:
+		# 	if item.mana_cost and item.mana_cost != "0":
+		# 		embed.add_field(name="Mana", value=f"{self.get_emoji('mana_cost')} {clean_values(item.mana_cost)}\n")
 
-		if item.mana_cost and item.mana_cost != "0":
-			embed.add_field(name="Mana", value=f"{self.get_emoji('mana_cost')} {clean_values(item.mana_cost)}\n")
+		# 	if item.cooldown and item.cooldown != "0":
+		# 		embed.add_field(name="Cooldown", value=f"{self.get_emoji('cooldown')} {clean_values(item.cooldown)}\n")
 
-		if item.cooldown and item.cooldown != "0":
-			embed.add_field(name="Cooldown", value=f"{self.get_emoji('cooldown')} {clean_values(item.cooldown)}\n")
-
-		if item.cost and item.cost != "0":
-			embed.add_field(name="Cost", value=f"{self.get_emoji('gold')} {item.cost}\n")
+		# if item.cost and item.cost != "0":
+		# 	embed.add_field(name="Cost", value=f"{self.get_emoji('gold')} {item.cost}\n")
 
 		await ctx.send(embed=embed)
 
