@@ -573,7 +573,49 @@ class Dotabase(MangoCog):
 			values = values.split(" ")
 			return " / ".join(values)
 
-		description = ability.description
+		description = ""
+
+		ability_behavior = OrderedDict([])
+		ability_behavior["channelled"] = "Channelled"
+		ability_behavior["autocast"] = "Auto-Cast"
+		ability_behavior["unit_target"] = "Unit Target"
+		ability_behavior["point"] = "Point Target"
+		ability_behavior["toggle"] = "Toggle"
+		ability_behavior["aura"] = "Aura"
+		ability_behavior["passive"] = "Passive"
+		ability_behavior["no_target"] = "No Target"
+
+		if ability.behavior:
+			behavior = ability.behavior.split("|")
+			for key in ability_behavior:
+				if key in behavior:
+					extra_stuff = ""
+					if "aoe" in behavior:
+						extra_stuff = f" (AOE)"
+					description += f"**Ability:** {ability_behavior[key]}{extra_stuff}\n"
+					break
+
+		if ability.damage_type:
+			damage_type = ability.damage_type[0].upper() + ability.damage_type[1:]
+			description += f"**Damage Type:** {damage_type}\n"
+
+		if ability.spell_immunity:
+			spell_immunity = ability.spell_immunity[0].upper() + ability.spell_immunity[1:]
+			description += f"**Pierces Spell Immunity:** {spell_immunity}\n"
+
+		if ability.dispellable:
+			dispellable = {
+				"yes": "Yes",
+				"no": "No",
+				"yes_strong": "Strong Dispells Only"
+			}[ability.dispellable]
+			description += f"**Dispellable:** {dispellable}\n"
+
+
+		if description != "":
+			description += "\n"
+
+		description += ability.description
 
 		ability_special = json.loads(ability.ability_special, object_pairs_hook=OrderedDict)
 		formatted_attributes = []
