@@ -79,6 +79,7 @@ class Dotabase(MangoCog):
 		self.criteria_aliases = read_json(settings.resource("json/criteria_aliases.json"))
 		self.item_colors = read_json(settings.resource("json/dota_item_colors.json"))
 		self.hero_aliases = {}
+		self.item_aliases = {}
 		self.build_aliases()
 		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
 		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos())
@@ -89,6 +90,13 @@ class Dotabase(MangoCog):
 			for alias in aliases:
 				self.hero_aliases[alias] = hero.id
 				self.hero_aliases[alias.replace(" ", "")] = hero.id
+
+		for item in session.query(Item):
+			aliases = item.aliases.split("|")
+			for alias in aliases:
+				if alias not in self.item_aliases:
+					self.item_aliases[alias] = item.id
+					self.item_aliases[alias.replace(" ", "")] = item.id
 
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name
@@ -151,12 +159,21 @@ class Dotabase(MangoCog):
 					return ability
 		return None
 
-	def lookup_item(self, text, full_check=True):
+	def lookup_item(self, item, full_check=True):
+		if not item:
+			return None
+		item_id = self.lookup_item_id(item, full_check)
+		if item_id:
+			return session.query(Item).filter(Item.id == item_id).first()
+		else:
+			return None
+
+	def lookup_item_id(self, text, full_check=True):
 		item_query = session.query(Item)
 		if "recipe" not in text.lower():
 			item_query = item_query.filter(~Item.name.contains("recipe"))
 		if isinstance(text, int) or text.isdigit():
-			return item_query.filter(Item.id == int(text)).first()
+			return int(text)
 		def clean_input(t):
 			return re.sub(r'[^a-z1-9\s]', r'', str(t).lower())
 		text = clean_input(text)
@@ -164,11 +181,17 @@ class Dotabase(MangoCog):
 			return None
 		for item in item_query:
 			if clean_input(item.localized_name) == text:
-				return item
+				return item.id
+		if text in self.item_aliases:
+			return self.item_aliases[text]
+
 		if full_check:
-			for item in item_query:
-				if clean_input(item.localized_name).startswith(text):
-					return item
+			for item in self.item_aliases:
+				if item.startswith(text):
+					return self.item_aliases[item]
+			for item in self.item_aliases:
+				if text in item:
+					return self.item_aliases[item]
 		return None
 
 	def get_hero_infos(self):
