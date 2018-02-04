@@ -564,12 +564,22 @@ class Dotabase(MangoCog):
 			text = f"**{header}** {format_values(value)}"
 			if footer:
 				text += f" {footer}"
+			if "talent_value" in attribute:
+				text += f" ({self.get_emoji('talent_tree')} {format_values(attribute['talent_value'])})"
 			formatted_attributes.append(text)
 
 		if formatted_attributes:
 			description += "\n\n" + "\n".join(formatted_attributes)
 
 		description = re.sub(r"(Upgradable by Aghanim's Scepter).?", f"**{self.get_emoji('aghanim')} \\1**", description)
+		if ability.aghanim and "Upgradable by Aghanim's Scepter" in description:
+			index = description.index("Upgradable by Aghanim's Scepter")
+			index = description.find("\n", index)
+			index += 1
+
+			description = f"{description[:index]}*{ability.aghanim}*\n{description[index:]}"
+
+
 		embed = discord.Embed(description=description)
 
 		embed.title = ability.localized_name
@@ -583,6 +593,9 @@ class Dotabase(MangoCog):
 
 		if ability.mana_cost and ability.mana_cost != "0":
 			embed.add_field(name="\u200b", value=f"{self.get_emoji('mana_cost')} {format_values(ability.mana_cost)}\n")
+
+		if ability.lore and ability.lore != "":
+			embed.set_footer(text=ability.lore)
 
 		await ctx.send(embed=embed)
 
@@ -652,6 +665,9 @@ class Dotabase(MangoCog):
 		embed.url = self.get_wiki_url(item)
 
 		embed.set_thumbnail(url=f"{self.vpkurl}{item.icon}")
+
+		if item.lore and item.lore != "":
+			embed.set_footer(text=item.lore)
 
 		await ctx.send(embed=embed)
 
