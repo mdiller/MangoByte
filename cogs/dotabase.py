@@ -11,6 +11,7 @@ import os
 import asyncio
 import string
 import re
+import json
 from .mangocog import *
 from dotabase import *
 from cogs.audio import AudioPlayerNotFoundError
@@ -579,10 +580,35 @@ class Dotabase(MangoCog):
 		if item is None:
 			raise UserError("I couldn't find an item by that name")
 
-		description = item.description
-		description = re.sub(r"(^|\n)# ([^\n]+)\n", r"\n__**\2**__\n", description)
+		description = ""
 
-		description = description[1:]
+
+		def format_values(values, join_string="/", base_level=None):
+			if values is None:
+				return None
+			values = values.split(" ")
+			if base_level and base_level <= len(values):
+				values[base_level - 1] = f"**{values[base_level - 1]}**"
+			return join_string.join(values)
+
+		ability_special = json.loads(item.ability_special, object_pairs_hook=OrderedDict)
+		for attribute in ability_special:
+			header = attribute.get("header")
+			if not header:
+				continue
+			value = attribute["value"]
+			footer = attribute.get("footer")
+			text = f"{header} {format_values(value, base_level=item.base_level)}"
+			if footer:
+				text += f" {footer}"
+			text += "\n"
+			description += text
+			
+		if description != "":
+			description += "\n"
+
+		description += item.description
+		description = re.sub(r"(^|\n)# ([^\n]+)\n", r"\n__**\2**__\n", description)
 
 		description = re.sub(r"(Upgradable by Aghanim's Scepter).?", r"**\1**", description)
 
