@@ -545,9 +545,30 @@ class Dotabase(MangoCog):
 		if ability is None:
 			raise UserError("I couldn't find an ability by that name")
 
+		def format_values(values):
+			values = values.split(" ")
+			return " / ".join(values)
+
 		description = ability.description
 
-		description = re.sub(r"(Upgradable by Aghanim's Scepter).?", r"**\1**", description)
+		ability_special = json.loads(ability.ability_special, object_pairs_hook=OrderedDict)
+		formatted_attributes = []
+		for attribute in ability_special:
+			header = attribute.get("header")
+			if not header:
+				continue
+			header = format_pascal_case(header)
+			value = attribute["value"]
+			footer = attribute.get("footer")
+			text = f"**{header}** {format_values(value)}"
+			if footer:
+				text += f" {footer}"
+			formatted_attributes.append(text)
+
+		if formatted_attributes:
+			description += "\n\n" + "\n".join(formatted_attributes)
+
+		description = re.sub(r"(Upgradable by Aghanim's Scepter).?", f"**{self.get_emoji('aghanim')} \\1**", description)
 		embed = discord.Embed(description=description)
 
 		embed.title = ability.localized_name
@@ -555,15 +576,12 @@ class Dotabase(MangoCog):
 
 		embed.set_thumbnail(url=f"{self.vpkurl}{ability.icon}")
 
-		def clean_values(values):
-			values = values.split(" ")
-			return " | ".join(values)
-
-		if ability.mana_cost and ability.mana_cost != "0":
-			embed.add_field(name="Mana", value=f"{self.get_emoji('mana_cost')} {clean_values(ability.mana_cost)}\n")
 
 		if ability.cooldown and ability.cooldown != "0":
-			embed.add_field(name="Cooldown", value=f"{self.get_emoji('cooldown')} {clean_values(ability.cooldown)}\n")
+			embed.add_field(name="\u200b", value=f"{self.get_emoji('cooldown')} {format_values(ability.cooldown)}\n")
+
+		if ability.mana_cost and ability.mana_cost != "0":
+			embed.add_field(name="\u200b", value=f"{self.get_emoji('mana_cost')} {format_values(ability.mana_cost)}\n")
 
 		await ctx.send(embed=embed)
 
@@ -589,6 +607,8 @@ class Dotabase(MangoCog):
 			values = values.split(" ")
 			if base_level and base_level <= len(values):
 				values[base_level - 1] = f"**{values[base_level - 1]}**"
+			else:
+				values = map(lambda v: f"**{v}**", values)
 			return join_string.join(values)
 
 		ability_special = json.loads(item.ability_special, object_pairs_hook=OrderedDict)
@@ -610,8 +630,6 @@ class Dotabase(MangoCog):
 		description += item.description
 		description = re.sub(r"(^|\n)# ([^\n]+)\n", r"\n__**\2**__\n", description)
 
-		description = re.sub(r"(Upgradable by Aghanim's Scepter).?", r"**\1**", description)
-
 		def clean_values(values):
 			values = values.split(" ")
 			return " / ".join(values)
@@ -623,25 +641,12 @@ class Dotabase(MangoCog):
 		if item.cooldown and item.cooldown != "0":
 			description += f"{self.get_emoji('cooldown')} {clean_values(item.cooldown)}"
 
-		# check if active exists
-		## put both cooldown and mana in if they exist
-
 		embed = discord.Embed(description=description)
 
 		embed.title = item.localized_name
 		embed.url = self.get_wiki_url(item)
 
 		embed.set_thumbnail(url=f"{self.vpkurl}{item.icon}")
-
-		# if not active_found:
-		# 	if item.mana_cost and item.mana_cost != "0":
-		# 		embed.add_field(name="Mana", value=f"{self.get_emoji('mana_cost')} {clean_values(item.mana_cost)}\n")
-
-		# 	if item.cooldown and item.cooldown != "0":
-		# 		embed.add_field(name="Cooldown", value=f"{self.get_emoji('cooldown')} {clean_values(item.cooldown)}\n")
-
-		# if item.cost and item.cost != "0":
-		# 	embed.add_field(name="Cost", value=f"{self.get_emoji('gold')} {item.cost}\n")
 
 		await ctx.send(embed=embed)
 

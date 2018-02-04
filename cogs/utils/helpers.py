@@ -56,6 +56,15 @@ def get_pretty_time(s):
 	else:
 		return f"{minutes}:{seconds:0>2}"
 
+def capitalize_first(text):
+	return text[0].upper() + text[1:]
+
+def format_pascal_case(text):
+	text = text.lower()
+	words = text.split(" ")
+	words = map(capitalize_first, words)
+	return " ".join(words)
+
 
 def format_duration_simple(duration):
 	if duration >= 3600:
