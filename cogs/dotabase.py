@@ -77,6 +77,7 @@ class Dotabase(MangoCog):
 		MangoCog.__init__(self, bot)
 		self.session = session
 		self.criteria_aliases = read_json(settings.resource("json/criteria_aliases.json"))
+		self.item_colors = read_json(settings.resource("json/dota_item_colors.json"))
 		self.hero_aliases = {}
 		self.build_aliases()
 		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
@@ -642,6 +643,10 @@ class Dotabase(MangoCog):
 			description += f"{self.get_emoji('cooldown')} {clean_values(item.cooldown)}"
 
 		embed = discord.Embed(description=description)
+
+		if item.quality:
+			embed.color = discord.Color(int(self.item_colors[item.quality][1:], 16))
+
 
 		embed.title = item.localized_name
 		embed.url = self.get_wiki_url(item)
