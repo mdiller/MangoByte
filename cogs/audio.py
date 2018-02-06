@@ -54,7 +54,7 @@ class AudioPlayer:
 		if self.voice is None:
 			return None
 		else:
-			return self.guild.me.voice_channel
+			return self.voice.channel
 
 	# connects to a voice channel
 	async def connect(self, channel):

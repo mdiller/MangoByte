@@ -1210,6 +1210,40 @@ class DotaStats(MangoCog):
 				return
 
 
+	@commands.command(aliases=["profiles"])
+	async def whoishere(self, ctx):
+		"""Shows what discord users are which steam users
+
+		This command will take the users that are currently in the channel mangobyte is in, and create an embed that shows who they are in steam"""
+		audio = self.bot.get_cog("Audio")
+		audioplayer = await audio.audioplayer(ctx, False)
+		if audioplayer is None or audioplayer.voice_channel is None:
+			raise UserError("I need to be in a voice channel for that to work")
+
+		voice_channel = audioplayer.voice_channel
+
+		mentions = []
+		links = []
+		my_id = voice_channel.guild.me.id
+
+		for member in voice_channel.members:
+			if member.id == my_id:
+				continue
+			mentions.append(member.mention)
+			userinfo = botdata.userinfo(member.id)
+			if userinfo.steam32 is None:
+				links.append("Unknown")
+			else:
+				player_info = await opendota_query(f"/players/{userinfo.steam32}")
+				links.append(f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{userinfo.steam32})")
+
+		embed = discord.Embed()
+		embed.add_field(name="Discord", value="\n".join(mentions))
+		embed.add_field(name="Steam", value="\n".join(links))
+
+		await ctx.send(embed=embed)
+
+
 
 
 	@commands.command()
