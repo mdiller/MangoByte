@@ -795,8 +795,10 @@ class Dotabase(MangoCog):
 		await ctx.message.add_reaction("✅")
 
 	@commands.command()
-	async def lore(self, ctx, *, name):
+	async def lore(self, ctx, *, name=None):
 		"""Gets the lore of a hero, ability, or item
+
+		Returns a random piece of lore if no name is specified
 
 		**Examples:**
 		`{cmdpfx}lore bristleback`
@@ -804,6 +806,17 @@ class Dotabase(MangoCog):
 		`{cmdpfx}lore venomous gale`"""
 		lore_info = {}
 		found = False
+
+		if name is None:
+			# Randomize!
+			names = []
+			for item in session.query(Item).filter(Item.lore != ""):
+				names.append(item.localized_name)
+			for ability in session.query(Ability).filter(Ability.lore != ""):
+				names.append(ability.localized_name)
+			for hero in session.query(Hero).filter(Hero.bio != ""):
+				names.append(hero.localized_name)
+			name = random.choice(names)
 
 		item = self.lookup_item(name, False)
 		if item:
@@ -848,7 +861,8 @@ class Dotabase(MangoCog):
 		embed.title = lore_info["name"]
 		embed.url = self.get_wiki_url(lore_info["object"])
 
-		embed.set_thumbnail(url=f"{self.vpkurl}{lore_info['icon']}")
+		if lore_info["icon"]:
+			embed.set_thumbnail(url=f"{self.vpkurl}{lore_info['icon']}")
 
 		await ctx.send(embed=embed)
 
