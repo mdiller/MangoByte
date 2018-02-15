@@ -367,6 +367,7 @@ class General(MangoCog):
 		character_limit = 600
 		description = submission.selftext
 		description = re.sub(r"\n(?:\*|-) (.*)", r"\n• \1", description)
+		description = re.sub(r"\n#+([^#\n]+)\n", r"\n__**\1**__ \n", description)
 
 		if len(description) > character_limit:
 			description = f"{description[0:character_limit]}...\n[Read More]({submission.shortlink})"
