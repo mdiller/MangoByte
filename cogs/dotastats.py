@@ -220,10 +220,17 @@ class DotaStats(MangoCog):
 		self.hero_info = dotabase.get_hero_infos()
 		self.lookup_hero = dotabase.lookup_hero
 		self.chat_wheel_info = dotabase.get_chat_wheel_infos()
+		self.dota_gif_lock = asyncio.Lock()
 
 	def get_pretty_hero(self, player):
 		dotabase = self.bot.get_cog("Dotabase")
 		return "**{}**".format(self.hero_info[player['hero_id']]['name'])
+
+	async def create_dota_gif(self, match, stratz_match, start_time, end_time, ms_per_second=100):
+		await self.dota_gif_lock.acquire()
+		result = await drawdota.create_dota_gif(match, stratz_match, start_time, end_time, ms_per_second)
+		self.dota_gif_lock.release()
+		return result
 
 	async def get_teamfights(self, game, is_radiant):
 		teamfights = []
@@ -1120,7 +1127,7 @@ class DotaStats(MangoCog):
 		async with ctx.channel.typing():
 			await thinker.think(ctx.message)
 			try:
-				image = discord.File(await drawdota.create_dota_gif(match, stratz_match, start, end, ms_per_second), "map.gif")
+				image = discord.File(await self.create_dota_gif(match, stratz_match, start, end, ms_per_second), "map.gif")
 				await ctx.send(file=image)
 			finally:
 				await thinker.stop_thinking(ctx.message)
@@ -1164,7 +1171,7 @@ class DotaStats(MangoCog):
 		async with ctx.channel.typing():
 			await thinker.think(ctx.message)
 			try:
-				image = discord.File(await drawdota.create_dota_gif(match, stratz_match, -89, 600, 100), "map.gif")
+				image = discord.File(await self.create_dota_gif(match, stratz_match, -89, 600, 100), "map.gif")
 				embed.set_image(url=f"attachment://{image.filename}")
 				await ctx.send(embed=embed, file=image)
 			finally:

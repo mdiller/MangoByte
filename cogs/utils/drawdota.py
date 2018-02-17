@@ -242,7 +242,6 @@ async def place_icon_on_map(map_image, icon, x, y):
 	y = (128 - (y - 64)) * scale
 	return paste_image(map_image, icon, int(x - (icon.width / 2)), int(y - (icon.height / 2)))
 
-
 async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_second=100):
 	uri = f"match_gif:{match['match_id']}:{start_time}:{end_time}:{ms_per_second}"
 
@@ -356,8 +355,6 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 		rune_icons[i] = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
 
 
-
-
 	process = subprocess.Popen(["gifsicle", "--multifile", "-d", str(ms_per_second // 10), "--conserve-memory", "-O3", "-", "-o", filename], stdin=subprocess.PIPE, bufsize=-1)
 
 	time_range = range(start_time, end_time + 1)
@@ -385,6 +382,7 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 
 		image.save(process.stdin, "gif")
 		image.close()
+		await asyncio.sleep(0.001) # Checks in with the event loop so we dont block
 
 	process.stdin.close()
 	process.wait()
