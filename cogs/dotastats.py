@@ -522,7 +522,7 @@ class DotaStats(MangoCog):
 		match = await get_match(match_id)
 
 		if perspective is None:
-			player_data = next(p for p in match['players'] if p['account_id'] == steamid)
+			player_data = next((p for p in match['players'] if p['account_id'] == steamid), None)
 			if steamid is not None and player_data is not None:
 				is_radiant = player_data['isRadiant']
 				perspective = "{2}({0}, {1})".format(self.get_pretty_hero(player_data), "Radiant" if is_radiant else "Dire", ctx.message.author.mention)
