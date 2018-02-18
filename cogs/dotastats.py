@@ -562,42 +562,76 @@ class DotaStats(MangoCog):
 
 		await self.tell_match_story(game, player_data['isRadiant'], ctx, perspective)
 
-	@commands.command(aliases=["recentmatches", "recent"])
-	async def matches(self, ctx, matchcount=10, player=None):
+	@commands.command(aliases=["recentmatches", "matches"])
+	async def recent(self, ctx, *, arguments=""):
 		"""Gets a list of your recent matches
 
-		The date/time is localized based off of the server that the game was played on, which means it may not be exact.
+		The date/time is localized based off of the server that the game was played on, which means it may not match your timezone.
 
-		Specifiy a `matchcount` to get a specific number of matches. Default is 10
-		You can also mention a user to get their recent matches
+		You can specify the following arguments in any order:
+		__**User:**__
+		@mention a discord user to get their recent matches instead of yours
+		__**Hero:**__
+		Indicate a hero and I'll return your most recent matches with that hero
+		__**Match Count:**__
+		A number indicating the number of matches to show. The default is 10, and the maximum is 20
 
 		**Example:**
-		`{cmdpfx}matches 5 @PlayerPerson`"""
-		steam32 = await get_check_steamid(player, ctx)
-
+		`{cmdpfx}recent @PlayerPerson 5`
+		`{cmdpfx}recent natures prophet`
+		`{cmdpfx}recent @PlayerPerson riki`"""
 		await ctx.channel.trigger_typing()
+		arguments = arguments.lower().split(" ")
+		player = None
+		if ctx.message.mentions:
+			if len(ctx.message.mentions) > 1:
+				raise UserError("I can only get recent matches for one user")
+			player = ctx.message.mentions[0]
+		steam32 = await get_check_steamid(player, ctx)
+		arguments = list(filter(lambda i: not re.match(r"<.*>", i), arguments))
 
-		projections = [ "kills", "deaths", "assists", "hero_id", "version", "game_mode", "lobby_type", "region", "duration", "start_time" ]
-		projections = map(lambda p: f"project={p}", projections)
-		projections = "&".join(projections)
-
-		queryargs = f"?significant=0&limit=20&{projections}"
-
-		matches = await opendota_query(f"/players/{steam32}/matches{queryargs}")
-
+		matchcount = 10
+		for arg in arguments:
+			if arg.isdigit():
+				matchcount = int(arg)
+		arguments = list(filter(lambda i: not re.match(r"[0-9]+", i), arguments))
 		if matchcount < 1:
 			raise UserError("Gotta have a matchcount of 1 or more")
 		if matchcount > 20:
 			raise UserError("Sorries, 20 is the maximum number of matches for this command")
-		if not matches:
-			raise UserError("Looks like this player hasn't played any matches")
 
-		matches = matches[:matchcount]
+		arguments = list(filter(lambda i: not re.match(r"(with|as|)$", i), arguments))
+		hero_text = " ".join(arguments)
+		hero = self.lookup_hero(hero_text)
+		if hero_text != "" and not hero:
+			raise UserError(f"Couldn't find a hero called '{hero_text}'")
+
+
+		projections = [ "kills", "deaths", "assists", "hero_id", "version", "game_mode", "lobby_type", "region", "duration", "start_time" ]
+		projections = "&".join(map(lambda p: f"project={p}", projections))
+
+		queryargs = f"?significant=0&limit={matchcount}&{projections}"
+
+		if hero:
+			queryargs += f"&hero_id={hero.id}"
+
+		matches = await opendota_query(f"/players/{steam32}/matches{queryargs}")
+		if not matches:
+			error_text = "Looks like this player hasn't played any matches"
+			if hero:
+				error_text += f" as {hero.localized_name}"
+			raise UserError(error_text)
+
 
 		embed = discord.Embed()
 
 		embed.title = "Recent Matches"
-		embed.url = f"https://www.opendota.com/players/{steam32}"
+		embed.url = f"https://www.opendota.com/players/{steam32}/matches"
+		if hero:
+			embed.title += f" as {hero.localized_name}"
+			embed.url += f"?hero_id={hero.id}"
+			if hero.color:
+				embed.color = discord.Color(int(hero.color[1:], 16))
 
 		matches_image = await drawdota.draw_matches_table(matches, self.dota_game_strings)
 		matches_image = discord.File(matches_image, "matches.png")
@@ -875,17 +909,16 @@ class DotaStats(MangoCog):
 
 		Clicking on the title of the returned embed will bring you to an opendota page with all of your games with that hero.
 
-		Example:
-		`{cmdpfx}herostats tinker`
-
-		Example:
-		`{cmdpfx}herostats tinker mid`
-
 		You can also give a lane, and then the command will return stats for games you played in that lane
 
 		If you @mention someone in the command, it will get their hero stats instead
 
 		Lanes can only be calculated for matches that have been parsed
+
+		Example:
+		`{cmdpfx}herostats tinker`
+		`{cmdpfx}herostats tinker mid`
+		`{cmdpfx}herostats riki @PlayerPerson`
 		"""
 		player = None
 

@@ -488,10 +488,10 @@ class Dotabase(MangoCog):
 		description += add_attr("agility", lambda h: h.attr_agility_base, lambda h: h.attr_agility_gain)
 		description += add_attr("intelligence", lambda h: h.attr_intelligence_base, lambda h: h.attr_intelligence_gain)
 
+		embed = discord.Embed(description=description)
+
 		if hero.color:
-			embed = discord.Embed(description=description, color=discord.Color(int(hero.color[1:], 16)))
-		else:
-			embed = discord.Embed(description=description)
+			embed.color = discord.Color(int(hero.color[1:], 16))
 
 		wikiurl = self.get_wiki_url(hero)
 
