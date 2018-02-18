@@ -7,7 +7,7 @@ import subprocess
 import os
 import numpy
 from PIL import Image, ImageDraw, ImageFont
-from .tabledraw import Table, ImageCell, TextCell, ColorCell
+from .tabledraw import Table, ImageCell, TextCell, ColorCell, DoubleCell
 from io import BytesIO
 from .helpers import run_command, get_pretty_time, read_json, UserError, format_duration_simple
 
@@ -24,6 +24,9 @@ def init_dota_info(hero_info, item_info):
 	global hero_infos, item_infos
 	hero_infos = hero_info
 	item_infos = item_info
+
+def get_hero_name(hero_id):
+	return hero_infos[hero_id]["name"]
 
 async def get_hero_image(hero_id):
 	try:
@@ -488,19 +491,31 @@ async def draw_matches_table(matches, game_strings):
 	for cell in table.rows[0]:
 		cell.background = trim_color
 
+	table.add_row([ColorCell(color=trim_color, height=6) for i in range(len(headers))])
+	first = True
 	for match in matches:
 		won_match = bool(match["radiant_win"]) == bool(match["player_slot"] < 128)
 		game_mode = game_strings[f"game_mode_{match['game_mode']}"]
 		lobby_type = game_strings[f"lobby_type_{match['lobby_type']}"]
+		if first:
+			first = False
+		else:
+			table.add_row([ColorCell(color=background_color, height=12) for i in range(len(headers))])
 		table.add_row([
 			ImageCell(img=await get_hero_image(match["hero_id"]), height=48),
-			TextCell(match.get("match_id")),
+			DoubleCell(
+				TextCell(get_hero_name(match["hero_id"]), font_size=24),
+				TextCell(match.get("match_id"), font_size=12, horizontal_align="left", color="#DDDDDD")
+			),
 			TextCell("Win" if won_match else "Loss", color=("green" if won_match else "red"), horizontal_align="center"),
 			TextCell(match.get("kills")),
 			TextCell(match.get("deaths")),
 			TextCell(match.get("assists")),
 			TextCell(format_duration_simple(match.get("duration")), horizontal_align="center"),
-			TextCell(f"{game_mode} / {lobby_type}")
+			DoubleCell(
+				TextCell(game_mode, font_size=18),
+				TextCell(lobby_type, font_size=18)
+			)
 		])
 	image = table.render()
 
