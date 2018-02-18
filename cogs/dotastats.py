@@ -50,15 +50,22 @@ async def opendota_query(querystring, cache=False):
 async def get_match(match_id):
 	url = f"https://api.opendota.com/api/matches/{match_id}"
 	cached_data = httpgetter.cache.get(url, "json")
+
+	def check_valid_match(match_data):
+		if match_data.get('radiant_win', True) is None:
+			raise InvalidMatchIdError(match_id)
 	
 	if cached_data:
 		if cached_data["version"]:
+			check_valid_match(cached_data)
 			return cached_data
 		else:
 			await httpgetter.cache.remove(url)
 
 	try:
-		return await opendota_query(f"/matches/{match_id}", cache=True)
+		data = await opendota_query(f"/matches/{match_id}", cache=True)
+		check_valid_match(data)
+		return data
 	except HttpError as e:
 		if e.code == 404:
 			raise InvalidMatchIdError(match_id)
@@ -818,7 +825,7 @@ class DotaStats(MangoCog):
 		embed.add_field(name="Economy", value=(
 			f"GPM: {avg('gold_per_min')}\n"
 			f"Last Hits/min: {avg(lambda p: p['last_hits'] / (1 + (p['duration'] / 60)), 2)}\n"
-			f"Farm from jungle: {avg(lambda p: 100 * p['neutral_kills'] / (1 + p['last_hits']))}%"))
+			f"Farm from jungle: {avg(lambda p: 100 * p.get('neutral_kills', 0) / (1 + p['last_hits']))}%"))
 
 		def wards_placed(p):
 			obs = 0 if p.get('obs_placed') is None else p.get('obs_placed')
@@ -832,16 +839,16 @@ class DotaStats(MangoCog):
 			f">=20: {percent(lambda p: wards_placed(p) >= 20)}%"))
 
 		embed.add_field(name="Heroes", value=(
-			f"{self.get_emoji('attr_strength')} {percent(lambda p: self.hero_info[p['hero_id']]['attr'] == 'strength')}%\n"
-			f"{self.get_emoji('attr_agility')} {percent(lambda p: self.hero_info[p['hero_id']]['attr'] == 'agility')}%\n"
-			f"{self.get_emoji('attr_intelligence')} {percent(lambda p: self.hero_info[p['hero_id']]['attr'] == 'intelligence')}%\n"
+			f"{self.get_emoji('attr_strength')} {percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'strength')}%\n"
+			f"{self.get_emoji('attr_agility')} {percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'agility')}%\n"
+			f"{self.get_emoji('attr_intelligence')} {percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'intelligence')}%\n"
 			f"Randomed: {percent('randomed')}%"))
 
 		embed.add_field(name="Laning", value=(
-			f"Safe Lane: {percent(lambda p: p['lane_role'] == 1 and not p.get('is_roaming'))}%\n"
-			f"Mid Lane: {percent(lambda p: p['lane_role'] == 2 and not p.get('is_roaming'))}%\n"
-			f"Off Lane: {percent(lambda p: p['lane_role'] == 3 and not p.get('is_roaming'))}%\n"
-			f"Jungle: {percent(lambda p: p['lane_role'] == 4 and not p.get('is_roaming'))}%\n"
+			f"Safe Lane: {percent(lambda p: p.get('lane_role') == 1 and not p.get('is_roaming'))}%\n"
+			f"Mid Lane: {percent(lambda p: p.get('lane_role') == 2 and not p.get('is_roaming'))}%\n"
+			f"Off Lane: {percent(lambda p: p.get('lane_role') == 3 and not p.get('is_roaming'))}%\n"
+			f"Jungle: {percent(lambda p: p.get('lane_role') == 4 and not p.get('is_roaming'))}%\n"
 			f"Roaming: {percent(lambda p: p.get('is_roaming'))}%\n"))
 
 		embed.add_field(name="Chat Wheel", value=chat_wheel_text)
