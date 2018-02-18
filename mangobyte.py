@@ -107,7 +107,7 @@ async def on_command_error(ctx, error):
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.HTTPException):
 			await ctx.send("Looks like there was a problem with discord just then. Try again in a bit.")
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
-			await ctx.send(error.original.message)
+			await error.original.send_self(ctx)
 		else:
 			await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
 			trace_string = report_error(ctx.message, error, skip_lines=4)

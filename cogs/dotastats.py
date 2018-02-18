@@ -37,6 +37,14 @@ class InvalidMatchIdError(UserError):
 	def __init__(self, match_id):
 		super().__init__(f"Sorry, looks like `{match_id}` isn't a valid match id")
 
+#"Couldn't find any recent matches for you. Try enabling the \"Expose Public Match Data\" option in dota"
+class NoMatchHistoryError(UserError):
+	def __init__(self, steam_id):
+		super().__init__(f"")
+		self.embed = discord.Embed(description=f"It looks like you either haven't played dota on this account, or the matches you've played are hidden. If you've played matches on this account, you should try enabling the **Expose Public Match Data** option in dota (see image below). Once you've done that, go to [your profile](http://www.opendota.com/players/{steam_id}) and click the button under your name that says **REFRESH**")
+		self.file = discord.File(settings.resource("images/expose_match_data.png"), "tip.png")
+		self.embed.set_image(url=f"attachment://{self.file.filename}")
+
 opendota_html_errors = {
 	404: "Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com",
 	521: "Looks like the OpenDota API is down or somethin, so ya gotta wait a sec",
@@ -93,7 +101,8 @@ async def get_lastmatch_id(steamid):
 	if matches:
 		return matches[0]["match_id"]
 	else:
-		raise UserError("Couldn't find any recent matches for you. Try enabling the \"Expose Public Match Data\" option in dota")
+		raise NoMatchHistoryError(steamid)
+
 
 def s_if_plural(text, n):
 	return text + "s" if n > 1 else text
@@ -168,7 +177,7 @@ async def get_check_steamid(player, ctx, mention=False, no_error=False):
 		player_info = await opendota_query(f"/players/{player}")
 
 		if player_info.get("profile") is None:
-			raise UserError("Either this person doesn't play dota, or they haven't enabled public match data")
+			raise NoMatchHistoryError(player)
 		if mention:
 			return player, f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{player})"
 		else:
@@ -387,12 +396,19 @@ class DotaStats(MangoCog):
 		"""Links a discord user to their steam/dota account
 		*The user parameter can only be specified by the bot owner*
 		
-		You have to give this command either your steam32 or steam64 id. An easy way to find this is to look at the end of your dotabuff/opendota profile url.
+		You have to give this command either your steam32 or steam64 id. An easy way to find this is to open dota and find your 'Friend ID', or look at the end of your dotabuff/opendota profile url.
+
+		If you open up dota and go to your profile, your 'Friend ID' will be just under your name, and will look like this:
+		<:steam:414724031380586496> **FRIEND ID:** `<number>`
 
 		To un-register, try `?setsteam none` or `?setsteam reset`
 
 		**Example:**
-		If my dotabuff url is https://www.dotabuff.com/players/70388657
+		If this is me:
+		https://www.dotabuff.com/players/70388657
+		or this is on my dota profile:
+		<:steam:414724031380586496> **FRIEND ID: 70388657**
+
 		I would do: `{cmdpfx}setsteam 70388657`
 		"""
 

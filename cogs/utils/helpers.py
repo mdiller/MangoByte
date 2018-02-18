@@ -90,8 +90,18 @@ def read_json(filename):
 
 
 class UserError(Exception):
-	def __init__(self, message):
+	def __init__(self, message, embed=None, file=None):
 		self.message = message
+		self.embed = embed
+		self.file = file
+	async def send_self(self, ctx):
+		kwargs = {}
+		if self.embed:
+			kwargs["embed"] = self.embed
+		if self.file:
+			kwargs["file"] = self.file
+		await ctx.send(self.message, **kwargs)
+
 
 # thinks about messages
 class Thinker():
