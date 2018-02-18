@@ -37,7 +37,6 @@ class InvalidMatchIdError(UserError):
 	def __init__(self, match_id):
 		super().__init__(f"Sorry, looks like `{match_id}` isn't a valid match id")
 
-#"Couldn't find any recent matches for you. Try enabling the \"Expose Public Match Data\" option in dota"
 class NoMatchHistoryError(UserError):
 	def __init__(self, steam_id):
 		super().__init__(f"")
@@ -633,10 +632,10 @@ class DotaStats(MangoCog):
 
 		matches = await opendota_query(f"/players/{steam32}/matches{queryargs}")
 		if not matches:
-			error_text = "Looks like this player hasn't played any matches"
 			if hero:
-				error_text += f" as {hero.localized_name}"
-			raise UserError(error_text)
+				raise UserError(f"Looks like this player hasn't played any matches as {hero.localized_name}")
+			else:
+				raise NoMatchHistoryError(steam32)
 
 
 		embed = discord.Embed()
