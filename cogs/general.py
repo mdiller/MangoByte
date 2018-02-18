@@ -361,19 +361,20 @@ class General(MangoCog):
 				submission = reddit.submission(url=url_or_id)
 			else:
 				submission = reddit.submission(id=url_or_id)
+			description = submission.selftext
 		except:
 			raise UserError("Couldn't properly find that reddit submission")
 
 		character_limit = 600
-		description = submission.selftext
 		description = re.sub(r"\n(?:\*|-) (.*)", r"\n• \1", description)
 		description = re.sub(r"\n#+([^#\n]+)\n", r"\n__**\1**__ \n", description)
+		description = re.sub(r"\n+---\n+", r"\n``` ```\n", description)
 
 		if len(description) > character_limit:
 			description = f"{description[0:character_limit]}...\n[Read More]({submission.shortlink})"
 
 		embed = discord.Embed(description=description, color=discord.Color(int("ff4500", 16)))
-		embed.set_footer(text=f"/r/{submission.subreddit}")
+		embed.set_footer(text=f"/r/{submission.subreddit}", icon_url="https://images-na.ssl-images-amazon.com/images/I/418PuxYS63L.png")
 
 		embed.title = submission.title
 		embed.url = submission.shortlink
