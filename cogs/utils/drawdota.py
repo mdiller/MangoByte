@@ -6,6 +6,7 @@ import sys
 import subprocess
 import os
 import numpy
+from datetime import datetime, timedelta
 from PIL import Image, ImageDraw, ImageFont
 from .tabledraw import Table, ImageCell, TextCell, ColorCell, DoubleCell
 from io import BytesIO
@@ -472,9 +473,24 @@ async def dota_rank_icon(rank_tier, leaderboard_rank):
 
 	return filename
 
+def get_datetime_cell(match, region_data):
+	match_date = datetime.utcfromtimestamp(match["start_time"])
+	region = str(match.get("region"))
+	if region and region in region_data:
+		match_date += timedelta(hours=region_data[region]["UTC_offset"])
+	str_date = match_date.strftime("%b %-d %Y")
+	str_time = match_date.strftime("%-I:%M %p")
+	return DoubleCell(
+		TextCell(str_date, font_size=18, horizontal_align="center"),
+		TextCell(str_time, font_size=18, horizontal_align="center")
+	)
+
 
 async def draw_matches_table(matches, game_strings):
+	region_data = read_json(settings.resource("json/region_data.json"))	
+
 	border_size = 10
+	grey_color = "#BBBBBB"
 	table = Table(background=background_color)
 	# Header
 	headers = [
@@ -485,7 +501,8 @@ async def draw_matches_table(matches, game_strings):
 		TextCell("D", horizontal_align="center"),
 		TextCell("A", horizontal_align="center"),
 		TextCell("Duration"),
-		TextCell("Type")
+		TextCell("Type"),
+		TextCell("Date")
 	]
 	table.add_row(headers)
 	for cell in table.rows[0]:
@@ -505,7 +522,7 @@ async def draw_matches_table(matches, game_strings):
 			ImageCell(img=await get_hero_image(match["hero_id"]), height=48),
 			DoubleCell(
 				TextCell(get_hero_name(match["hero_id"]), font_size=24),
-				TextCell(match.get("match_id"), font_size=12, horizontal_align="left", color="#DDDDDD")
+				TextCell(match.get("match_id"), font_size=12, horizontal_align="left", color=grey_color)
 			),
 			TextCell("Win" if won_match else "Loss", color=("green" if won_match else "red"), horizontal_align="center"),
 			TextCell(match.get("kills")),
@@ -513,9 +530,10 @@ async def draw_matches_table(matches, game_strings):
 			TextCell(match.get("assists")),
 			TextCell(format_duration_simple(match.get("duration")), horizontal_align="center"),
 			DoubleCell(
-				TextCell(game_mode, font_size=18),
-				TextCell(lobby_type, font_size=18)
-			)
+				TextCell(game_mode, font_size=18, padding_right=15, color=grey_color),
+				TextCell(lobby_type, font_size=18, padding_right=15, color=grey_color)
+			),
+			get_datetime_cell(match, region_data)
 		])
 	image = table.render()
 

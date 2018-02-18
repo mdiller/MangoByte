@@ -566,6 +566,8 @@ class DotaStats(MangoCog):
 	async def matches(self, ctx, matchcount=10, player=None):
 		"""Gets a list of your recent matches
 
+		The date/time is localized based off of the server that the game was played on, which means it may not be exact.
+
 		Specifiy a `matchcount` to get a specific number of matches. Default is 10
 		You can also mention a user to get their recent matches
 
@@ -575,7 +577,13 @@ class DotaStats(MangoCog):
 
 		await ctx.channel.trigger_typing()
 
-		matches = await opendota_query(f"/players/{steam32}/recentmatches")
+		projections = [ "kills", "deaths", "assists", "hero_id", "version", "game_mode", "lobby_type", "region", "duration", "start_time" ]
+		projections = map(lambda p: f"project={p}", projections)
+		projections = "&".join(projections)
+
+		queryargs = f"?significant=0&limit=20&{projections}"
+
+		matches = await opendota_query(f"/players/{steam32}/matches{queryargs}")
 
 		if matchcount < 1:
 			raise UserError("Gotta have a matchcount of 1 or more")

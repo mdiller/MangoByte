@@ -1,0 +1,86 @@
+{
+	"0": {
+		"name": "Automatic",
+		"UTC_offset": 0
+	},
+	"1": {
+		"name": "US West",
+		"UTC_offset": -8
+	},
+	"2": {
+		"name": "US East",
+		"UTC_offset": -5
+	},
+	"3": {
+		"name": "Luxembourg",
+		"UTC_offset": 1
+	},
+	"5": {
+		"name": "Singapore",
+		"UTC_offset": 8
+	},
+	"6": {
+		"name": "Dubai",
+		"UTC_offset": 4
+	},
+	"7": {
+		"name": "Australia",
+		"UTC_offset": 10
+	},
+	"8": {
+		"name": "Stockholm",
+		"UTC_offset": 1
+	},
+	"9": {
+		"name": "Austria",
+		"UTC_offset": 1
+	},
+	"10": {
+		"name": "Brazil",
+		"UTC_offset": -3
+	},
+	"11": {
+		"name": "South Africa",
+		"UTC_offset": 2
+	},
+	"12": {
+		"name": "China TC Shanghai",
+		"UTC_offset": 8
+	},
+	"13": {
+		"name": "China UC",
+		"UTC_offset": 8
+	},
+	"14": {
+		"name": "Chile",
+		"UTC_offset": -3
+	},
+	"15": {
+		"name": "Peru",
+		"UTC_offset": -5
+	},
+	"16": {
+		"name": "India",
+		"UTC_offset": 5
+	},
+	"17": {
+		"name": "China TC Guangdong",
+		"UTC_offset": 8
+	},
+	"18": {
+		"name": "China TC Zhejiang",
+		"UTC_offset": 8
+	},
+	"19": {
+		"name": "Japan",
+		"UTC_offset": 9
+	},
+	"20": {
+		"name": "China TC Wuhan",
+		"UTC_offset": 8
+	},
+	"25": {
+		"name": "China UC 2",
+		"UTC_offset": 8
+	}
+}
