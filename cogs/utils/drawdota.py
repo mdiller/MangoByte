@@ -495,7 +495,7 @@ async def draw_matches_table(matches, game_strings):
 	# Header
 	headers = [
 		TextCell("Hero", padding=0),
-		TextCell("Match ID"),
+		TextCell(""),
 		TextCell("Result"),
 		TextCell("K", horizontal_align="center"),
 		TextCell("D", horizontal_align="center"),
