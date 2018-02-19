@@ -115,6 +115,8 @@ class Dotabase(MangoCog):
 	def lookup_hero(self, hero):
 		if not hero:
 			return None
+		if isinstance(hero, str):
+			hero = hero.strip()
 		hero_id = self.lookup_hero_id(hero)
 		if hero_id:
 			return session.query(Hero).filter(Hero.id == hero_id).first()
@@ -142,6 +144,8 @@ class Dotabase(MangoCog):
 		return None
 
 	def lookup_ability(self, text, full_check=True):
+		if isinstance(text, str):
+			text = text.strip()
 		ability_query = session.query(Ability).filter(Ability.hero_id != None)
 		if isinstance(text, int) or text.isdigit():
 			return ability_query.filter(Ability.id == int(text)).first()
@@ -162,6 +166,8 @@ class Dotabase(MangoCog):
 	def lookup_item(self, item, full_check=True):
 		if not item:
 			return None
+		if isinstance(item, str):
+			item = item.strip()
 		item_id = self.lookup_item_id(item, full_check)
 		if item_id:
 			return session.query(Item).filter(Item.id == item_id).first()
@@ -865,6 +871,63 @@ class Dotabase(MangoCog):
 			embed.set_thumbnail(url=f"{self.vpkurl}{lore_info['icon']}")
 
 		await ctx.send(embed=embed)
+
+	@commands.command(aliases=["fuse", "fuze", "fuzeheroes"])
+	async def fuseheroes(self, ctx, *, heroes=None):
+		"""See what would happen if you fused two heroes together
+
+		If no heroes are given, two will be chosen at random
+
+		**Example:**
+		`{cmdpfx}fuseheroes axe chen`"""
+		await ctx.channel.trigger_typing()
+		if heroes is None:
+			heroes = session.query(Hero).order_by(func.random()).limit(2).all()
+			heroes = " ".join(map(lambda h: h.localized_name, heroes))
+
+		words = heroes.split(" ")
+
+		for i in range(1, len(words)):
+			hero1 = self.lookup_hero(" ".join(words[:i]))
+			hero2 = self.lookup_hero(" ".join(words[i:]))
+			if hero1 and hero2:
+				break
+
+		if not (hero1 and hero2):
+			raise UserError("That doesn't look like two distinct heroes")
+		if hero1.id == hero2.id:
+			raise UserError("Fusing something with itself sounds boring")
+
+		def combine_words(word1, word2):
+			middle1 = len(word1) - (len(word1) // 2)
+			middle2 = len(word2) - (len(word2) // 2)
+			return word1[:middle1] + word2[middle2:]
+
+		name1 = hero1.localized_name
+		name2 = hero2.localized_name
+		if " " not in name1 and " " not in name2:
+			hero_name = combine_words(name1, name2)
+		if " " in name1 and " " not in name2:
+			hero_name = name1.split(" ")[0] + " " + name2
+		if " " not in name1 and " " in name2:
+			hero_name = name1 + " " + name2.split(" ")[-1]
+		if " " in name1 and " " in name2:
+			hero_name = name1.split(" ")[0] + " " + name2.split(" ")[-1]
+			if hero_name == name1 or hero_name == name2:
+				hero_name = combine_words(name1.split(" ")[0], name2.split(" ")[0]) + " " + name2.split(" ")[-1]
+			if hero_name == name1 or hero_name == name2:
+				hero_name = name1.split(" ")[0] + " " + combine_words(name1.split(" ")[-1], name2.split(" ")[-1])
+
+
+		embed = discord.Embed()
+
+		embed.title = hero_name
+
+		image = discord.File(await drawdota.fuse_hero_images(hero1, hero2), "hero.png")
+		embed.set_thumbnail(url=f"attachment://{image.filename}")
+
+		await ctx.send(embed=embed, file=image)
+
 
 def setup(bot):
 	bot.add_cog(Dotabase(bot))

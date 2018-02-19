@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from .tabledraw import Table, ImageCell, TextCell, ColorCell, DoubleCell
 from io import BytesIO
 from .helpers import run_command, get_pretty_time, read_json, UserError, format_duration_simple
+from .imagetools import *
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -75,45 +76,6 @@ def get_lane(player):
 		return f"{lane_role_dict[player['lane_role']]}({lane_dict[player['lane']]})"
 	else:
 		return lane_role_dict[player.get('lane_role')]
-
-# pastes image 2 onto image 1, preserving alpha/transparency
-# this will close the first image that was passed in, as it is assumed that this will replace it
-def paste_image(image1, image2, x, y):
-	temp_image = Image.new("RGBA", image1.size)
-	temp_image.paste(image2, (x, y))
-	return Image.alpha_composite(image1, temp_image)
-
-# colors an image with one single color for all the pixes that are currently not transparent
-def color_image(image, color):
-	image = image.copy()
-	pixels = image.load()
-
-	for y in range(image.height):
-		for x in range(image.width):
-			if pixels[x, y][3] > 128:
-				pixels[x, y] = color
-	return image
-
-# removes semi transparent areas of an image and replaces them with either transparent or the given color
-def remove_semi_transparent(image, color):
-	image = image.copy()
-	pixels = image.load()
-
-	for y in range(image.height):
-		for x in range(image.width):
-			if pixels[x, y][3] > 128:
-				p = pixels[x, y]
-				pixels[x, y] = (p[0], p[1], p[2])
-			else:
-				pixels[x, y] = color
-	return image
-
-def outline_image(image, thickness, color):
-	background = color_image(image, color)
-	background = background.resize((image.width + (thickness * 2), image.height + (thickness * 2)))
-
-	image = paste_image(background, image, thickness, thickness)
-	return image
 
 
 async def add_player_row(table, player, is_parsed):
@@ -592,5 +554,12 @@ async def draw_hero_talents(hero):
 
 	return fp
 
+async def fuse_hero_images(hero1, hero2):
+	file1 = await httpgetter.get(hero_infos[hero1.id]["image"], "filename", cache=True)
+	file2 = await httpgetter.get(hero_infos[hero2.id]["image"], "filename", cache=True)
 
-	
+	fp = BytesIO()
+	colorize_image(file1, file2, fp)
+	fp.seek(0)
+
+	return fp

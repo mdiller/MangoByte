@@ -2,10 +2,11 @@ aiohttp>=1.0.5
 async_timeout>=1.1.0
 beautifulsoup4>=4.5.3
 cairosvg==2.1.1
+colorgram.py==1.1.0
 discord.py==1.0.0a1284
 gTTS>=1.1.8
 SQLAlchemy>=1.0.15
 Pillow==4.0.0
+praw>=5.2.0
 wikipedia==1.4.0
 youtube-dl>=2017.9.11
-praw>=5.2.0
