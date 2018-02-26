@@ -1,0 +1,41 @@
+accordion
+bagpipes
+banjo
+bass drum
+bassoon
+bongo drum
+cello
+clarinet
+cymbal
+double bass
+drum
+electric guitar
+fiddle
+flute
+french horn
+gong
+guitar
+harp
+harpsichord
+lute
+lyre
+marimba
+mellophone
+oboe
+organ
+pan pipes
+pennywhistle
+piano
+recorder
+saxophone
+snare drum
+synthesizer
+tambourine
+timpani
+triangle
+trombone
+trumpet
+tuba
+viola
+violin
+xylophone

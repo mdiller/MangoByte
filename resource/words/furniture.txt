@@ -1,0 +1,41 @@
+armchair
+armoire
+bed
+bench
+bookcase
+cabinet
+ceiling fan
+chair
+coffee table
+cot
+couch
+cuckoo clock
+cupboard
+davenport
+daybed
+deck chair
+drawers
+dresser
+filing cabinet
+folding chair
+footstool
+futon
+grandfather clock
+hammock
+hat rack
+lamp
+locker
+love seat
+mattress
+mirror
+ottoman
+rack
+recliner
+rocking chair
+sofa
+step stool
+stool
+table
+throne
+vanity
+workbench

@@ -1,0 +1,43 @@
+almond
+black bean
+blackberry
+blueberry
+butter
+cake
+cereal
+cheese
+chocolate
+coffee
+cookie
+cracker
+garlic
+hamburger
+hot dog
+ice cream
+macaroni
+nut
+omelet
+onion
+pancake
+pasta
+pizza
+popcorn
+pudding
+raspberry
+ravioli
+sandwich
+shrimp
+soda
+soup
+spaghetti
+steak
+stew
+strawberry
+sushi
+tea
+toast
+tomato
+waffle
+walnut
+water
+wine

@@ -16,7 +16,36 @@ from bs4 import BeautifulSoup, Tag
 from io import BytesIO
 import re
 import praw
+import os
 from .mangocog import *
+
+def load_words():
+	words = {}
+	for root, dirs, files in os.walk(settings.resource("words/")):
+		for file in files:
+			with open(os.path.join(root, file), 'r') as f:
+				text = f.read()
+			key, ext = os.path.splitext(file)
+			words[key] = text.split("\n")
+	return words
+
+
+# fills a template with the words of the type asked for
+def fill_word_template(template, words):
+	def replace(match):
+		parts = match.group(1).split(":")
+		keys = parts[0].split("|")
+		values = []
+		for key in keys:
+			values += words[key]
+
+		if len(parts) > 1:
+			if "NOSPACE" in parts[1]:
+				values = list(filter(lambda w: " " not in w, values))
+
+		return random.choice(values)
+
+	return re.sub(r"\{([^}]+)\}", replace, template)
 
 
 class General(MangoCog):
@@ -29,6 +58,7 @@ class General(MangoCog):
 		self.questions = read_json(settings.resource("json/questions.json"))
 		self.subscripts = read_json(settings.resource("json/subscripts.json"))
 		self.superscripts = read_json(settings.resource("json/superscripts.json"))
+		self.words = load_words()
 
 	@commands.command()
 	async def ping(self, ctx, count : int=1):
@@ -415,6 +445,34 @@ class General(MangoCog):
 					pass # Not needed for this 
 				return
 		print("didnt match anything for ask")
+
+	@commands.command()
+	async def insult(self, ctx):
+		"""Gets a nice insult for ya
+
+		Mention someone in discord and I'll insult them instead of you
+
+		**Example:**
+		`{cmdpfx}insult`
+		`{cmdpfx}insult @InnocentMan`
+		"""
+		start = "You "
+		start_local = start
+
+		template = "{animal|food|furniture|instrument:NOSPACE}-{body_part_ed} {relation} of a {animal|furniture}"
+
+		if ctx.message.mentions:
+			user = ctx.message.mentions[0]
+			if user.id == ctx.guild.me.id:
+				template = "lovely fellow"
+			start = f"{user.mention}, you're a "
+			start_local = f"{user.name}, you're a "
+
+		result = fill_word_template(template, self.words)
+
+		await ctx.send(start + result)
+		if ctx.guild.me.voice:
+			await self.play_clip(f"tts:{start_local}{result}", ctx)
 		
 
 	async def on_message(self, message):

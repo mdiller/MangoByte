@@ -1,0 +1,27 @@
+acid rain
+blizzard
+breeze
+clouds
+dust storm
+earthquake
+eclipse
+flash flood
+flood
+fog
+gale
+hail
+hurricane
+maelstrom
+meteor shower
+monsoon
+rain
+sleet
+smog
+snow
+storm
+thunderstorm
+tornado
+twister
+typhoon
+whirlwind
+wind
