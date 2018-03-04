@@ -1,7 +1,7 @@
 from __main__ import settings, botdata
 from PIL import Image, ImageDraw, ImageFont
 
-table_font = settings.resource("images/table_font.ttf")
+table_font = settings.resource("images/arial_unicode_bold.ttf")
 
 # if specified, padding should be a 4 element list, or an int
 # 4 element list is left, top, right, bottom

@@ -229,7 +229,7 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 	map_image = map_image.resize((256, 256), Image.ANTIALIAS)
 
 	clock_bg_image = Image.open(settings.resource("images/map/clock_background.png"))
-	font = ImageFont.truetype(settings.resource("images/table_font.ttf"), 16)
+	font = ImageFont.truetype(settings.resource("images/arial_unicode_bold.ttf"), 16)
 
 	match_start = -89
 	if start_time < match_start:
