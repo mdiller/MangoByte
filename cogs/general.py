@@ -54,6 +54,7 @@ class General(MangoCog):
 	Random and/or fun commands with a variety of uses"""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
+		self.donation_link = "https://www.paypal.me/dillerm"
 		self.reactions = read_json(settings.resource("json/reactions.json"))
 		self.questions = read_json(settings.resource("json/questions.json"))
 		self.subscripts = read_json(settings.resource("json/subscripts.json"))
@@ -145,6 +146,9 @@ class General(MangoCog):
 		embed.add_field(name="Help", value=(
 			f"If you want to invite mangobyte to your server/guild, click this [invite link]({invite_link}). "
 			f"If you have a question, suggestion, or just want to try out mah features, check out the [Help Server/Guild]({help_guild_link})."))
+
+		embed.add_field(name="Donate", value=(
+			f"If you want to donate money to me because you like MangoByte, click [here]({self.donation_link})"))
 
 		owner = (await self.bot.application_info()).owner
 
@@ -501,6 +505,10 @@ class General(MangoCog):
 		loggingdb_session.commit()
 		print(msg)
 
+	@commands.command(aliases=[ "tipjar", "donation" ])
+	async def donate(self, ctx):
+		"""Posts the donation link"""
+		await ctx.send(self.donation_link)
 
 
 def setup(bot):
