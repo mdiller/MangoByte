@@ -666,15 +666,23 @@ class DotaStats(MangoCog):
 		playerinfo = await opendota_query(f"/players/{steam32}")
 		matches = await opendota_query(f"/players/{steam32}/matches")
 
+		rank_strings = [ "Unranked", "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine" ]
+
+		rank_tier = playerinfo.get("rank_tier", 0) // 10
+		leaderboard_rank = playerinfo.get("leaderboard_rank")
+		rank_string = f"**{rank_strings[rank_tier]}**"
+		stars = min(playerinfo.get("rank_tier", 0) % 10, 5)
+		if stars > 0:
+			rank_string += f" [{stars}]"
+
+		if rank_tier == 7 and leaderboard_rank:
+			rank_string = f"Rank **{leaderboard_rank}** on the leaderboards"
+
 		gamesplayed = len(matches)
 		if gamesplayed > 0:
 			winrate = "{:.2%}".format(len(list(filter(lambda m: m['radiant_win'] == (m['player_slot'] < 128), matches))) / gamesplayed)
 		else:
 			winrate = "0%"
-		if playerinfo.get("solo_competitive_rank") is not None:
-			solommr = f"**{playerinfo['solo_competitive_rank']}**"
-		else:
-			solommr = "not publicly displayed"
 
 		heroes = {}
 		for match in matches:
@@ -739,8 +747,7 @@ class DotaStats(MangoCog):
 
 		embed.add_field(name="General", value=(
 			f"Winrate of **{winrate}** over **{gamesplayed}** games\n"
-			f"Solo MMR: {solommr}\n"
-			f"Estimated MMR: **{playerinfo.get('mmr_estimate').get('estimate')}** *(based on players in recently played games)*"))
+			f"{rank_string}"))
 
 		embed.add_field(name="Profiles", value=(
 			f"[Steam]({playerinfo['profile']['profileurl']})\n"
