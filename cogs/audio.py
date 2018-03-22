@@ -656,12 +656,17 @@ class Audio(MangoCog):
 		if before and before.channel and botdata.guildinfo(before.channel.guild).outros:
 			beforeplayer = await self.audioplayer(before.channel, error_on_none=False)
 			if beforeplayer is not None and beforeplayer.voice is not None and beforeplayer.voice.channel.id == before.channel.id:
+				guildinfo = botdata.guildinfo(before.channel.guild)
 				userinfo = botdata.userinfo(member.id)
 
 				outroclip = userinfo.outro
 				outrotts = userinfo.outrotts
+				name = member.name
+				if guildinfo.usenickname and member.nick:
+					name = member.nick
 
-				text = (await self.fix_name(member.name)) + " " + outrotts
+
+				text = (await self.fix_name(name)) + " " + outrotts
 				print(text)
 
 				await asyncio.sleep(0.5)
@@ -670,19 +675,23 @@ class Audio(MangoCog):
 		if after and after.channel and botdata.guildinfo(after.channel.guild).intros:
 			afterplayer = await self.audioplayer(after.channel, error_on_none=False)
 			if afterplayer is not None and afterplayer.voice is not None and afterplayer.voice.channel.id == after.channel.id:
+				guildinfo = botdata.guildinfo(after.channel.guild)
 				if member.id == self.bot.user.id:
-					botdata.guildinfo(after.channel.guild.id).voicechannel = after.channel.id
+					guildinfo.voicechannel = after.channel.id
 
 				userinfo = botdata.userinfo(member.id)
 
 				introclip = userinfo.intro
 				introtts = userinfo.introtts
+				name = member.name
+				if guildinfo.usenickname and member.nick:
+					name = member.nick
 
 				# Special case for default
 				if userinfo.intro == "local:helloits" and introtts == "it's":
 					introtts = ""
 
-				text = introtts + " " + await self.fix_name(member.name)
+				text = introtts + " " + await self.fix_name(name)
 				print(text + " joined the channel")
 
 				await asyncio.sleep(3)

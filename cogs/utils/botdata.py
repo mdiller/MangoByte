@@ -134,6 +134,13 @@ class GuildInfo(BotDataItem):
 			"type": "GttsLang",
 			"description": "Sets the language/voice that mangobyte will use to speak using the `?tts` command. To see a list of all of the possible languages, check out [this file](https://github.com/mdiller/MangoByte/blob/master/resource/json/gtts_languages.json) in the github repo",
 			"example": "Russian"
+		},
+		{
+			"key": "usenickname",
+			"default": False,
+			"type": bool,
+			"description": "Sets whether mangobyte will use the user's name or nickname when announcing that they have joined or left a channel",
+			"example": "enable"
 		}
 	]
 
