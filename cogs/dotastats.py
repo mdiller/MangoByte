@@ -860,6 +860,8 @@ class DotaStats(MangoCog):
 							longest_message_match_id = match['match_id']
 					elif message["type"] == "chatwheel":
 						msg_id = int(message['key'])
+						if msg_id >= 1000:
+							continue # skip hero chat wheels
 						chat_wheel_counts[msg_id] = chat_wheel_counts.get(msg_id, 0) + 1
 						chat_wheel_total += 1
 
