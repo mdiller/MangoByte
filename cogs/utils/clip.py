@@ -162,7 +162,7 @@ class DotaClip(Clip):
 			text += f"({self.response.voice.voice_actor})"
 		if self.response.criteria != "":
 			text += "\n\n*"
-			text += self.response.pretty_criteria
+			text += self.response.pretty_criteria.replace("|", "\n")
 			text += "*"
 
 		return text
