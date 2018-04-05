@@ -429,15 +429,16 @@ class Dotabase(MangoCog):
 		query = await self.dota_keyphrase_query(";inthebag")
 		if hero is None:
 				await self.play_response_query(query.filter(Response.text_simple != " its in the bag "), ctx)
-		elif hero in self.hero_aliases:
-			query = query.filter(Response.hero_id == self.hero_aliases[hero])
+		else:
+			hero = self.lookup_hero(hero)
+			if hero is None:
+				raise UserError("Don't know what hero yer talkin about")
+			query = query.filter(Response.hero_id == hero.id)
 			newquery = query.filter(Response.text_simple != " its in the bag ")
 			if newquery.count() > 0:
 				await self.play_response_query(newquery, ctx)
 			else:
 				await self.play_response_query(query, ctx)
-		else:
-			raise UserError("Don't know what hero yer talkin about")
 
 	@commands.command()
 	async def chatwheel(self, ctx, *, text):
