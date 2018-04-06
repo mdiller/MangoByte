@@ -262,9 +262,14 @@ class Dotabase(MangoCog):
 		return None
 
 	async def play_response(self, response, ctx):
-		await self.play_clip("dota:" + response.name, ctx)
+		await self.play_clip(f"dota:{response.fullname}", ctx)
 
+	# used for getting the right response for dota clips
 	def get_response(self, responsename):
+		response = session.query(Response).filter(Response.fullname == responsename).first()
+		if response:
+			return response
+		# to support legacy clips that used name instead of fullname
 		return session.query(Response).filter(Response.name == responsename).first()
 
 	# Plays a random response from a query

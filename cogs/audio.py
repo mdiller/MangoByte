@@ -340,7 +340,7 @@ class Audio(MangoCog):
 
 		clipid is specified like this:
 		`local:shitpickle`
-		`dota:timb_ally_01`
+		`dota:shredder_timb_ally_01`
 		"""
 		if clipid is None:
 			if (await self.audioplayer(ctx)).last_clip == None:
@@ -400,7 +400,7 @@ class Audio(MangoCog):
 		if clipname is None:
 			intro = botdata.userinfo(user.id).intro
 			if intro is None or intro == "":
-				await ctx.send("Yer intro isn't set. Try doin somethin' like `?setintro dota:gyro_items_01`")
+				await ctx.send("Yer intro isn't set. Try doin somethin' like `?setintro dota:gyrocopter_gyro_items_01`")
 				return
 			else:
 				await ctx.send("Your intro is: {}".format(intro))
@@ -440,7 +440,7 @@ class Audio(MangoCog):
 		if clipname is None:
 			outro = botdata.userinfo(user.id).outro
 			if outro is None or outro == "":
-				await ctx.send("Yer outro isn't set. Try doin somethin' like `?setoutro dota:troll_lose_03`")
+				await ctx.send("Yer outro isn't set. Try doin somethin' like `?setoutro dota:troll_warlord_troll_lose_03`")
 				return
 			else:
 				await ctx.send("Your outro is: {}".format(outro))
