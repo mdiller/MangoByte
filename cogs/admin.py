@@ -77,7 +77,8 @@ class Admin(MangoCog):
 			await audio.connect_voice(channel)
 			botdata.guildinfo(channel.guild.id).voicechannel = channel.id
 		except asyncio.TimeoutError:
-			raise UserError("There was a timeout when attempting to do the `?summon`")
+			cmdpfx = botdata.command_prefix(ctx)
+			raise UserError(f"There was a timeout when attempting to do the `{cmdpfx}summon`")
 
 
 	@commands.command()
@@ -98,7 +99,7 @@ class Admin(MangoCog):
 		"default": [ "reset", "clear", "none", "null" ]
 	}
 
-	async def config_get(self, var, value):
+	async def config_get(self, var, value, cmdpfx):
 		embed = discord.Embed(description=var["description"])
 		embed.set_author(name=var["key"])
 		if var["type"] == bool:
@@ -113,7 +114,7 @@ class Admin(MangoCog):
 			embed.add_field(name="Value", value=value)
 		else:
 			raise ValueError("I don't know how to parse this type")
-		embed.add_field(name="Example", value=f"`?config {var['key']} {var['example']}`")
+		embed.add_field(name="Example", value=f"`{cmdpfx}config {var['key']} {var['example']}`")
 		return embed
 
 	async def config_set_parse(self, ctx, var, value):
@@ -152,14 +153,12 @@ class Admin(MangoCog):
 				return value
 		else:
 			raise ValueError("I don't know how to parse this type")
-		embed.add_field(name="Example", value=f"`?config {var['key']} {var['example']}`")
-		return embed
 
 	@commands.command()
 	async def config(self, ctx, name, value = None):
 		"""Configures the bot's settings for this server
 
-		Below are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `?config <settingname>`, and you can configure a setting by typing `?config <settingname> <value>`
+		Below are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `{cmdpfx}config <settingname>`, and you can configure a setting by typing `{cmdpfx}config <settingname> <value>`
 
 		{config_help}
 		"""
@@ -172,7 +171,7 @@ class Admin(MangoCog):
 		
 		if not value: # We are just getting a value
 			value = botdata.guildinfo(ctx.guild)[var["key"]]
-			await ctx.send(embed=await self.config_get(var, value))
+			await ctx.send(embed=await self.config_get(var, value, self.cmdpfx(ctx)))
 		else: # We are setting a value
 			value = await self.config_set_parse(ctx, var, value)
 			botdata.guildinfo(ctx.guild)[var["key"]] = value

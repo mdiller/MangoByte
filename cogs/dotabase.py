@@ -379,8 +379,7 @@ class Dotabase(MangoCog):
 			"timb_deny_08",
 			"tech_pain_39",
 			"meepo_attack_08",
-			"slark_lasthit_02",
-			"gyro_move_26"
+			"slark_lasthit_02"
 		]
 		dota_response = random.choice(dota_hellos)
 		response = session.query(Response).filter(Response.name == dota_response).first()

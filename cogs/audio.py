@@ -235,7 +235,7 @@ class Audio(MangoCog):
 					if chat_clip:
 						await self.play_clip(chat_clip, ctx)
 						return
-				await ctx.send(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
+				await ctx.send(f"'{clip}' is not a valid clip. 🤦 Try {self.cmdpfx(ctx)}playlist.")
 		else:
 			await self.play_clip(clip, ctx)
 
@@ -400,7 +400,7 @@ class Audio(MangoCog):
 		if clipname is None:
 			intro = botdata.userinfo(user.id).intro
 			if intro is None or intro == "":
-				await ctx.send("Yer intro isn't set. Try doin somethin' like `?setintro dota:gyrocopter_gyro_items_01`")
+				await ctx.send(f"Yer intro isn't set. Try doin somethin' like `{self.cmdpfx(ctx)}setintro dota:gyrocopter_gyro_items_01`")
 				return
 			else:
 				await ctx.send("Your intro is: {}".format(intro))
@@ -440,7 +440,7 @@ class Audio(MangoCog):
 		if clipname is None:
 			outro = botdata.userinfo(user.id).outro
 			if outro is None or outro == "":
-				await ctx.send("Yer outro isn't set. Try doin somethin' like `?setoutro dota:troll_warlord_troll_lose_03`")
+				await ctx.send(f"Yer outro isn't set. Try doin somethin' like `{self.cmdpfx(ctx)}setoutro dota:troll_warlord_troll_lose_03`")
 				return
 			else:
 				await ctx.send("Your outro is: {}".format(outro))
@@ -465,7 +465,7 @@ class Audio(MangoCog):
 
 		This is what is said before saying your name when announcing that you have joined the channel
 
-		Calling this command without any text will tell you your current tts intro. The default is simply `it's`. To set your tts to be nothing, try `?setintrotts nothing` or `?setintrotts none`
+		Calling this command without any text will tell you your current tts intro. The default is simply `it's`. To set your tts to be nothing, try `{cmdpfx}setintrotts nothing` or `{cmdpfx}setintrotts none`
 
 		The argument is the name of the clip that will introduce you, for example:
 		`{cmdpfx}setintrotts it's the magnificent`
@@ -496,7 +496,7 @@ class Audio(MangoCog):
 
 		This is what is said after saying your name when announcing that you have left the channel
 
-		Calling this command without any text will tell you your current tts intro. The default is simply `has left!`. To set your tts to be nothing, try `?setoutrotts nothing` or `?setoutrotts none`
+		Calling this command without any text will tell you your current tts intro. The default is simply `has left!`. To set your tts to be nothing, try `{cmdpfx}setoutrotts nothing` or `{cmdpfx}setoutrotts none`
 
 		The argument is the name of the clip that will introduce you, for example:
 		`{cmdpfx}setoutrotts dun gone left`
@@ -555,7 +555,7 @@ class Audio(MangoCog):
 			try:
 				clip = await self.get_clip(f"local:{clip}", ctx)
 			except ClipNotFound:
-				await ctx.send(f"'{clip}' is not a valid clip. 🤦 Try ?playlist.")
+				await ctx.send(f"'{clip}' is not a valid clip. 🤦 Try `{self.cmdpfx(ctx)}playlist`")
 				return
 		else:
 			clip = await self.get_clip(clip, ctx)
@@ -612,7 +612,7 @@ class Audio(MangoCog):
 		await self.do_tts(message, ctx)
 
 	async def on_message(self, message):
-		if message.guild and (not message.content.startswith("?")) and message.author.id != self.bot.user.id:
+		if message.guild and (not message.content.startswith(self.cmdpfx(message.guild))) and message.author.id != self.bot.user.id:
 			if botdata.guildinfo(message.guild).is_banned(message.author):
 				return # banned users cant talk
 			ttschannel = botdata.guildinfo(message.guild.id).ttschannel

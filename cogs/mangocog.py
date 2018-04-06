@@ -41,3 +41,6 @@ class MangoCog:
 
 		audio = self.bot.get_cog("Audio")
 		await (await audio.audioplayer(ctx)).queue_clip(clip, ctx)
+
+	def cmdpfx(self, ctx):
+		return botdata.command_prefix(ctx)

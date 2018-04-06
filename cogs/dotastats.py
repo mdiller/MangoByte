@@ -24,14 +24,14 @@ class SteamNotLinkedError(UserError):
 		self.is_author = user is None
 		self.user = user
 		if not self.is_author:
-			super().__init__(f"{user.name} doesn't have a steam account linked. They should try `?help setsteam` to see how to link their steam account.")
+			super().__init__(f"{user.name} doesn't have a steam account linked. They should try `{{cmdpfx}}help setsteam` to see how to link their steam account.")
 		else:
-			super().__init__("Yer steam account isn't linked to yer discord account yet.\nTry doin `?help setsteam` to see how to link a steam account.")
+			super().__init__("Yer steam account isn't linked to yer discord account yet.\nTry doin `{cmdpfx}help setsteam` to see how to link a steam account.")
 
 class MatchNotParsedError(UserError):
 	def __init__(self, match_id, action=None):
 		self.action = action if action else "do that"
-		super().__init__(f"This match must be parsed before I can {self.action}.\nTry `?parse {match_id}` to request a parse.")
+		super().__init__(f"This match must be parsed before I can {self.action}.\nTry `{{cmdpfx}}parse {match_id}` to request a parse.")
 
 class InvalidMatchIdError(UserError):
 	def __init__(self, match_id):
@@ -387,7 +387,7 @@ class DotaStats(MangoCog):
 
 		embed = discord.Embed(description=story, color=self.embed_color)
 		embed.set_author(name="Story of Match {}".format(game["match_id"]), url="https://www.opendota.com/matches/{}".format(game["match_id"]))
-		embed.set_footer(text="For more information, try ?match {}".format(game["match_id"]))
+		embed.set_footer(text=f"For more information, try {self.cmdpfx(ctx)}match {game['match_id']}")
 		await ctx.send(embed=embed)
 
 	@commands.command(aliases=["register"])
@@ -400,7 +400,7 @@ class DotaStats(MangoCog):
 		If you open up dota and go to your profile, your 'Friend ID' will be just under your name, and will look like this:
 		<:steam:414724031380586496> **FRIEND ID:** `<number>`
 
-		To un-register, try `?setsteam none` or `?setsteam reset`
+		To un-register, try `{cmdpfx}setsteam none` or `{cmdpfx}setsteam reset`
 
 		**Example:**
 		If this is me:
@@ -777,7 +777,7 @@ class DotaStats(MangoCog):
 				# This is a steamid
 				player_mention = player
 
-		embed.set_footer(text=f"For more info, try ?playerstats {player_mention}")
+		embed.set_footer(text=f"For more info, try {self.cmdpfx(ctx)}playerstats {player_mention}")
 
 		rank_icon = await drawdota.dota_rank_icon(playerinfo.get("rank_tier"), playerinfo.get("leaderboard_rank"))
 		rank_icon = discord.File(rank_icon, "rank.png")

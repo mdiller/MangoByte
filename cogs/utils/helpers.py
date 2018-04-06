@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import subprocess
@@ -94,13 +95,15 @@ class UserError(Exception):
 		self.message = message
 		self.embed = embed
 		self.file = file
-	async def send_self(self, ctx):
+	async def send_self(self, ctx, botdata):
 		kwargs = {}
 		if self.embed:
 			kwargs["embed"] = self.embed
 		if self.file:
 			kwargs["file"] = self.file
-		await ctx.send(self.message, **kwargs)
+
+		message = re.sub("\{cmdpfx\}", botdata.command_prefix(ctx), self.message)
+		await ctx.send(message, **kwargs)
 
 
 # thinks about messages

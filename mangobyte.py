@@ -76,21 +76,23 @@ async def on_command_error(ctx, error):
 	if ctx.message in thinker.messages:
 		await thinker.stop_thinking(ctx.message)
 
+	cmdpfx = botdata.command_prefix(ctx)
+
 	try:
 		if isinstance(error, commands.CommandNotFound):
 			cmd = ctx.message.content[1:].split(" ")[0]
 			if cmd in deprecated_commands:
-				await ctx.send(f"You shouldn't use `?{cmd}` anymore. It's *deprecated*. Try `?{deprecated_commands[cmd]}` instead.")
+				await ctx.send(f"You shouldn't use `{cmdpfx}{cmd}` anymore. It's *deprecated*. Try `{cmdpfx}{deprecated_commands[cmd]}` instead.")
 				return
 			elif cmd == "" or cmd.startswith("?") or cmd.startswith("!"):
 				return # These were probably not meant to be commands
 
 			if cmd.lower() in bot.commands:
 				new_message = ctx.message
-				new_message.content = "?" + cmd.lower() + ctx.message.content[len(cmd) + 1:]
+				new_message.content = cmdpfx + cmd.lower() + ctx.message.content[len(cmd) + 1:]
 				await bot.process_commands(new_message)
 			elif await invalid_command_reporting(ctx):
-				await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `?help` fer a list of things that ARE commands.") 
+				await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `{cmdpfx}help` fer a list of things that ARE commands.") 
 		elif isinstance(error, commands.CheckFailure):
 			print("(suppressed)")
 			return # The user does not have permissions
@@ -101,13 +103,13 @@ async def on_command_error(ctx, error):
 			await ctx.send((
 				"Thats the wrong type of argument for that command.\n\n"
 				f"Ya gotta do it like this:\n`{signature}`\n\n"
-				f"Try `?help {ctx.command}` for a more detailed description of the command"))
+				f"Try `{cmdpfx}help {ctx.command}` for a more detailed description of the command"))
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.Forbidden):
 			await print_missing_perms(ctx, error)
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.HTTPException):
 			await ctx.send("Looks like there was a problem with discord just then. Try again in a bit.")
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
-			await error.original.send_self(ctx)
+			await error.original.send_self(ctx, botdata)
 		else:
 			await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
 			trace_string = report_error(ctx.message, error, skip_lines=4)

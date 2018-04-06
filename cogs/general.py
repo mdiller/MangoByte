@@ -135,11 +135,12 @@ class General(MangoCog):
 			"Developed as an open source project, hosted on [GitHub]({}). "
 			"Implemented using {} and a python discord api wrapper [discord.py]({})".format(github, python_version, discordpy)))
 
+		cmdpfx = self.cmdpfx(ctx)
 		embed.add_field(name="Features", value=(
-			"• Answers questions (`?ask`)\n"
-			"• Plays audio clips (`?play`, `?dota`)\n"
-			"• Greets users joining a voice channel\n"
-			"• For a list of command categories, try `?help`"))
+			f"• Answers questions (`{cmdpfx}ask`)\n"
+			f"• Plays audio clips (`{cmdpfx}play`, `{cmdpfx}dota`)\n"
+			f"• Greets users joining a voice channel\n"
+			f"• For a list of command categories, try `{cmdpfx}help`"))
 
 		help_guild_link = "https://discord.gg/d6WWHxx"
 
@@ -176,20 +177,20 @@ class General(MangoCog):
 		embed.add_field(name="Commands", value=f"{commands.count():,}")
 		embed.add_field(name="Commands (This Week)", value=f"{commands_weekly.count():,}")
 
-
+		cmdpfx = self.cmdpfx(ctx)
 		top_commands = loggingdb_session.query(loggingdb.Message.command, func.count(loggingdb.Message.command)).filter(loggingdb.Message.command != None).group_by(loggingdb.Message.command).order_by(func.count(loggingdb.Message.command).desc())
 		if top_commands.count() >= 3:
 			embed.add_field(name="Top Commands", value=(
-				f"`?{top_commands[0][0]}`\n"
-				f"`?{top_commands[1][0]}`\n"
-				f"`?{top_commands[2][0]}`\n"))
+				f"`{cmdpfx}{top_commands[0][0]}`\n"
+				f"`{cmdpfx}{top_commands[1][0]}`\n"
+				f"`{cmdpfx}{top_commands[2][0]}`\n"))
 
 		top_commands_weekly = top_commands.filter(loggingdb.Message.timestamp > datetime.datetime.utcnow() - datetime.timedelta(weeks=1))
 		if top_commands_weekly.count() >= 3:
 			embed.add_field(name="Top Commands (This Week)", value=(
-				f"`?{top_commands_weekly[0][0]}`\n"
-				f"`?{top_commands_weekly[1][0]}`\n"
-				f"`?{top_commands_weekly[2][0]}`\n"))
+				f"`{cmdpfx}{top_commands_weekly[0][0]}`\n"
+				f"`{cmdpfx}{top_commands_weekly[1][0]}`\n"
+				f"`{cmdpfx}{top_commands_weekly[2][0]}`\n"))
 
 		await ctx.send(embed=embed)
 
@@ -483,7 +484,7 @@ class General(MangoCog):
 		if message.guild is not None and not botdata.guildinfo(message.guild.id).reactions:
 			return
 
-		if (message.author == self.bot.user) or message.content.startswith("?"):
+		if (message.author == self.bot.user) or message.content.startswith(self.cmdpfx(message.guild)):
 			return
 
 		random.seed(message.content)
