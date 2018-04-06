@@ -1301,15 +1301,16 @@ class DotaStats(MangoCog):
 		If you are in a voice channel, it will use the channel that you are in"""
 		if ctx.message.guild is None:
 			raise UserError("You have to use that command in a server")
-		audio = self.bot.get_cog("Audio")
-		audioplayer = await audio.audioplayer(ctx, False)
-		if audioplayer is None or audioplayer.voice_channel is None:
-			raise UserError("I need to be in a voice channel for that to work")
 
-
-		voice_channel = audioplayer.voice_channel
 		if ctx.author.voice and ctx.author.voice.channel:
 			voice_channel = ctx.author.voice.channel
+		else:
+			audio = self.bot.get_cog("Audio")
+			audioplayer = await audio.audioplayer(ctx, False)
+			if audioplayer is None or audioplayer.voice_channel is None:
+				raise UserError("One of us needs to be in a voice channel for that to work")
+			voice_channel = audioplayer.voice_channel
+
 
 		mentions = []
 		links = []
