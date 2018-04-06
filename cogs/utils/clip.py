@@ -22,11 +22,11 @@ def tts_save(filename, text, lang):
 
 class ClipNotFound(UserError):
 	def __init__(self, cliptype, clipname):
-		self.message = "There ain't a {} clip with the name '{}'".format(cliptype, clipname)
+		super().__init__("There ain't a {} clip with the name '{}'".format(cliptype, clipname))
 
 class MissingClipType(UserError):
 	def __init__(self, clipid):
-		self.message = "Yer clipid '{}' is missin a proper cliptype".format(clipid)
+		super().__init__("Yer clipid '{}' is missin a proper cliptype".format(clipid))
 
 # For this class and all its subclasses, we need to have
 # init be asynchronous. because of this, we are simply making

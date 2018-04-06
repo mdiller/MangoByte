@@ -94,6 +94,13 @@ class GuildInfo(BotDataItem):
 
 	variables = [
 		{
+			"key": "prefix",
+			"default": "?",
+			"type": "CommandPrefix",
+			"description": "Configures the character to use to prefix your commands for this server",
+			"example": "!"
+		},
+		{
 			"key": "reactions",
 			"default": False,
 			"type": bool,
@@ -204,3 +211,18 @@ class BotData:
 		return userinfos
 
 
+	# gets the command prefix
+	def command_prefix(self, ctx):
+		return self.command_prefix_guild(ctx) # will act the same for self.guildinfo
+
+	def command_prefix_botmessage(self, bot, message):
+		return self.command_prefix_guild(message.guild)
+
+	def command_prefix_guild(self, guild):
+		guildinfo = self.guildinfo(guild)
+		if guildinfo is not None:
+			return guildinfo.prefix
+		else:
+			return "?"
+
+		

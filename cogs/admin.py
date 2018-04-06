@@ -109,6 +109,8 @@ class Admin(MangoCog):
 			embed.add_field(name="Value", value=f"<@&{value}>" if value else "None")
 		elif var["type"] == "GttsLang":
 			embed.add_field(name="Value", value=GttsLang(value).pretty)
+		elif var["type"] == "CommandPrefix":
+			embed.add_field(name="Value", value=value)
 		else:
 			raise ValueError("I don't know how to parse this type")
 		embed.add_field(name="Example", value=f"`?config {var['key']} {var['example']}`")
@@ -143,6 +145,11 @@ class Admin(MangoCog):
 				raise UserError("Invalid input. See https://github.com/mdiller/MangoByte/blob/master/resource/json/gtts_languages.json for valid langs")
 			else:
 				return lang.lang
+		elif var["type"] == "CommandPrefix":
+			if len(value) > 5 or len(value) < 1:
+				raise UserError("Invalid input. A command prefix must be between 1 and 5 characters long")
+			else:
+				return value
 		else:
 			raise ValueError("I don't know how to parse this type")
 		embed.add_field(name="Example", value=f"`?config {var['key']} {var['example']}`")

@@ -27,7 +27,7 @@ class TtsChannelError(Exception):
 
 class AudioPlayerNotFoundError(UserError):
 	def __init__(self, message):
-		self.message = message
+		super().__init__(message)
 
 def remove_if_temp(mp3name):
 	if os.path.isfile(mp3name):
@@ -186,7 +186,7 @@ class Audio(MangoCog):
 				return audioplayer
 
 		if error_on_none:
-			raise AudioPlayerNotFoundError(f"I'm not in a voice channel on this server/guild. Have an admin do `{self.bot.command_prefix}summon` to put me in one.")
+			raise AudioPlayerNotFoundError(f"I'm not in a voice channel on this server/guild. Have an admin do `{botdata.command_prefix(ctx)}summon` to put me in one.")
 		else:
 			return None
 

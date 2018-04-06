@@ -2,7 +2,6 @@ import discord
 from cogs.utils.settings import Settings
 from cogs.utils.botdata import BotData
 from cogs.utils.helpers import *
-from cogs.utils.helpformatter import MangoHelpFormatter
 import cogs.utils.loggingdb as loggingdb
 import traceback
 import asyncio
@@ -18,6 +17,7 @@ settings = Settings()
 loggingdb_session = loggingdb.create_session(settings.resource("loggingdb.db"))
 
 # This have to be done after loading settings
+from cogs.utils.helpformatter import MangoHelpFormatter
 from cogs.utils.httpgetter import HttpGetter
 httpgetter = HttpGetter()
 from cogs.utils.clip import *
@@ -26,7 +26,7 @@ description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 				For more information about me, try `{cmdpfx}info`"""
 permissions = 314432
 
-bot = commands.Bot(command_prefix='?', formatter=MangoHelpFormatter(), description=description)
+bot = commands.Bot(command_prefix=botdata.command_prefix_botmessage, formatter=MangoHelpFormatter(), description=description)
 bot.remove_command("help")
 thinker = Thinker(bot)
 invite_link = f"https://discordapp.com/oauth2/authorize?permissions={permissions}&scope=bot&client_id=213476188037971968"
@@ -168,6 +168,7 @@ def report_error(message, error, skip_lines=2):
 	trace_string = "\n".join(trace)
 	print(f"\nError on: {message.clean_content}\n{trace_string}\n")
 	return trace_string
+
 
 
 if __name__ == '__main__':

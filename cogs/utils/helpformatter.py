@@ -1,3 +1,4 @@
+from __main__ import botdata
 import discord, itertools, inspect, re
 from discord.ext.commands import *
 from .botdata import GuildInfo
@@ -52,7 +53,7 @@ class MangoHelpFormatter(HelpFormatter):
 
 	def fill_template(self, text):
 		text = re.sub("\{config_help\}", get_config_help(), text)
-		text = re.sub("\{cmdpfx\}", self.context.bot.command_prefix, text)
+		text = re.sub("\{cmdpfx\}", botdata.command_prefix(self.context), text)
 		return text
 
 	def cog_short_doc(self, cog):
