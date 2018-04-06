@@ -668,10 +668,13 @@ class DotaStats(MangoCog):
 
 		rank_strings = [ "Unranked", "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine" ]
 
-		rank_tier = playerinfo.get("rank_tier", 0) // 10
+		base_rank_tier = playerinfo.get("rank_tier")
+		if base_rank_tier is None:
+			base_rank_tier = 0
+		rank_tier = base_rank_tier // 10
 		leaderboard_rank = playerinfo.get("leaderboard_rank")
 		rank_string = f"**{rank_strings[rank_tier]}**"
-		stars = min(playerinfo.get("rank_tier", 0) % 10, 5)
+		stars = min(base_rank_tier % 10, 5)
 		if stars > 0:
 			rank_string += f" [{stars}]"
 
