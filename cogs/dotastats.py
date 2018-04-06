@@ -1328,7 +1328,7 @@ class DotaStats(MangoCog):
 				links.append(f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{userinfo.steam32})")
 
 		if len(mentions) == 0:
-			raise UserError("There isn't anyone in my voice channel")
+			raise UserError("There isn't anyone in my voice channel 😢")
 
 		embed = discord.Embed()
 		embed.add_field(name="Discord", value="\n".join(mentions))
