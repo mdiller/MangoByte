@@ -401,9 +401,11 @@ class General(MangoCog):
 			raise UserError("Couldn't properly find that reddit submission")
 
 		character_limit = 600
+		# convert between markdown types
 		description = re.sub(r"\n(?:\*|-) (.*)", r"\n• \1", description)
-		description = re.sub(r"\n#+([^#\n]+)\n", r"\n__**\1**__ \n", description)
+		description = re.sub(r"(?:^|\n)#+([^#\n]+)\n", r"\n__**\1**__ \n", description)
 		description = re.sub(r"\n+---\n+", r"\n``` ```\n", description)
+		description = re.sub(r"&nbsp;", r" ", description)
 
 		if len(description) > character_limit:
 			description = f"{description[0:character_limit]}...\n[Read More]({submission.shortlink})"
