@@ -42,7 +42,11 @@ async def on_ready():
 	print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
 	print('Connecting to voice channels if specified in botdata.json ...')
 
-	discord.Game(name="DOTA 3 [?help]", start=datetime.datetime.utcnow())
+	game = discord.Activity(
+		name="DOTA 3 [?help]", 
+		type=discord.ActivityType.playing,
+		start=datetime.datetime.utcnow())
+	await bot.change_presence(status=discord.Status.online, activity=game)
 	cog = bot.get_cog("Audio")
 
 	for guildinfo in botdata.guildinfo_list():
