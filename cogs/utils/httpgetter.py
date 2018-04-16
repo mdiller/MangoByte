@@ -1,5 +1,6 @@
-from __main__ import settings
+from __main__ import settings, loggingdb_session
 from .helpers import *
+from .loggingdb import insert_http_request
 import re
 import aiohttp
 from io import BytesIO
@@ -111,9 +112,11 @@ class HttpGetter:
 
 	async def get(self, url, return_type="json", cache=False, errors={}):
 		if cache and self.cache.get_filename(url):
+			insert_http_request(url, 0, True, True, loggingdb_session)
 			return self.cache.get(url, return_type)
 
 		async with self.session.get(url) as r:
+			insert_http_request(url, r.status, False, cache, loggingdb_session)
 			if r.status == 200:
 				if cache:
 					await self.cache.save(url, return_type, r)
@@ -133,6 +136,7 @@ class HttpGetter:
 
 	async def post(self, url, return_type="json", errors={}):
 		async with self.session.post(url) as r:
+			insert_http_request(url, r.status, False, False, loggingdb_session)
 			if r.status == 200:
 				if return_type == "json":
 					return json.loads(await r.text(), object_pairs_hook=OrderedDict)

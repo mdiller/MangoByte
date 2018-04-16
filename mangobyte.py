@@ -82,6 +82,7 @@ async def on_command_error(ctx, error):
 
 	cmdpfx = botdata.command_prefix(ctx)
 
+	loggingdb.command_finished(ctx, "errored", type(error).__name__, loggingdb_session)
 	try:
 		if isinstance(error, commands.CommandNotFound):
 			cmd = ctx.message.content[1:].split(" ")[0]
@@ -113,6 +114,7 @@ async def on_command_error(ctx, error):
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.HTTPException):
 			await ctx.send("Looks like there was a problem with discord just then. Try again in a bit.")
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
+			loggingdb.command_finished(ctx, "user_errored", error.original.message, loggingdb_session)
 			await error.original.send_self(ctx, botdata)
 		else:
 			await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
@@ -156,22 +158,11 @@ def report_error(message, error, skip_lines=2):
 		if skip_lines > 0 and len(trace) >= (2 + skip_lines):
 			del trace[1:(skip_lines + 1)]
 		trace = [x for x in trace if x] # removes empty lines
-
-	now_time = datetime.datetime.now() - datetime.timedelta(hours=3)
-
-	error_list.append({
-		"author": message.author.id,
-		"message_id": message.id,
-		"message": message.clean_content,
-		"message_full": message.content,
-		"date": now_time.strftime("%b %d  %-I:%M %p"),
-		"command_error": type(error).__name__,
-		"error": str(error),
-		"traceback": trace
-	})
-	if settings.error_logging:
-		write_json(error_file, error_list)
+	
 	trace_string = "\n".join(trace)
+
+	loggingdb.insert_error(message, error, trace_string, loggingdb_session)
+
 	print(f"\nError on: {message.clean_content}\n{trace_string}\n")
 	return trace_string
 

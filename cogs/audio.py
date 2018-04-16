@@ -2,8 +2,9 @@ import discord
 from discord.ext import commands
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
-from __main__ import settings, botdata, report_error
+from __main__ import settings, botdata, report_error, loggingdb_session
 from cogs.utils import checks
+import cogs.utils.loggingdb as loggingdb
 import asyncio
 import os
 import string
@@ -619,6 +620,7 @@ class Audio(MangoCog):
 			if ttschannel == message.channel.id:
 				if message.content.startswith("//") or message.content.startswith("#"):
 					return # commented out stuff should be ignored
+				loggingdb.insert_message(message, "smarttts", loggingdb_session)
 				try:
 					await self.do_smarttts(message.clean_content, message.guild)
 				except UserError as e:

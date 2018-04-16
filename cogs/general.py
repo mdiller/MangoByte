@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands.bot import _mention_pattern, _mentions_transforms
-from __main__ import settings, botdata, invite_link, httpgetter, loggingdb_session
+from __main__ import settings, botdata, invite_link, httpgetter
 from cogs.utils.helpers import *
 from cogs.utils import checks
 from cogs.audio import AudioPlayerNotFoundError
@@ -503,10 +503,12 @@ class General(MangoCog):
 				break
 
 	async def on_command(self, ctx):
-		msg = loggingdb.convert_message(ctx)
-		loggingdb_session.add(msg)
-		loggingdb_session.commit()
+		msg = loggingdb.insert_message(ctx.message, ctx.command.name, loggingdb_session)
+		loggingdb.insert_command(ctx, loggingdb_session)
 		print(msg)
+
+	async def on_command_completion(self, ctx):
+		loggingdb.command_finished(ctx, "completed", None, loggingdb_session)
 
 	@commands.command(aliases=[ "tipjar", "donation" ])
 	async def donate(self, ctx):
