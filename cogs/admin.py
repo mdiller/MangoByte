@@ -3,11 +3,12 @@ import youtube_dl
 import asyncio
 import shutil
 from discord.ext import commands
-from __main__ import settings, botdata, httpgetter
+from __main__ import settings, botdata, httpgetter, loggingdb_session
 from cogs.utils.helpers import *
 from cogs.utils.botdata import GuildInfo
 from cogs.utils.clip import GttsLang
 from cogs.utils import checks
+from cogs.utils import loggingdb
 from .mangocog import *
 
 class Admin(MangoCog):
@@ -347,6 +348,38 @@ class Admin(MangoCog):
 			raise UserError("Couldn't find a file at that uri")
 
 		await ctx.send(file=discord.File(filename))
+
+	@checks.is_owner()
+	@commands.command(hidden=True)
+	async def errors(self, ctx, count : int=5, page : int=0):
+		"""Gets a list of the most recent errors from loggingdb"""
+
+		for error in loggingdb_session.query(loggingdb.Error).order_by(loggingdb.Error.timestamp).offset(page * count).limit(count):
+			await ctx.send(embed=error.to_embed(self))
+			await ctx.send(error.error_text() + "\n'")
+
+
+	@checks.is_owner()
+	@commands.command(hidden=True, aliases=["logs", "logger"])
+	async def loggingdb(self, ctx, table, identifier):
+		"""Gets a list of the most recent errors from loggingdb"""
+		if table in [ "error", "errors", "bugs", "bug" ]:
+			table = loggingdb.Error
+			filterer = lambda q: q.filter_by(message_id=identifier)
+		elif table in [ "message", "messages", "msg", "messages" ]:
+			table = loggingdb.Message
+			filterer = lambda q: q.filter_by(id=identifier)
+		elif table in [ "command", "commands", "cmd", "cmds" ]:
+			table = loggingdb.Command
+			filterer = lambda q: q.filter_by(message_id=identifier)
+		else:
+			raise UserError("Dont know what table you're talking about")
+
+		for obj in filterer(loggingdb_session.query(table)):
+			await ctx.send(embed=obj.to_embed(self))
+			if table == loggingdb.Error:
+				await ctx.send(obj.error_text())
+
 
 
 def setup(bot):

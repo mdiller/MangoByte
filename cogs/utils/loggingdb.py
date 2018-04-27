@@ -2,6 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Table, DateTime
 from sqlalchemy.orm import sessionmaker, relationship
+import discord
 import datetime
 import os
 import re
@@ -24,6 +25,20 @@ class Message(Base):
 
 	command = Column(String) # keeping for legacy
 
+	def to_embed(self, cog):
+		embed = discord.Embed(description=self.content)
+
+		author = cog.bot.get_user(self.author_id)
+		if author is not None:
+			embed.set_author(name=f"{author.name} ({author.id})", icon_url=author.avatar_url)
+		else:
+			embed.set_author(name=self.author_id)
+
+		embed.timestamp = self.timestamp
+		embed.set_footer(text=self.id)
+
+		return embed
+
 	def __repr__(self):
 		return f"{self.author_name}: {self.clean_content}"
 
@@ -40,6 +55,23 @@ class Command(Base):
 	status = Column(String)
 
 	message = relationship("Message")
+
+	def to_embed(self, cog):
+		embed = self.message.to_embed(cog)
+
+		if self.invoke_time is not None and self.finish_time is not None:
+			embed.add_field(name="Duration", value=f"{(self.finish_time - self.invoke_time).total_seconds():.2f}")
+
+		if self.status != "completed":
+			if self.status == "user_errored":
+				embed.add_field(name="UserError", value=self.error)
+			else:
+				embed.add_field(name="Status", value=self.status)
+				if self.error:
+					embed.add_field(name="Error", value=self.error)
+					embed.color = discord.Color.red()
+
+		return embed
 
 class HttpRequest(Base):
 	__tablename__ = 'httprequests'
@@ -63,6 +95,20 @@ class Error(Base):
 	traceback = Column(String)
 
 	message = relationship("Message")
+
+	def error_text(self):
+	    return f"```\n{self.error}\n\n{self.traceback}\n```"
+
+	def to_embed(self, cog):
+		embed = self.message.to_embed(cog)
+		embed.color = discord.Color.red()
+
+		embed.timestamp = self.timestamp
+
+		if self.command_error != "CommandInvokeError":
+			embed.add_field(name="Error", value=self.command_error)
+
+		return embed
 
 # inserters
 
