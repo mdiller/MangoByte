@@ -96,6 +96,8 @@ def insert_command(ctx, session):
 	return command
 
 def command_finished(ctx, status, error, session):
+	if ctx.command is None:
+		return # no command to finish
 	command = session.query(Command).filter_by(message_id=ctx.message.id).filter_by(command=ctx.command.name).first()
 	command.status = status
 	command.finish_time = datetime.datetime.utcnow()

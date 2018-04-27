@@ -54,14 +54,18 @@ async def on_ready():
 			try:
 				print(f"connecting voice to: {guildinfo.voicechannel}")
 				await cog.connect_voice(guildinfo.voicechannel)
+				print(f"connected: {guildinfo.voicechannel}")
 			except UserError as e:
 				if e.message == "channel not found":
 					guildinfo.voicechannel = None
+					print("channel not found!")
 				else:
 					raise
 			except asyncio.TimeoutError:
 				guildinfo.voicechannel = None
+				print("timeout error when connecting to channel")
 	
+	print("\ninitialization finished\n")
 
 async def get_cmd_signature(ctx):
 	bot.formatter.context = ctx
