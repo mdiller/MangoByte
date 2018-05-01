@@ -4,7 +4,7 @@ beautifulsoup4>=4.5.3
 cairosvg==2.1.1
 colorgram.py==1.1.0
 discord.py==1.0.0a1284
-gTTS>=1.2.2
+gTTS>=2.0.0
 SQLAlchemy>=1.0.15
 Pillow==4.0.0
 praw>=5.2.0
