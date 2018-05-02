@@ -396,7 +396,13 @@ class Admin(MangoCog):
 
 		for error in loggingdb_session.query(loggingdb.Error).order_by(loggingdb.Error.timestamp).offset(page * count).limit(count):
 			await ctx.send(embed=error.to_embed(self))
-			await ctx.send(error.error_text() + "\n'")
+			error_chunks = error.error_text_chunks()
+			for chunk in error_chunks[:-1]:
+				await ctx.send(chunk)
+				await asyncio.sleep(0.5)
+
+			await ctx.send(error_chunks[-1] + "\n_ _")
+			await asyncio.sleep(0.5)
 
 
 	@checks.is_owner()

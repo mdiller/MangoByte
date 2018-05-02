@@ -96,8 +96,24 @@ class Error(Base):
 
 	message = relationship("Message")
 
-	def error_text(self):
-	    return f"```\n{self.error}\n\n{self.traceback}\n```"
+	def error_text_chunks(self):
+		maxlength = 1900
+		result = f"{self.error}\n\n{self.traceback}"
+
+		chunks = []
+		thischunk = None
+		for line in result.split("\n"):
+			if thischunk is None:
+				thischunk = line
+			elif len(thischunk + line) > maxlength:
+				chunks.append(f"```\n{thischunk}\n```")
+				thischunk = line
+			else:
+				thischunk += "\n" + line
+		if thischunk:
+			chunks.append(f"```\n{thischunk}\n```")
+
+		return chunks
 
 	def to_embed(self, cog):
 		embed = self.message.to_embed(cog)
