@@ -80,6 +80,7 @@ class Admin(MangoCog):
 		except asyncio.TimeoutError:
 			cmdpfx = botdata.command_prefix(ctx)
 			raise UserError(f"There was a timeout when attempting to do the `{cmdpfx}summon`")
+		await ctx.message.add_reaction("✅")
 
 
 	@commands.command()
@@ -92,6 +93,45 @@ class Admin(MangoCog):
 			raise UserError("You have to say that in a server")
 		await audio.disconnect(ctx.message.guild)
 		botdata.guildinfo(ctx.message.guild.id).voicechannel = None
+		await ctx.message.add_reaction("✅")
+
+
+	@commands.command()
+	async def resummon(self, ctx):
+		"""Removes and then re-summons the bot to the voice channel
+
+		This command is useful if you are having issues with mangobyte not being responsive"""
+		audio = self.bot.get_cog("Audio")
+		if not audio:
+			raise UserError("You must have the Audio cog enabled to do this")
+		if not ctx.message.guild:
+			raise UserError("You have to be in a server to use this command")
+
+		guildinfo = botdata.guildinfo(ctx.message.guild.id)
+
+		save_channel = False
+		channel = None
+		if ctx.message.guild.me.voice:
+			channel = ctx.message.guild.me.voice.channel
+		elif ctx.message.author.voice:
+			channel = ctx.message.author.voice.channel
+		elif guildinfo.voicechannel is not None:
+			channel = self.bot.get_channel(guildinfo.voicechannel)
+		else:
+			raise UserError("I'm not sure where you want me to resummon to. I'm not in any channel currently.")
+
+		await audio.disconnect(ctx.message.guild)
+
+		await asyncio.sleep(1)
+
+		try:
+			await audio.connect_voice(channel)
+			guildinfo.voicechannel = channel.id
+		except asyncio.TimeoutError:
+			cmdpfx = botdata.command_prefix(ctx)
+			raise UserError(f"There was a timeout when attempting to do the `{cmdpfx}summon`")
+
+		await ctx.message.add_reaction("✅")
 	
 
 	config_aliases = {

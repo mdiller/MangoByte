@@ -208,11 +208,14 @@ class Audio(MangoCog):
 			self.audioplayers.append(audioplayer)
 
 	async def disconnect(self, guild):
-		audioplayer = await self.audioplayer(guild)
+		audioplayer = await self.audioplayer(guild, False)
 		if audioplayer is not None:
 			if audioplayer.voice is not None:
 				await audioplayer.voice.disconnect()
 			self.audioplayers.remove(audioplayer)
+		elif guild.me and guild.me.voice:
+			await guild.me.voice.disconnect()
+
 
 	@commands.command()
 	async def play(self, ctx, *, clip : str):
