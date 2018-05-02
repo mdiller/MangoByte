@@ -391,18 +391,26 @@ class Admin(MangoCog):
 
 	@checks.is_owner()
 	@commands.command(hidden=True)
-	async def errors(self, ctx, count : int=5, page : int=0):
+	async def errors(self, ctx, count : int=5, page : int=0, excludestring=None):
 		"""Gets a list of the most recent errors from loggingdb"""
 
-		for error in loggingdb_session.query(loggingdb.Error).order_by(loggingdb.Error.timestamp).offset(page * count).limit(count):
-			await ctx.send(embed=error.to_embed(self))
+		for error in loggingdb_session.query(loggingdb.Error).order_by(loggingdb.Error.timestamp).offset(page * count):
+			if count <= 0:
+				return
 			error_chunks = error.error_text_chunks()
+			try:
+				if excludestring and re.search(excludestring, "\n".join(error_chunks)):
+					continue # skip this because our excludestring matches
+			except Exception:
+				raise UserError("Regex parsing error")
+			await ctx.send(embed=error.to_embed(self))
 			for chunk in error_chunks[:-1]:
 				await ctx.send(chunk)
 				await asyncio.sleep(0.5)
 
 			await ctx.send(error_chunks[-1] + "\n_ _")
 			await asyncio.sleep(0.5)
+			count -= 1
 
 
 	@checks.is_owner()
