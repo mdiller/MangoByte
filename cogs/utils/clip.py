@@ -19,6 +19,11 @@ def tts_save(filename, text, lang):
 		raise UserError("Whoops. Looks like gtts is broken right now.")
 	except (RecursionError, requests.exceptions.HTTPError):
 		raise UserError("There was a problem converting that via gtts")
+	except AssertionError as e:
+		if e.args and e.args[0] == "No text to send to TTS API":
+			raise UserError("I can't convert that to TTS. Looks like there's not much there.")
+		else:
+			raise
 
 class ClipNotFound(UserError):
 	def __init__(self, cliptype, clipname):
