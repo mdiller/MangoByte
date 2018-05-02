@@ -149,7 +149,7 @@ class General(MangoCog):
 			f"If you have a question, suggestion, or just want to try out mah features, check out the [Help Server/Guild]({help_guild_link})."))
 
 		embed.add_field(name="Donate", value=(
-			f"If you want to donate money to me because you like MangoByte, click [here]({self.donation_link})"))
+			f"If you want to donate money to support MangoByte's server costs, click [here]({self.donation_link})"))
 
 		owner = (await self.bot.application_info()).owner
 
@@ -512,8 +512,14 @@ class General(MangoCog):
 
 	@commands.command(aliases=[ "tipjar", "donation" ])
 	async def donate(self, ctx):
-		"""Posts the donation link"""
-		await ctx.send(self.donation_link)
+		"""Posts the donation information"""
+		embed = discord.Embed()
+
+		embed.description = "I host MangoByte on [DigitalOcean](https://www.digitalocean.com), which costs `$15` per month. (2nd row in the 'Flexible Droplet' table [here](https://www.digitalocean.com/pricing/)). "
+		embed.description += "I have a decently paying job, so MangoByte won't be going down anytime soon, but if you want to help with the server costs, or just support me because you feel like it, feel free to donate using the link below:"
+		embed.description += f"\n\n[Donation Link]({self.donation_link})"
+
+		await ctx.send(embed=embed)
 
 
 def setup(bot):
