@@ -16,6 +16,7 @@ import functools
 import time
 import statistics
 import random
+import aiohttp
 from types import *
 from .mangocog import *
 
@@ -47,6 +48,7 @@ class NoMatchHistoryError(UserError):
 opendota_html_errors = {
 	404: "Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com",
 	521: "Looks like the OpenDota API is down or somethin, so ya gotta wait a sec",
+	502: "Looks like there was an issue with the OpenDota API. Try again in a bit",
 	"default": "OpenDota said we did things wrong 😢. status code: {}"
 }
 
@@ -91,9 +93,13 @@ async def get_stratz_match(match_id):
 		else:
 			await httpgetter.cache.remove(url)
 
-	return await httpgetter.get(url, cache=True, errors={
-		500: "Looks like something wrong with the STRATZ api"
-	})
+	try:
+		return await httpgetter.get(url, cache=True, errors={
+			500: "Looks like something wrong with the STRATZ api"
+		})
+	except aiohttp.ClientConnectorError:
+		raise UserError("Looks like this match has not been parsed by STRATZ yet. Try again in a bit")
+
 
 async def get_lastmatch_id(steamid):
 	matches = await opendota_query(f"/players/{steamid}/recentmatches")
