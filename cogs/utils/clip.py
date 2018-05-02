@@ -62,8 +62,16 @@ class Clip(object):
 	def audiolength(self):
 		return round(float(run_command(["ffprobe", "-i", self.audiopath, "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0"])), 2)
 
-	async def get_info(self):
-		return self.text if self.text is not None else ""
+	async def get_info_embed(self):
+		embed = discord.Embed()
+		embed.description = self.text if self.text is not None else ""
+		self.add_info_embed_parts(embed)
+		return embed
+
+	def add_info_embed_parts(self, embed):
+		"""Adds some things to a clips `info` embed"""
+		embed.set_author(name=self.clipid)
+		embed.add_field(name="Length", value=f"{self.audiolength} seconds")
 
 
 class LocalClip(Clip):
@@ -90,7 +98,7 @@ class LocalClip(Clip):
 	def type(cls):
 		return "local"
 
-	async def get_info(self):
+	async def get_info_embed(self):
 		result = ""
 		if self.text != "":
 			result += f"\"{self.text}\""
@@ -99,13 +107,12 @@ class LocalClip(Clip):
 				result += f" - {self.author}"
 			else:
 				result += f"By {self.author}"
-		if self.author or self.text != "":
-			result += "\n\n"
-		if self.source:
-			result += f"**Source:** {self.source}\n"
-		if self.tags:
-			result += f"*Tags: {', '.join(self.tags)}*"
-		return result
+		embed = discord.Embed()
+		embed.description = result
+		embed.add_field(name="Source", value=self.source)
+		embed.add_field(name="Tags", value=", ".join(self.tags))
+		self.add_info_embed_parts(embed)
+		return embed
 
 
 
@@ -148,6 +155,9 @@ class DotaClip(Clip):
 		self.response = dotabase.get_response(responsename)
 		if self.response == None:
 			raise ClipNotFound(self.type(), responsename)
+		self.voice_thumbnail = None
+		if self.response.voice.image:
+			self.voice_thumbnail = dotabase.vpkurl + self.response.voice.image
 
 		filename = await httpgetter.get(dotabase.vpkurl + self.response.mp3, "filename", cache=True)
 		return await Clip.init(self, responsename, filename, text=self.response.text, volume=0.4)
@@ -156,16 +166,18 @@ class DotaClip(Clip):
 	def type(cls):
 		return "dota"
 
-	async def get_info(self):
-		text = f"\"{self.response.text}\" - {self.response.voice.name}"
-		if self.response.voice.voice_actor:
-			text += f"({self.response.voice.voice_actor})"
+	async def get_info_embed(self):
+		embed = discord.Embed()
+		embed.description = f"\"{self.response.text}\" - {self.response.voice.name}"
 		if self.response.criteria != "":
-			text += "\n\n*"
-			text += self.response.pretty_criteria.replace("|", "\n")
-			text += "*"
+			embed.add_field(name="Criteria", value=self.response.pretty_criteria.replace('|', '\n'))
+		if self.response.voice.voice_actor:
+			embed.add_field(name="Voice Actor", value=self.response.voice.voice_actor)
+		if self.voice_thumbnail:
+			embed.set_thumbnail(url=self.voice_thumbnail)
 
-		return text
+		self.add_info_embed_parts(embed)
+		return embed
 
 gtts_langs = read_json(settings.resource("json/gtts_languages.json"))
 

@@ -372,16 +372,18 @@ class Audio(MangoCog):
 		filename += os.path.splitext(clip.audiopath)[1]
 
 		content = f"ClipID: **{clip.clipid}**"
-		clip_info = await clip.get_info()
-		if clip_info != "":
-			content += f"\n\n{clip_info}"
+		clip_info_embed = await clip.get_info_embed()
+		# if clip_info != "":
+		# 	content += f"\n\n{clip_info}"
+
+		await ctx.send(embed=clip_info_embed)
 
 		try:
-			await ctx.send(content, file=discord.File(clip.audiopath, filename=filename))
+			await ctx.send(file=discord.File(clip.audiopath, filename=filename))
 		except FileNotFoundError as e:
 			# The file is probably actually a url
 			fp = urllib.request.urlopen(clip.audiopath)
-			await ctx.send(content, file=discord.File(fp, filename=filename))
+			await ctx.send(file=discord.File(fp, filename=filename))
 			fp.close()
 
 	@commands.command()
