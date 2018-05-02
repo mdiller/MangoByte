@@ -892,6 +892,8 @@ class Dotabase(MangoCog):
 
 		words = heroes.split(" ")
 
+		hero1 = None
+		hero2 = None
 		for i in range(1, len(words)):
 			hero1 = self.lookup_hero(" ".join(words[:i]))
 			hero2 = self.lookup_hero(" ".join(words[i:]))
