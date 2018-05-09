@@ -216,6 +216,8 @@ class Dotabase(MangoCog):
 	def get_item_infos(self):
 		result = {}
 		for item in session.query(Item):
+			if item.icon is None:
+				continue
 			result[item.id] = {
 				"name": item.localized_name,
 				"icon": self.vpkurl + item.icon,
@@ -227,7 +229,7 @@ class Dotabase(MangoCog):
 		for message in session.query(ChatWheelMessage):
 			result[message.id] = {
 				"name": message.name,
-				"message": message.message,
+				"message": message.message if message.message else message.name.replace("_", " ") + " (spray)",
 				"is_sound": message.sound != None,
 				"sound": self.vpkurl + message.sound if message.sound else None
 			}
@@ -448,7 +450,10 @@ class Dotabase(MangoCog):
 	async def chatwheel(self, ctx, *, text):
 		"""Plays the given chat wheel sound
 
-		Try `{cmdpfx}chatwheel help` or `{cmdpfx}chatwheel list` and I will PM you a list of all of the chat wheel sounds
+		Try one of the following to get a list of the corresponding chatwheel messages:
+		`{cmdpfx}chatwheel casters`
+		`{cmdpfx}chatwheel sounds`
+		`{cmdpfx}chatwheel legacy`
 
 		**Examples:**
 		`{cmdpfx}chatwheel disastah`
@@ -456,14 +461,15 @@ class Dotabase(MangoCog):
 		`{cmdpfx}chatwheel 玩不了啦`
 		`{cmdpfx}chatwheel ehto gg`
 		`{cmdpfx}chatwheel Это ГГ`"""
-		if text.lower() in [ "help", "list" ]:
+		if text.lower() in [ "casters", "sounds", "legacy" ]:
+			text = text.lower()
 			sounds = []
-			for message in session.query(ChatWheelMessage):
+			for message in session.query(ChatWheelMessage).filter_by(category=f"ti8_{text}"):
 				if message.sound:
 					sounds.append(f"{self.get_emoji('chat_wheel_sound')} {message.message}")
 			embed = discord.Embed(description="\n".join(sounds))
-			embed.set_author(name="Chat Wheel Sounds")
-			await ctx.author.send(embed=embed)
+			embed.set_author(name=f"Chat Wheel Sounds ({text})")
+			await ctx.send(embed=embed)
 			return
 
 		message = self.get_chatwheel_sound(text, True)
