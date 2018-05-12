@@ -49,6 +49,7 @@ async def on_ready():
 	await bot.change_presence(status=discord.Status.online, activity=game)
 	cog = bot.get_cog("Audio")
 
+
 	for guildinfo in botdata.guildinfo_list():
 		if guildinfo.voicechannel is not None:
 			try:
@@ -64,6 +65,9 @@ async def on_ready():
 			except asyncio.TimeoutError:
 				guildinfo.voicechannel = None
 				print("timeout error when connecting to channel")
+
+	print("\nupdating guilds")
+	loggingdb.update_guilds(bot.guilds, loggingdb_session)
 	
 	print("\ninitialization finished\n")
 

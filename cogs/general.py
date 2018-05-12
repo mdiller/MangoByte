@@ -510,6 +510,12 @@ class General(MangoCog):
 	async def on_command_completion(self, ctx):
 		loggingdb.command_finished(ctx, "completed", None, loggingdb_session)
 
+	async def on_guild_join(self, guild):
+		loggingdb.update_guilds(self.bot.guilds, loggingdb_session)
+
+	async def on_guild_remove(self, guild):
+		loggingdb.update_guilds(self.bot.guilds, loggingdb_session)
+
 	@commands.command(aliases=[ "tipjar", "donation" ])
 	async def donate(self, ctx):
 		"""Posts the donation information"""

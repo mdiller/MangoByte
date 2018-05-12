@@ -126,6 +126,15 @@ class Error(Base):
 
 		return embed
 
+
+class Guild(Base):
+	__tablename__ = 'guilds'
+
+	id = Column(Integer, primary_key=True)
+	name = Column(String)
+	join_time = Column(DateTime)
+	leave_time = Column(DateTime)
+
 # inserters
 
 def insert_message(msg, cmd, session):
@@ -193,6 +202,32 @@ def insert_http_request(url, status, was_cached, cached, session):
 	session.commit()
 	return request
 
+def update_guilds(guilds, session):
+	for guild in guilds:
+		guild_log = session.query(Guild).filter_by(id=guild.id).first()
+		if guild_log is None:
+			guild_log = Guild()
+			guild_log.id = guild.id
+			guild_log.name = guild.name
+			guild_log.join_time = guild.me.joined_at
+			guild_log.leave_time = None
+			session.add(guild_log)
+		else:
+			if guild_log.leave_time is not None:
+				guild_log.leave_time = None
+			if guild_log.name == "<Unknown>":
+				guild_log.name = guild.name
+	for guild_log in session.query(Guild).filter_by(leave_time=None):
+		found = False
+		for guild in guilds:
+			if str(guild.id) == str(guild_log.id):
+				found = True
+				break
+		if not found:
+			guild_log.leave_time = datetime.datetime.utcnow()
+	session.commit()
+
+
 # returns an open dotabase session
 # if recreate is true, deletes any existing database first
 def create_session(loggingdb_path):
@@ -212,3 +247,31 @@ def update_commands_column(session, bot):
 				message.command = cmd.name
 	session.commit()
 	print("done updating logged commands!")
+
+
+def add_missing_guilds(current_guilds, session):
+	update_guilds(current_guilds, session)
+	guilds = {}
+	for message in session.query(Message).order_by(Message.timestamp):
+		if message.server_id not in guilds:
+			guilds[message.server_id] = {
+				"first": message.timestamp,
+				"last": message.timestamp
+			}
+		else:
+			guilds[message.server_id]["last"] = message.timestamp
+
+	for guild_id in guilds:
+		found = False
+		for guild in session.query(Guild):
+			if str(guild.id) == str(guild_id):
+				found = True
+				break
+		if not found:
+			guild_log = Guild()
+			guild_log.id = guild_id
+			guild_log.name = "<Unknown>"
+			guild_log.join_time = guilds[guild_id]["first"]
+			guild_log.leave_time = guilds[guild_id]["last"]
+			session.add(guild_log)
+	session.commit()
