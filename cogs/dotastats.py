@@ -462,8 +462,8 @@ class DotaStats(MangoCog):
 
 		duration = get_pretty_duration(match['duration'], postfix=False)
 		winstatus = "Won" if player["win"] != 0 else "Lost"
-		game_mode = self.dota_game_strings[f"game_mode_{match['game_mode']}"]
-		lobby_type = self.dota_game_strings[f"lobby_type_{match['lobby_type']}"] + " "
+		game_mode = self.dota_game_strings.get(f"game_mode_{match.get('game_mode')}", "Unknown")
+		lobby_type = self.dota_game_strings.get(f"lobby_type_{match.get('lobby_type')}", "Unknown") + " "
 		if lobby_type == "Normal ":
 			lobby_type = ""
 
@@ -510,8 +510,8 @@ class DotaStats(MangoCog):
 
 		match = await get_match(match_id)
 		duration = get_pretty_duration(match['duration'], postfix=False)
-		game_mode = self.dota_game_strings[f"game_mode_{match['game_mode']}"]
-		lobby_type = self.dota_game_strings[f"lobby_type_{match['lobby_type']}"] + " "
+		game_mode = self.dota_game_strings.get(f"game_mode_{match.get('game_mode')}", "Unknown")
+		lobby_type = self.dota_game_strings.get(f"lobby_type_{match.get('lobby_type')}", "Unknown") + " "
 		if lobby_type == "Normal ":
 			lobby_type = ""
 
@@ -524,8 +524,8 @@ class DotaStats(MangoCog):
 							timestamp=datetime.datetime.utcfromtimestamp(match['start_time']), color=self.embed_color)
 		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
 
-		embed.add_field(name="Game Mode", value=self.dota_game_strings[f"game_mode_{match['game_mode']}"])
-		embed.add_field(name="Lobby Type", value=self.dota_game_strings[f"lobby_type_{match['lobby_type']}"])
+		embed.add_field(name="Game Mode", value=game_mode)
+		embed.add_field(name="Lobby Type", value=game_mode)
 
 		match_image = discord.File(await drawdota.create_match_image(match), filename="matchimage.png")
 

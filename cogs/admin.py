@@ -2,6 +2,7 @@ import discord
 import youtube_dl
 import asyncio
 import shutil
+from sqlalchemy import desc
 from discord.ext import commands
 from __main__ import settings, botdata, httpgetter, loggingdb_session
 from cogs.utils.helpers import *
@@ -394,7 +395,7 @@ class Admin(MangoCog):
 	async def errors(self, ctx, count : int=5, page : int=0, excludestring=None):
 		"""Gets a list of the most recent errors from loggingdb"""
 
-		for error in loggingdb_session.query(loggingdb.Error).order_by(loggingdb.Error.timestamp).offset(page * count):
+		for error in loggingdb_session.query(loggingdb.Error).order_by(desc(loggingdb.Error.timestamp)).offset(page * count):
 			if count <= 0:
 				return
 			error_chunks = error.error_text_chunks()
