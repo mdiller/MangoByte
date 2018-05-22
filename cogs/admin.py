@@ -11,6 +11,20 @@ from cogs.utils.clip import GttsLang
 from cogs.utils import checks
 from cogs.utils import loggingdb
 from .mangocog import *
+from concurrent.futures import ThreadPoolExecutor
+
+def youtube_download_func(youtube_id, video_file):
+	ytdl_options = {
+		'format': 'bestaudio/best',
+		'extractaudio' : True,
+		'audioformat' : "mp3",
+		'outtmpl': video_file,
+		'source_address': '0.0.0.0',
+		'noplaylist' : True,
+		'nooverwrites': True,
+	}
+	with youtube_dl.YoutubeDL(ytdl_options) as ytdl:
+		ytdl.download([youtube_id])
 
 class Admin(MangoCog):
 	"""Administrative commands
@@ -31,6 +45,9 @@ class Admin(MangoCog):
 	def __local_check(self, ctx):
 		"""Checks to make sure the user has admin privilages"""
 		return checks.is_admin_check(ctx.message.channel, ctx)
+
+	async def youtube_download(self, youtube_id, video_file):
+		return await self.bot.loop.run_in_executor(ThreadPoolExecutor(max_workers=1), youtube_download_func, youtube_id, video_file)
 
 	@commands.command()
 	async def botban(self, ctx, user: discord.Member):
@@ -258,18 +275,8 @@ class Admin(MangoCog):
 
 		video_file = settings.resource(f"cache/youtube/{youtube_id}.mp3")
 
-		options = {
-			'format': 'bestaudio/best',
-			'extractaudio' : True,
-			'audioformat' : "mp3",
-			'outtmpl': video_file,
-			'source_address': '0.0.0.0',
-			'noplaylist' : True,
-			'nooverwrites': True,
-		}
 		if not os.path.exists(video_file):
-			with youtube_dl.YoutubeDL(options) as ydl:
-				ydl.download([youtube_id])
+			await self.youtube_download(youtube_id, video_file)
 
 		fadefilter = f"afade=t=in:ss=0:d={start_fade},afade=t=out:st={duration - end_fade}:d={end_fade}"
 
