@@ -214,7 +214,7 @@ class Audio(MangoCog):
 				await audioplayer.voice.disconnect()
 			self.audioplayers.remove(audioplayer)
 		elif guild.me and guild.me.voice:
-			voice = next((voice for voice in self.bot.voice_clients if voice.guild == self.guild), None)
+			voice = next((voice for voice in self.bot.voice_clients if voice.guild == guild), None)
 			if voice:
 				await voice.disconnect()
 
