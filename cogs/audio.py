@@ -284,11 +284,15 @@ class Audio(MangoCog):
 							clips.append(t)
 		else:
 			for clipname in self.local_clipinfo:
-				tags = self.local_clipinfo[clipname].get("tags")
+				info = self.local_clipinfo[clipname]
+				tags = info.get("tags")
 				if tags:
 					tags = tags.split("|")
 					if tag in tags:
 						clips.append(clipname)
+						continue
+				if len(tag) > 3 and tag.lower() in info.get("author", "").lower():
+					clips.append(clipname)
 			if not clips:
 				raise UserError("No clips not found for that tag")
 

@@ -114,8 +114,10 @@ class LocalClip(Clip):
 				result += f"By {self.author}"
 		embed = discord.Embed()
 		embed.description = result
-		embed.add_field(name="Source", value=self.source)
-		embed.add_field(name="Tags", value=", ".join(self.tags))
+		if self.source:
+			embed.add_field(name="Source", value=self.source)
+		if self.tags:
+			embed.add_field(name="Tags", value=", ".join(self.tags))
 		self.add_info_embed_parts(embed)
 		return embed
 
