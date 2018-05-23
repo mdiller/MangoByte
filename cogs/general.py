@@ -59,6 +59,7 @@ class General(MangoCog):
 		self.questions = read_json(settings.resource("json/questions.json"))
 		self.subscripts = read_json(settings.resource("json/subscripts.json"))
 		self.superscripts = read_json(settings.resource("json/superscripts.json"))
+		self.showerthoughts_data = read_json(settings.resource("json/showerthoughts.json"))
 		self.words = load_words()
 
 	@commands.command()
@@ -426,6 +427,26 @@ class General(MangoCog):
 
 		await ctx.send(embed=embed)
 
+	@commands.command(aliases=["quote", "showerthoughts", "thought" ])
+	async def showerthought(self, ctx):
+		"""Gets a top post from r/ShowerThoughts
+		
+		Gets a random post from the [r/ShowerThoughts](https://www.reddit.com/r/Showerthoughts/top/?sort=top&t=all) subreddit. Looks through the list of the all time top posts for the subreddit
+		"""
+		await ctx.channel.trigger_typing()
+
+		thought = random.choice(self.showerthoughts_data)
+
+		author = thought["author"]
+		author = f"u/{author}" if author else "[deleted]"
+
+		embed = discord.Embed()
+
+		embed.description = thought["title"]
+		embed.timestamp = datetime.datetime.utcfromtimestamp(thought["timestamp"])
+		embed.set_footer(text=author)
+
+		await ctx.send(embed=embed)
 
 	@commands.command(hidden=True, aliases=["restapi"])
 	async def restget(self, ctx, url):
