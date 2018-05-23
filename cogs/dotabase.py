@@ -635,12 +635,15 @@ class Dotabase(MangoCog):
 
 		description += ability.description
 
+		found_damage = False
 		ability_special = json.loads(ability.ability_special, object_pairs_hook=OrderedDict)
 		formatted_attributes = []
 		for attribute in ability_special:
 			header = attribute.get("header")
 			if not header:
 				continue
+			if attribute.get("key") == "damage":
+				found_damage = True
 			header = format_pascal_case(header)
 			value = attribute["value"]
 			footer = attribute.get("footer")
@@ -650,6 +653,9 @@ class Dotabase(MangoCog):
 			if "talent_value" in attribute:
 				text += f" ({self.get_emoji('talent_tree')} {format_values(attribute['talent_value'])})"
 			formatted_attributes.append(text)
+
+		if (not found_damage) and ability.damage:
+			formatted_attributes.append(f"**Damage:** {format_values(ability.damage)}")
 
 		if formatted_attributes:
 			description += "\n\n" + "\n".join(formatted_attributes)
@@ -936,6 +942,11 @@ class Dotabase(MangoCog):
 		embed = discord.Embed()
 
 		embed.title = hero_name
+
+		emoji1 = self.get_emoji(f"dota_hero_{hero1.name}")
+		emoji2 = self.get_emoji(f"dota_hero_{hero2.name}")
+
+		embed.description = f"{emoji1} + {emoji2}"
 
 		image = discord.File(await drawdota.fuse_hero_images(hero1, hero2), "hero.png")
 		embed.set_thumbnail(url=f"attachment://{image.filename}")
