@@ -245,7 +245,7 @@ class Admin(MangoCog):
 			for emoji in ctx.guild.emojis:
 				imgpath = settings.resource(f"images/emojis/{emoji.name}.png")
 				with open(imgpath, 'wb+') as f:
-					f.write((await httpgetter.get(emoji.url, ctx, return_type="bytes")).read())
+					f.write((await httpgetter.get(emoji.url, return_type="bytes")).read())
 				emoji_json[emoji.name] = str(emoji)
 		write_json(settings.resource("json/emoji.json"), emoji_json)
 		await ctx.send("done!")
