@@ -209,7 +209,8 @@ class Dotabase(MangoCog):
 				"icon": self.vpkurl + hero.icon,
 				"attr": hero.attr_primary,
 				"portrait": self.vpkurl + hero.portrait,
-				"image": self.vpkurl + hero.image
+				"image": self.vpkurl + hero.image,
+				"emoji": self.get_emoji(f"dota_hero_{hero.name}")
 			}
 		return result
 

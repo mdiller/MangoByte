@@ -245,7 +245,9 @@ class DotaStats(MangoCog):
 
 	def get_pretty_hero(self, player):
 		dotabase = self.bot.get_cog("Dotabase")
-		return "**{}**".format(self.hero_info[player['hero_id']]['name'])
+		name = self.hero_info[player["hero_id"]]["name"]
+		emoji = self.hero_info[player["hero_id"]]["emoji"]
+		return f"{emoji}**{name}**"
 
 	async def create_dota_gif(self, match, stratz_match, start_time, end_time, ms_per_second=100):
 		await self.dota_gif_lock.acquire()
@@ -309,7 +311,7 @@ class DotaStats(MangoCog):
 			get_pretty_duration(fb_objective['time']))
 
 
-	async def get_timeline_story(self, game, is_radiant):
+	async def get_teamfight_stories(self, game, is_radiant):
 		teamfights = await self.get_teamfights(game, is_radiant)
 		teamfights_count = len(teamfights)
 		story = ""
@@ -329,11 +331,8 @@ class DotaStats(MangoCog):
 			timeline.extend(teamfights)
 			teamfights = []
 
-		timeline = sorted(timeline, key=lambda t: t['time']) 
-		for line in timeline:
-			story += "\n" + line['formatted'] + "\n"
-
-		return story
+		timeline = sorted(timeline, key=lambda t: t['time'])
+		return list(map(lambda t: t["formatted"], timeline))
 
 	async def get_lane_story(self, players, laneid, is_radiant):
 		our_eff = 0
@@ -384,15 +383,19 @@ class DotaStats(MangoCog):
 
 		story += await self.get_lane_stories(game, is_radiant)
 
-		teamfights = await self.get_timeline_story(game, is_radiant)
-		if teamfights != "":
-			story += teamfights
+		teamfights = await self.get_teamfight_stories(game, is_radiant)
 
 		game_ending_state = "won" if (is_radiant == game['radiant_win']) else "lost"
-		story += f"\n{end_perspective} {game_ending_state} the game at { get_pretty_duration(game['duration']) }"
+		story_end = f"\n{end_perspective} {game_ending_state} the game at { get_pretty_duration(game['duration']) }"
+
+		i = 0
+		while i < len(teamfights) and (len(story) + len(teamfights[i]) + len(story_end)) < 2000:
+			story += f"\n{teamfights[i]}"
+			i += 1
 
 		embed = discord.Embed(description=story, color=self.embed_color)
-		embed.set_author(name="Story of Match {}".format(game["match_id"]), url="https://www.opendota.com/matches/{}".format(game["match_id"]))
+		embed.title = f"Story of Match {game['match_id']}"
+		embed.url = f"https://www.opendota.com/matches/{game['match_id']}/story"
 		embed.set_footer(text=f"For more information, try {self.cmdpfx(ctx)}match {game['match_id']}")
 		await ctx.send(embed=embed)
 
@@ -700,9 +703,7 @@ class DotaStats(MangoCog):
 		favs = ""
 		for i in range(0,3):
 			if i < len(heroes):
-				if i:
-					favs += ", "
-				favs += self.hero_info[heroes[i][0]]['name']
+				favs += self.hero_info[heroes[i][0]]['emoji']
 
 		# Recent means 2 months / 60 days 
 		timecutoff = time.time() - (86400 * 60)
@@ -715,9 +716,7 @@ class DotaStats(MangoCog):
 		recent_favs = ""
 		for i in range(0,3):
 			if i < len(heroes):
-				if i:
-					recent_favs += ", "
-				recent_favs += self.hero_info[heroes[i][0]]['name']
+				recent_favs += self.hero_info[heroes[i][0]]['emoji']
 
 		recent_count = 0
 		activity_delta = []
@@ -771,7 +770,7 @@ class DotaStats(MangoCog):
 		embed.add_field(name="Activity", value=(
 			"*Average time between groups of games*\n"
 			f"**Recent**: {recent_activity_delta}\n"
-			f"**Overall**: {overall_activity_delta}\n"))
+			f"**Overall**: {overall_activity_delta}\n"), inline=False)
 
 		if player is None:
 			player_mention = ""
