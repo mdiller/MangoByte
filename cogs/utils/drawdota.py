@@ -405,14 +405,12 @@ async def dota_rank_icon(rank_tier, leaderboard_rank):
 	stars_num = min(rank_tier % 10, 5)
 	modifier = ""
 
-	if badge_num == 7 and leaderboard_rank:
+	if badge_num == 8 and leaderboard_rank:
 		stars_num = 0
-		if leaderboard_rank == 1:
+		if leaderboard_rank <= 10:
 			modifier = "c"
 		elif leaderboard_rank <= 100:
 			modifier = "b"
-		else:
-			modifier = "a"
 
 	image = Image.open(settings.resource(f"images/ranks/rank_{badge_num}{modifier}.png"))
 
@@ -428,7 +426,7 @@ async def dota_rank_icon(rank_tier, leaderboard_rank):
 		box_height = 50
 
 		cell = TextCell(leaderboard_rank, color="#feffe5", font_size=50, horizontal_align="center")
-		cell.render(draw, image, 0, 256 - box_height, box_width, box_height)
+		cell.render(draw, image, 0, 232 - box_height, box_width, box_height)
 
 
 	image.save(filename, "png")

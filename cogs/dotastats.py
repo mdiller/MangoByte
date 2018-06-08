@@ -675,7 +675,7 @@ class DotaStats(MangoCog):
 		playerinfo = await opendota_query(f"/players/{steam32}")
 		matches = await opendota_query(f"/players/{steam32}/matches")
 
-		rank_strings = [ "Unranked", "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine" ]
+		rank_strings = [ "Unranked", "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine", "Immortal" ]
 
 		base_rank_tier = playerinfo.get("rank_tier")
 		if base_rank_tier is None:
