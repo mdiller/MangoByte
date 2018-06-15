@@ -68,12 +68,12 @@ async def get_item_images(player):
 
 
 def get_lane(player):
-	lane_dict = { 1: "Bot", 3: "Top" }
-	lane_role_dict = { 1: "Safe", 2: "Mid", 3: "Off", 4: "Jungle" }
+	lane_dict = { 1: "Bot", 3: "Top", None: "" }
+	lane_role_dict = { 1: "Safe", 2: "Mid", 3: "Off", 4: "Jungle", None: "" }
 	if 'is_roaming' in player and player['is_roaming']:
 		return "Roaming"
 	elif player.get('lane') in lane_dict:
-		return f"{lane_role_dict[player['lane_role']]}({lane_dict[player['lane']]})"
+		return f"{lane_role_dict[player.get('lane_role')]}({lane_dict[player.get('lane')]})"
 	else:
 		return lane_role_dict[player.get('lane_role')]
 

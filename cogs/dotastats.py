@@ -456,9 +456,10 @@ class DotaStats(MangoCog):
 		match = await get_match(match_id)
 
 		# Finds the player in the game which has our matching steam32 id
-		player = next(p for p in match['players'] if p['account_id'] == steamid)
+		player = next((p for p in match['players'] if p['account_id'] == steamid), None)
 		if player is None:
-			raise ValueError("wtf they're not in their own game")
+			await self.print_match_stats(ctx, match_id)
+			return
 
 		dotabase = self.bot.get_cog("Dotabase")
 		hero_name = self.hero_info[player['hero_id']]['name']
@@ -506,11 +507,7 @@ class DotaStats(MangoCog):
 		match_id = await get_lastmatch_id(steamid)
 		await self.player_match_stats(steamid, match_id, ctx)
 
-	@commands.command(aliases=["matchdetails"])
-	async def match(self, ctx, match_id : int):
-		"""Gets a summary of the dota match with the given id"""
-		await ctx.channel.trigger_typing()
-
+	async def print_match_stats(self, ctx, match_id):
 		match = await get_match(match_id)
 		duration = get_pretty_duration(match['duration'], postfix=False)
 		game_mode = self.dota_game_strings.get(f"game_mode_{match.get('game_mode')}", "Unknown")
@@ -535,6 +532,14 @@ class DotaStats(MangoCog):
 		embed.set_image(url=f"attachment://{match_image.filename}")
 		embed.set_footer(text=str(match_id))
 		await ctx.send(embed=embed, file=match_image)
+
+
+	@commands.command(aliases=["matchdetails"])
+	async def match(self, ctx, match_id : int):
+		"""Gets a summary of the dota match with the given id"""
+		await ctx.channel.trigger_typing()
+		await self.print_match_stats(ctx, match_id)
+
 
 	@commands.command()
 	async def matchstory(self, ctx, match_id : int, perspective=None):
@@ -581,7 +586,7 @@ class DotaStats(MangoCog):
 		if player is None:
 			player = ctx.message.author.mention
 
-		player_data = next(p for p in game['players'] if p['account_id'] == steamid)
+		player_data = next((p for p in game['players'] if p['account_id'] == steamid), None)
 		perspective += "({0}, {1})".format(self.get_pretty_hero(player_data), "Radiant" if player_data['isRadiant'] else "Dire")
 
 		await self.tell_match_story(game, player_data['isRadiant'], ctx, perspective)
@@ -807,7 +812,7 @@ class DotaStats(MangoCog):
 			while i < len(matches_info) and len(player_matches) < 20:
 				if matches_info[i].get('version', None) is not None:
 					match = await get_match(matches_info[i]['match_id'])
-					player_matches.append(next(p for p in match['players'] if p['account_id'] == steam32))
+					player_matches.append(next((p for p in match['players'] if p['account_id'] == steam32), None))
 					matches.append(match)
 					
 					player_matches[-1]['party_size'] = 0
@@ -858,7 +863,7 @@ class DotaStats(MangoCog):
 		longest_message = None
 		longest_message_match_id = None
 		for match in matches:
-			player = next(p for p in match['players'] if p['account_id'] == steam32)
+			player = next((p for p in match['players'] if p['account_id'] == steam32), None)
 			for message in match['chat']:
 				if message.get('player_slot', -1) == player['player_slot']:
 					if message["type"] == "chat":
@@ -1127,12 +1132,12 @@ class DotaStats(MangoCog):
 
 		def on_same_team(match):
 			heroes = match["heroes"]
-			player1 = heroes[next(x for x in heroes if heroes[x].get("account_id") == author_id)]
-			player2 = heroes[next(x for x in heroes if heroes[x].get("account_id") == friend_id)]
+			player1 = heroes[next((x for x in heroes if heroes[x].get("account_id") == author_id), None)]
+			player2 = heroes[next((x for x in heroes if heroes[x].get("account_id") == friend_id), None)]
 			return (player1["player_slot"] < 128) == (player2["player_slot"] < 128)
 		def won_match(match):
 			heroes = match["heroes"]
-			player = heroes[next(x for x in heroes if heroes[x].get("account_id") == author_id)]
+			player = heroes[next((x for x in heroes if heroes[x].get("account_id") == author_id), None)]
 			return (player["player_slot"] < 128) == match["radiant_win"]
 
 		url = f"/players/{author_id}/matches?included_account_id={friend_id}"
@@ -1145,8 +1150,8 @@ class DotaStats(MangoCog):
 
 		def format_match(match):
 			heroes = match["heroes"]
-			author = heroes[next(x for x in heroes if heroes[x].get("account_id") == author_id)]
-			friend = heroes[next(x for x in heroes if heroes[x].get("account_id") == friend_id)]
+			author = heroes[next((x for x in heroes if heroes[x].get("account_id") == author_id), None)]
+			friend = heroes[next((x for x in heroes if heroes[x].get("account_id") == friend_id), None)]
 			timediff = time.time() - match['start_time']
 			timediff -= timediff % 60
 			if timediff > (60 * 60 * 24 * 30):
