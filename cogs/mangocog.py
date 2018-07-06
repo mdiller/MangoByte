@@ -10,7 +10,13 @@ class MangoCog:
 		self.emoji_dict = read_json(settings.resource("json/emoji.json"))
 
 	def get_emoji(self, key):
-		return self.emoji_dict.get(key, f":{key}:")
+		emoji_id = self.emoji_dict.get(key)
+		if emoji_id is None:
+			return f":{key}:"
+		emoji = self.bot.get_emoji(emoji_id)
+		if emoji is None:
+			return f"<:{key}:{emoji_id}>"
+		return str(emoji)
 
 	async def get_clip_try_types(self, clipid, trytypes, ctx):
 		trytypes = trytypes.split("|")

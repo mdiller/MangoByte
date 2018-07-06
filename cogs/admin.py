@@ -246,7 +246,7 @@ class Admin(MangoCog):
 				imgpath = settings.resource(f"images/emojis/{emoji.name}.png")
 				with open(imgpath, 'wb+') as f:
 					f.write((await httpgetter.get(emoji.url, return_type="bytes")).read())
-				emoji_json[emoji.name] = str(emoji)
+				emoji_json[emoji.name] = emoji.id
 		write_json(settings.resource("json/emoji.json"), emoji_json)
 		await ctx.send("done!")
 
