@@ -212,6 +212,15 @@ class Dotabase(MangoCog):
 				"image": self.vpkurl + hero.image,
 				"emoji": self.get_emoji(f"dota_hero_{hero.name}")
 			}
+		result[0] = {
+			"name": "Unknown",
+			"full_name": "unknown_hero",
+			"icon": self.vpkurl + "/resource/flash3/images/miniheroes/bm_fire.png",
+			"attr": "strength",
+			"portrait": self.vpkurl + "/resource/flash3/images/heroes/selection/npc_dota_ancient_granite_golum.png",
+			"image": self.vpkurl + "/resource/flash3/images/heroes/default.png",
+			"emoji": "unknown_hero"
+		}
 		return result
 
 	def get_item_infos(self):
