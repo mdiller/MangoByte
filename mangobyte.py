@@ -49,6 +49,11 @@ async def on_ready():
 	await bot.change_presence(status=discord.Status.online, activity=game)
 	cog = bot.get_cog("Audio")
 
+	# stuff to help track/log the connection of voice channels
+	start_time = datetime.datetime.now()
+	connected_count = 0
+	not_found_count = 0
+	timeout_count = 0
 
 	for guildinfo in botdata.guildinfo_list():
 		if guildinfo.voicechannel is not None:
@@ -56,20 +61,35 @@ async def on_ready():
 				print(f"connecting voice to: {guildinfo.voicechannel}")
 				await cog.connect_voice(guildinfo.voicechannel)
 				print(f"connected: {guildinfo.voicechannel}")
+				connected_count += 1
 			except UserError as e:
 				if e.message == "channel not found":
 					guildinfo.voicechannel = None
 					print("channel not found!")
+					not_found_count += 1
 				else:
 					raise
 			except asyncio.TimeoutError:
 				guildinfo.voicechannel = None
 				print("timeout error when connecting to channel")
+				timeout_count += 1
 
 	print("\nupdating guilds")
 	loggingdb.update_guilds(bot.guilds, loggingdb_session)
 	
 	print("\ninitialization finished\n")
+
+	message = "__**Initialization complete:**__"
+	if connected_count > 0:
+		message += f"\n{connected_count} voice channels connected"
+	if not_found_count > 0:
+		message += f"\n{not_found_count} voice channels not found"
+	if timeout_count > 0:
+		message += f"\n{timeout_count} voice channels timed out"
+
+	appinfo = await bot.application_info()
+	if not settings.debug:
+		await appinfo.owner.send(message)
 
 async def get_cmd_signature(ctx):
 	bot.formatter.context = ctx
