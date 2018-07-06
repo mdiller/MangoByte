@@ -889,8 +889,8 @@ class DotaStats(MangoCog):
 			chat_wheel_counts = sorted(chat_wheel_counts.items(), key=lambda m: m[1], reverse=True)
 			for i in range(0, min(3, len(chat_wheel_counts))):
 				msg_id, count = chat_wheel_counts[i]
-				message = self.chat_wheel_info[msg_id]
-				icon = self.get_emoji("chat_wheel_sound" if message['is_sound'] else "chat_wheel_text")
+				message = self.chat_wheel_info.get(msg_id, { "message": "Unknown" })
+				icon = self.get_emoji("chat_wheel_sound" if message.get('is_sound') else "chat_wheel_text")
 				lines.append(f"{icon} {message['message']}")
 			chat_wheel_text = "\n".join(lines)
 
