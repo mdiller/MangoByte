@@ -150,10 +150,10 @@ class Owner(MangoCog):
 
 			embed = discord.Embed(description=(user.mention + "\n```json\n" + json.dumps(data.json_data, indent='\t') + "\n```"))
 			embed.set_thumbnail(url=user.avatar_url)
-			if data.steam32:
+			if data.steam:
 				embed.add_field(name="Profiles", value=(
-					f"[Steam](http://steamcommunity.com/id/{data.steam32})\n"
-					f"[OpenDota](https://www.opendota.com/players/{data.steam32})\n"))
+					f"[Steam](http://steamcommunity.com/id/{data.steam})\n"
+					f"[OpenDota](https://www.opendota.com/players/{data.steam})\n"))
 			await ctx.send(embed=embed)
 		elif selector in ["server", "guild"]:
 			data = botdata.guildinfo(identifier)

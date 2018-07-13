@@ -195,7 +195,7 @@ class General(MangoCog):
 		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url)
 
 		embed.add_field(name="Servers/Guilds", value="{:,}".format(len(self.bot.guilds)))
-		embed.add_field(name="Registered Users", value="{:,}".format(len(list(filter(lambda user: user.steam32, botdata.userinfo_list())))))
+		embed.add_field(name="Registered Users", value="{:,}".format(len(list(filter(lambda user: user.steam, botdata.userinfo_list())))))
 
 		commands = loggingdb_session.query(loggingdb.Message).filter(loggingdb.Message.command != None)
 		commands_weekly = commands.filter(loggingdb.Message.timestamp > datetime.datetime.utcnow() - datetime.timedelta(weeks=1))

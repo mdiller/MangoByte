@@ -197,7 +197,7 @@ async def get_check_steamid(player, ctx, mention=False, no_error=False):
 			raise UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me a their steam id")
 
 	userinfo = botdata.userinfo(player.id)
-	if userinfo.steam32 is None:
+	if userinfo.steam is None:
 		if no_error:
 			return None
 		if is_author:
@@ -206,9 +206,9 @@ async def get_check_steamid(player, ctx, mention=False, no_error=False):
 			raise SteamNotLinkedError(player)
 
 	if mention:
-		return userinfo.steam32, player.mention
+		return userinfo.steam, player.mention
 	else:
-		return userinfo.steam32
+		return userinfo.steam
 
 
 def format_teamfight(teamfight):
@@ -1070,7 +1070,7 @@ class DotaStats(MangoCog):
 	async def friendstats(self, ctx, player):
 		"""Statistics of games played with a friend"""
 		await ctx.channel.trigger_typing()
-		author_id = botdata.userinfo(ctx.message.author.id).steam32
+		author_id = botdata.userinfo(ctx.message.author.id).steam
 		if not author_id:
 			raise SteamNotLinkedError()
 
@@ -1284,11 +1284,11 @@ class DotaStats(MangoCog):
 				continue
 			mentions.append(member.mention)
 			userinfo = botdata.userinfo(member.id)
-			if userinfo.steam32 is None:
+			if userinfo.steam is None:
 				links.append("Unknown")
 			else:
-				player_info = await opendota_query(f"/players/{userinfo.steam32}")
-				links.append(f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{userinfo.steam32})")
+				player_info = await opendota_query(f"/players/{userinfo.steam}")
+				links.append(f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{userinfo.steam})")
 
 		if len(mentions) == 0:
 			raise UserError("There isn't anyone in my voice channel 😢")
