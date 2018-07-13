@@ -215,6 +215,7 @@ if __name__ == '__main__':
 	bot.load_extension("cogs.dotastats")
 	bot.load_extension("cogs.pokemon")
 	bot.load_extension("cogs.admin")
+	bot.load_extension("cogs.owner")
 	bot.run(settings.token)
 
 

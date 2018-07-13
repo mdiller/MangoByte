@@ -88,6 +88,8 @@ class MangoHelpFormatter(HelpFormatter):
 				embed = self.embed_description(self.command.description + "\n\nTo get more information about a specific category, try `{cmdpfx}help <category>`")
 				embed.set_author(name=self.command.user.name, icon_url=self.command.user.avatar_url, url="https://github.com/mdiller/MangoByte")
 				for cog in self.command.cogs:
+					if cog == "Owner":
+						continue
 					embed.add_field(name=f"**{cog}**", value=self.cog_short_doc(self.command.cogs[cog]))
 		else:
 			# This is a cog
