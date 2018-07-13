@@ -151,6 +151,10 @@ class ShortClip(ConfigVarType):
 	async def _parse(cls, value, ctx):
 		max_intro_outro_length = 4.5
 		audio_cog = ctx.bot.get_cog("Audio")
+
+		value = str(value)
+		if value.lower() in [ "none", "silent", "silence", "off", "disable" ]:
+			return None
 		
 		clip = await audio_cog.get_clip_try_types(value, "local|dota", ctx)
 

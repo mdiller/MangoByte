@@ -91,14 +91,14 @@ class UserInfo(BotDataItem):
 			"key": "intro",
 			"default": "local:helloits",
 			"type": types.ShortClip,
-			"description": "This sets the clip that will play whenever you join a voice channel that mangobyte is in. Note that this clip cannot be longer than 4.5 seconds",
+			"description": "This sets the clip that will play whenever you join a voice channel that mangobyte is in. Note that this clip cannot be longer than 4.5 seconds\n\nTo make it so no clip plays when you join the channel, try setting this to `none`, `silent`, `off`, or `disable`",
 			"example": "local:math"
 		},
 		{
 			"key": "outro",
 			"default": "local:farewell",
 			"type": types.ShortClip,
-			"description": "This sets the clip that will play whenever you leave a voice channel that mangobyte is in. Note that this clip cannot be longer than 4.5 seconds",
+			"description": "This sets the clip that will play whenever you leave a voice channel that mangobyte is in. Note that this clip cannot be longer than 4.5 seconds\n\nTo make it so no clip plays when you join the channel, try setting this to `none`, `silent`, `off`, or `disable`",
 			"example": "dota:troll_warlord_troll_lose_03"
 		},
 		{

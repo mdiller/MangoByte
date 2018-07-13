@@ -541,7 +541,8 @@ class Audio(MangoCog):
 				print(text)
 
 				await asyncio.sleep(0.5)
-				await self.play_clip(outroclip, before.channel)
+				if not outroclip is None:				
+					await self.play_clip(outroclip, before.channel)
 				await self.play_clip("tts:" + text, before.channel)
 		if after and after.channel and botdata.guildinfo(after.channel.guild).intros:
 			afterplayer = await self.audioplayer(after.channel, error_on_none=False)
@@ -566,7 +567,8 @@ class Audio(MangoCog):
 				print(text + " joined the channel")
 
 				await asyncio.sleep(3)
-				await self.play_clip(introclip, after.channel)
+				if not introclip is None:
+					await self.play_clip(introclip, after.channel)
 				await self.play_clip("tts:" + text, after.channel)
 
 
