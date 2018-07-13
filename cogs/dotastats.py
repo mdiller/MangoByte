@@ -25,9 +25,9 @@ class SteamNotLinkedError(UserError):
 		self.is_author = user is None
 		self.user = user
 		if not self.is_author:
-			super().__init__(f"{user.name} doesn't have a steam account linked. They should try `{{cmdpfx}}help setsteam` to see how to link their steam account.")
+			super().__init__(f"{user.name} doesn't have a steam account linked. They should try `{{cmdpfx}}userconfig steam` to see how to link their steam account.")
 		else:
-			super().__init__("Yer steam account isn't linked to yer discord account yet.\nTry doin `{cmdpfx}help setsteam` to see how to link a steam account.")
+			super().__init__("Yer steam account isn't linked to yer discord account yet.\nTry doin `{cmdpfx}userconfig steam` to see how to link a steam account.")
 
 class MatchNotParsedError(UserError):
 	def __init__(self, match_id, action=None):
@@ -41,7 +41,7 @@ class InvalidMatchIdError(UserError):
 class NoMatchHistoryError(UserError):
 	def __init__(self, steam_id):
 		super().__init__(f"")
-		self.embed = discord.Embed(description=f"It looks like you either haven't played dota on this account, or the matches you've played are hidden. If you've played matches on this account, you should try enabling the **Expose Public Match Data** option in dota (see image below). Once you've done that, go to [your profile](http://www.opendota.com/players/{steam_id}) and click the button under your name that says **REFRESH**")
+		self.embed = discord.Embed(description=f"It looks like you either haven't played dota on this account, or the matches you've played are hidden. If you've played matches on this account, you should try enabling the **Expose Public Match Data** option in dota (see image below). Once you've done that, go to [your opendota profile](http://www.opendota.com/players/{steam_id}) and click the button under your name that says **REFRESH**")
 		self.file = discord.File(settings.resource("images/expose_match_data.png"), "tip.png")
 		self.embed.set_image(url=f"attachment://{self.file.filename}")
 
@@ -249,6 +249,10 @@ class DotaStats(MangoCog):
 		emoji = self.hero_info[player["hero_id"]]["emoji"]
 		return f"{emoji}**{name}**"
 
+	async def get_player(self, steamid, ctx):
+		# expects that steamid is a valid int
+		return await get_check_steamid(steamid, ctx)
+
 	async def create_dota_gif(self, match, stratz_match, start_time, end_time, ms_per_second=100):
 		await self.dota_gif_lock.acquire()
 		result = await drawdota.create_dota_gif(match, stratz_match, start_time, end_time, ms_per_second)
@@ -399,57 +403,6 @@ class DotaStats(MangoCog):
 		embed.set_footer(text=f"For more information, try {self.cmdpfx(ctx)}match {game['match_id']}")
 		await ctx.send(embed=embed)
 
-	@commands.command(aliases=["register"])
-	async def setsteam(self, ctx, steam_id, user: discord.User=None):
-		"""Links a discord user to their steam/dota account
-		*The user parameter can only be specified by the bot owner*
-		
-		You have to give this command either your steam32 or steam64 id. An easy way to find this is to open dota and find your 'Friend ID', or look at the end of your dotabuff/opendota profile url.
-
-		If you open up dota and go to your profile, your 'Friend ID' will be just under your name, and will look like this:
-		<:steam:414724031380586496> **FRIEND ID:** `<number>`
-
-		To un-register, try `{cmdpfx}setsteam none` or `{cmdpfx}setsteam reset`
-
-		**Example:**
-		If this is me:
-		https://www.dotabuff.com/players/70388657
-		or this is on my dota profile:
-		<:steam:414724031380586496> **FRIEND ID: 70388657**
-
-		I would do: `{cmdpfx}setsteam 70388657`
-		"""
-
-		if user is None:
-			user = ctx.message.author
-		elif user.id != ctx.message.author.id:
-			if not checks.is_owner_check(ctx.message.author):
-				await ctx.send("You aint the boss of me 😠")
-				return
-
-		if steam_id.lower() in [ "none", "reset", "default" ]:
-			userinfo = botdata.userinfo(user.id)
-			userinfo.steam32 = None
-			await ctx.send("Steam ID has been unregistered")
-			return
-
-		steam_id = str(steam_id)
-		if not steam_id.isdigit():
-			raise UserError("You gotta give me a steam id here")
-		steam_id = int(steam_id)
-
-		if steam_id > 76561197960265728:
-			steam_id -= 76561197960265728
-
-		player = await opendota_query(f"/players/{steam_id}")
-
-		if player.get("profile") is None:
-			raise UserError("Either thats a bad id, you don't play dota, or ya haven't enabled public match data")
-
-		userinfo = botdata.userinfo(user.id)
-		userinfo.steam32 = steam_id
-
-		await ctx.send("Linked to {}".format(player['profile']['personaname']))
 
 	# prints the stats for the given player's latest game
 	async def player_match_stats(self, steamid, match_id, ctx):

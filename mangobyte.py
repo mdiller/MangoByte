@@ -1,26 +1,30 @@
-import discord
+
+# The following have to be imported and initialized in the correct order
 from cogs.utils.settings import Settings
+settings = Settings()
+
 from cogs.utils.botdata import BotData
-from cogs.utils.helpers import *
+botdata = BotData()
+
 import cogs.utils.loggingdb as loggingdb
+loggingdb_session = loggingdb.create_session(settings.resource("loggingdb.db"))
+
+from cogs.utils.httpgetter import HttpGetter
+httpgetter = HttpGetter()
+
+from cogs.utils.helpers import *
+import discord
 import traceback
 import asyncio
 import string
 from discord.ext import commands
 import logging
 import datetime
+from cogs.utils.helpformatter import MangoHelpFormatter
+from cogs.utils.clip import *
 
 logging.basicConfig(level=logging.INFO)
 
-botdata = BotData()
-settings = Settings()
-loggingdb_session = loggingdb.create_session(settings.resource("loggingdb.db"))
-
-# This have to be done after loading settings
-from cogs.utils.helpformatter import MangoHelpFormatter
-from cogs.utils.httpgetter import HttpGetter
-httpgetter = HttpGetter()
-from cogs.utils.clip import *
 
 description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 				For more information about me, try `{cmdpfx}info`"""
@@ -34,7 +38,14 @@ invite_link = f"https://discordapp.com/oauth2/authorize?permissions={permissions
 deprecated_commands = {
 	"ttschannel": "config ttschannel",
 	"unttschannel": "config ttschannel none",
-	"opendotasql": "https://www.opendota.com/explorer"
+	"opendotasql": "https://www.opendota.com/explorer",
+	"setintrotts": "userconfig introtts",
+	"setwelcome": "userconfig introtts",
+	"setoutrotts": "userconfig outrotts",
+	"setintro": "userconfig intro",
+	"setoutro": "userconfig outro",
+	"setsteam": "userconfig steam",
+	"register": "userconfig steam"
 }
 
 @bot.event

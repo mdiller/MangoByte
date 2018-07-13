@@ -1,14 +1,14 @@
 from __main__ import botdata
 import discord, itertools, inspect, re
 from discord.ext.commands import *
-from .botdata import GuildInfo
+from .botdata import GuildInfo, UserInfo
 
-def get_config_help():
+def get_config_help(variables, command):
 	keys = []
 	examples = []
-	for var in GuildInfo.variables:
+	for var in variables:
 		keys.append(f"`{var['key']}`")
-		examples.append(f"`{'{cmdpfx}'}config {var['key']} {var['example']}`")
+		examples.append(f"`{'{cmdpfx}'}{command} {var['key']} {var['example']}`")
 	keys = "\n".join(keys)
 	examples = "\n".join(examples)
 	return (
@@ -52,7 +52,8 @@ class MangoHelpFormatter(HelpFormatter):
 			return "`<empty>`"
 
 	def fill_template(self, text):
-		text = re.sub("\{config_help\}", get_config_help(), text)
+		text = re.sub("\{config_help\}", get_config_help(GuildInfo.variables, "config"), text)
+		text = re.sub("\{userconfig_help\}", get_config_help(UserInfo.variables, "userconfig"), text)
 		text = re.sub("\{cmdpfx\}", botdata.command_prefix(self.context), text)
 		return text
 

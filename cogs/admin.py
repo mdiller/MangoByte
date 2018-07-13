@@ -10,6 +10,7 @@ from cogs.utils.botdata import GuildInfo
 from cogs.utils.clip import GttsLang
 from cogs.utils import checks
 from cogs.utils import loggingdb
+from cogs.utils import botdatatypes
 from .mangocog import *
 from concurrent.futures import ThreadPoolExecutor
 
@@ -150,71 +151,9 @@ class Admin(MangoCog):
 			raise UserError(f"There was a timeout when attempting to do the `{cmdpfx}summon`")
 
 		await ctx.message.add_reaction("✅")
-	
-
-	config_aliases = {
-		True: [ "enable", "enabled", "true", "yes" ],
-		False: [ "disable", "disabled", "false", "no" ],
-		"default": [ "reset", "clear", "none", "null" ]
-	}
-
-	async def config_get(self, var, value, cmdpfx):
-		embed = discord.Embed(description=var["description"])
-		embed.set_author(name=var["key"])
-		if var["type"] == bool:
-			embed.add_field(name="Value", value="enabled" if value else "disabled")
-		elif var["type"] == discord.TextChannel:
-			embed.add_field(name="Value", value=f"<#{value}>" if value else "None")
-		elif var["type"] == discord.Role:
-			embed.add_field(name="Value", value=f"<@&{value}>" if value else "None")
-		elif var["type"] == "GttsLang":
-			embed.add_field(name="Value", value=GttsLang(value).pretty)
-		elif var["type"] == "CommandPrefix":
-			embed.add_field(name="Value", value=value)
-		else:
-			raise ValueError("I don't know how to parse this type")
-		embed.add_field(name="Example", value=f"`{cmdpfx}config {var['key']} {var['example']}`")
-		return embed
-
-	async def config_set_parse(self, ctx, var, value):
-		if value in [ "default", "reset", "clear", "none", "null" ]:
-			return var["default"]
-
-		if var["type"] == bool:
-			if value.lower() in [ "enable", "enabled", "true", "yes" ]:
-				return True
-			elif value.lower() in [ "disable", "disabled", "false", "no" ]:
-				return False
-			else:
-				raise UserError("Invalid input. Give me something like `enable` or `disable`")
-		elif var["type"] == discord.TextChannel:
-			try:
-				channel = await commands.TextChannelConverter().convert(ctx, value)
-				return channel.id
-			except commands.BadArgument:
-				raise UserError("Invalid input. Give me a channel reference like `#general`")
-		elif var["type"] == discord.Role:
-			try:
-				channel = await commands.RoleConverter().convert(ctx, value)
-				return channel.id
-			except commands.BadArgument:
-				raise UserError("Invalid input. Give me a role reference like `@BotAdmin`")
-		elif var["type"] == "GttsLang":
-			lang = GttsLang.get(value)
-			if lang is None:
-				raise UserError("Invalid input. See https://github.com/mdiller/MangoByte/blob/master/resource/json/gtts_languages.json for valid langs")
-			else:
-				return lang.lang
-		elif var["type"] == "CommandPrefix":
-			if len(value) > 5 or len(value) < 1:
-				raise UserError("Invalid input. A command prefix must be between 1 and 5 characters long")
-			else:
-				return value
-		else:
-			raise ValueError("I don't know how to parse this type")
 
 	@commands.command()
-	async def config(self, ctx, name, value = None):
+	async def config(self, ctx, name, *, value = None):
 		"""Configures the bot's settings for this server
 
 		Below are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `{cmdpfx}config <settingname>`, and you can configure a setting by typing `{cmdpfx}config <settingname> <value>`
@@ -230,9 +169,9 @@ class Admin(MangoCog):
 		
 		if not value: # We are just getting a value
 			value = botdata.guildinfo(ctx.guild)[var["key"]]
-			await ctx.send(embed=await self.config_get(var, value, self.cmdpfx(ctx)))
+			await ctx.send(embed=await botdatatypes.localize_embed(ctx, var, value, f"{self.cmdpfx(ctx)}config"))
 		else: # We are setting a value
-			value = await self.config_set_parse(ctx, var, value)
+			value = await botdatatypes.parse(ctx, var, value)
 			botdata.guildinfo(ctx.guild)[var["key"]] = value
 			await ctx.message.add_reaction("✅")
 

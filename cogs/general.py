@@ -3,7 +3,8 @@ from discord.ext import commands
 from discord.ext.commands.bot import _mention_pattern, _mentions_transforms
 from __main__ import settings, botdata, invite_link, httpgetter
 from cogs.utils.helpers import *
-from cogs.utils import checks
+from cogs.utils.botdata import UserInfo
+from cogs.utils import checks, botdatatypes
 from cogs.audio import AudioPlayerNotFoundError
 from sqlalchemy import func
 from cairosvg import svg2png
@@ -61,6 +62,29 @@ class General(MangoCog):
 		self.superscripts = read_json(settings.resource("json/superscripts.json"))
 		self.showerthoughts_data = read_json(settings.resource("json/showerthoughts.json"))
 		self.words = load_words()
+
+	@commands.command()
+	async def userconfig(self, ctx, name, *, value = None):
+		"""Configures the bot's user-specific settings
+
+		Below are the different user-specific settings that you can tweak to customize mangobyte. You can get more information about a setting by typing `{cmdpfx}userconfig <settingname>`, and you can configure a setting by typing `{cmdpfx}userconfig <settingname> <value>`
+
+		{userconfig_help}
+		"""
+		var = next((v for v in UserInfo.variables if v["key"] == name), None)
+		if not var:
+			vars_list = "\n".join(map(lambda v: f"`{v['key']}`", UserInfo.variables))
+			await ctx.send(f"There is no userconfig setting called '{name}'. Try one of these:\n{vars_list}")
+			return
+
+		
+		if not value: # We are just getting a value
+			value = botdata.userinfo(ctx.message.author)[var["key"]]
+			await ctx.send(embed=await botdatatypes.localize_embed(ctx, var, value, f"{self.cmdpfx(ctx)}userconfig"))
+		else: # We are setting a value
+			value = await botdatatypes.parse(ctx, var, value)
+			botdata.userinfo(ctx.message.author)[var["key"]] = value
+			await ctx.message.add_reaction("✅")
 
 	@commands.command()
 	async def ping(self, ctx, count : int=1):
