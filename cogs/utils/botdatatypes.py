@@ -172,11 +172,10 @@ class SteamId(ConfigVarType):
 
 		dotastats_cog = ctx.bot.get_cog("DotaStats")
 		name = "Dota Profile"
-		player = await dotastats_cog.opendota_query(f"/players/{value}")
-		if player.get("profile") is not None:
-			name = player.get("profile").get("personaname")
-
-		return f"[{name}](http://www.opendota.com/players/{value})"
+		try:
+			return await dotastats_cog.get_player_mention(value, ctx)
+		except UserError:
+			return f"[Dota Profile](http://www.opendota.com/players/{value})"
 
 	@classmethod
 	async def _parse(cls, value, ctx):
@@ -194,6 +193,6 @@ class SteamId(ConfigVarType):
 			value -= 76561197960265728
 
 		# This will throw the appropriate UserError if the player is not found / has no matches
-		player = await dotastats_cog.get_player(value, ctx)
+		player = await dotastats_cog.get_player_mention(value, ctx)
 
 		return value

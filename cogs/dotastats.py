@@ -249,9 +249,10 @@ class DotaStats(MangoCog):
 		emoji = self.hero_info[player["hero_id"]]["emoji"]
 		return f"{emoji}**{name}**"
 
-	async def get_player(self, steamid, ctx):
+	async def get_player_mention(self, steamid, ctx):
 		# expects that steamid is a valid int
-		return await get_check_steamid(steamid, ctx)
+		steamid, mention = await get_check_steamid(steamid, ctx, True)
+		return mention
 
 	async def create_dota_gif(self, match, stratz_match, start_time, end_time, ms_per_second=100):
 		await self.dota_gif_lock.acquire()
