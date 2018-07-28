@@ -1043,6 +1043,7 @@ class DotaStats(MangoCog):
 			f"Winrate: **{percent(lambda p: p['radiant_win'] == (p['player_slot'] < 128), round_place=2)}%**\n"
 			f"Avg KDA: **{avg('kills')}**/**{avg('deaths')}**/**{avg('assists')}**\n"), color=self.embed_color)
 
+		embed.color = discord.Color(int(hero.color[1:], 16))
 
 		embed.set_author(
 			name=f"{playerinfo['profile']['personaname']} ({hero.localized_name})", 
