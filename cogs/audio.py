@@ -16,9 +16,6 @@ from random import randint
 from .mangocog import *
 from ctypes.util import find_library
 
-discord.opus.load_opus(find_library('opus'))
-
-
 intro_outro_length = 4.5
 
 class TtsChannelError(Exception):
