@@ -346,7 +346,7 @@ class General(MangoCog):
 			
 			return str(tag)
 
-		summary = tagsToMarkdown(page_html.find("div").find("p", recursive=False).contents)
+		summary = tagsToMarkdown(page_html.find("div").find(lambda tag: tag.name == "p" and not tag.attrs, recursive=False).contents)
 
 		def markdownLength(text):
 			text = re.sub(r"\[([^\[]*)]\([^\(]*\)", r"\1", text)
