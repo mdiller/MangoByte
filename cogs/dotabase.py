@@ -460,25 +460,30 @@ class Dotabase(MangoCog):
 	async def chatwheel(self, ctx, *, text):
 		"""Plays the given chat wheel sound
 
-		Try one of the following to get a list of the corresponding chatwheel messages:
-		`{cmdpfx}chatwheel casters`
-		`{cmdpfx}chatwheel sounds`
-		`{cmdpfx}chatwheel legacy`
+		Give the command a number between 1 and 6 to page through all of the available chat options:
+		`{cmdpfx}chatwheel 1`
+		`{cmdpfx}chatwheel 3`
 
 		**Examples:**
+		`{cmdpfx}chatwheel Lakad Matataaaag!`
 		`{cmdpfx}chatwheel disastah`
 		`{cmdpfx}chatwheel Wan Bu Liao La`
 		`{cmdpfx}chatwheel 玩不了啦`
 		`{cmdpfx}chatwheel ehto gg`
 		`{cmdpfx}chatwheel Это ГГ`"""
-		if text.lower() in [ "casters", "sounds", "legacy" ]:
-			text = text.lower()
+		page_size = 10
+		query = session.query(ChatWheelMessage).filter(ChatWheelMessage.sound.like("/%"))
+		if text.isdigit():
+			page = int(text)
+			max_pages = int((query.count() / page_size) + 1)
+			if page < 1 or page > max_pages:
+				raise UserError(f"Gotta give me a number between 1 and {max_pages}")
 			sounds = []
-			for message in session.query(ChatWheelMessage).filter_by(category=f"ti8_{text}"):
+			for message in query.offset((page - 1) * page_size).limit(page_size):
 				if message.sound:
 					sounds.append(f"{self.get_emoji('chat_wheel_sound')} {message.message}")
 			embed = discord.Embed(description="\n".join(sounds))
-			embed.set_author(name=f"Chat Wheel Sounds ({text})")
+			embed.set_author(name=f"Chat Wheel Sounds ({page}/{max_pages})")
 			await ctx.send(embed=embed)
 			return
 
