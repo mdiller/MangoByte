@@ -7,7 +7,6 @@ from cogs.utils.botdata import UserInfo
 from cogs.utils import checks, botdatatypes
 from cogs.audio import AudioPlayerNotFoundError
 from sqlalchemy import func
-from cairosvg import svg2png
 import cogs.utils.loggingdb as loggingdb
 import string
 import random
@@ -378,22 +377,14 @@ class General(MangoCog):
 		for image in page.images:
 			if "Wikisource-logo" in image:
 				continue
-			if re.search(r"\.(png|jpg|jpeg|gif|svg)$", image, re.IGNORECASE):
+			if re.search(r"\.(png|jpg|jpeg|gif)$", image, re.IGNORECASE):
 				index = page_html_text.find(image.split('/')[-1])
 				if index != -1 and (best_image_index == -1 or index < best_image_index):
 					best_image = image
 					best_image_index = index
 
 		if best_image:
-			if re.search(r"\.svg$", best_image, re.IGNORECASE):
-				svg_text = await httpgetter.get(best_image, "text", cache=True)
-				fp = BytesIO()
-				svg2png(bytestring=svg_text, write_to=fp)
-				fp.seek(0)
-				svg_png_image = discord.File(fp, "svg.png")
-				embed.set_image(url=f"attachment://{svg_png_image.filename}")
-			else:
-				embed.set_image(url=best_image)
+			embed.set_image(url=best_image)
 
 		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 
