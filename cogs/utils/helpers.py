@@ -86,7 +86,7 @@ def write_json(filename, data):
 		f.write(text) # Do it like this so it doesnt break mid-file
 
 def read_json(filename):
-	with open(filename) as f:
+	with open(filename, encoding="utf-8") as f:
 		return json.load(f, object_pairs_hook=OrderedDict)
 
 
