@@ -9,6 +9,7 @@ import os
 import random
 import html
 import requests
+from concurrent.futures import ThreadPoolExecutor
 
 def tts_save(filename, text, lang):
 	# run_command(["pico2wave", "--wave", filename, "-l", "en-GB", text])
@@ -133,7 +134,7 @@ class TtsClip(Clip):
 		if not filename:
 			filename = await httpgetter.cache.new(uri, "wav")
 			try:
-				tts_save(filename, text, ttslang)
+				await bot.loop.run_in_executor(ThreadPoolExecutor(max_workers=1), tts_save, filename, text, ttslang)
 			except:
 				await httpgetter.cache.remove(uri)
 				raise
