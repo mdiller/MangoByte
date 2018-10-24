@@ -1,6 +1,5 @@
 # MangoByte<img align="right" src="/resource/images/readme/mangobyte.png"/>
 
-[![Help Server](https://img.shields.io/discord/296486417197170688.svg?label=Help%20Server&logo=discord)](https://discord.gg/d6WWHxx)
 [![Servers](https://img.shields.io/badge/dynamic/json.svg?label=servers&url=http%3A%2F%2Fdillerm.io%2Fshieldstats%2Fmangobyte.json&query=%24.servers&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968)
 [![Registered Users](https://img.shields.io/badge/dynamic/json.svg?label=registered%20users&url=http%3A%2F%2Fdillerm.io%2Fshieldstats%2Fmangobyte.json&query=%24.registered_users&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968)
 
