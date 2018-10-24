@@ -406,7 +406,8 @@ class Audio(MangoCog):
 		gtts_fixes = read_json(settings.resource("json/gtts_fixes.json"))
 		text = text.replace("\n", " ")
 		for key in gtts_fixes:
-			text = re.sub("\\b({})\\b".format(key), gtts_fixes[key], text, re.IGNORECASE)
+			pattern = f"\\b({key})\\b" if not key.startswith("regex:") else re.sub("^regex:", "", key)
+			text = re.sub(pattern, gtts_fixes[key], text, re.IGNORECASE)
 		await self.play_clip("tts:" + text, ctx)
 
 
