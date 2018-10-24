@@ -702,6 +702,10 @@ class DotaStats(MangoCog):
 			activity_delta = [ 0 ]
 			activity_count = [ 0 ]
 
+		overall_time_played = 0
+		for match in matches:
+			overall_time_played += match["duration"]
+
 		overall_activity_delta = get_pretty_time((int(statistics.mean(activity_delta)) // 60) * 60)
 		if recent_count:
 			recent_activity_delta = get_pretty_time((int(statistics.mean(activity_delta[:recent_count])) // 60) * 60)
@@ -719,6 +723,7 @@ class DotaStats(MangoCog):
 
 		embed.add_field(name="General", value=(
 			f"Winrate of **{winrate}** over **{gamesplayed}** games\n"
+			f"Total Hours Played: **{overall_time_played // 360}**\n"
 			f"{rank_string}"))
 
 		embed.add_field(name="Profiles", value=(
