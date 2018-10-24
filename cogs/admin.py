@@ -56,12 +56,27 @@ class Admin(MangoCog):
 		await ctx.send("{} is free of their restraints and may once again use commands".format(user.mention))
 
 	@commands.command()
-	async def summon(self, ctx, channel : discord.VoiceChannel = None):
+	async def summon(self, ctx, channel : str = None):
 		"""Summons the bot to the voice channel you are currently in
 
 		You can specify the specific voice channel that you would like to connect to. If no channel is specified, it will connect to whatever channel you are currently in.
-		**Example:**
+		**Examples:**
+		`{cmdpfx}summon`
 		`{cmdpfx}summon General`"""
+		if channel:
+			actual_channel = None
+			if ctx.message.guild:
+				for ch in ctx.message.guild.voice_channels
+					if channel.lower() == ch.name.lower():
+						actual_channel = ch
+						break
+				if not actual_channel:
+					for ch in ctx.message.guild.voice_channels
+						if channel.lower() in ch.name.lower()
+							actual_channel = ch
+							break
+			channel = actual_channel
+
 		if not channel:
 			if not ctx.message.guild:
 				raise UserError("You have to say that in a server")
