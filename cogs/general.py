@@ -12,6 +12,7 @@ import string
 import random
 import datetime
 import wikipedia
+import html
 from bs4 import BeautifulSoup, Tag
 from io import BytesIO
 import re
@@ -422,6 +423,8 @@ class General(MangoCog):
 		description = re.sub(r"(?:^|\n)#+([^#\n]+)\n", r"\n__**\1**__ \n", description)
 		description = re.sub(r"\n+---\n+", r"\n\n", description)
 		description = re.sub(r"&nbsp;", r" ", description)
+
+		description = html.unescape(description)
 
 		if len(description) > character_limit:
 			description = f"{description[0:character_limit]}...\n[Read More]({submission.shortlink})"
