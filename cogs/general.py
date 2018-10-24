@@ -517,6 +517,39 @@ class General(MangoCog):
 		if ctx.guild.me.voice:
 			await self.play_clip(f"tts:{start_local}{result}", ctx)
 		
+	
+	@commands.command(aliases=["random"])	
+	async def random_number(self, maximum : int, minimum : int = 0):
+		"""Gets a random number between the minimum and maximum
+
+		The min and max integer bounds are **inclusive**
+
+		The command will be able to figure out which number is the minimum and which is the maximum if they are put in backwards. If one number is entered, it is assumed to be the maximum, and the default minimum is 0
+
+		**Example:**
+		`{cmdpfx}random 5`
+		`{cmdpfx}random 1 10`
+		"""
+		result = None
+		if maximum < minimum:
+			result = random.randint(maximum, minimum)
+		else:
+			result = random.randint(minimum, maximum)
+		await ctx.send(result)
+	
+	@commands.command(aliases=["pickone"])
+	async def choose(self, *options):
+		"""Randomly chooses one of the given options
+
+		You must provide at least one option for the bot to choose, and the options should be separated by spaces
+		
+		**Example:**
+		`{cmdpfx}choose Dota2 Fortnite RocketLeague`
+		`{cmdpfx}choose green red blue`
+		"""
+		if not len(options) > 0:
+			raise UserError("You gotta give me a couple different options, separated by spaces")
+		await ctx.send(random.choice(options))
 
 	async def on_message(self, message):
 		if message.guild is not None and not botdata.guildinfo(message.guild.id).reactions:
