@@ -141,6 +141,8 @@ class ShortText(ConfigVarType):
 		return value
 
 
+max_intro_outro_length = 4.5
+
 class ShortClip(ConfigVarType):
 	"""Used for intro and outro clips"""
 	@classmethod
@@ -149,7 +151,6 @@ class ShortClip(ConfigVarType):
 
 	@classmethod
 	async def _parse(cls, value, ctx):
-		max_intro_outro_length = 4.5
 		audio_cog = ctx.bot.get_cog("Audio")
 
 		value = str(value)

@@ -5,6 +5,7 @@ from cogs.utils.clip import *
 from __main__ import settings, botdata, report_error, loggingdb_session
 from cogs.utils import checks
 import cogs.utils.loggingdb as loggingdb
+import cogs.utils.botdatatypes as botdatatypes
 import asyncio
 import os
 import string
@@ -527,7 +528,15 @@ class Audio(MangoCog):
 				guildinfo = botdata.guildinfo(before.channel.guild)
 				userinfo = botdata.userinfo(member.id)
 
-				outroclip = userinfo.outro
+				try:
+					outroclip = await self.get_clip(userinfo.outro, before.channel.guild)
+				except:
+					outroclip = None
+					userinfo.outro = None
+				if outroclip and outroclip.audiolength > (botdatatypes.max_intro_outro_length + 0.5)
+					outroclip = None
+					userinfo.outro = None
+
 				outrotts = userinfo.outrotts
 				name = member.name
 				if guildinfo.usenickname and member.nick:
@@ -550,7 +559,15 @@ class Audio(MangoCog):
 
 				userinfo = botdata.userinfo(member.id)
 
-				introclip = userinfo.intro
+				try:
+					introclip = await self.get_clip(userinfo.intro, after.channel.guild)
+				except:
+					introclip = None
+					userinfo.intro = None
+				if introclip and introclip.audiolength > (botdatatypes.max_intro_intro_length + 0.5)
+					introclip = None
+					userinfo.intro = None
+
 				introtts = userinfo.introtts
 				name = member.name
 				if guildinfo.usenickname and member.nick:
