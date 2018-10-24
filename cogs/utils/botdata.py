@@ -184,6 +184,13 @@ class GuildInfo(BotDataItem):
 			"type": types.Boolean,
 			"description": "Sets whether mangobyte will use the user's name or nickname when announcing that they have joined or left a channel",
 			"example": "enable"
+		},
+		{
+			"key": "announcetts",
+			"default": False,
+			"type": types.Boolean,
+			"description": "Sets whether mangobyte announce the user's name before playing the clip when they the user plays a clip by typing something in the tts channel",
+			"example": "enable"
 		}
 	]
 

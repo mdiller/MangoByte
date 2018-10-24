@@ -482,14 +482,20 @@ class Audio(MangoCog):
 
 	async def on_message(self, message):
 		if message.guild and (not message.content.startswith(self.cmdpfx(message.guild))) and message.author.id != self.bot.user.id:
-			if botdata.guildinfo(message.guild).is_banned(message.author):
+			guildinfo = botdata.guildinfo(message.guild)
+			if guildinfo.is_banned(message.author):
 				return # banned users cant talk
-			ttschannel = botdata.guildinfo(message.guild.id).ttschannel
+			ttschannel = guildinfo.ttschannel
 			if ttschannel == message.channel.id:
 				if message.content.startswith("//") or message.content.startswith("#"):
 					return # commented out stuff should be ignored
 				loggingdb.insert_message(message, "smarttts", loggingdb_session)
 				try:
+					name = message.author.name
+					if guildinfo.usenickname and message.author.nick:
+						name = message.author.nick
+					name = await self.fix_name(name)
+					await self.do_tts(f"{name} says", message.guild)
 					await self.do_smarttts(message.clean_content, message.guild)
 				except UserError as e:
 					await message.channel.send(e.message)
