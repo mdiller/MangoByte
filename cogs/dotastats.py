@@ -53,6 +53,11 @@ opendota_html_errors = {
 }
 
 async def opendota_query(querystring, cache=False):
+	if settings.odota:
+		if "?" in querystring:
+			querystring += f"&api_key={settings.odota}"
+		else:
+			querystring += f"?api_key={settings.odota}"
 	return await httpgetter.get(f"https://api.opendota.com/api{querystring}", cache=cache, errors=opendota_html_errors)
 
 # rate_limit = false if this is the only query we're sending

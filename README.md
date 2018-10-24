@@ -48,3 +48,4 @@ You should now be done! You can run mangobyte by calling `python3.6 mangobyte.py
 	"debug": false
 }
 ```
+For explanation of each option, see the comments on the properties in [settings.py](cogs/utils/settings.py)
