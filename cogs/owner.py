@@ -141,7 +141,7 @@ class Owner(MangoCog):
 
 	@commands.command(aliases=["botdata"])
 	async def getbotdata(self, ctx, selector, identifier : int):
-		"""Gets info about a user or a server, depending on the selector given"""
+		"""Gets info about a user or a server"""
 		if selector in ["user", "player", "member"]:
 			data = botdata.userinfo(identifier)
 			user = self.bot.get_user(identifier)

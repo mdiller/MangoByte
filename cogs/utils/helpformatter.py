@@ -43,7 +43,7 @@ class MangoHelpFormatter(HelpFormatter):
 				# skip aliases
 				continue
 
-			entry = '`{0:<{width}} {1}`'.format(name, command.short_doc, width=self.max_name_size)
+			entry = '`{0:<{width}} | {1}`'.format(name, command.short_doc, width=self.max_name_size)
 			shortened = self.shorten(entry)
 			results.append(entry)
 		if results:
@@ -81,6 +81,8 @@ class MangoHelpFormatter(HelpFormatter):
 				embed.set_author(name=self.command.user.name, icon_url=self.command.user.avatar_url, url="https://github.com/mdiller/MangoByte")
 				data = sorted(await self.filter_command_list(), key=category)
 				for category, commands in itertools.groupby(data, key=category):
+					if category == "Owner:":
+						continue
 					commands = list(commands)
 					if len(commands) > 0:
 						embed.add_field(name=category, value=self.list_commands(commands))
