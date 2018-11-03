@@ -637,7 +637,7 @@ class DotaStats(MangoCog):
 		await ctx.channel.trigger_typing()
 
 		playerinfo = await opendota_query(f"/players/{steam32}")
-		matches = await opendota_query(f"/players/{steam32}/matches")
+		matches = await opendota_query(f"/players/{steam32}/matches?significant=0")
 
 		rank_strings = [ "Unranked", "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine", "Immortal" ]
 
@@ -723,7 +723,7 @@ class DotaStats(MangoCog):
 
 		embed.add_field(name="General", value=(
 			f"Winrate of **{winrate}** over **{gamesplayed}** games\n"
-			f"Total Hours Played: **{overall_time_played // 360}**\n"
+			f"Total Hours In Game: **{overall_time_played // 3600:,}**\n"
 			f"{rank_string}"))
 
 		embed.add_field(name="Profiles", value=(
