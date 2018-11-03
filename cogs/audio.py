@@ -491,11 +491,12 @@ class Audio(MangoCog):
 					return # commented out stuff should be ignored
 				loggingdb.insert_message(message, "smarttts", loggingdb_session)
 				try:
-					name = message.author.name
-					if guildinfo.usenickname and message.author.nick:
-						name = message.author.nick
-					name = await self.fix_name(name)
-					await self.do_tts(f"{name} says", message.guild)
+					if guildinfo.announcetts:
+						name = message.author.name
+						if guildinfo.usenickname and message.author.nick:
+							name = message.author.nick
+						name = await self.fix_name(name)
+						await self.do_tts(f"{name} says", message.guild)
 					await self.do_smarttts(message.clean_content, message.guild)
 				except UserError as e:
 					await message.channel.send(e.message)
