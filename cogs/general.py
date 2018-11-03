@@ -522,7 +522,7 @@ class General(MangoCog):
 		
 	
 	@commands.command(aliases=["random"])	
-	async def random_number(self, maximum : int, minimum : int = 0):
+	async def random_number(self, ctx, maximum : int, minimum : int = 0):
 		"""Gets a random number between the minimum and maximum
 
 		The min and max integer bounds are **inclusive**
@@ -541,7 +541,7 @@ class General(MangoCog):
 		await ctx.send(result)
 	
 	@commands.command(aliases=["pickone"])
-	async def choose(self, *options):
+	async def choose(self, ctx, *options):
 		"""Randomly chooses one of the given options
 
 		You must provide at least one option for the bot to choose, and the options should be separated by spaces

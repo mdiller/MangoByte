@@ -540,7 +540,7 @@ class Audio(MangoCog):
 				except:
 					outroclip = None
 					userinfo.outro = None
-				if outroclip and outroclip.audiolength > (botdatatypes.max_intro_outro_length + 0.5)
+				if outroclip and outroclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
 					outroclip = None
 					userinfo.outro = None
 
@@ -571,7 +571,7 @@ class Audio(MangoCog):
 				except:
 					introclip = None
 					userinfo.intro = None
-				if introclip and introclip.audiolength > (botdatatypes.max_intro_intro_length + 0.5)
+				if introclip and introclip.audiolength > botdatatypes.max_intro_intro_length + 0.5:
 					introclip = None
 					userinfo.intro = None
 

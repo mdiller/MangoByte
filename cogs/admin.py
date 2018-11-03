@@ -66,13 +66,13 @@ class Admin(MangoCog):
 		if channel:
 			actual_channel = None
 			if ctx.message.guild:
-				for ch in ctx.message.guild.voice_channels
+				for ch in ctx.message.guild.voice_channels:
 					if channel.lower() == ch.name.lower():
 						actual_channel = ch
 						break
 				if not actual_channel:
-					for ch in ctx.message.guild.voice_channels
-						if channel.lower() in ch.name.lower()
+					for ch in ctx.message.guild.voice_channels:
+						if channel.lower() in ch.name.lower():
 							actual_channel = ch
 							break
 			channel = actual_channel
