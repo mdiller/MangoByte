@@ -532,17 +532,20 @@ class Audio(MangoCog):
 		if before and before.channel and botdata.guildinfo(before.channel.guild).outros:
 			beforeplayer = await self.audioplayer(before.channel, error_on_none=False)
 			if beforeplayer is not None and beforeplayer.voice is not None and beforeplayer.voice.channel.id == before.channel.id:
+				ctx = before.channel.guild
 				guildinfo = botdata.guildinfo(before.channel.guild)
 				userinfo = botdata.userinfo(member.id)
 
 				try:
-					outroclip = await self.get_clip(userinfo.outro, before.channel.guild)
+					outroclip = userinfo.outro
+					if outroclip:
+						outroclip = await self.get_clip(userinfo.outro, ctx)
+						if outroclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
+							userinfo.set_default(ctx, "outro")
+							outroclip = userinfo.outro
 				except:
-					outroclip = None
-					userinfo.outro = None
-				if outroclip and outroclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
-					outroclip = None
-					userinfo.outro = None
+					userinfo.set_default(ctx, "outro")
+					outroclip = userinfo.outro
 
 				outrotts = userinfo.outrotts
 				name = member.name
@@ -560,6 +563,7 @@ class Audio(MangoCog):
 		if after and after.channel and botdata.guildinfo(after.channel.guild).intros:
 			afterplayer = await self.audioplayer(after.channel, error_on_none=False)
 			if afterplayer is not None and afterplayer.voice is not None and afterplayer.voice.channel.id == after.channel.id:
+				ctx = after.channel.guild
 				guildinfo = botdata.guildinfo(after.channel.guild)
 				if member.id == self.bot.user.id:
 					guildinfo.voicechannel = after.channel.id
@@ -567,13 +571,15 @@ class Audio(MangoCog):
 				userinfo = botdata.userinfo(member.id)
 
 				try:
-					introclip = await self.get_clip(userinfo.intro, after.channel.guild)
+					introclip = userinfo.intro
+					if introclip:
+						introclip = await self.get_clip(userinfo.intro, ctx)
+						if introclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
+							userinfo.set_default(ctx, "intro")
+							introclip = userinfo.intro
 				except:
-					introclip = None
-					userinfo.intro = None
-				if introclip and introclip.audiolength > botdatatypes.max_intro_intro_length + 0.5:
-					introclip = None
-					userinfo.intro = None
+					userinfo.set_default(ctx, "intro")
+					introclip = userinfo.intro
 
 				introtts = userinfo.introtts
 				name = member.name

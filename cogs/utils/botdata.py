@@ -116,6 +116,11 @@ class UserInfo(BotDataItem):
 			"example": "dun gone left"
 		}
 	]
+
+	def set_default(self, ctx, key):
+		var = next((v for v in self.variables if v["key"] == key), None)
+		if var:
+			self[key] = var["default"]
 	
 class GuildInfo(BotDataItem):
 	def __init__(self, botdata, guildid):
