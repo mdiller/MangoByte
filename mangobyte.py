@@ -58,7 +58,9 @@ async def on_ready():
 		type=discord.ActivityType.playing,
 		start=datetime.datetime.utcnow())
 	await bot.change_presence(status=discord.Status.online, activity=game)
-	cog = bot.get_cog("Audio")
+	audio_cog = bot.get_cog("Audio")
+	artifact_cog = bot.get_cog("Artifact")
+	await artifact_cog.load_card_sets()
 
 	# stuff to help track/log the connection of voice channels
 	start_time = datetime.datetime.now()
@@ -70,7 +72,7 @@ async def on_ready():
 		if guildinfo.voicechannel is not None:
 			try:
 				print(f"connecting voice to: {guildinfo.voicechannel}")
-				await cog.connect_voice(guildinfo.voicechannel)
+				await audio_cog.connect_voice(guildinfo.voicechannel)
 				print(f"connected: {guildinfo.voicechannel}")
 				connected_count += 1
 			except UserError as e:
@@ -214,6 +216,7 @@ if __name__ == '__main__':
 	bot.load_extension("cogs.dotabase")
 	bot.load_extension("cogs.dotastats")
 	bot.load_extension("cogs.pokemon")
+	bot.load_extension("cogs.artifact")
 	bot.load_extension("cogs.admin")
 	bot.load_extension("cogs.owner")
 	bot.run(settings.token)
