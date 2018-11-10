@@ -36,6 +36,11 @@ class Artifact(MangoCog):
 			if card["card_name"] and card["card_name"]["english"]:
 				name = card["card_name"]["english"].lower()
 				self.card_names[name] = card["card_id"]
+		self.actual_card_names = OrderedDict()
+		for card in self.cards:
+			if card["card_name"] and card["card_name"]["english"] and card.get("large_image"):
+				name = card["card_name"]["english"].lower()
+				self.actual_card_names[name] = card["card_id"]
 
 	async def update_card_sets(self):
 		sets_data = []
@@ -93,21 +98,40 @@ class Artifact(MangoCog):
 				return card
 		return None
 
+	# there is a better way to do this but im lazy and tired right now
 	def find_card(self, name):
 		if name is None:
-			return random.choice(self.cards)
+			return self.get_card(random.choice(list(self.actual_card_names.values())))
 		name = name.lower()
+		for card_name in self.actual_card_names:
+			if name == card_name:
+				return self.get_card(self.actual_card_names[card_name])
 		for card_name in self.card_names:
 			if name == card_name:
 				return self.get_card(self.card_names[card_name])
+		for card_name in self.actual_card_names:
+			if name in card_name.split(" "):
+				return self.get_card(self.actual_card_names[card_name])
+		for card_name in self.card_names:
+			if name in card_name.split(" "):
+				return self.get_card(self.card_names[card_name])
+		for card_name in self.actual_card_names:
+			if name in card_name:
+				return self.get_card(self.actual_card_names[card_name])
 		for card_name in self.card_names:
 			if name in card_name:
 				return self.get_card(self.card_names[card_name])
 		pattern = r"[^a-z]"
 		name = re.sub(pattern, "", name)
+		for card_name in self.actual_card_names:
+			if name == re.sub(pattern, "", card_name):
+				return self.get_card(self.actual_card_names[card_name])
 		for card_name in self.card_names:
 			if name == re.sub(pattern, "", card_name):
 				return self.get_card(self.card_names[card_name])
+		for card_name in self.actual_card_names:
+			if name in re.sub(pattern, "", card_name):
+				return self.get_card(self.actual_card_names[card_name])
 		for card_name in self.card_names:
 			if name in re.sub(pattern, "", card_name):
 				return self.get_card(self.card_names[card_name])
@@ -153,7 +177,10 @@ class Artifact(MangoCog):
 				if ref.get("count"):
 					ref_type += f" (x{ref['count']})"
 				ref_card = self.get_card(ref["card_id"])
-				descriptions.append(f"**{ref_type}:** {ref_card['card_name']['english']}")
+				ref_name = ref_card["card_name"]["english"]
+				if ref_name == card["card_name"]["english"]:
+					continue
+				descriptions.append(f"{ref_type}: **{ref_name}**")
 			if descriptions:
 				embed.description = "\n".join(descriptions)
 
