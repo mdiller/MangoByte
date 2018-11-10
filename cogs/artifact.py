@@ -35,12 +35,8 @@ class Artifact(MangoCog):
 		for card in self.cards:
 			if card["card_name"] and card["card_name"]["english"]:
 				name = card["card_name"]["english"].lower()
-				self.card_names[name] = card["card_id"]
-		self.actual_card_names = OrderedDict()
-		for card in self.cards:
-			if card["card_name"] and card["card_name"]["english"] and card.get("large_image"):
-				name = card["card_name"]["english"].lower()
-				self.actual_card_names[name] = card["card_id"]
+				if name not in self.card_names or card.get("large_image"):
+					self.card_names[name] = card["card_id"]
 
 	async def update_card_sets(self):
 		sets_data = []
@@ -100,38 +96,27 @@ class Artifact(MangoCog):
 
 	# there is a better way to do this but im lazy and tired right now
 	def find_card(self, name):
+		if name == "":
+			return None
 		if name is None:
-			return self.get_card(random.choice(list(self.actual_card_names.values())))
+			return self.get_card(random.choice(list(self.card_names.values())))
 		name = name.lower()
-		for card_name in self.actual_card_names:
-			if name == card_name:
-				return self.get_card(self.actual_card_names[card_name])
 		for card_name in self.card_names:
 			if name == card_name:
 				return self.get_card(self.card_names[card_name])
-		for card_name in self.actual_card_names:
-			if name in card_name.split(" "):
-				return self.get_card(self.actual_card_names[card_name])
 		for card_name in self.card_names:
 			if name in card_name.split(" "):
 				return self.get_card(self.card_names[card_name])
-		for card_name in self.actual_card_names:
-			if name in card_name:
-				return self.get_card(self.actual_card_names[card_name])
 		for card_name in self.card_names:
 			if name in card_name:
 				return self.get_card(self.card_names[card_name])
 		pattern = r"[^a-z]"
 		name = re.sub(pattern, "", name)
-		for card_name in self.actual_card_names:
-			if name == re.sub(pattern, "", card_name):
-				return self.get_card(self.actual_card_names[card_name])
+		if name == "":
+			return None
 		for card_name in self.card_names:
 			if name == re.sub(pattern, "", card_name):
 				return self.get_card(self.card_names[card_name])
-		for card_name in self.actual_card_names:
-			if name in re.sub(pattern, "", card_name):
-				return self.get_card(self.actual_card_names[card_name])
 		for card_name in self.card_names:
 			if name in re.sub(pattern, "", card_name):
 				return self.get_card(self.card_names[card_name])
