@@ -1,10 +1,12 @@
 import discord
 from discord.ext import commands
 from __main__ import settings, botdata, httpgetter
+from cogs.utils.deck_decoder import ParseDeck
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
 from cogs.utils.card import *
 from cogs.utils import checks
+from cogs.utils import drawdota
 from .mangocog import *
 import random
 import os
@@ -104,10 +106,9 @@ class Artifact(MangoCog):
 		await ctx.message.add_reaction("✅")
 
 
-	@commands.command(aliases=["card"])
-	async def artifact(self, ctx, *, card_name : str=None):
+	@commands.command(aliases=["artifact"])
+	async def card(self, ctx, *, card_name : str=None):
 		"""Displays info about the artifact card
-
 		
 		Example:
 		`{cmdpfx}artifact Healing Salve`
@@ -144,6 +145,40 @@ class Artifact(MangoCog):
 		embed.set_footer(text=f"Set: {card.set.name}")
 
 		await ctx.send(embed=embed)
+
+	@commands.command()
+	async def deck(self, ctx, deck_string):
+		"""Displays the card list for the given deck
+		
+		Example:
+		`{cmdpfx}deck ADCJWkTZX05uwGDCRV4XQGy3QGLmqUBg4GQJgGLGgO7AaABR3JlZW4vQmxhY2sgRXhhbXBsZQ__`"""
+		deck_info = ParseDeck(deck_string)
+		if not deck_info:
+			raise UserError("This doesn't look like a proper deck string")
+		cards = []
+		hero_turns = {}
+		card_counts = {}
+		for card_info in deck_info["heroes"]:
+			card = self.get_card(card_info["id"])
+			for ref in card.get_references("includes"):
+				deck_info["cards"].append({ "id": ref.id, "count": ref.count })
+			cards.append(card)
+			hero_turns[card_info["id"]] = card_info["turn"]
+		for card_info in deck_info["cards"]:
+			cards.append(self.get_card(card_info["id"]))
+			card_counts[card_info["id"]] = card_info["count"]
+
+		embed = discord.Embed()
+
+		embed.title = deck_info["name"]
+		embed.url = f"https://playartifact.com/d/{deck_string}"
+
+		deck_image = await drawdota.draw_artifact_deck(deck_string, cards, hero_turns, card_counts)
+		deck_image = discord.File(deck_image, "deck.png")
+		embed.set_image(url=f"attachment://{deck_image.filename}")
+
+		await ctx.send(embed=embed, file=deck_image)
+
 
 
 def setup(bot):

@@ -1,5 +1,6 @@
 from __main__ import settings, botdata
 from PIL import Image, ImageDraw, ImageFont
+from .imagetools import *
 
 table_font = settings.resource("images/arial_unicode_bold.ttf")
 
@@ -137,6 +138,9 @@ class ImageCell(Cell):
 		if not self.image:
 			return # no image, so this is basically an empty cell
 		actual_image = self.image.resize((self.width, self.height), Image.ANTIALIAS)
+		if self.background:
+			rect = Image.new("RGBA", (self.width, self.height), self.background)
+			actual_image = paste_image(rect, actual_image, 0, 0)
 		image.paste(actual_image, (x, y))
 
 

@@ -30,21 +30,24 @@ def init_dota_info(hero_info, item_info):
 def get_hero_name(hero_id):
 	return hero_infos[hero_id]["name"]
 
+async def get_url_image(url):
+	return Image.open(await httpgetter.get(url, "bytes", cache=True))
+
 async def get_hero_image(hero_id):
 	try:
-		return Image.open(await httpgetter.get(hero_infos[hero_id]["image"], "bytes", cache=True))
+		return await get_url_image(httpgetter.get(hero_infos[hero_id]["image"]))
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
 async def get_hero_icon(hero_id):
 	try:
-		return Image.open(await httpgetter.get(hero_infos[hero_id]["icon"], "bytes", cache=True))
+		return await get_url_image(httpgetter.get(hero_infos[hero_id]["icon"]))
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
 async def get_item_image(item_id):
 	try:
-		return Image.open(await httpgetter.get(item_infos[item_id]["icon"], "bytes", cache=True))
+		return await get_url_image(httpgetter.get(item_infos[item_id]["icon"]))
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
@@ -561,3 +564,72 @@ async def fuse_hero_images(hero1, hero2):
 	fp.seek(0)
 
 	return fp
+
+async def draw_artifact_deck(deck_string, cards, hero_turns, card_counts):
+	uri = f"artifact_deck:{deck_string}"
+	filename = httpgetter.cache.get_filename(uri)
+	if filename and not settings.debug:
+		return filename
+
+	filename = await httpgetter.cache.new(uri, "png")
+
+	sorting_info = [
+		{
+			"filter": lambda c: c.type == "Hero",
+			"sort": lambda c: hero_turns[c.id]
+		},
+		{
+			"filter": lambda c: c.type != "Hero" and c.type != "Item",
+			"sort": lambda c: c.mana_cost
+		},
+		{
+			"filter": lambda c: c.type == "Item",
+			"sort": lambda c: c.gold_cost
+		}
+	]
+	ordered_cards = []
+	for info in sorting_info:
+		for card in sorted(filter(info["filter"], cards), key=info["sort"]):
+			ordered_cards.append(card)
+
+	column_count = 5
+	border_size = 10
+	grey_color = "#BBBBBB"
+	table = Table(background=background_color)
+
+	table.add_row([ColorCell(color=trim_color, height=border_size) for i in range(column_count)])
+	first = True
+	for card in ordered_cards:
+		cost = ""
+		if card.type != "Hero":
+			if card.type == "Item":
+				cost = card.gold_cost
+			else:
+				cost = card.mana_cost
+		last_cell = ""
+		if card.type == "Hero":
+			last_cell = f"Turn {hero_turns.get(card.id)}"
+		else:
+			last_cell = f"x {card_counts.get(card.id)}"
+		if first:
+			first = False
+		else:
+			table.add_row([ColorCell(color=background_color, height=2) for i in range(column_count)])
+		table.add_row([
+			ImageCell(img=await get_url_image(card.mini_image), height=48),
+			ImageCell(img=await get_url_image(card.type_image), height=48),
+			TextCell(cost),
+			TextCell(card.name),
+			TextCell(last_cell, horizontal_align="right")
+		])
+		card_color = card.color.blend(Color(background_color), 0.5)
+		for cell in table.rows[len(table.rows) - 1]:
+			cell.background = card_color.hex
+	image = table.render()
+
+	border_image = Image.new('RGBA', (image.size[0] + (border_size * 2), image.size[1] + border_size), color=trim_color)
+	image = paste_image(border_image, image, border_size, 0)
+
+	image.save(filename, format="PNG")
+
+	return filename
