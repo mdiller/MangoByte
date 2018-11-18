@@ -124,6 +124,8 @@ class ImageCell(Cell):
 			return # no image, so this is basically an empty cell
 		if isinstance(self.image, str): # prolly a path to an image
 			self.image = Image.open(self.image)
+			
+		self.background = kwargs.get('background')
 
 		if (not self.width) and (not self.height):
 			self.width = self.image.width

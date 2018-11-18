@@ -35,19 +35,19 @@ async def get_url_image(url):
 
 async def get_hero_image(hero_id):
 	try:
-		return await get_url_image(httpgetter.get(hero_infos[hero_id]["image"]))
+		return await get_url_image(hero_infos[hero_id]["image"])
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
 async def get_hero_icon(hero_id):
 	try:
-		return await get_url_image(httpgetter.get(hero_infos[hero_id]["icon"]))
+		return await get_url_image(hero_infos[hero_id]["icon"])
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
 async def get_item_image(item_id):
 	try:
-		return await get_url_image(httpgetter.get(item_infos[item_id]["icon"]))
+		return await get_url_image(item_infos[item_id]["icon"])
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 

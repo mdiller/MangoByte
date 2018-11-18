@@ -828,7 +828,7 @@ class DotaStats(MangoCog):
 		longest_message_match_id = None
 		for match in matches:
 			player = next((p for p in match['players'] if p['account_id'] == steam32), None)
-			for message in match['chat']:
+			for message in match.get('chat', []):
 				if message.get('player_slot', -1) == player['player_slot']:
 					if message["type"] == "chat":
 						message_count += 1
