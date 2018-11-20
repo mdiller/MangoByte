@@ -8,6 +8,6 @@ SQLAlchemy>=1.2.11
 Pillow==4.0.0
 wikipedia==1.4.0
 youtube-dl>=2018.8.28
-dotabase>=4.4.6
+dotabase>=4.4.8
 praw==6.0.0
 numpy==1.15.1
