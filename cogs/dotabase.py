@@ -18,6 +18,24 @@ from cogs.audio import AudioPlayerNotFoundError
 
 session = dotabase_session()
 
+ABILITY_KEY_MAP = {
+	"q": 1,
+	"w": 2,
+	"e": 3,
+	"d": 4,
+	"f": 5,
+	"r": 4 # the last ability in the list, except for invoker
+}
+# some specific heroes have weird places for their ultimate keys
+ABILITY_ULTI_KEY_MAP = {
+	"3": 4, "10": 6, "19": 4, "23": 4, 
+	"54": 4, "68": 4, "73": 4, "74": 6, 
+	"80": 5, "86": 6, "88": 5, "89": 4, 
+	"90": 4, "91": 4, "98": 5, "100": 5, 
+	"103": 4, "108": 4, "110": 5, "114": 6, "120": 4
+}
+for i in range(1, 20):
+	ABILITY_KEY_MAP[str(i)] = i
 
 # A variable that can specify a filter on a query
 class QueryVariable():
@@ -161,6 +179,23 @@ class Dotabase(MangoCog):
 			for ability in ability_query:
 				if clean_input(ability.localized_name).startswith(text):
 					return ability
+			for key in text.split(" "):
+				if key in ABILITY_KEY_MAP:
+					text = re.sub(f'\\b{key}\\b', '', text)
+					hero = self.lookup_hero(text)
+					if hero is None:
+						return None
+					ability_position = ABILITY_KEY_MAP[key]
+					# use this instead of directly using ability_slot because there are some filler generic_ability things
+					abilities = session.query(Ability).filter_by(hero_id=hero.id).order_by(Ability.ability_slot).all()
+					if ability_position > len(abilities):
+						raise Exception(f"{hero.localized_name} doesn't have that many abilities")
+					if key == "r": # if is ultimate and not invoker, get last ability in list
+						if str(hero.id) in ABILITY_ULTI_KEY_MAP:
+							ability_position = ABILITY_ULTI_KEY_MAP[str(hero.id)]
+						else: 
+							ability_position = len(abilities)
+					return abilities[ability_position - 1]
 		return None
 
 	def lookup_item(self, item, full_check=True):
