@@ -828,19 +828,21 @@ class DotaStats(MangoCog):
 		longest_message_match_id = None
 		for match in matches:
 			player = next((p for p in match['players'] if p['account_id'] == steam32), None)
-			for message in match.get('chat', []):
-				if message.get('player_slot', -1) == player['player_slot']:
-					if message["type"] == "chat":
-						message_count += 1
-						if longest_message is None or len(longest_message) <= len(message['key']):
-							longest_message = message['key']
-							longest_message_match_id = match['match_id']
-					elif message["type"] == "chatwheel":
-						msg_id = int(message['key'])
-						if msg_id >= 1000:
-							continue # skip hero chat wheels
-						chat_wheel_counts[msg_id] = chat_wheel_counts.get(msg_id, 0) + 1
-						chat_wheel_total += 1
+			match_chat = match.get('chat', None)
+			if match_chat:
+				for message in match_chat:
+					if message.get('player_slot', -1) == player['player_slot']:
+						if message["type"] == "chat":
+							message_count += 1
+							if longest_message is None or len(longest_message) <= len(message['key']):
+								longest_message = message['key']
+								longest_message_match_id = match['match_id']
+						elif message["type"] == "chatwheel":
+							msg_id = int(message['key'])
+							if msg_id >= 1000:
+								continue # skip hero chat wheels
+							chat_wheel_counts[msg_id] = chat_wheel_counts.get(msg_id, 0) + 1
+							chat_wheel_total += 1
 
 		message_count = int(round(message_count / len(matches)))
 		if longest_message is not None:
