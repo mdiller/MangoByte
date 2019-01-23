@@ -638,6 +638,7 @@ class DotaStats(MangoCog):
 
 		playerinfo = await opendota_query(f"/players/{steam32}")
 		matches = await opendota_query(f"/players/{steam32}/matches?significant=0")
+		matches = list(filter(lambda m: m.get('player_slot') is not None, matches))
 
 		rank_strings = [ "Unranked", "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine", "Immortal" ]
 
@@ -656,7 +657,7 @@ class DotaStats(MangoCog):
 
 		gamesplayed = len(matches)
 		if gamesplayed > 0:
-			winrate = "{:.2%}".format(len(list(filter(lambda m: m['radiant_win'] == (m['player_slot'] < 128), matches))) / gamesplayed)
+			winrate = "{:.2%}".format(len(list(filter(lambda m: m.get('radiant_win', False) == ((m.get('player_slot', 0) or 0) < 128), matches))) / gamesplayed)
 		else:
 			winrate = "0%"
 
