@@ -405,7 +405,7 @@ async def dota_rank_icon(rank_tier, leaderboard_rank):
 	filename = await httpgetter.cache.new(uri, "png")
 
 	badge_num = rank_tier // 10
-	stars_num = min(rank_tier % 10, 5)
+	stars_num = min(rank_tier % 10, 7)
 	modifier = ""
 
 	if badge_num == 8 and leaderboard_rank:
