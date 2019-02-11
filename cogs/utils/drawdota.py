@@ -318,7 +318,7 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 				del current_runes[e["id"]]
 	# rune icons
 	rune_icons = {}
-	for i in range(0, 7):
+	for i in range(0, 9):
 		scale = 0.5
 		icon = Image.open(settings.resource(f"images/map/rune_{i}.png"))
 		rune_icons[i] = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
