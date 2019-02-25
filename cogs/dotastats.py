@@ -52,17 +52,21 @@ opendota_html_errors = {
 	"default": "OpenDota said we did things wrong 😢. status code: {}"
 }
 
-async def opendota_query(querystring, cache=False):
+def opendota_query_get_url(querystring):
 	if settings.odota:
 		if "?" in querystring:
 			querystring += f"&api_key={settings.odota}"
 		else:
 			querystring += f"?api_key={settings.odota}"
-	return await httpgetter.get(f"https://api.opendota.com/api{querystring}", cache=cache, errors=opendota_html_errors)
+	return f"https://api.opendota.com/api{querystring}"
+
+async def opendota_query(querystring, cache=False):
+	url = opendota_query_get_url(querystring)
+	return await httpgetter.get(url, cache=cache, errors=opendota_html_errors)
 
 # rate_limit = false if this is the only query we're sending
 async def get_match(match_id):
-	url = f"https://api.opendota.com/api/matches/{match_id}"
+	url = opendota_query_get_url(f"/matches/{match_id}")
 	cached_data = httpgetter.cache.get(url, "json")
 
 	def check_valid_match(match_data):
