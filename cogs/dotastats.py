@@ -70,7 +70,7 @@ async def get_match(match_id):
 			raise InvalidMatchIdError(match_id)
 	
 	if cached_data:
-		if cached_data["version"]:
+		if is_parsed(cached_data):
 			check_valid_match(cached_data)
 			return cached_data
 		else:
@@ -457,7 +457,7 @@ class DotaStats(MangoCog):
 
 		await ctx.send(embed=embed, file=match_image)
 
-	@commands.command(aliases=["lastgame"])
+	@commands.command(aliases=["lastgame", "lm"])
 	async def lastmatch(self, ctx, player=None):
 		"""Gets info about the player's last dota game"""
 		await ctx.channel.trigger_typing()
