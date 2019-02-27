@@ -135,7 +135,8 @@ class MangoHelpFormatter(HelpFormatter):
 		if not description:
 			return discord.Embed()
 		description = self.fill_template(description)
-		if botdata.guildinfo(self.context).is_disabled(self.command):
+		guildinfo = botdata.guildinfo(self.context)
+		if guildinfo and guildinfo.is_disabled(self.command):
 			emoji = simple_get_emoji("command_disabled", self.context.bot)
 			thing = "command" if isinstance(self.command, Command) else "category"
 			description = f"{emoji} *This {thing} has been disabled on this server*\n{description}"
