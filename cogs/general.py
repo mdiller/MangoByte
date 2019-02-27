@@ -554,6 +554,7 @@ class General(MangoCog):
 			raise UserError("You gotta give me a couple different options, separated by spaces")
 		await ctx.send(random.choice(options))
 
+	@commands.Cog.listener()
 	async def on_message(self, message):
 		if message.guild is not None and not botdata.guildinfo(message.guild.id).reactions:
 			return
@@ -574,17 +575,21 @@ class General(MangoCog):
 				await message.add_reaction(random.choice(check["reaction"]))
 				break
 
+	@commands.Cog.listener()
 	async def on_command(self, ctx):
 		msg = loggingdb.insert_message(ctx.message, ctx.command.name, loggingdb_session)
 		loggingdb.insert_command(ctx, loggingdb_session)
 		print(msg)
 
+	@commands.Cog.listener()
 	async def on_command_completion(self, ctx):
 		loggingdb.command_finished(ctx, "completed", None, loggingdb_session)
 
+	@commands.Cog.listener()
 	async def on_guild_join(self, guild):
 		loggingdb.update_guilds(self.bot.guilds, loggingdb_session)
 
+	@commands.Cog.listener()
 	async def on_guild_remove(self, guild):
 		loggingdb.update_guilds(self.bot.guilds, loggingdb_session)
 

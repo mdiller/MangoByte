@@ -20,14 +20,14 @@ class Admin(MangoCog):
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 
-	def __global_check(self, ctx):
+	def bot_check(self, ctx):
 		"""Checks to make sure the user has permissions"""
 		if not isinstance(ctx.message.channel, discord.abc.PrivateChannel):
 			if botdata.guildinfo(ctx.message.guild).is_banned(ctx.message.author):
 				return False
 		return True
 
-	def __local_check(self, ctx):
+	def cog_check(self, ctx):
 		"""Checks to make sure the user has admin privilages"""
 		return checks.is_admin_check(ctx.message.channel, ctx)
 

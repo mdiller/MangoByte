@@ -1,10 +1,10 @@
 from __main__ import settings, botdata, loggingdb_session
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
+import discord
 
 
-
-class MangoCog:
+class MangoCog(discord.ext.commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 		self.emoji_dict = read_json(settings.resource("json/emoji.json"))

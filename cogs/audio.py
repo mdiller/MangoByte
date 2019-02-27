@@ -480,6 +480,7 @@ class Audio(MangoCog):
 
 		await self.do_tts(message, ctx)
 
+	@commands.Cog.listener()
 	async def on_message(self, message):
 		if message.guild and (not message.content.startswith(self.cmdpfx(message.guild))) and message.author.id != self.bot.user.id:
 			guildinfo = botdata.guildinfo(message.guild)
@@ -525,6 +526,7 @@ class Audio(MangoCog):
 		return name
 
 	#function called when this event occurs
+	@commands.Cog.listener()
 	async def on_voice_state_update(self, member, before, after):
 		if member.bot and member.id != self.bot.user.id:
 			return # ignore bots except for mahself
