@@ -141,7 +141,10 @@ async def on_command_error(ctx, error):
 				await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `{cmdpfx}help` fer a list of things that ARE commands.") 
 		elif isinstance(error, commands.CheckFailure):
 			emoji_dict = read_json(settings.resource("json/emoji.json"))
-			await ctx.message.add_reaction(bot.get_emoji(emoji_dict["unauthorized"]))
+			if botdata.guildinfo(ctx).is_disabled(ctx.command):
+				await ctx.message.add_reaction(bot.get_emoji(emoji_dict["command_disabled"]))
+			else:
+				await ctx.message.add_reaction(bot.get_emoji(emoji_dict["unauthorized"]))
 			return # The user does not have permissions
 		elif isinstance(error, commands.MissingRequiredArgument):
 			await ctx.send(embed=await bot.formatter.format_as_embed(ctx, ctx.command))

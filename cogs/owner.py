@@ -34,7 +34,7 @@ class Owner(MangoCog):
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 
-	def __local_check(self, ctx):
+	def cog_check(self, ctx):
 		"""Checks to make sure the user is the bot owner"""
 		return checks.is_owner_check(ctx.message.author)
 

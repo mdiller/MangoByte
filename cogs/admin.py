@@ -22,8 +22,11 @@ class Admin(MangoCog):
 
 	def bot_check(self, ctx):
 		"""Checks to make sure the user has permissions"""
+		guildinfo = botdata.guildinfo(ctx)
 		if not isinstance(ctx.message.channel, discord.abc.PrivateChannel):
-			if botdata.guildinfo(ctx.message.guild).is_banned(ctx.message.author):
+			if guildinfo.is_banned(ctx.message.author):
+				return False
+			if guildinfo.is_disabled(ctx.command):
 				return False
 		return True
 
@@ -54,6 +57,73 @@ class Admin(MangoCog):
 			return
 		botdata.guildinfo(ctx.message.guild).botunban(user)
 		await ctx.send("{} is free of their restraints and may once again use commands".format(user.mention))
+
+	def get_command_or_cog(self, ctx, text):
+		result = ctx.bot.cogs.get(text)
+		if result is not None:
+			return result
+		result = ctx.bot.get_command(text)
+		if result is not None:
+			return result
+		text = text.lower()
+		for cog in ctx.bot.cogs:
+			if text == cog.lower():
+				return ctx.bot.cogs[cog]
+		return None
+
+	@commands.command()
+	async def disablecommand(self, ctx, command: str):
+		"""Disabled the specified command or command category
+
+		**Examples:**
+		`{cmdpfx}disablecommand wiki`
+		`{cmdpfx}disablecommand Audio`"""
+		guildinfo = botdata.guildinfo(ctx)
+		if not guildinfo:
+			raise UserError("This command must be called in a guild")
+
+		cmd = self.get_command_or_cog(ctx, command)
+		if cmd is None:
+			raise UserError("Couldn't find a command or command category by that name")
+
+		secure_cogs = [ "Admin", "Owner" ]
+		if isinstance(cmd, discord.ext.commands.Command):
+			if guildinfo.is_disabled(cmd.cog_name):
+				raise UserError(f"The category this command belongs to ({cmd.cog_name}) is already disabled")
+			if cmd.cog_name in secure_cogs:
+				raise UserError("You can't disable a command in this category")
+		else:
+			if cmd.name in secure_cogs:
+				raise UserError("You can't disable this category")
+
+		if guildinfo.is_disabled(cmd.name):
+			raise UserError("This has already been disabled")
+		guildinfo.disable_command(cmd.name)
+		await ctx.message.add_reaction("✅")
+
+	@commands.command()
+	async def enablecommand(self, ctx, command: str):
+		"""Re-enables the specified command or command category
+
+		Only works on commands that have already been disabled by the `{cmdpfx}disablecommand` command
+
+		**Examples:**
+		`{cmdpfx}enablecommand wiki`
+		`{cmdpfx}enablecommand Audio`"""
+		guildinfo = botdata.guildinfo(ctx)
+		if not guildinfo:
+			raise UserError("This command must be called in a guild")
+		cmd = self.get_command_or_cog(ctx, command)
+		if cmd is None:
+			raise UserError("Couldn't find a command or command category by that name")
+		if not guildinfo.is_disabled(cmd.name):
+			if guildinfo.is_disabled(cmd):
+				raise UserError(f"This command is not disabled, but its category ({cmd.cog_name}) is")
+			else:
+				raise UserError("This is not currently disabled")
+		guildinfo.enable_command(cmd.name)
+		await ctx.message.add_reaction("✅")
+
 
 	@commands.command()
 	async def summon(self, ctx, channel : str = None):

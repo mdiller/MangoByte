@@ -1,7 +1,9 @@
-from __main__ import botdata
+from __main__ import botdata, settings
 import discord, itertools, inspect, re
 from discord.ext.commands import *
 from .botdata import GuildInfo, UserInfo
+from .helpers import read_json
+from cogs.mangocog import simple_get_emoji
 
 def get_config_help(variables, command):
 	keys = []
@@ -133,4 +135,8 @@ class MangoHelpFormatter(HelpFormatter):
 		if not description:
 			return discord.Embed()
 		description = self.fill_template(description)
+		if botdata.guildinfo(self.context).is_disabled(self.command):
+			emoji = simple_get_emoji("command_disabled", self.context.bot)
+			thing = "command" if isinstance(self.command, Command) else "category"
+			description = f"{emoji} *This {thing} has been disabled on this server*\n{description}"
 		return discord.Embed(description=description, color=discord.Color.blue())

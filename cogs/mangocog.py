@@ -3,20 +3,28 @@ from cogs.utils.helpers import *
 from cogs.utils.clip import *
 import discord
 
+emoji_dict = read_json(settings.resource("json/emoji.json"))
+
+def simple_get_emoji(key, bot):
+	emoji_id = emoji_dict.get(key)
+	if emoji_id is None:
+		return f":{key}:"
+	emoji = bot.get_emoji(emoji_id)
+	if emoji is None:
+		return f"<:{key}:{emoji_id}>"
+	return str(emoji)
+
 
 class MangoCog(discord.ext.commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
-		self.emoji_dict = read_json(settings.resource("json/emoji.json"))
 
 	def get_emoji(self, key):
-		emoji_id = self.emoji_dict.get(key)
-		if emoji_id is None:
-			return f":{key}:"
-		emoji = self.bot.get_emoji(emoji_id)
-		if emoji is None:
-			return f"<:{key}:{emoji_id}>"
-		return str(emoji)
+		return simple_get_emoji(key, self.bot)
+
+	@property
+	def name(self):
+		return self.__class__.__name__
 
 	async def get_clip_try_types(self, clipid, trytypes, ctx):
 		trytypes = trytypes.split("|")

@@ -127,7 +127,8 @@ class GuildInfo(BotDataItem):
 		defaults = OrderedDict([ 
 			("voicechannel", None),
 			("invalidcommands", False),
-			("banned_users", [])
+			("banned_users", []),
+			("disabled_commands", [])
 		])
 		for var in self.variables:
 			defaults[var["key"]] = var["default"]
@@ -207,6 +208,19 @@ class GuildInfo(BotDataItem):
 
 	def botunban(self, user):
 		self.remove_list_item("banned_users", user.id)
+
+	def is_disabled(self, cmd):
+		if isinstance(cmd, discord.ext.commands.Command):
+			return self.is_disabled(cmd.name) or self.is_disabled(cmd.cog_name)
+		if isinstance(cmd, discord.ext.commands.Cog):
+			return self.is_disabled(cmd.name)
+		return cmd in self.disabled_commands
+
+	def disable_command(self, cmd):
+		self.add_list_item("disabled_commands", cmd)
+
+	def enable_command(self, cmd):
+		self.remove_list_item("disabled_commands", cmd)
 
 
 
