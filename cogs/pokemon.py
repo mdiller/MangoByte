@@ -5,6 +5,7 @@ from cogs.utils.helpers import *
 from cogs.utils.clip import *
 from cogs.utils import checks
 from .mangocog import *
+from cogs.audio import AudioPlayerNotFoundError
 import os
 import re
 
@@ -106,6 +107,8 @@ class Pokemon(MangoCog):
 			await self.play_clip(clip, ctx)
 		except Http404Error:
 			return False
+		except AudioPlayerNotFoundError:
+			return True
 
 		return True
 
