@@ -187,7 +187,7 @@ class SteamId(ConfigVarType):
 			return None
 
 		if not value.isdigit():
-			raise InvalidInputError("You gotta give me a steam id here")
+			raise InvalidInputError("You gotta give me a steam id (SteamId64 / Friend Id) here")
 		value = int(value)
 
 		if value > 76561197960265728:
