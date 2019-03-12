@@ -45,6 +45,12 @@ async def get_hero_icon(hero_id):
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
+async def get_hero_portrait(hero_id):
+	try:
+		return await get_url_image(hero_infos[hero_id]["portrait"])
+	except KeyError:
+		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
+
 async def get_item_image(item_id):
 	try:
 		return await get_url_image(item_infos[item_id]["icon"])
@@ -561,6 +567,33 @@ async def fuse_hero_images(hero1, hero2):
 
 	fp = BytesIO()
 	colorize_image(file1, file2, fp)
+	fp.seek(0)
+
+	return fp
+
+async def draw_courage(hero_id, icon_ids):
+	# scaled to 128 height
+	hero_image = await get_hero_portrait(hero_id)
+	hero_image = hero_image.resize((97, 128), Image.ANTIALIAS)
+
+	table = Table()
+	table.add_row([
+		ColorCell(color="white", width=97, height=64),
+		ImageCell(img=await get_item_image(icon_ids[0])),
+		ImageCell(img=await get_item_image(icon_ids[1])),
+		ImageCell(img=await get_item_image(icon_ids[2]))
+	])
+	table.add_row([
+		ColorCell(color="white", width=97, height=64),
+		ImageCell(img=await get_item_image(icon_ids[3])),
+		ImageCell(img=await get_item_image(icon_ids[4])),
+		ImageCell(img=await get_item_image(icon_ids[5]))
+	])
+	image = table.render()
+	image = paste_image(image, hero_image, 0, 0)
+
+	fp = BytesIO()
+	image.save(fp, format="PNG")
 	fp.seek(0)
 
 	return fp

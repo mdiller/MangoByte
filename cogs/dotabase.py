@@ -1003,5 +1003,44 @@ class Dotabase(MangoCog):
 		await ctx.send(embed=embed, file=image)
 
 
+	@commands.command()
+	async def courage(self, ctx, hero = None):
+		"""Generates a challenge build
+
+		Creates a challenge build with a random (or given) hero and a random set of items
+
+		**Examples:**
+		`{cmdpfx}courage`
+		`{cmdpfx}courage shadow fiend`"""
+
+		all_boots = [
+			"travel_boots",
+			"phase_boots",
+			"power_treads",
+			"arcane_boots",
+			"tranquil_boots",
+			"guardian_greaves"
+		]
+
+		all_items = read_json(settings.resource("json/courage_items.json"))
+		random.shuffle(all_items)
+		items = all_items[0:5]
+		items.append(random.choice(all_boots))
+		random.shuffle(items)
+
+		item_ids = []
+		for item in items:
+			item_ids.append(session.query(Item).filter(Item.name == f"item_{item}").first().id)
+		if hero:
+			hero_id = self.lookup_hero_id(hero)
+			if not hero_id:
+				raise UserError(f"Couldn't a hero called '{hero}'")
+		else:
+			hero_id = session.query(Hero).order_by(func.random()).first().id
+
+		image = discord.File(await drawdota.draw_courage(hero_id, item_ids), "courage.png")
+		await ctx.send(file=image)
+
+
 def setup(bot):
 	bot.add_cog(Dotabase(bot))
