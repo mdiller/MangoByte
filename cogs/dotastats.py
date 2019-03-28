@@ -25,9 +25,9 @@ class SteamNotLinkedError(UserError):
 		self.is_author = user is None
 		self.user = user
 		if not self.is_author:
-			super().__init__(f"{user.name} doesn't have a steam account linked. They should try `{{cmdpfx}}help setsteam` to see how to link their steam account.")
+			super().__init__(f"{user.name} doesn't have a steam account linked. They should try `{{cmdpfx}}userconfig steam` to see how to link their steam account.")
 		else:
-			super().__init__("Yer steam account isn't linked to yer discord account yet.\nTry doin `{cmdpfx}help setsteam` to see how to link a steam account.")
+			super().__init__("Yer steam account isn't linked to yer discord account yet.\nTry doin `{cmdpfx}userconfig steam` to see how to link a steam account.")
 
 class MatchNotParsedError(UserError):
 	def __init__(self, match_id, action=None):
@@ -41,7 +41,7 @@ class InvalidMatchIdError(UserError):
 class NoMatchHistoryError(UserError):
 	def __init__(self, steam_id):
 		super().__init__(f"")
-		self.embed = discord.Embed(description=f"It looks like you either haven't played dota on this account, or the matches you've played are hidden. If you've played matches on this account, you should try enabling the **Expose Public Match Data** option in dota (see image below). Once you've done that, go to [your profile](http://www.opendota.com/players/{steam_id}) and click the button under your name that says **REFRESH**")
+		self.embed = discord.Embed(description=f"It looks like you either haven't played dota on this account, or the matches you've played are hidden. If you've played matches on this account, you should try enabling the **Expose Public Match Data** option in dota (see image below). Once you've done that, go to [your opendota profile](http://www.opendota.com/players/{steam_id}) and click the button under your name that says **REFRESH**")
 		self.file = discord.File(settings.resource("images/expose_match_data.png"), "tip.png")
 		self.embed.set_image(url=f"attachment://{self.file.filename}")
 
@@ -52,12 +52,21 @@ opendota_html_errors = {
 	"default": "OpenDota said we did things wrong 😢. status code: {}"
 }
 
+def opendota_query_get_url(querystring):
+	if settings.odota:
+		if "?" in querystring:
+			querystring += f"&api_key={settings.odota}"
+		else:
+			querystring += f"?api_key={settings.odota}"
+	return f"https://api.opendota.com/api{querystring}"
+
 async def opendota_query(querystring, cache=False):
-	return await httpgetter.get(f"https://api.opendota.com/api{querystring}", cache=cache, errors=opendota_html_errors)
+	url = opendota_query_get_url(querystring)
+	return await httpgetter.get(url, cache=cache, errors=opendota_html_errors)
 
 # rate_limit = false if this is the only query we're sending
 async def get_match(match_id):
-	url = f"https://api.opendota.com/api/matches/{match_id}"
+	url = opendota_query_get_url(f"/matches/{match_id}")
 	cached_data = httpgetter.cache.get(url, "json")
 
 	def check_valid_match(match_data):
@@ -65,7 +74,7 @@ async def get_match(match_id):
 			raise InvalidMatchIdError(match_id)
 	
 	if cached_data:
-		if cached_data["version"]:
+		if is_parsed(cached_data):
 			check_valid_match(cached_data)
 			return cached_data
 		else:
@@ -197,7 +206,7 @@ async def get_check_steamid(player, ctx, mention=False, no_error=False):
 			raise UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me a their steam id")
 
 	userinfo = botdata.userinfo(player.id)
-	if userinfo.steam32 is None:
+	if userinfo.steam is None:
 		if no_error:
 			return None
 		if is_author:
@@ -206,9 +215,9 @@ async def get_check_steamid(player, ctx, mention=False, no_error=False):
 			raise SteamNotLinkedError(player)
 
 	if mention:
-		return userinfo.steam32, player.mention
+		return userinfo.steam, player.mention
 	else:
-		return userinfo.steam32
+		return userinfo.steam
 
 
 def format_teamfight(teamfight):
@@ -248,6 +257,11 @@ class DotaStats(MangoCog):
 		name = self.hero_info[player["hero_id"]]["name"]
 		emoji = self.hero_info[player["hero_id"]]["emoji"]
 		return f"{emoji}**{name}**"
+
+	async def get_player_mention(self, steamid, ctx):
+		# expects that steamid is a valid int
+		steamid, mention = await get_check_steamid(steamid, ctx, True)
+		return mention
 
 	async def create_dota_gif(self, match, stratz_match, start_time, end_time, ms_per_second=100):
 		await self.dota_gif_lock.acquire()
@@ -399,66 +413,16 @@ class DotaStats(MangoCog):
 		embed.set_footer(text=f"For more information, try {self.cmdpfx(ctx)}match {game['match_id']}")
 		await ctx.send(embed=embed)
 
-	@commands.command(aliases=["register"])
-	async def setsteam(self, ctx, steam_id, user: discord.User=None):
-		"""Links a discord user to their steam/dota account
-		*The user parameter can only be specified by the bot owner*
-		
-		You have to give this command either your steam32 or steam64 id. An easy way to find this is to open dota and find your 'Friend ID', or look at the end of your dotabuff/opendota profile url.
-
-		If you open up dota and go to your profile, your 'Friend ID' will be just under your name, and will look like this:
-		<:steam:414724031380586496> **FRIEND ID:** `<number>`
-
-		To un-register, try `{cmdpfx}setsteam none` or `{cmdpfx}setsteam reset`
-
-		**Example:**
-		If this is me:
-		https://www.dotabuff.com/players/70388657
-		or this is on my dota profile:
-		<:steam:414724031380586496> **FRIEND ID: 70388657**
-
-		I would do: `{cmdpfx}setsteam 70388657`
-		"""
-
-		if user is None:
-			user = ctx.message.author
-		elif user.id != ctx.message.author.id:
-			if not checks.is_owner_check(ctx.message.author):
-				await ctx.send("You aint the boss of me 😠")
-				return
-
-		if steam_id.lower() in [ "none", "reset", "default" ]:
-			userinfo = botdata.userinfo(user.id)
-			userinfo.steam32 = None
-			await ctx.send("Steam ID has been unregistered")
-			return
-
-		steam_id = str(steam_id)
-		if not steam_id.isdigit():
-			raise UserError("You gotta give me a steam id here")
-		steam_id = int(steam_id)
-
-		if steam_id > 76561197960265728:
-			steam_id -= 76561197960265728
-
-		player = await opendota_query(f"/players/{steam_id}")
-
-		if player.get("profile") is None:
-			raise UserError("Either thats a bad id, you don't play dota, or ya haven't enabled public match data")
-
-		userinfo = botdata.userinfo(user.id)
-		userinfo.steam32 = steam_id
-
-		await ctx.send("Linked to {}".format(player['profile']['personaname']))
 
 	# prints the stats for the given player's latest game
 	async def player_match_stats(self, steamid, match_id, ctx):
 		match = await get_match(match_id)
 
 		# Finds the player in the game which has our matching steam32 id
-		player = next(p for p in match['players'] if p['account_id'] == steamid)
+		player = next((p for p in match['players'] if p['account_id'] == steamid), None)
 		if player is None:
-			raise ValueError("wtf they're not in their own game")
+			await self.print_match_stats(ctx, match_id)
+			return
 
 		dotabase = self.bot.get_cog("Dotabase")
 		hero_name = self.hero_info[player['hero_id']]['name']
@@ -497,7 +461,7 @@ class DotaStats(MangoCog):
 
 		await ctx.send(embed=embed, file=match_image)
 
-	@commands.command(aliases=["lastgame"])
+	@commands.command(aliases=["lastgame", "lm"])
 	async def lastmatch(self, ctx, player=None):
 		"""Gets info about the player's last dota game"""
 		await ctx.channel.trigger_typing()
@@ -506,11 +470,7 @@ class DotaStats(MangoCog):
 		match_id = await get_lastmatch_id(steamid)
 		await self.player_match_stats(steamid, match_id, ctx)
 
-	@commands.command(aliases=["matchdetails"])
-	async def match(self, ctx, match_id : int):
-		"""Gets a summary of the dota match with the given id"""
-		await ctx.channel.trigger_typing()
-
+	async def print_match_stats(self, ctx, match_id):
 		match = await get_match(match_id)
 		duration = get_pretty_duration(match['duration'], postfix=False)
 		game_mode = self.dota_game_strings.get(f"game_mode_{match.get('game_mode')}", "Unknown")
@@ -535,6 +495,14 @@ class DotaStats(MangoCog):
 		embed.set_image(url=f"attachment://{match_image.filename}")
 		embed.set_footer(text=str(match_id))
 		await ctx.send(embed=embed, file=match_image)
+
+
+	@commands.command(aliases=["matchdetails"])
+	async def match(self, ctx, match_id : int):
+		"""Gets a summary of the dota match with the given id"""
+		await ctx.channel.trigger_typing()
+		await self.print_match_stats(ctx, match_id)
+
 
 	@commands.command()
 	async def matchstory(self, ctx, match_id : int, perspective=None):
@@ -581,7 +549,7 @@ class DotaStats(MangoCog):
 		if player is None:
 			player = ctx.message.author.mention
 
-		player_data = next(p for p in game['players'] if p['account_id'] == steamid)
+		player_data = next((p for p in game['players'] if p['account_id'] == steamid), None)
 		perspective += "({0}, {1})".format(self.get_pretty_hero(player_data), "Radiant" if player_data['isRadiant'] else "Dire")
 
 		await self.tell_match_story(game, player_data['isRadiant'], ctx, perspective)
@@ -673,7 +641,8 @@ class DotaStats(MangoCog):
 		await ctx.channel.trigger_typing()
 
 		playerinfo = await opendota_query(f"/players/{steam32}")
-		matches = await opendota_query(f"/players/{steam32}/matches")
+		matches = await opendota_query(f"/players/{steam32}/matches?significant=0")
+		matches = list(filter(lambda m: m.get('player_slot') is not None, matches))
 
 		rank_strings = [ "Unranked", "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine", "Immortal" ]
 
@@ -683,7 +652,7 @@ class DotaStats(MangoCog):
 		rank_tier = base_rank_tier // 10
 		leaderboard_rank = playerinfo.get("leaderboard_rank")
 		rank_string = f"**{rank_strings[rank_tier]}**"
-		stars = min(base_rank_tier % 10, 5)
+		stars = min(base_rank_tier % 10, 7)
 		if stars > 0:
 			rank_string += f" [{stars}]"
 
@@ -692,7 +661,7 @@ class DotaStats(MangoCog):
 
 		gamesplayed = len(matches)
 		if gamesplayed > 0:
-			winrate = "{:.2%}".format(len(list(filter(lambda m: m['radiant_win'] == (m['player_slot'] < 128), matches))) / gamesplayed)
+			winrate = "{:.2%}".format(len(list(filter(lambda m: m.get('radiant_win', False) == ((m.get('player_slot', 0) or 0) < 128), matches))) / gamesplayed)
 		else:
 			winrate = "0%"
 
@@ -738,6 +707,10 @@ class DotaStats(MangoCog):
 			activity_delta = [ 0 ]
 			activity_count = [ 0 ]
 
+		overall_time_played = 0
+		for match in matches:
+			overall_time_played += match["duration"]
+
 		overall_activity_delta = get_pretty_time((int(statistics.mean(activity_delta)) // 60) * 60)
 		if recent_count:
 			recent_activity_delta = get_pretty_time((int(statistics.mean(activity_delta[:recent_count])) // 60) * 60)
@@ -755,6 +728,7 @@ class DotaStats(MangoCog):
 
 		embed.add_field(name="General", value=(
 			f"Winrate of **{winrate}** over **{gamesplayed}** games\n"
+			f"Total Hours In Game: **{overall_time_played // 3600:,}**\n"
 			f"{rank_string}"))
 
 		embed.add_field(name="Profiles", value=(
@@ -807,7 +781,7 @@ class DotaStats(MangoCog):
 			while i < len(matches_info) and len(player_matches) < 20:
 				if matches_info[i].get('version', None) is not None:
 					match = await get_match(matches_info[i]['match_id'])
-					player_matches.append(next(p for p in match['players'] if p['account_id'] == steam32))
+					player_matches.append(next((p for p in match['players'] if p['account_id'] == steam32), None))
 					matches.append(match)
 					
 					player_matches[-1]['party_size'] = 0
@@ -858,20 +832,22 @@ class DotaStats(MangoCog):
 		longest_message = None
 		longest_message_match_id = None
 		for match in matches:
-			player = next(p for p in match['players'] if p['account_id'] == steam32)
-			for message in match['chat']:
-				if message.get('player_slot', -1) == player['player_slot']:
-					if message["type"] == "chat":
-						message_count += 1
-						if longest_message is None or len(longest_message) <= len(message['key']):
-							longest_message = message['key']
-							longest_message_match_id = match['match_id']
-					elif message["type"] == "chatwheel":
-						msg_id = int(message['key'])
-						if msg_id >= 1000:
-							continue # skip hero chat wheels
-						chat_wheel_counts[msg_id] = chat_wheel_counts.get(msg_id, 0) + 1
-						chat_wheel_total += 1
+			player = next((p for p in match['players'] if p['account_id'] == steam32), None)
+			match_chat = match.get('chat', None)
+			if match_chat:
+				for message in match_chat:
+					if message.get('player_slot', -1) == player['player_slot']:
+						if message["type"] == "chat":
+							message_count += 1
+							if longest_message is None or len(longest_message) <= len(message['key']):
+								longest_message = message['key']
+								longest_message_match_id = match['match_id']
+						elif message["type"] == "chatwheel":
+							msg_id = int(message['key'])
+							if msg_id >= 1000:
+								continue # skip hero chat wheels
+							chat_wheel_counts[msg_id] = chat_wheel_counts.get(msg_id, 0) + 1
+							chat_wheel_total += 1
 
 		message_count = int(round(message_count / len(matches)))
 		if longest_message is not None:
@@ -884,8 +860,8 @@ class DotaStats(MangoCog):
 			chat_wheel_counts = sorted(chat_wheel_counts.items(), key=lambda m: m[1], reverse=True)
 			for i in range(0, min(3, len(chat_wheel_counts))):
 				msg_id, count = chat_wheel_counts[i]
-				message = self.chat_wheel_info[msg_id]
-				icon = self.get_emoji("chat_wheel_sound" if message['is_sound'] else "chat_wheel_text")
+				message = self.chat_wheel_info.get(msg_id, { "message": "Unknown" })
+				icon = self.get_emoji("chat_wheel_sound" if message.get('is_sound') else "chat_wheel_text")
 				lines.append(f"{icon} {message['message']}")
 			chat_wheel_text = "\n".join(lines)
 
@@ -1084,6 +1060,7 @@ class DotaStats(MangoCog):
 			f"Winrate: **{percent(lambda p: p['radiant_win'] == (p['player_slot'] < 128), round_place=2)}%**\n"
 			f"Avg KDA: **{avg('kills')}**/**{avg('deaths')}**/**{avg('assists')}**\n"), color=self.embed_color)
 
+		embed.color = discord.Color(int(hero.color[1:], 16))
 
 		embed.set_author(
 			name=f"{playerinfo['profile']['personaname']} ({hero.localized_name})", 
@@ -1112,7 +1089,7 @@ class DotaStats(MangoCog):
 	async def friendstats(self, ctx, player):
 		"""Statistics of games played with a friend"""
 		await ctx.channel.trigger_typing()
-		author_id = botdata.userinfo(ctx.message.author.id).steam32
+		author_id = botdata.userinfo(ctx.message.author.id).steam
 		if not author_id:
 			raise SteamNotLinkedError()
 
@@ -1127,12 +1104,12 @@ class DotaStats(MangoCog):
 
 		def on_same_team(match):
 			heroes = match["heroes"]
-			player1 = heroes[next(x for x in heroes if heroes[x].get("account_id") == author_id)]
-			player2 = heroes[next(x for x in heroes if heroes[x].get("account_id") == friend_id)]
+			player1 = heroes[next((x for x in heroes if heroes[x].get("account_id") == author_id), None)]
+			player2 = heroes[next((x for x in heroes if heroes[x].get("account_id") == friend_id), None)]
 			return (player1["player_slot"] < 128) == (player2["player_slot"] < 128)
 		def won_match(match):
 			heroes = match["heroes"]
-			player = heroes[next(x for x in heroes if heroes[x].get("account_id") == author_id)]
+			player = heroes[next((x for x in heroes if heroes[x].get("account_id") == author_id), None)]
 			return (player["player_slot"] < 128) == match["radiant_win"]
 
 		url = f"/players/{author_id}/matches?included_account_id={friend_id}"
@@ -1145,8 +1122,8 @@ class DotaStats(MangoCog):
 
 		def format_match(match):
 			heroes = match["heroes"]
-			author = heroes[next(x for x in heroes if heroes[x].get("account_id") == author_id)]
-			friend = heroes[next(x for x in heroes if heroes[x].get("account_id") == friend_id)]
+			author = heroes[next((x for x in heroes if heroes[x].get("account_id") == author_id), None)]
+			friend = heroes[next((x for x in heroes if heroes[x].get("account_id") == friend_id), None)]
 			timediff = time.time() - match['start_time']
 			timediff -= timediff % 60
 			if timediff > (60 * 60 * 24 * 30):
@@ -1326,11 +1303,11 @@ class DotaStats(MangoCog):
 				continue
 			mentions.append(member.mention)
 			userinfo = botdata.userinfo(member.id)
-			if userinfo.steam32 is None:
+			if userinfo.steam is None:
 				links.append("Unknown")
 			else:
-				player_info = await opendota_query(f"/players/{userinfo.steam32}")
-				links.append(f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{userinfo.steam32})")
+				player_info = await opendota_query(f"/players/{userinfo.steam}")
+				links.append(f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{userinfo.steam})")
 
 		if len(mentions) == 0:
 			raise UserError("There isn't anyone in my voice channel 😢")

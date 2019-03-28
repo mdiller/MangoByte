@@ -3,15 +3,16 @@ from discord.ext import commands
 from discord.ext.commands.bot import _mention_pattern, _mentions_transforms
 from __main__ import settings, botdata, invite_link, httpgetter
 from cogs.utils.helpers import *
-from cogs.utils import checks
+from cogs.utils.botdata import UserInfo
+from cogs.utils import checks, botdatatypes
 from cogs.audio import AudioPlayerNotFoundError
 from sqlalchemy import func
-from cairosvg import svg2png
 import cogs.utils.loggingdb as loggingdb
 import string
 import random
 import datetime
 import wikipedia
+import html
 from bs4 import BeautifulSoup, Tag
 from io import BytesIO
 import re
@@ -61,6 +62,29 @@ class General(MangoCog):
 		self.superscripts = read_json(settings.resource("json/superscripts.json"))
 		self.showerthoughts_data = read_json(settings.resource("json/showerthoughts.json"))
 		self.words = load_words()
+
+	@commands.command()
+	async def userconfig(self, ctx, name, *, value = None):
+		"""Configures the bot's user-specific settings
+
+		Below are the different user-specific settings that you can tweak to customize mangobyte. You can get more information about a setting by typing `{cmdpfx}userconfig <settingname>`, and you can configure a setting by typing `{cmdpfx}userconfig <settingname> <value>`
+
+		{userconfig_help}
+		"""
+		var = next((v for v in UserInfo.variables if v["key"] == name), None)
+		if not var:
+			vars_list = "\n".join(map(lambda v: f"`{v['key']}`", UserInfo.variables))
+			await ctx.send(f"There is no userconfig setting called '{name}'. Try one of these:\n{vars_list}")
+			return
+
+		
+		if not value: # We are just getting a value
+			value = botdata.userinfo(ctx.message.author)[var["key"]]
+			await ctx.send(embed=await botdatatypes.localize_embed(ctx, var, value, f"{self.cmdpfx(ctx)}userconfig"))
+		else: # We are setting a value
+			value = await botdatatypes.parse(ctx, var, value)
+			botdata.userinfo(ctx.message.author)[var["key"]] = value
+			await ctx.message.add_reaction("✅")
 
 	@commands.command()
 	async def ping(self, ctx, count : int=1):
@@ -171,7 +195,7 @@ class General(MangoCog):
 		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url)
 
 		embed.add_field(name="Servers/Guilds", value="{:,}".format(len(self.bot.guilds)))
-		embed.add_field(name="Registered Users", value="{:,}".format(len(list(filter(lambda user: user.steam32, botdata.userinfo_list())))))
+		embed.add_field(name="Registered Users", value="{:,}".format(len(list(filter(lambda user: user.steam, botdata.userinfo_list())))))
 
 		commands = loggingdb_session.query(loggingdb.Message).filter(loggingdb.Message.command != None)
 		commands_weekly = commands.filter(loggingdb.Message.timestamp > datetime.datetime.utcnow() - datetime.timedelta(weeks=1))
@@ -323,7 +347,7 @@ class General(MangoCog):
 			
 			return str(tag)
 
-		summary = tagsToMarkdown(page_html.find("div").find("p", recursive=False).contents)
+		summary = tagsToMarkdown(page_html.find("div").find(lambda tag: tag.name == "p" and not tag.attrs, recursive=False).contents)
 
 		def markdownLength(text):
 			text = re.sub(r"\[([^\[]*)]\([^\(]*\)", r"\1", text)
@@ -354,22 +378,14 @@ class General(MangoCog):
 		for image in page.images:
 			if "Wikisource-logo" in image:
 				continue
-			if re.search(r"\.(png|jpg|jpeg|gif|svg)$", image, re.IGNORECASE):
+			if re.search(r"\.(png|jpg|jpeg|gif)$", image, re.IGNORECASE):
 				index = page_html_text.find(image.split('/')[-1])
 				if index != -1 and (best_image_index == -1 or index < best_image_index):
 					best_image = image
 					best_image_index = index
 
 		if best_image:
-			if re.search(r"\.svg$", best_image, re.IGNORECASE):
-				svg_text = await httpgetter.get(best_image, "text", cache=True)
-				fp = BytesIO()
-				svg2png(bytestring=svg_text, write_to=fp)
-				fp.seek(0)
-				svg_png_image = discord.File(fp, "svg.png")
-				embed.set_image(url=f"attachment://{svg_png_image.filename}")
-			else:
-				embed.set_image(url=best_image)
+			embed.set_image(url=best_image)
 
 		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 
@@ -405,8 +421,10 @@ class General(MangoCog):
 		# convert between markdown types
 		description = re.sub(r"\n(?:\*|-) (.*)", r"\n• \1", description)
 		description = re.sub(r"(?:^|\n)#+([^#\n]+)\n", r"\n__**\1**__ \n", description)
-		description = re.sub(r"\n+---\n+", r"\n``` ```\n", description)
+		description = re.sub(r"\n+---\n+", r"\n\n", description)
 		description = re.sub(r"&nbsp;", r" ", description)
+
+		description = html.unescape(description)
 
 		if len(description) > character_limit:
 			description = f"{description[0:character_limit]}...\n[Read More]({submission.shortlink})"
@@ -502,7 +520,41 @@ class General(MangoCog):
 		if ctx.guild.me.voice:
 			await self.play_clip(f"tts:{start_local}{result}", ctx)
 		
+	
+	@commands.command(aliases=["random"])	
+	async def random_number(self, ctx, maximum : int, minimum : int = 0):
+		"""Gets a random number between the minimum and maximum
 
+		The min and max integer bounds are **inclusive**
+
+		The command will be able to figure out which number is the minimum and which is the maximum if they are put in backwards. If one number is entered, it is assumed to be the maximum, and the default minimum is 0
+
+		**Example:**
+		`{cmdpfx}random 5`
+		`{cmdpfx}random 1 10`
+		"""
+		result = None
+		if maximum < minimum:
+			result = random.randint(maximum, minimum)
+		else:
+			result = random.randint(minimum, maximum)
+		await ctx.send(result)
+	
+	@commands.command(aliases=["pickone"])
+	async def choose(self, ctx, *options):
+		"""Randomly chooses one of the given options
+
+		You must provide at least one option for the bot to choose, and the options should be separated by spaces
+		
+		**Example:**
+		`{cmdpfx}choose Dota2 Fortnite RocketLeague`
+		`{cmdpfx}choose green red blue`
+		"""
+		if not len(options) > 0:
+			raise UserError("You gotta give me a couple different options, separated by spaces")
+		await ctx.send(random.choice(options))
+
+	@commands.Cog.listener()
 	async def on_message(self, message):
 		if message.guild is not None and not botdata.guildinfo(message.guild.id).reactions:
 			return
@@ -523,17 +575,21 @@ class General(MangoCog):
 				await message.add_reaction(random.choice(check["reaction"]))
 				break
 
+	@commands.Cog.listener()
 	async def on_command(self, ctx):
 		msg = loggingdb.insert_message(ctx.message, ctx.command.name, loggingdb_session)
 		loggingdb.insert_command(ctx, loggingdb_session)
 		print(msg)
 
+	@commands.Cog.listener()
 	async def on_command_completion(self, ctx):
 		loggingdb.command_finished(ctx, "completed", None, loggingdb_session)
 
+	@commands.Cog.listener()
 	async def on_guild_join(self, guild):
 		loggingdb.update_guilds(self.bot.guilds, loggingdb_session)
 
+	@commands.Cog.listener()
 	async def on_guild_remove(self, guild):
 		loggingdb.update_guilds(self.bot.guilds, loggingdb_session)
 

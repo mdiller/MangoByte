@@ -77,6 +77,14 @@ class Color():
 	def __hash__(self):
 		return self.integer
 
+	# blends this color with another color (of the given opacity) and returns the result
+	def blend(self, color, opacity=0.5):
+		my_op = 1 - opacity
+		return Color((
+			int((self.r * my_op) + (color.r * opacity)),
+			int((self.g * my_op) + (color.g * opacity)),
+			int((self.b * my_op) + (color.b * opacity))
+		))
 
 # gets a number representing how far apart the 2 colors are
 def color_diff(c1, c2):

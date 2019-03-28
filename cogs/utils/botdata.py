@@ -1,6 +1,7 @@
 from .helpers import *
 import os
 import discord
+import cogs.utils.botdatatypes as types
 from collections import OrderedDict
 
 class ListVar:
@@ -73,20 +74,61 @@ class BotDataItem:
 
 class UserInfo(BotDataItem):
 	def __init__(self, botdata, discord):
-		BotDataItem.__init__(self, botdata, "userinfo", { "discord": discord }, OrderedDict([
-			("steam32", None),
-			("intro", "local:helloits"),
-			("outro", "local:farewell"),
-			("introtts", "it's"),
-			("outrotts", "has left!")
-		]))
+		defaults = OrderedDict([])
+		for var in self.variables:
+			defaults[var["key"]] = var["default"]
+		BotDataItem.__init__(self, botdata, "userinfo", { "discord": discord }, defaults)
+
+	variables = [
+		{
+			"key": "steam",
+			"default": None,
+			"type": types.SteamId,
+			"description": "This links your steam account to your discord account for mangobyte. You have to give this either your steam32 or steam64 id. An easy way to find this is to open dota and find your 'Friend ID', or look at the end of your dotabuff/opendota profile url.\n\nIf you open up dota and go to your profile, your 'Friend ID' will be just under your name, and will look like this:\n<:steam:414724031380586496> **FRIEND ID:** `<number>`\n\nIn which case you should do `?userconfig steam <number>`\n\nTo un-register, try setting this to `clear` or `reset`",
+			"example": "70388657"
+		},
+		{
+			"key": "intro",
+			"default": "local:helloits",
+			"type": types.ShortClip,
+			"description": "This sets the clip that will play whenever you join a voice channel that mangobyte is in. Note that this clip cannot be longer than 4.5 seconds\n\nTo make it so no clip plays when you join the channel, try setting this to `none`, `silent`, `off`, or `disable`",
+			"example": "local:math"
+		},
+		{
+			"key": "outro",
+			"default": "local:farewell",
+			"type": types.ShortClip,
+			"description": "This sets the clip that will play whenever you leave a voice channel that mangobyte is in. Note that this clip cannot be longer than 4.5 seconds\n\nTo make it so no clip plays when you join the channel, try setting this to `none`, `silent`, `off`, or `disable`",
+			"example": "dota:troll_warlord_troll_lose_03"
+		},
+		{
+			"key": "introtts",
+			"default": "it's",
+			"type": types.ShortText,
+			"description": "This is what is said before saying your name when announcing that you have joined the channel. To set your tts to be nothing, try setting this to `nothing` or `none`\n\nNote that this clip can be no longer than 32 characters.",
+			"example": "it's the magnificent"
+		},
+		{
+			"key": "outrotts",
+			"default": "has left!",
+			"type": types.ShortText,
+			"description": "This is what is said after saying your name when announcing that you have left the channel. To set your tts to be nothing, try setting this to `nothing` or `none`\n\nNote that this clip can be no longer than 32 characters.",
+			"example": "dun gone left"
+		}
+	]
+
+	def set_default(self, ctx, key):
+		var = next((v for v in self.variables if v["key"] == key), None)
+		if var:
+			self[key] = var["default"]
 	
 class GuildInfo(BotDataItem):
 	def __init__(self, botdata, guildid):
 		defaults = OrderedDict([ 
 			("voicechannel", None),
 			("invalidcommands", False),
-			("banned_users", [])
+			("banned_users", []),
+			("disabled_commands", [])
 		])
 		for var in self.variables:
 			defaults[var["key"]] = var["default"]
@@ -96,57 +138,64 @@ class GuildInfo(BotDataItem):
 		{
 			"key": "prefix",
 			"default": "?",
-			"type": "CommandPrefix",
+			"type": types.CommandPrefix,
 			"description": "Configures the character to use to prefix your commands for this server",
 			"example": "!"
 		},
 		{
 			"key": "reactions",
 			"default": False,
-			"type": bool,
+			"type": types.Boolean,
 			"description": "Allows mangobyte to react to users messages depending on what they are saying",
 			"example": "enable"
 		},
 		{
 			"key": "ttschannel",
 			"default": None,
-			"type": discord.TextChannel,
+			"type": types.TextChannel,
 			"description": "If someone types in the given channel, mangobyte will automatically interpret it as a `?smarttts` command, and say it in the voicechannel that they are in. To say something in this channel without doing a tts, try adding a `//` or `#` to the front of your message",
 			"example": "#tts"
 		},
 		{
 			"key": "botadmin",
 			"default": None,
-			"type": discord.Role,
+			"type": types.Role,
 			"description": "Users who have the specified role will be able to use commands from the admin section. To set this role, do `?config botadmin <role>` where <role> is an @mention of a role in the server",
 			"example": "@BotAdmin"
 		},
 		{
 			"key": "intros",
 			"default": True,
-			"type": bool,
+			"type": types.Boolean,
 			"description": "Allows mangobyte to announce users when they enter the voice channel that mangobyte is currently in",
 			"example": "disable"
 		},
 		{
 			"key": "outros",
 			"default": True,
-			"type": bool,
+			"type": types.Boolean,
 			"description": "Allows mangobyte to announce when users leave the voice channel that mangobyte is currently in",
 			"example": "disable"
 		},
 		{
 			"key": "ttslang",
 			"default": "en-au",
-			"type": "GttsLang",
+			"type": types.GttsLang,
 			"description": "Sets the language/voice that mangobyte will use to speak using the `?tts` command. To see a list of all of the possible languages, check out [this file](https://github.com/mdiller/MangoByte/blob/master/resource/json/gtts_languages.json) in the github repo",
 			"example": "Russian"
 		},
 		{
 			"key": "usenickname",
 			"default": False,
-			"type": bool,
+			"type": types.Boolean,
 			"description": "Sets whether mangobyte will use the user's name or nickname when announcing that they have joined or left a channel",
+			"example": "enable"
+		},
+		{
+			"key": "announcetts",
+			"default": False,
+			"type": types.Boolean,
+			"description": "Sets whether mangobyte announce the user's name before playing the clip when they the user plays a clip by typing something in the tts channel",
 			"example": "enable"
 		}
 	]
@@ -159,6 +208,19 @@ class GuildInfo(BotDataItem):
 
 	def botunban(self, user):
 		self.remove_list_item("banned_users", user.id)
+
+	def is_disabled(self, cmd):
+		if isinstance(cmd, discord.ext.commands.Command):
+			return self.is_disabled(cmd.name) or self.is_disabled(cmd.cog_name)
+		if isinstance(cmd, discord.ext.commands.Cog):
+			return self.is_disabled(cmd.name)
+		return cmd in self.disabled_commands
+
+	def disable_command(self, cmd):
+		self.add_list_item("disabled_commands", cmd)
+
+	def enable_command(self, cmd):
+		self.remove_list_item("disabled_commands", cmd)
 
 
 
@@ -183,7 +245,7 @@ class BotData:
 		write_json(self.path, self.json_data)
 
 	def userinfo(self, userid):
-		if isinstance(userid, discord.User):
+		if isinstance(userid, discord.User) or  isinstance(userid, discord.Member):
 			userid = userid.id
 		return UserInfo(self, userid)
 

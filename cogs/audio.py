@@ -5,6 +5,7 @@ from cogs.utils.clip import *
 from __main__ import settings, botdata, report_error, loggingdb_session
 from cogs.utils import checks
 import cogs.utils.loggingdb as loggingdb
+import cogs.utils.botdatatypes as botdatatypes
 import asyncio
 import os
 import string
@@ -15,9 +16,6 @@ import urllib.request
 from random import randint
 from .mangocog import *
 from ctypes.util import find_library
-
-discord.opus.load_opus(find_library('opus'))
-
 
 intro_outro_length = 4.5
 
@@ -393,148 +391,6 @@ class Audio(MangoCog):
 			fp.close()
 
 	@commands.command()
-	async def setintro(self, ctx, clipname : str=None, user: discord.User=None):
-		"""Sets your intro clip
-
-		Calling this command without a clipname will tell you your current intro
-
-		The argument is the name of the clip that will introduce you, for example:
-		`{cmdpfx}setintro math`
-		**Note:** your intro clip cannot be longer than 4 seconds
-		"""
-		if user is None:
-			user = ctx.message.author
-		elif user.id != ctx.message.author.id:
-			if not checks.is_owner_check(ctx.message.author):
-				await ctx.send("You ain't the boss of me 😠")
-				return
-
-		if clipname is None:
-			intro = botdata.userinfo(user.id).intro
-			if intro is None or intro == "":
-				await ctx.send(f"Yer intro isn't set. Try doin somethin' like `{self.cmdpfx(ctx)}setintro dota:gyrocopter_gyro_items_01`")
-				return
-			else:
-				await ctx.send("Your intro is: {}".format(intro))
-				await self.play_clip("tts:your intro is", ctx)
-				await self.play_clip(intro, ctx)
-				return
-
-		clip = await self.get_clip_try_types(clipname, "local|dota", ctx)
-
-		audiolength = clip.audiolength
-
-		if audiolength > intro_outro_length + 0.1:
-			await ctx.send(f"Dat clip is {audiolength:.1f} seconds long, and intros gotta be less than {intro_outro_length}.")
-			return
-
-		botdata.userinfo(user.id).intro = clip.clipid
-		await ctx.send(f"Yer intro is now `{clip.clipid}`")
-
-
-	@commands.command()
-	async def setoutro(self, ctx, clipname : str=None, user: discord.User=None):
-		"""Sets your outro clip
-
-		Calling this command without a clipname will tell you your current outro
-
-		The argument is the name of the clip that will 'outroduce' you, for example:
-		`{cmdpfx}setoutro math`
-		**Note:** your outro clip cannot be longer than 4 seconds
-		"""
-		if user is None:
-			user = ctx.message.author
-		elif user.id != ctx.message.author.id:
-			if not checks.is_owner_check(ctx.message.author):
-				await ctx.send("You ain't the boss of me 😠")
-				return
-
-		if clipname is None:
-			outro = botdata.userinfo(user.id).outro
-			if outro is None or outro == "":
-				await ctx.send(f"Yer outro isn't set. Try doin somethin' like `{self.cmdpfx(ctx)}setoutro dota:troll_warlord_troll_lose_03`")
-				return
-			else:
-				await ctx.send("Your outro is: {}".format(outro))
-				await self.play_clip("tts:your outro is", ctx)
-				await self.play_clip(outro, ctx)
-				return
-
-		clip = await self.get_clip_try_types(clipname, "local|dota", ctx)
-
-		audiolength = clip.audiolength
-
-		if audiolength >  intro_outro_length + 0.1:
-			await ctx.send(f"Dat clip is {audiolength:.1f} seconds long, and outros gotta be less than {intro_outro_length}.")
-			return
-
-		botdata.userinfo(user.id).outro = clip.clipid
-		await ctx.send(f"Yer outro is now `{clip.clipid}`")
-
-	@commands.command(aliases=["setwelcome"])
-	async def setintrotts(self, ctx, *, introtts : str=None):
-		"""Sets your intro tts
-
-		This is what is said before saying your name when announcing that you have joined the channel
-
-		Calling this command without any text will tell you your current tts intro. The default is simply `it's`. To set your tts to be nothing, try `{cmdpfx}setintrotts nothing` or `{cmdpfx}setintrotts none`
-
-		The argument is the name of the clip that will introduce you, for example:
-		`{cmdpfx}setintrotts it's the magnificent`
-		**Note:** your intro tts cannot be longer than 32 characters
-		"""
-		user = ctx.message.author
-
-		if introtts is None:
-			introtts = botdata.userinfo(user.id).introtts
-
-			await ctx.send(f"Your intro tts sounds like: {introtts} {ctx.author.name}")
-			await self.play_clip(f"tts:{introtts} {ctx.author.name}", ctx)
-			return
-
-		if len(introtts) > 32:
-			await ctx.send(f"Dat text is {len(introtts)} characters long, and introtts text must be 32 characters or less")
-			return
-
-		if introtts.lower() in [ "nothing", "none", "" ]:
-			introtts = " "
-
-		botdata.userinfo(user.id).introtts = introtts
-		await ctx.send(f"Yer intro tts is now `{introtts}`")
-
-	@commands.command()
-	async def setoutrotts(self, ctx, *, outrotts : str=None):
-		"""Sets your outro tts
-
-		This is what is said after saying your name when announcing that you have left the channel
-
-		Calling this command without any text will tell you your current tts intro. The default is simply `has left!`. To set your tts to be nothing, try `{cmdpfx}setoutrotts nothing` or `{cmdpfx}setoutrotts none`
-
-		The argument is the name of the clip that will introduce you, for example:
-		`{cmdpfx}setoutrotts dun gone left`
-		**Note:** your intro tts cannot be longer than 32 characters
-		"""
-		user = ctx.message.author
-
-		if outrotts is None:
-			outrotts = botdata.userinfo(user.id).outrotts
-
-			await ctx.send(f"Your outro tts sounds like: {ctx.author.name} {outrotts}")
-			await self.play_clip(f"tts:{ctx.author.name} {outrotts}", ctx)
-			return
-
-		if len(outrotts) > 32:
-			await ctx.send(f"Dat text is {len(outrotts)} characters long, and outrotts text must be 32 characters or less")
-			return
-
-		if outrotts.lower() in [ "nothing", "none", "" ]:
-			outrotts = " "
-
-		botdata.userinfo(user.id).outrotts = outrotts
-		await ctx.send(f"Yer intro tts is now `{outrotts}`")
-
-
-	@commands.command()
 	async def tts(self, ctx, *, message : str):
 		"""Like echo but for people who can't read
 
@@ -550,7 +406,8 @@ class Audio(MangoCog):
 		gtts_fixes = read_json(settings.resource("json/gtts_fixes.json"))
 		text = text.replace("\n", " ")
 		for key in gtts_fixes:
-			text = re.sub("\\b({})\\b".format(key), gtts_fixes[key], text, re.IGNORECASE)
+			pattern = f"\\b({key})\\b" if not key.startswith("regex:") else re.sub("^regex:", "", key)
+			text = re.sub(pattern, gtts_fixes[key], text, re.IGNORECASE)
 		await self.play_clip("tts:" + text, ctx)
 
 
@@ -623,16 +480,24 @@ class Audio(MangoCog):
 
 		await self.do_tts(message, ctx)
 
+	@commands.Cog.listener()
 	async def on_message(self, message):
 		if message.guild and (not message.content.startswith(self.cmdpfx(message.guild))) and message.author.id != self.bot.user.id:
-			if botdata.guildinfo(message.guild).is_banned(message.author):
+			guildinfo = botdata.guildinfo(message.guild)
+			if guildinfo.is_banned(message.author):
 				return # banned users cant talk
-			ttschannel = botdata.guildinfo(message.guild.id).ttschannel
+			ttschannel = guildinfo.ttschannel
 			if ttschannel == message.channel.id:
 				if message.content.startswith("//") or message.content.startswith("#"):
 					return # commented out stuff should be ignored
 				loggingdb.insert_message(message, "smarttts", loggingdb_session)
 				try:
+					if guildinfo.announcetts:
+						name = message.author.name
+						if guildinfo.usenickname and message.author.nick:
+							name = message.author.nick
+						name = await self.fix_name(name)
+						await self.do_tts(f"{name} says", message.guild)
 					await self.do_smarttts(message.clean_content, message.guild)
 				except UserError as e:
 					await message.channel.send(e.message)
@@ -661,6 +526,7 @@ class Audio(MangoCog):
 		return name
 
 	#function called when this event occurs
+	@commands.Cog.listener()
 	async def on_voice_state_update(self, member, before, after):
 		if member.bot and member.id != self.bot.user.id:
 			return # ignore bots except for mahself
@@ -669,10 +535,21 @@ class Audio(MangoCog):
 		if before and before.channel and botdata.guildinfo(before.channel.guild).outros:
 			beforeplayer = await self.audioplayer(before.channel, error_on_none=False)
 			if beforeplayer is not None and beforeplayer.voice is not None and beforeplayer.voice.channel.id == before.channel.id:
+				ctx = before.channel.guild
 				guildinfo = botdata.guildinfo(before.channel.guild)
 				userinfo = botdata.userinfo(member.id)
 
-				outroclip = userinfo.outro
+				try:
+					outroclip = userinfo.outro
+					if outroclip:
+						outroclip = await self.get_clip(userinfo.outro, ctx)
+						if outroclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
+							userinfo.set_default(ctx, "outro")
+							outroclip = userinfo.outro
+				except:
+					userinfo.set_default(ctx, "outro")
+					outroclip = userinfo.outro
+
 				outrotts = userinfo.outrotts
 				name = member.name
 				if guildinfo.usenickname and member.nick:
@@ -683,18 +560,30 @@ class Audio(MangoCog):
 				print(text)
 
 				await asyncio.sleep(0.5)
-				await self.play_clip(outroclip, before.channel)
+				if not outroclip is None:				
+					await self.play_clip(outroclip, before.channel)
 				await self.play_clip("tts:" + text, before.channel)
 		if after and after.channel and botdata.guildinfo(after.channel.guild).intros:
 			afterplayer = await self.audioplayer(after.channel, error_on_none=False)
 			if afterplayer is not None and afterplayer.voice is not None and afterplayer.voice.channel.id == after.channel.id:
+				ctx = after.channel.guild
 				guildinfo = botdata.guildinfo(after.channel.guild)
 				if member.id == self.bot.user.id:
 					guildinfo.voicechannel = after.channel.id
 
 				userinfo = botdata.userinfo(member.id)
 
-				introclip = userinfo.intro
+				try:
+					introclip = userinfo.intro
+					if introclip:
+						introclip = await self.get_clip(userinfo.intro, ctx)
+						if introclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
+							userinfo.set_default(ctx, "intro")
+							introclip = userinfo.intro
+				except:
+					userinfo.set_default(ctx, "intro")
+					introclip = userinfo.intro
+
 				introtts = userinfo.introtts
 				name = member.name
 				if guildinfo.usenickname and member.nick:
@@ -708,7 +597,8 @@ class Audio(MangoCog):
 				print(text + " joined the channel")
 
 				await asyncio.sleep(3)
-				await self.play_clip(introclip, after.channel)
+				if not introclip is None:
+					await self.play_clip(introclip, after.channel)
 				await self.play_clip("tts:" + text, after.channel)
 
 

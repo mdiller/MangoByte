@@ -30,21 +30,30 @@ def init_dota_info(hero_info, item_info):
 def get_hero_name(hero_id):
 	return hero_infos[hero_id]["name"]
 
+async def get_url_image(url):
+	return Image.open(await httpgetter.get(url, "bytes", cache=True))
+
 async def get_hero_image(hero_id):
 	try:
-		return Image.open(await httpgetter.get(hero_infos[hero_id]["image"], "bytes", cache=True))
+		return await get_url_image(hero_infos[hero_id]["image"])
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
 async def get_hero_icon(hero_id):
 	try:
-		return Image.open(await httpgetter.get(hero_infos[hero_id]["icon"], "bytes", cache=True))
+		return await get_url_image(hero_infos[hero_id]["icon"])
+	except KeyError:
+		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
+
+async def get_hero_portrait(hero_id):
+	try:
+		return await get_url_image(hero_infos[hero_id]["portrait"])
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
 async def get_item_image(item_id):
 	try:
-		return Image.open(await httpgetter.get(item_infos[item_id]["icon"], "bytes", cache=True))
+		return await get_url_image(item_infos[item_id]["icon"])
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
@@ -68,12 +77,12 @@ async def get_item_images(player):
 
 
 def get_lane(player):
-	lane_dict = { 1: "Bot", 3: "Top" }
-	lane_role_dict = { 1: "Safe", 2: "Mid", 3: "Off", 4: "Jungle" }
+	lane_dict = { 1: "Bot", 3: "Top", None: "" }
+	lane_role_dict = { 1: "Safe", 2: "Mid", 3: "Off", 4: "Jungle", None: "" }
 	if 'is_roaming' in player and player['is_roaming']:
 		return "Roaming"
 	elif player.get('lane') in lane_dict:
-		return f"{lane_role_dict[player['lane_role']]}({lane_dict[player['lane']]})"
+		return f"{lane_role_dict[player.get('lane_role')]}({lane_dict[player.get('lane')]})"
 	else:
 		return lane_role_dict[player.get('lane_role')]
 
@@ -315,7 +324,7 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 				del current_runes[e["id"]]
 	# rune icons
 	rune_icons = {}
-	for i in range(0, 7):
+	for i in range(0, 9):
 		scale = 0.5
 		icon = Image.open(settings.resource(f"images/map/rune_{i}.png"))
 		rune_icons[i] = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
@@ -402,7 +411,7 @@ async def dota_rank_icon(rank_tier, leaderboard_rank):
 	filename = await httpgetter.cache.new(uri, "png")
 
 	badge_num = rank_tier // 10
-	stars_num = min(rank_tier % 10, 5)
+	stars_num = min(rank_tier % 10, 7)
 	modifier = ""
 
 	if badge_num == 8 and leaderboard_rank:
@@ -561,3 +570,99 @@ async def fuse_hero_images(hero1, hero2):
 	fp.seek(0)
 
 	return fp
+
+async def draw_courage(hero_id, icon_ids):
+	# scaled to 128 height
+	hero_image = await get_hero_portrait(hero_id)
+	hero_image = hero_image.resize((97, 128), Image.ANTIALIAS)
+
+	table = Table()
+	table.add_row([
+		ColorCell(color="white", width=97, height=64),
+		ImageCell(img=await get_item_image(icon_ids[0])),
+		ImageCell(img=await get_item_image(icon_ids[1])),
+		ImageCell(img=await get_item_image(icon_ids[2]))
+	])
+	table.add_row([
+		ColorCell(color="white", width=97, height=64),
+		ImageCell(img=await get_item_image(icon_ids[3])),
+		ImageCell(img=await get_item_image(icon_ids[4])),
+		ImageCell(img=await get_item_image(icon_ids[5]))
+	])
+	image = table.render()
+	image = paste_image(image, hero_image, 0, 0)
+
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
+
+	return fp
+
+async def draw_artifact_deck(deck_string, cards, hero_turns, card_counts):
+	uri = f"artifact_deck:{deck_string}"
+	filename = httpgetter.cache.get_filename(uri)
+	if filename and not settings.debug:
+		return filename
+
+	filename = await httpgetter.cache.new(uri, "png")
+
+	sorting_info = [
+		{
+			"filter": lambda c: c.type == "Hero",
+			"sort": lambda c: hero_turns[c.id]
+		},
+		{
+			"filter": lambda c: c.type != "Hero" and c.type != "Item",
+			"sort": lambda c: c.mana_cost
+		},
+		{
+			"filter": lambda c: c.type == "Item",
+			"sort": lambda c: c.gold_cost
+		}
+	]
+	ordered_cards = []
+	for info in sorting_info:
+		for card in sorted(filter(info["filter"], cards), key=info["sort"]):
+			ordered_cards.append(card)
+
+	column_count = 5
+	border_size = 10
+	grey_color = "#BBBBBB"
+	table = Table(background=background_color)
+
+	table.add_row([ColorCell(color=trim_color, height=border_size) for i in range(column_count)])
+	first = True
+	for card in ordered_cards:
+		cost = ""
+		if card.type != "Hero":
+			if card.type == "Item":
+				cost = card.gold_cost
+			else:
+				cost = card.mana_cost
+		last_cell = ""
+		if card.type == "Hero":
+			last_cell = f"Turn {hero_turns.get(card.id)}"
+		else:
+			last_cell = f"x {card_counts.get(card.id)}"
+		if first:
+			first = False
+		else:
+			table.add_row([ColorCell(color=background_color, height=2) for i in range(column_count)])
+		table.add_row([
+			ImageCell(img=await get_url_image(card.mini_image), height=48),
+			ImageCell(img=await get_url_image(card.type_image), height=48),
+			TextCell(cost),
+			TextCell(card.name),
+			TextCell(last_cell, horizontal_align="right")
+		])
+		card_color = card.color.blend(Color(background_color), 0.5)
+		for cell in table.rows[len(table.rows) - 1]:
+			cell.background = card_color.hex
+	image = table.render()
+
+	border_image = Image.new('RGBA', (image.size[0] + (border_size * 2), image.size[1] + border_size), color=trim_color)
+	image = paste_image(border_image, image, border_size, 0)
+
+	image.save(filename, format="PNG")
+
+	return filename

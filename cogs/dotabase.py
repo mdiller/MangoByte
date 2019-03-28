@@ -18,6 +18,24 @@ from cogs.audio import AudioPlayerNotFoundError
 
 session = dotabase_session()
 
+ABILITY_KEY_MAP = {
+	"q": 1,
+	"w": 2,
+	"e": 3,
+	"d": 4,
+	"f": 5,
+	"r": 4 # the last ability in the list, except for invoker
+}
+# some specific heroes have weird places for their ultimate keys
+ABILITY_ULTI_KEY_MAP = {
+	"3": 4, "10": 6, "19": 4, "23": 4, 
+	"54": 4, "68": 4, "73": 4, "74": 6, 
+	"80": 5, "86": 6, "88": 5, "89": 4, 
+	"90": 4, "91": 4, "98": 5, "100": 5, 
+	"103": 4, "108": 4, "110": 5, "114": 6, "120": 4
+}
+for i in range(1, 20):
+	ABILITY_KEY_MAP[str(i)] = i
 
 # A variable that can specify a filter on a query
 class QueryVariable():
@@ -161,6 +179,23 @@ class Dotabase(MangoCog):
 			for ability in ability_query:
 				if clean_input(ability.localized_name).startswith(text):
 					return ability
+			for key in text.split(" "):
+				if key in ABILITY_KEY_MAP:
+					text = re.sub(f'\\b{key}\\b', '', text)
+					hero = self.lookup_hero(text)
+					if hero is None:
+						return None
+					ability_position = ABILITY_KEY_MAP[key]
+					# use this instead of directly using ability_slot because there are some filler generic_ability things
+					abilities = session.query(Ability).filter_by(hero_id=hero.id).order_by(Ability.ability_slot).all()
+					if ability_position > len(abilities):
+						raise Exception(f"{hero.localized_name} doesn't have that many abilities")
+					if key == "r": # if is ultimate and not invoker, get last ability in list
+						if str(hero.id) in ABILITY_ULTI_KEY_MAP:
+							ability_position = ABILITY_ULTI_KEY_MAP[str(hero.id)]
+						else: 
+							ability_position = len(abilities)
+					return abilities[ability_position - 1]
 		return None
 
 	def lookup_item(self, item, full_check=True):
@@ -210,8 +245,17 @@ class Dotabase(MangoCog):
 				"attr": hero.attr_primary,
 				"portrait": self.vpkurl + hero.portrait,
 				"image": self.vpkurl + hero.image,
-				"emoji": self.get_emoji(f"dota_hero_{hero.name}")
+				"emoji": str(self.get_emoji(f"dota_hero_{hero.name}"))
 			}
+		result[0] = {
+			"name": "Unknown",
+			"full_name": "unknown_hero",
+			"icon": self.vpkurl + "/resource/flash3/images/miniheroes/bm_fire.png",
+			"attr": "strength",
+			"portrait": self.vpkurl + "/resource/flash3/images/heroes/selection/npc_dota_ancient_granite_golum.png",
+			"image": self.vpkurl + "/resource/flash3/images/heroes/default.png",
+			"emoji": "unknown_hero"
+		}
 		return result
 
 	def get_item_infos(self):
@@ -451,25 +495,30 @@ class Dotabase(MangoCog):
 	async def chatwheel(self, ctx, *, text):
 		"""Plays the given chat wheel sound
 
-		Try one of the following to get a list of the corresponding chatwheel messages:
-		`{cmdpfx}chatwheel casters`
-		`{cmdpfx}chatwheel sounds`
-		`{cmdpfx}chatwheel legacy`
+		Give the command a number between 1 and 6 to page through all of the available chat options:
+		`{cmdpfx}chatwheel 1`
+		`{cmdpfx}chatwheel 3`
 
 		**Examples:**
+		`{cmdpfx}chatwheel Lakad Matataaaag!`
 		`{cmdpfx}chatwheel disastah`
 		`{cmdpfx}chatwheel Wan Bu Liao La`
 		`{cmdpfx}chatwheel 玩不了啦`
 		`{cmdpfx}chatwheel ehto gg`
 		`{cmdpfx}chatwheel Это ГГ`"""
-		if text.lower() in [ "casters", "sounds", "legacy" ]:
-			text = text.lower()
+		page_size = 10
+		query = session.query(ChatWheelMessage).filter(ChatWheelMessage.sound.like("/%"))
+		if text.isdigit():
+			page = int(text)
+			max_pages = int((query.count() / page_size) + 1)
+			if page < 1 or page > max_pages:
+				raise UserError(f"Gotta give me a number between 1 and {max_pages}")
 			sounds = []
-			for message in session.query(ChatWheelMessage).filter_by(category=f"ti8_{text}"):
+			for message in query.offset((page - 1) * page_size).limit(page_size):
 				if message.sound:
 					sounds.append(f"{self.get_emoji('chat_wheel_sound')} {message.message}")
 			embed = discord.Embed(description="\n".join(sounds))
-			embed.set_author(name=f"Chat Wheel Sounds ({text})")
+			embed.set_author(name=f"Chat Wheel Sounds ({page}/{max_pages})")
 			await ctx.send(embed=embed)
 			return
 
@@ -952,6 +1001,45 @@ class Dotabase(MangoCog):
 		embed.set_thumbnail(url=f"attachment://{image.filename}")
 
 		await ctx.send(embed=embed, file=image)
+
+
+	@commands.command()
+	async def courage(self, ctx, hero = None):
+		"""Generates a challenge build
+
+		Creates a challenge build with a random (or given) hero and a random set of items
+
+		**Examples:**
+		`{cmdpfx}courage`
+		`{cmdpfx}courage shadow fiend`"""
+
+		all_boots = [
+			"travel_boots",
+			"phase_boots",
+			"power_treads",
+			"arcane_boots",
+			"tranquil_boots",
+			"guardian_greaves"
+		]
+
+		all_items = read_json(settings.resource("json/courage_items.json"))
+		random.shuffle(all_items)
+		items = all_items[0:5]
+		items.append(random.choice(all_boots))
+		random.shuffle(items)
+
+		item_ids = []
+		for item in items:
+			item_ids.append(session.query(Item).filter(Item.name == f"item_{item}").first().id)
+		if hero:
+			hero_id = self.lookup_hero_id(hero)
+			if not hero_id:
+				raise UserError(f"Couldn't a hero called '{hero}'")
+		else:
+			hero_id = session.query(Hero).order_by(func.random()).first().id
+
+		image = discord.File(await drawdota.draw_courage(hero_id, item_ids), "courage.png")
+		await ctx.send(file=image)
 
 
 def setup(bot):

@@ -1,26 +1,30 @@
-import discord
+
+# The following have to be imported and initialized in the correct order
 from cogs.utils.settings import Settings
+settings = Settings()
+
 from cogs.utils.botdata import BotData
-from cogs.utils.helpers import *
+botdata = BotData()
+
 import cogs.utils.loggingdb as loggingdb
+loggingdb_session = loggingdb.create_session(settings.resource("loggingdb.db"))
+
+from cogs.utils.httpgetter import HttpGetter
+httpgetter = HttpGetter()
+
+from cogs.utils.helpers import *
+import discord
 import traceback
 import asyncio
 import string
 from discord.ext import commands
 import logging
 import datetime
+from cogs.utils.helpformatter import MangoHelpFormatter
+from cogs.utils.clip import *
 
 logging.basicConfig(level=logging.INFO)
 
-botdata = BotData()
-settings = Settings()
-loggingdb_session = loggingdb.create_session(settings.resource("loggingdb.db"))
-
-# This have to be done after loading settings
-from cogs.utils.helpformatter import MangoHelpFormatter
-from cogs.utils.httpgetter import HttpGetter
-httpgetter = HttpGetter()
-from cogs.utils.clip import *
 
 description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 				For more information about me, try `{cmdpfx}info`"""
@@ -34,7 +38,14 @@ invite_link = f"https://discordapp.com/oauth2/authorize?permissions={permissions
 deprecated_commands = {
 	"ttschannel": "config ttschannel",
 	"unttschannel": "config ttschannel none",
-	"opendotasql": "https://www.opendota.com/explorer"
+	"opendotasql": "https://www.opendota.com/explorer",
+	"setintrotts": "userconfig introtts",
+	"setwelcome": "userconfig introtts",
+	"setoutrotts": "userconfig outrotts",
+	"setintro": "userconfig intro",
+	"setoutro": "userconfig outro",
+	"setsteam": "userconfig steam",
+	"register": "userconfig steam"
 }
 
 @bot.event
@@ -47,29 +58,51 @@ async def on_ready():
 		type=discord.ActivityType.playing,
 		start=datetime.datetime.utcnow())
 	await bot.change_presence(status=discord.Status.online, activity=game)
-	cog = bot.get_cog("Audio")
+	audio_cog = bot.get_cog("Audio")
+	artifact_cog = bot.get_cog("Artifact")
+	await artifact_cog.load_card_sets()
 
+	# stuff to help track/log the connection of voice channels
+	start_time = datetime.datetime.now()
+	connected_count = 0
+	not_found_count = 0
+	timeout_count = 0
 
 	for guildinfo in botdata.guildinfo_list():
 		if guildinfo.voicechannel is not None:
 			try:
 				print(f"connecting voice to: {guildinfo.voicechannel}")
-				await cog.connect_voice(guildinfo.voicechannel)
+				await audio_cog.connect_voice(guildinfo.voicechannel)
 				print(f"connected: {guildinfo.voicechannel}")
+				connected_count += 1
 			except UserError as e:
 				if e.message == "channel not found":
 					guildinfo.voicechannel = None
 					print("channel not found!")
+					not_found_count += 1
 				else:
 					raise
 			except asyncio.TimeoutError:
 				guildinfo.voicechannel = None
 				print("timeout error when connecting to channel")
+				timeout_count += 1
 
 	print("\nupdating guilds")
 	loggingdb.update_guilds(bot.guilds, loggingdb_session)
 	
 	print("\ninitialization finished\n")
+
+	message = "__**Initialization complete:**__"
+	if connected_count > 0:
+		message += f"\n{connected_count} voice channels connected"
+	if not_found_count > 0:
+		message += f"\n{not_found_count} voice channels not found"
+	if timeout_count > 0:
+		message += f"\n{timeout_count} voice channels timed out"
+
+	appinfo = await bot.application_info()
+	if not settings.debug:
+		await appinfo.owner.send(message)
 
 async def get_cmd_signature(ctx):
 	bot.formatter.context = ctx
@@ -107,7 +140,11 @@ async def on_command_error(ctx, error):
 			elif await invalid_command_reporting(ctx):
 				await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `{cmdpfx}help` fer a list of things that ARE commands.") 
 		elif isinstance(error, commands.CheckFailure):
-			print("(suppressed)")
+			emoji_dict = read_json(settings.resource("json/emoji.json"))
+			if botdata.guildinfo(ctx).is_disabled(ctx.command):
+				await ctx.message.add_reaction(bot.get_emoji(emoji_dict["command_disabled"]))
+			else:
+				await ctx.message.add_reaction(bot.get_emoji(emoji_dict["unauthorized"]))
 			return # The user does not have permissions
 		elif isinstance(error, commands.MissingRequiredArgument):
 			await ctx.send(embed=await bot.formatter.format_as_embed(ctx, ctx.command))
@@ -182,7 +219,9 @@ if __name__ == '__main__':
 	bot.load_extension("cogs.dotabase")
 	bot.load_extension("cogs.dotastats")
 	bot.load_extension("cogs.pokemon")
+	bot.load_extension("cogs.artifact")
 	bot.load_extension("cogs.admin")
+	bot.load_extension("cogs.owner")
 	bot.run(settings.token)
 
 

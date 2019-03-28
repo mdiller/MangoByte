@@ -18,5 +18,6 @@
 	"okedokes": "okeydokes",
 	"wouldnt": "wouldn't",
 	"isnt": "isn't",
-	"id": "i'd"
+	"id": "i'd",
+	"regex:m\\.": "m!"
 }

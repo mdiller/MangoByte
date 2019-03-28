@@ -1,14 +1,16 @@
-from __main__ import botdata
+from __main__ import botdata, settings
 import discord, itertools, inspect, re
 from discord.ext.commands import *
-from .botdata import GuildInfo
+from .botdata import GuildInfo, UserInfo
+from .helpers import read_json
+from cogs.mangocog import simple_get_emoji
 
-def get_config_help():
+def get_config_help(variables, command):
 	keys = []
 	examples = []
-	for var in GuildInfo.variables:
+	for var in variables:
 		keys.append(f"`{var['key']}`")
-		examples.append(f"`{'{cmdpfx}'}config {var['key']} {var['example']}`")
+		examples.append(f"`{'{cmdpfx}'}{command} {var['key']} {var['example']}`")
 	keys = "\n".join(keys)
 	examples = "\n".join(examples)
 	return (
@@ -25,7 +27,7 @@ class MangoHelpFormatter(HelpFormatter):
 			cmd = tup[1]
 			if self.is_cog():
 				# filter commands that don't exist to this cog.
-				if cmd.instance is not self.command:
+				if cmd.cog is not self.command:
 					return False
 
 			if cmd.hidden and not self.show_hidden:
@@ -43,7 +45,7 @@ class MangoHelpFormatter(HelpFormatter):
 				# skip aliases
 				continue
 
-			entry = '`{0:<{width}} {1}`'.format(name, command.short_doc, width=self.max_name_size)
+			entry = '`{0:<{width}} | {1}`'.format(name, command.short_doc, width=self.max_name_size)
 			shortened = self.shorten(entry)
 			results.append(entry)
 		if results:
@@ -52,7 +54,8 @@ class MangoHelpFormatter(HelpFormatter):
 			return "`<empty>`"
 
 	def fill_template(self, text):
-		text = re.sub("\{config_help\}", get_config_help(), text)
+		text = re.sub("\{config_help\}", get_config_help(GuildInfo.variables, "config"), text)
+		text = re.sub("\{userconfig_help\}", get_config_help(UserInfo.variables, "userconfig"), text)
 		text = re.sub("\{cmdpfx\}", botdata.command_prefix(self.context), text)
 		return text
 
@@ -80,6 +83,8 @@ class MangoHelpFormatter(HelpFormatter):
 				embed.set_author(name=self.command.user.name, icon_url=self.command.user.avatar_url, url="https://github.com/mdiller/MangoByte")
 				data = sorted(await self.filter_command_list(), key=category)
 				for category, commands in itertools.groupby(data, key=category):
+					if category == "Owner:":
+						continue
 					commands = list(commands)
 					if len(commands) > 0:
 						embed.add_field(name=category, value=self.list_commands(commands))
@@ -87,6 +92,8 @@ class MangoHelpFormatter(HelpFormatter):
 				embed = self.embed_description(self.command.description + "\n\nTo get more information about a specific category, try `{cmdpfx}help <category>`")
 				embed.set_author(name=self.command.user.name, icon_url=self.command.user.avatar_url, url="https://github.com/mdiller/MangoByte")
 				for cog in self.command.cogs:
+					if cog == "Owner":
+						continue
 					embed.add_field(name=f"**{cog}**", value=self.cog_short_doc(self.command.cogs[cog]))
 		else:
 			# This is a cog
@@ -128,4 +135,9 @@ class MangoHelpFormatter(HelpFormatter):
 		if not description:
 			return discord.Embed()
 		description = self.fill_template(description)
+		guildinfo = botdata.guildinfo(self.context)
+		if guildinfo and guildinfo.is_disabled(self.command):
+			emoji = simple_get_emoji("command_disabled", self.context.bot)
+			thing = "command" if isinstance(self.command, Command) else "category"
+			description = f"{emoji} *This {thing} has been disabled on this server*\n{description}"
 		return discord.Embed(description=description, color=discord.Color.blue())

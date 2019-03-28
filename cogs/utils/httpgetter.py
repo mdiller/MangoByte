@@ -23,7 +23,7 @@ class Cache:
 
 	@property
 	def files(self):
-	    return self.cache["files"]
+		return self.cache["files"]
 
 	def save_cache(self):
 		if not os.path.exists(self.cache_dir):
