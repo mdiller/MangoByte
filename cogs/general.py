@@ -189,6 +189,10 @@ class General(MangoCog):
 	@commands.command()
 	async def botstats(self, ctx):
 		"""Displays some bot statistics"""
+
+		await ctx.send("Due to scaling issues with my stats, I'm disabling use of this command for now. Going to rework the way it works, and enable it after thats done")
+		return
+
 		embed = discord.Embed(color=discord.Color.green())
 
 		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url)
