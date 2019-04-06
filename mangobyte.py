@@ -61,6 +61,7 @@ async def on_ready():
 	audio_cog = bot.get_cog("Audio")
 	artifact_cog = bot.get_cog("Artifact")
 	await artifact_cog.load_card_sets()
+	bot.help_command.cog = bot.get_cog("General")
 
 	# stuff to help track/log the connection of voice channels
 	start_time = datetime.datetime.now()
@@ -105,9 +106,8 @@ async def on_ready():
 		await appinfo.owner.send(message)
 
 async def get_cmd_signature(ctx):
-	bot.formatter.context = ctx
-	bot.formatter.command = ctx.command
-	return bot.formatter.get_command_signature()
+	bot.help_command.context = ctx
+	return bot.help_command.get_command_signature(ctd.command)
 
 # Whether or not we report invalid commands
 async def invalid_command_reporting(ctx):
@@ -147,7 +147,7 @@ async def on_command_error(ctx, error):
 				await ctx.message.add_reaction(bot.get_emoji(emoji_dict["unauthorized"]))
 			return # The user does not have permissions
 		elif isinstance(error, commands.MissingRequiredArgument):
-			await ctx.send(embed=await bot.formatter.format_as_embed(ctx, ctx.command))
+			await bot.help_command.command_callback(ctx, command=ctx.command.name)
 		elif isinstance(error, commands.BadArgument):
 			signature = await get_cmd_signature(ctx)
 			await ctx.send((
