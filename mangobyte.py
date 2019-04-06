@@ -20,7 +20,7 @@ import string
 from discord.ext import commands
 import logging
 import datetime
-from cogs.utils.helpformatter import MangoHelpFormatter
+from cogs.utils.helpcommand import MangoHelpCommand
 from cogs.utils.clip import *
 
 logging.basicConfig(level=logging.INFO)
@@ -30,8 +30,8 @@ description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 				For more information about me, try `{cmdpfx}info`"""
 permissions = 314432
 
-bot = commands.Bot(command_prefix=botdata.command_prefix_botmessage, formatter=MangoHelpFormatter(), description=description)
-bot.remove_command("help")
+bot = commands.Bot(command_prefix=botdata.command_prefix_botmessage, help_command=MangoHelpCommand(), description=description)
+
 thinker = Thinker(bot)
 invite_link = f"https://discordapp.com/oauth2/authorize?permissions={permissions}&scope=bot&client_id=213476188037971968"
 
@@ -211,17 +211,24 @@ def report_error(message, error, skip_lines=2):
 	print(f"\nError on: {message.clean_content}\n{trace_string}\n")
 	return trace_string
 
-
+from cogs.general import General
+from cogs.audio import Audio
+from cogs.dotabase import Dotabase
+from cogs.dotastats import DotaStats
+from cogs.pokemon import Pokemon
+from cogs.artifact import Artifact
+from cogs.admin import Admin
+from cogs.owner import Owner
 
 if __name__ == '__main__':
-	bot.load_extension("cogs.general")
-	bot.load_extension("cogs.audio")
-	bot.load_extension("cogs.dotabase")
-	bot.load_extension("cogs.dotastats")
-	bot.load_extension("cogs.pokemon")
-	bot.load_extension("cogs.artifact")
-	bot.load_extension("cogs.admin")
-	bot.load_extension("cogs.owner")
+	bot.add_cog(General(bot))
+	bot.add_cog(Audio(bot))
+	bot.add_cog(Dotabase(bot))
+	bot.add_cog(DotaStats(bot))
+	bot.add_cog(Pokemon(bot))
+	bot.add_cog(Artifact(bot))
+	bot.add_cog(Admin(bot))
+	bot.add_cog(Owner(bot))
 	bot.run(settings.token)
 
 

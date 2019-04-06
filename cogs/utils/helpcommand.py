@@ -2,8 +2,9 @@ from __main__ import botdata, settings
 import discord, itertools, inspect, re
 from discord.ext.commands import *
 from .botdata import GuildInfo, UserInfo
-from .helpers import read_json
+from .helpers import read_json, MENTION_PATTERN
 from cogs.mangocog import simple_get_emoji
+
 
 def get_config_help(variables, command):
 	keys = []
@@ -19,39 +20,94 @@ def get_config_help(variables, command):
 		f"**Examples**\n"
 		f"{examples}")
 
-class MangoHelpFormatter(HelpFormatter):
-	async def filter_command_list(self):
-		"""Same as one from original formatter, but doesnt check to see if the checks fail"""
+class MangoHelpCommand(DefaultHelpCommand):
+	def __init__(self, **options):
+		options["verify_checks"] = False
+		super().__init__(**options)
 
-		def sane_no_suspension_point_predicate(tup):
-			cmd = tup[1]
-			if self.is_cog():
-				# filter commands that don't exist to this cog.
-				if cmd.cog is not self.command:
-					return False
+	@property
+	def bot(self):
+		return self.context.bot
 
-			if cmd.hidden and not self.show_hidden:
-				return False
-			return True
+	async def send_bot_help(self, mapping):
+		no_category = '\u200b{0.no_category}:'.format(self)
+		def get_category(command, *, no_category=no_category):
+			cog = command.cog
+			return cog.qualified_name + ':' if cog is not None else no_category
 
-		iterator = self.command.all_commands.items() if not self.is_cog() else self.context.bot.all_commands.items()
-		
-		return filter(sane_no_suspension_point_predicate, iterator)
+		if self.show_all:
+			embed = self.embed_description(self.bot.description + "\n\nTo get more information about a specific command, try `{cmdpfx}help <command>`", self.bot)
+			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url, url="https://github.com/mdiller/MangoByte")
+
+			filtered = await self.filter_commands(self.bot.commands, sort=True, key=get_category)
+			to_iterate = itertools.groupby(filtered, key=get_category)
+
+			for category, commands in to_iterate:
+				if category == "Owner:":
+					continue
+				commands = list(commands)
+				if len(commands) > 0:
+					embed.add_field(name=category, value=self.list_commands(commands))
+		else:
+			embed = self.embed_description(self.bot.description + "\n\nTo get more information about a specific category, try `{cmdpfx}help <category>`\nTo show all commands, try `{cmdpfx}help all`", self.bot)
+			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url, url="https://github.com/mdiller/MangoByte")
+			for cog in self.bot.cogs:
+				if cog == "Owner":
+					continue
+				embed.add_field(name=f"**{cog}**", value=self.cog_short_doc(self.bot.cogs[cog]), inline=False)
+		await self.send_embed(embed)
+
+	async def send_command_help(self, command):
+		embed = self.embed_description(command.help, command)
+		embed.set_author(name=self.get_command_signature(command))
+		if command.aliases:
+			embed.add_field(name="Aliases", value=", ".join(command.aliases))
+		await self.send_embed(embed)
+
+	async def send_cog_help(self, cog):
+		embed = self.embed_description(inspect.getdoc(cog), cog)
+		embed.set_author(name=cog.__class__.__name__)
+		embed.add_field(name="Commands", value=self.list_commands(await self.filter_commands(cog.get_commands())))
+		await self.send_embed(embed)
+
+	async def send_embed(self, embed):
+		dest = self.get_destination()
+		await dest.send(embed=embed)
+
+	# Overridden to ignore case for input, and to add the 'all' option
+	async def command_callback(self, ctx, *, command=None):
+		if command:
+			command = command.lower()
+			if command == "all":
+				command = None
+				self.show_all = True
+			else:
+				name = command
+				if name in map(lambda c: c.lower(), ctx.bot.cogs):
+					for cog in ctx.bot.cogs:
+						if cog.lower() == name:
+							command = cog
+							break
+		else:
+			self.show_all = False
+
+		await super().command_callback(ctx, command=command)
 
 	def list_commands(self, commands):
 		results = []
-		for name, command in commands:
-			if name in command.aliases:
+		for command in commands:
+			if command.name in command.aliases:
 				# skip aliases
 				continue
-
-			entry = '`{0:<{width}} | {1}`'.format(name, command.short_doc, width=self.max_name_size)
-			shortened = self.shorten(entry)
-			results.append(entry)
+			entry = '`{0:{2}<{width}} | {1}`'.format(command.name, command.short_doc, u"\u00A0", width=self.get_max_size(commands))
+			results.append(self.shorten_text(entry))
 		if results:
 			return "\n".join(results)
 		else:
 			return "`<empty>`"
+	
+	def get_command_signature(self, command):
+		return '%s%s %s' % (self.clean_prefix, command.qualified_name, command.signature)
 
 	def fill_template(self, text):
 		text = re.sub("\{config_help\}", get_config_help(GuildInfo.variables, "config"), text)
@@ -62,82 +118,13 @@ class MangoHelpFormatter(HelpFormatter):
 	def cog_short_doc(self, cog):
 		return self.fill_template(inspect.getdoc(cog).split('\n')[0])
 
-	async def format_as_embed(self, context, command_or_bot, show_all=False):
-		self.context = context
-		self.command = command_or_bot
-
-		if isinstance(self.command, Command):
-			embed = self.embed_description(self.command.help)
-			embed.set_author(name=self.get_command_signature())
-			if self.command.aliases:
-				embed.add_field(name="Aliases", value=", ".join(self.command.aliases))
-			return embed
-
-		def category(tup):
-			cog = tup[1].cog_name
-			return cog + ':' if cog is not None else '\u200bNo Category:'
-
-		if self.is_bot():
-			if show_all:
-				embed = self.embed_description(self.command.description + "\n\nTo get more information about a specific command, try `{cmdpfx}help <command>`")
-				embed.set_author(name=self.command.user.name, icon_url=self.command.user.avatar_url, url="https://github.com/mdiller/MangoByte")
-				data = sorted(await self.filter_command_list(), key=category)
-				for category, commands in itertools.groupby(data, key=category):
-					if category == "Owner:":
-						continue
-					commands = list(commands)
-					if len(commands) > 0:
-						embed.add_field(name=category, value=self.list_commands(commands))
-			else:
-				embed = self.embed_description(self.command.description + "\n\nTo get more information about a specific category, try `{cmdpfx}help <category>`")
-				embed.set_author(name=self.command.user.name, icon_url=self.command.user.avatar_url, url="https://github.com/mdiller/MangoByte")
-				for cog in self.command.cogs:
-					if cog == "Owner":
-						continue
-					embed.add_field(name=f"**{cog}**", value=self.cog_short_doc(self.command.cogs[cog]))
-		else:
-			# This is a cog
-			embed = self.embed_description(inspect.getdoc(self.command))
-			embed.set_author(name=self.command.__class__.__name__)
-			embed.add_field(name="Commands", value=self.list_commands(await self.filter_command_list()))
-
-		return embed
-
-	# Overridden to remove aliases
-	def get_command_signature(self):
-		"""Retrieves the signature portion of the help page."""
-		result = []
-		prefix = self.clean_prefix
-		cmd = self.command
-		parent = cmd.full_parent_name
-		name = prefix + cmd.name if not parent else prefix + parent + ' ' + cmd.name
-		result.append(name)
-
-		params = cmd.clean_params
-		if len(params) > 0:
-			for name, param in params.items():
-				if param.default is not param.empty:
-					# We don't want None or '' to trigger the [name=value] case and instead it should
-					# do [name] since [name=None] or [name=] are not exactly useful for the user.
-					should_print = param.default if isinstance(param.default, str) else param.default is not None
-					if should_print:
-						result.append('[{}={}]'.format(name, param.default))
-					else:
-						result.append('[{}]'.format(name))
-				elif param.kind == param.VAR_POSITIONAL:
-					result.append('[{}...]'.format(name))
-				else:
-					result.append('<{}>'.format(name))
-
-		return ' '.join(result)
-
-	def embed_description(self, description):
+	def embed_description(self, description, helptarget):
 		if not description:
 			return discord.Embed()
 		description = self.fill_template(description)
 		guildinfo = botdata.guildinfo(self.context)
-		if guildinfo and guildinfo.is_disabled(self.command):
+		if helptarget and guildinfo and guildinfo.is_disabled(helptarget):
 			emoji = simple_get_emoji("command_disabled", self.context.bot)
-			thing = "command" if isinstance(self.command, Command) else "category"
+			thing = "command" if isinstance(helptarget, Command) else "category"
 			description = f"{emoji} *This {thing} has been disabled on this server*\n{description}"
 		return discord.Embed(description=description, color=discord.Color.blue())

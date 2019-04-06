@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands.bot import _mention_pattern, _mentions_transforms
 from __main__ import settings, botdata, invite_link, httpgetter
 from cogs.utils.helpers import *
 from cogs.utils.botdata import UserInfo
@@ -227,10 +226,10 @@ class General(MangoCog):
 		await ctx.send(file=discord.File(settings.resource("images/lasagna.jpg")))
 
 	@commands.command()
-	async def help(self, ctx, command : str=None):
+	async def helpold(self, ctx, command : str=None):
 		"""Shows this message."""
 		def repl(obj):
-			return _mentions_transforms.get(obj.group(0), '')
+			return MENTION_TRANSFORMS.get(obj.group(0), '')
 
 		# help by itself just lists our own commands.
 		if command == "all":
@@ -239,7 +238,7 @@ class General(MangoCog):
 			embed = await self.bot.formatter.format_as_embed(ctx, self.bot, False)
 		else:
 			# try to see if it is a cog name
-			name = _mention_pattern.sub(repl, command).lower()
+			name = MENTION_PATTERN.sub(repl, command).lower()
 			if name in map(lambda c: c.lower(), self.bot.cogs):
 				for cog in self.bot.cogs:
 					if cog.lower() == name:
