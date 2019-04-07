@@ -98,7 +98,7 @@ async def get_stratz_match(match_id):
 
 async def get_lastmatch_id(steamid, matchfilter=MatchFilter()):
 	no_filter = matchfilter.to_query_args() == ""
-	matchfilter.add_simple_arg("significant", "0")
+	matchfilter.add_simple_arg("significant", "0", False)
 	matchfilter.add_simple_arg("limit", "1")
 	matches = await opendota_query(f"/players/{steamid}/matches?{matchfilter.to_query_args()}")
 	if matches:

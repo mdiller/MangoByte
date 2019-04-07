@@ -155,6 +155,7 @@ class TimeSpanArg(QueryArg):
 	@property
 	def days(self):
 		count = {
+			"today": 1,
 			"day": 1,
 			"week": 7,
 			"month": 30,
@@ -163,7 +164,7 @@ class TimeSpanArg(QueryArg):
 		return count * self.count
 
 	def regex(self):
-		return r"(?:in|over)? ?(?:the )?(this|last|past)? ?(\d+)? (day|week|month|year)s?"
+		return r"(?:in|over)? ?(?:the )?(this|last|past)? ?(\d+)? ((?:to)?day|week|month|year)s?"
 
 class HeroArg(QueryArg):
 	def __init__(self, ctx, name, prefix):
@@ -199,6 +200,10 @@ class MatchFilter():
 				r"ranked": 7,
 				r"(un|non)-?ranked": 0
 			}),
+			QueryArg("significant", {
+				r"(normal|standard)": 1,
+				r"(not|non)(-| )?(normal|standard)": 0
+			}),
 			QueryArg("lane_role", {
 				r"safe( ?lane)?": 1,
 				r"mid(dle)?( ?lane)?": 2,
@@ -209,6 +214,8 @@ class MatchFilter():
 				r"roam(ing)?|gank(ing)?": True
 			}, lambda p: p.get("is_roaming")),
 			TimeSpanArg(),
+			HeroArg(ctx, "against_hero_id", "(?:against|vs) "),
+			HeroArg(ctx, "with_hero_id", "with "),
 			HeroArg(ctx, "hero_id", "(?:as )?")
 		]
 		for arg in args:
@@ -222,8 +229,15 @@ class MatchFilter():
 	def __str__(self):
 		return self.to_query_args() if len(self.args) > 0 else "None"
 
-	def add_simple_arg(self, name, value):
-		self.args.append(SimpleQueryArg(name, value))
+	def has_value(self, name):
+		for arg in self.args:
+			if arg.name == name:
+				return arg.has_value()
+		return False
+
+	def add_simple_arg(self, name, value, overwrite=True):
+		if (not self.has_value(name)) or overwrite:
+			self.args.append(SimpleQueryArg(name, value))
 
 	def to_query_args(self):
 		return "&".join(map(lambda a: a.to_query_arg(), filter(lambda a: a.has_value(), self.args)))
