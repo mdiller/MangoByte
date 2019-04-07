@@ -447,8 +447,10 @@ def get_datetime_cell(match, region_data):
 	region = str(match.get("region"))
 	if region and region in region_data:
 		match_date += timedelta(hours=region_data[region]["UTC_offset"])
-	str_date = match_date.strftime("%b %-d %Y")
-	str_time = match_date.strftime("%-I:%M %p")
+	# character for leading space is different on windows
+	lead_char = "#" if os.name == "nt" else "-"
+	str_date = match_date.strftime(f"%b %{lead_char}d %Y")
+	str_time = match_date.strftime(f"%{lead_char}I:%M %p")
 	return DoubleCell(
 		TextCell(str_date, font_size=18, horizontal_align="center"),
 		TextCell(str_time, font_size=18, horizontal_align="center")
