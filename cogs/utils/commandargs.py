@@ -189,6 +189,9 @@ class MatchFilter():
 			raise commands.BadArgument()
 		return cls(args)
 
+	def __str__(self):
+		return self.to_query_args() if len(self.args) > 0 else "None"
+
 	def add_simple_arg(self, name, value):
 		self.args.append(SimpleQueryArg(name, value))
 
