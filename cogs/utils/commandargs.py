@@ -171,13 +171,15 @@ class HeroArg(QueryArg):
 		super().__init__(name)
 		self.prefix = prefix
 		self.dotabase = ctx.bot.get_cog("Dotabase")
+		self.hero = None
 
 	def regex(self):
 		return get_cache_hero_pattern(self.dotabase, self.prefix)
 
 	def parse(self, text):
 		text = re.sub(self.prefix, "", text)
-		self.value = self.dotabase.lookup_hero_id(text)
+		self.hero = self.dotabase.lookup_hero(text)
+		self.value = self.hero.id
 
 
 class MatchFilter():
@@ -229,14 +231,31 @@ class MatchFilter():
 	def __str__(self):
 		return self.to_query_args() if len(self.args) > 0 else "None"
 
+	@property
+	def hero(self):
+		for arg in self.args:
+			if arg.name == "hero_id":
+				return arg.hero
+		return None
+
 	def has_value(self, name):
 		for arg in self.args:
 			if arg.name == name:
 				return arg.has_value()
 		return False
 
-	def add_simple_arg(self, name, value, overwrite=True):
+	def get_arg(self, name):
+		for arg in self.args:
+			if arg.name == name:
+				return arg.value
+		return None
+
+	def set_arg(self, name, value, overwrite=True):
 		if (not self.has_value(name)) or overwrite:
+			for arg in self.args:
+				if arg.name == name:
+					arg.value = value
+					return
 			self.args.append(SimpleQueryArg(name, value))
 
 	def to_query_args(self):

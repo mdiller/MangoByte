@@ -98,8 +98,8 @@ async def get_stratz_match(match_id):
 
 async def get_lastmatch_id(steamid, matchfilter=MatchFilter()):
 	no_filter = matchfilter.to_query_args() == ""
-	matchfilter.add_simple_arg("significant", "0", False)
-	matchfilter.add_simple_arg("limit", "1")
+	matchfilter.set_arg("significant", 0, False)
+	matchfilter.set_arg("limit", 1)
 	matches = await opendota_query(f"/players/{steamid}/matches?{matchfilter.to_query_args()}")
 	if matches:
 		return matches[0]["match_id"]
@@ -506,61 +506,41 @@ class DotaStats(MangoCog):
 
 		await self.tell_match_story(game, player_data['isRadiant'], ctx, perspective)
 
-	@commands.command(aliases=["recentmatches", "matches"])
-	async def recent(self, ctx, *, arguments=""):
-		"""Gets a list of your recent matches
+	@commands.command(aliases=["recentmatches", "recent"])
+	async def matches(self, ctx, player: typing.Optional[DotaPlayer] = None, *, matchfilter : MatchFilter = MatchFilter()):
+		"""Gets a list of your matches
 
 		The date/time is localized based off of the server that the game was played on, which means it may not match your timezone.
 
-		You can specify the following arguments in any order:
+		You can specify the following arguments:
 		__**User:**__
 		@mention a discord user to get their recent matches instead of yours
 		__**Hero:**__
 		Indicate a hero and I'll return your most recent matches with that hero
-		__**Match Count:**__
-		A number indicating the number of matches to show. The default is 10, and the maximum is 20
 
 		**Example:**
-		`{cmdpfx}recent @PlayerPerson 5`
-		`{cmdpfx}recent natures prophet`
-		`{cmdpfx}recent @PlayerPerson riki`"""
+		`{cmdpfx}matches @PlayerPerson mid witch doctor ranked`
+		`{cmdpfx}matches natures prophet`
+		`{cmdpfx}matches @PlayerPerson riki`"""
 		await ctx.channel.trigger_typing()
-		arguments = arguments.lower().split(" ")
-		player = None
-		if ctx.message.mentions:
-			if len(ctx.message.mentions) > 1:
-				raise UserError("I can only get recent matches for one user")
-			player = ctx.message.mentions[0]
 
-		player = await DotaPlayer.convert(ctx, player)
+
+		if not player:
+			player = await DotaPlayer.from_author(ctx)
 		steam32 = player.steam_id
 
-		arguments = list(filter(lambda i: not re.match(r"<.*>", i), arguments))
+		matchfilter.set_arg("limit", 10, False)
+		matchfilter.set_arg("significant", 0, False)
 
-		matchcount = 10
-		for arg in arguments:
-			if arg.isdigit():
-				matchcount = int(arg)
-		arguments = list(filter(lambda i: not re.match(r"[0-9]+", i), arguments))
-		if matchcount < 1:
-			raise UserError("Gotta have a matchcount of 1 or more")
-		if matchcount > 20:
-			raise UserError("Sorries, 20 is the maximum number of matches for this command")
+		if matchfilter.get_arg("limit") > 20:
+			matchfilter.set_arg("limit", 20, True)
 
-		arguments = list(filter(lambda i: not re.match(r"(with|as|)$", i), arguments))
-		hero_text = " ".join(arguments)
-		hero = self.lookup_hero(hero_text)
-		if hero_text != "" and not hero:
-			raise UserError(f"Couldn't find a hero called '{hero_text}'")
-
+		hero = matchfilter.hero
 
 		projections = [ "kills", "deaths", "assists", "hero_id", "version", "game_mode", "lobby_type", "region", "duration", "start_time" ]
 		projections = "&".join(map(lambda p: f"project={p}", projections))
 
-		queryargs = f"?significant=0&limit={matchcount}&{projections}"
-
-		if hero:
-			queryargs += f"&hero_id={hero.id}"
+		queryargs = f"?{matchfilter.to_query_args()}&{projections}"
 
 		matches = await opendota_query(f"/players/{steam32}/matches{queryargs}")
 		if not matches:
