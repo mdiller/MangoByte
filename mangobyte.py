@@ -116,7 +116,7 @@ async def on_ready():
 
 async def get_cmd_signature(ctx):
 	bot.help_command.context = ctx
-	return bot.help_command.get_command_signature(ctd.command)
+	return bot.help_command.get_command_signature(ctx.command)
 
 # Whether or not we report invalid commands
 async def invalid_command_reporting(ctx):

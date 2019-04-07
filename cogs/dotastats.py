@@ -3,6 +3,7 @@ from discord.ext import commands
 from __main__ import settings, botdata, thinker, httpgetter
 from cogs.utils import checks
 from cogs.utils.helpers import *
+from cogs.utils.commandargs import *
 from cogs.utils import drawdota
 import asyncio
 import async_timeout
@@ -110,8 +111,10 @@ async def get_stratz_match(match_id):
 		raise UserError("Looks like this match has not been parsed by STRATZ yet. Try again in a bit")
 
 
-async def get_lastmatch_id(steamid):
-	matches = await opendota_query(f"/players/{steamid}/recentmatches")
+async def get_lastmatch_id(steamid, matchfilter=MatchFilter()):
+	matchfilter.add_simple_arg("significant", "0")
+	matchfilter.add_simple_arg("limit", "1")
+	matches = await opendota_query(f"/players/{steamid}/matches?{matchfilter.to_query_args()}")
 	if matches:
 		return matches[0]["match_id"]
 	else:
@@ -462,12 +465,12 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed, file=match_image)
 
 	@commands.command(aliases=["lastgame", "lm"])
-	async def lastmatch(self, ctx, player=None):
+	async def lastmatch(self, ctx, player=None, *, matchfilter : MatchFilter = MatchFilter()):
 		"""Gets info about the player's last dota game"""
 		await ctx.channel.trigger_typing()
 
 		steamid = await get_check_steamid(player, ctx)
-		match_id = await get_lastmatch_id(steamid)
+		match_id = await get_lastmatch_id(steamid, matchfilter)
 		await self.player_match_stats(steamid, match_id, ctx)
 
 	async def print_match_stats(self, ctx, match_id):
