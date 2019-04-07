@@ -641,7 +641,7 @@ class DotaStats(MangoCog):
 		await ctx.channel.trigger_typing()
 
 		playerinfo = await opendota_query(f"/players/{steam32}")
-		matches = await opendota_query(f"/players/{steam32}/matches?significant=0")
+		matches = await opendota_query(f"/players/{steam32}/matches")
 		matches = list(filter(lambda m: m.get('player_slot') is not None, matches))
 
 		rank_strings = [ "Unranked", "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine", "Immortal" ]
