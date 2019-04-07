@@ -1,8 +1,33 @@
+from __main__ import settings, botdata, httpgetter
 import re
-import discord.ext.commands
+import discord
+from discord.ext import commands
+from .helpers import *
 
 def clean_input(t):
 	return re.sub(r'[^a-z1-9\s]', r'', str(t).lower())
+
+class SteamNotLinkedError(UserError):
+	def __init__(self, user=None):
+		self.is_author = user is None
+		self.user = user
+		if not self.is_author:
+			super().__init__(f"{user.name} doesn't have a steam account linked. They should try `{{cmdpfx}}userconfig steam` to see how to link their steam account.")
+		else:
+			super().__init__("Yer steam account isn't linked to yer discord account yet.\nTry doin `{cmdpfx}userconfig steam` to see how to link a steam account.")
+
+class NoMatchHistoryError(UserError):
+	def __init__(self, steam_id):
+		super().__init__(f"")
+		self.embed = discord.Embed(description=f"It looks like you either haven't played dota on this account, or the matches you've played are hidden. If you've played matches on this account, you should try enabling the **Expose Public Match Data** option in dota (see image below). Once you've done that, go to [your opendota profile](http://www.opendota.com/players/{steam_id}) and click the button under your name that says **REFRESH**")
+		self.file = discord.File(settings.resource("images/expose_match_data.png"), "tip.png")
+		self.embed.set_image(url=f"attachment://{self.file.filename}")
+
+class CustomBadArgument(commands.BadArgument):
+	def __init__(self, user_error):
+		super().__init__()
+		self.user_error = user_error
+
 
 class InputParser():
 	def __init__(self, text):
@@ -21,6 +46,51 @@ class InputParser():
 		self.trim()
 		return match.group(0)
 
+
+class DotaPlayer():
+	def __init__(self, steam_id, mention=None, is_author=False):
+		self.steam_id = steam_id
+		self.mention = mention
+		self.is_author = is_author
+
+	@classmethod
+	async def from_author(cls, ctx):
+		return await cls.convert(ctx, None)
+
+	@classmethod
+	async def convert(cls, ctx, player):
+		is_author = player is None
+		if is_author:
+			player = ctx.message.author
+
+		try:
+			player = int(player)
+		except (ValueError, TypeError):
+			pass # This either this is a discord user or an invalid argument
+
+		if isinstance(player, int):
+			if player > 76561197960265728:
+				player -= 76561197960265728
+			# Don't have to rate limit here because this will be first query ran
+			player_info = await httpgetter.get(f"https://api.opendota.com/api/players/{player}", cache=False)
+
+			if player_info.get("profile") is None:
+				raise CustomBadArgument(NoMatchHistoryError(player))
+			return cls(player, f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{player})", is_author)
+
+		if not isinstance(player, discord.User):
+			try:
+				player = await commands.MemberConverter().convert(ctx, str(player))
+			except commands.BadArgument:
+				raise CustomBadArgument(UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me a their steam id"))
+
+		userinfo = botdata.userinfo(player.id)
+		if userinfo.steam is None:
+			if is_author:
+				raise CustomBadArgument(SteamNotLinkedError())
+			else:
+				raise CustomBadArgument(SteamNotLinkedError(player))
+		return cls(userinfo.steam, player.mention, is_author)
 
 class QueryArg():
 	def __init__(self, name, args_dict={}, post_filter=None):
@@ -116,7 +186,7 @@ class MatchFilter():
 			if value:
 				arg.parse(value)
 		if parser.text:
-			raise discord.ext.commands.BadArgument()
+			raise commands.BadArgument()
 		return cls(args)
 
 	def add_simple_arg(self, name, value):

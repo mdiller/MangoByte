@@ -22,6 +22,7 @@ import logging
 import datetime
 from cogs.utils.helpcommand import MangoHelpCommand
 from cogs.utils.clip import *
+from cogs.utils.commandargs import *
 
 logging.basicConfig(level=logging.INFO)
 
@@ -157,6 +158,8 @@ async def on_command_error(ctx, error):
 			return # The user does not have permissions
 		elif isinstance(error, commands.MissingRequiredArgument):
 			await bot.help_command.command_callback(ctx, command=ctx.command.name)
+		elif isinstance(error, CustomBadArgument):
+			await error.user_error.send_self(ctx, botdata)
 		elif isinstance(error, commands.BadArgument):
 			signature = await get_cmd_signature(ctx)
 			await ctx.send((
