@@ -201,8 +201,8 @@ class MatchFilter():
 				r"(un|non)-?ranked": 0
 			}),
 			QueryArg("significant", {
-				r"(normal|standard)": 1,
-				r"(not|non)(-| )?(normal|standard)": 0
+				r"(significant|standard)": 1,
+				r"(not|non)(-| )?(significant|standard)": 0
 			}),
 			QueryArg("lane_role", {
 				r"safe( ?lane)?": 1,
