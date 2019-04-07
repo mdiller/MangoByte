@@ -189,11 +189,13 @@ class DotaStats(MangoCog):
 		self.chat_wheel_info = dotabase.get_chat_wheel_infos()
 		self.dota_gif_lock = asyncio.Lock()
 
-	def get_pretty_hero(self, player):
+	def get_pretty_hero(self, player, use_icons=False):
 		dotabase = self.bot.get_cog("Dotabase")
 		name = self.hero_info[player["hero_id"]]["name"]
-		emoji = self.hero_info[player["hero_id"]]["emoji"]
-		return f"{emoji}**{name}**"
+		if use_icons:
+			emoji = self.hero_info[player["hero_id"]]["emoji"]
+			return f"{emoji}**{name}**"
+		return f"**{name}**"
 
 	async def get_player_mention(self, steamid, ctx):
 		# expects that steamid is a valid int
@@ -285,7 +287,7 @@ class DotaStats(MangoCog):
 		timeline = sorted(timeline, key=lambda t: t['time'])
 		return list(map(lambda t: t["formatted"], timeline))
 
-	async def get_lane_story(self, players, laneid, is_radiant):
+	async def get_lane_story(self, players, laneid, is_radiant, use_icons=False):
 		our_eff = 0
 		their_eff = 0
 		our_heroes = []
@@ -295,11 +297,11 @@ class DotaStats(MangoCog):
 				if (player['isRadiant'] == is_radiant): #on our team
 					if player.get('lane_efficiency', 0) > our_eff:
 						our_eff = player['lane_efficiency']
-					our_heroes.append(self.get_pretty_hero(player))
+					our_heroes.append(self.get_pretty_hero(player, use_icons))
 				else: #on their team
 					if player.get('lane_efficiency', 0) > their_eff:
 						their_eff = player['lane_efficiency']
-					their_heroes.append(self.get_pretty_hero(player))
+					their_heroes.append(self.get_pretty_hero(player, use_icons))
 		return {
 			"us": pretty_list(our_heroes, "An empty lane"),
 			"won_lost": "won" if our_eff > their_eff else "lost",
@@ -307,12 +309,12 @@ class DotaStats(MangoCog):
 		}
 
 	# gets the story for all of the lanes
-	async def get_lane_stories(self, game, is_radiant):
+	async def get_lane_stories(self, game, is_radiant, use_icons=False):
 		story = ""
 		lanes = {1: "bottom", 2: "middle", 3: "top"}
 		for laneid in lanes:
-			story += "• {0[us]} {0[won_lost]} {1} lane vs {0[them]}\n".format(await self.get_lane_story(game['players'], laneid, is_radiant), lanes[laneid])
-		roamers = [self.get_pretty_hero(p) for p in game['players'] if p.get('is_roaming')]
+			story += "• {0[us]} {0[won_lost]} {1} lane vs {0[them]}\n".format(await self.get_lane_story(game['players'], laneid, is_radiant, use_icons), lanes[laneid])
+		roamers = [self.get_pretty_hero(p, use_icons) for p in game['players'] if p.get('is_roaming')]
 		if roamers:
 			story += f"• {pretty_list(roamers)} roamed\n"
 		return story
@@ -341,7 +343,7 @@ class DotaStats(MangoCog):
 
 		i = 0
 		while i < len(teamfights) and (len(story) + len(teamfights[i]) + len(story_end)) < 2000:
-			story += f"\n{teamfights[i]}"
+			story += f"\n\n{teamfights[i]}"
 			i += 1
 
 		embed = discord.Embed(description=story, color=self.embed_color)
@@ -1171,7 +1173,7 @@ class DotaStats(MangoCog):
 			player_data = next((p for p in match['players'] if p['account_id'] == steamid), None)
 		perspective = player_data.get("isRadiant") if player_data else True
 
-		embed = discord.Embed(description=await self.get_lane_stories(match, perspective))
+		embed = discord.Embed(description=await self.get_lane_stories(match, perspective, True))
 
 		embed.title = f"Laning"
 		embed.url = f"https://www.opendota.com/matches/{match_id}/laning"
