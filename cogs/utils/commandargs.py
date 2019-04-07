@@ -4,6 +4,18 @@ import discord
 from discord.ext import commands
 from .helpers import *
 
+
+hero_pattern_cache = {}
+def get_cache_hero_pattern(dotabase, prefix):
+	if prefix in hero_pattern_cache:
+		return hero_pattern_cache[prefix]
+	else:
+		pattern = f"{prefix}{dotabase.hero_regex}"
+		pattern = f"\\b(?:{pattern})\\b"
+		pattern = re.compile(pattern, re.IGNORECASE)
+		hero_pattern_cache[prefix] = pattern
+		return pattern
+
 def clean_input(t):
 	return re.sub(r'[^a-z1-9\s]', r'', str(t).lower())
 
@@ -38,8 +50,11 @@ class InputParser():
 		self.text = re.sub(r"\s+", " ", self.text)
 
 	def take_regex(self, pattern, add_word_boundary=True):
-		pattern = f"\\b(?:{pattern})\\b"
-		match = re.search(pattern, self.text, re.IGNORECASE)
+		if isinstance(pattern, str):
+			if add_word_boundary:
+				pattern = f"\\b(?:{pattern})\\b"
+			pattern = re.compile(pattern, re.IGNORECASE)
+		match = re.search(pattern, self.text)
 		if match is None:
 			return None
 		self.text = re.sub(pattern, "", self.text, count=1)
@@ -150,6 +165,20 @@ class TimeSpanArg(QueryArg):
 	def regex(self):
 		return r"(?:in|over)? ?(?:the )?(this|last|past)? ?(\d+)? (day|week|month|year)s?"
 
+class HeroArg(QueryArg):
+	def __init__(self, ctx, name, prefix):
+		super().__init__(name)
+		self.prefix = prefix
+		self.dotabase = ctx.bot.get_cog("Dotabase")
+
+	def regex(self):
+		return get_cache_hero_pattern(self.dotabase, self.prefix)
+
+	def parse(self, text):
+		text = re.sub(self.prefix, "", text)
+		self.value = self.dotabase.lookup_hero_id(text)
+
+
 class MatchFilter():
 	def __init__(self, args=[]):
 		self.args = args
@@ -179,14 +208,15 @@ class MatchFilter():
 			QueryArg(None, {
 				r"roam(ing)?|gank(ing)?": True
 			}, lambda p: p.get("is_roaming")),
-			TimeSpanArg()
+			TimeSpanArg(),
+			HeroArg(ctx, "hero_id", "(?:as )?")
 		]
 		for arg in args:
-			value = parser.take_regex(arg.regex(), arg.parse)
+			value = parser.take_regex(arg.regex())
 			if value:
 				arg.parse(value)
 		if parser.text:
-			raise commands.BadArgument()
+			raise CustomBadArgument(UserError(f"I'm not sure what you mean by '{parser.text}'"))
 		return cls(args)
 
 	def __str__(self):

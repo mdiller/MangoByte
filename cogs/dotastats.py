@@ -18,6 +18,7 @@ import time
 import statistics
 import random
 import aiohttp
+import typing
 from types import *
 from .mangocog import *
 
@@ -96,13 +97,17 @@ async def get_stratz_match(match_id):
 
 
 async def get_lastmatch_id(steamid, matchfilter=MatchFilter()):
+	no_filter = matchfilter.to_query_args() == ""
 	matchfilter.add_simple_arg("significant", "0")
 	matchfilter.add_simple_arg("limit", "1")
 	matches = await opendota_query(f"/players/{steamid}/matches?{matchfilter.to_query_args()}")
 	if matches:
 		return matches[0]["match_id"]
 	else:
-		raise NoMatchHistoryError(steamid)
+		if no_filter:
+			raise NoMatchHistoryError(steamid)
+		else:
+			raise UserError("No matches found using that filter")
 
 
 def s_if_plural(text, n):
@@ -401,7 +406,7 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed, file=match_image)
 
 	@commands.command(aliases=["lastgame", "lm"])
-	async def lastmatch(self, ctx, player : DotaPlayer = None, *, matchfilter : MatchFilter = MatchFilter()):
+	async def lastmatch(self, ctx, player: typing.Optional[DotaPlayer] = None, *, matchfilter : MatchFilter = MatchFilter()):
 		"""Gets info about the player's last dota game"""
 		await ctx.channel.trigger_typing()
 

@@ -98,11 +98,12 @@ class Dotabase(MangoCog):
 		self.item_colors = read_json(settings.resource("json/dota_item_colors.json"))
 		self.hero_aliases = {}
 		self.item_aliases = {}
-		self.build_aliases()
+		self.hero_regex = ""
+		self.build_helpers()
 		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
 		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos())
 
-	def build_aliases(self):
+	def build_helpers(self):
 		for hero in session.query(Hero):
 			aliases = hero.aliases.split("|")
 			for alias in aliases:
@@ -118,6 +119,21 @@ class Dotabase(MangoCog):
 
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name
+
+		pattern_parts = []
+		for alias in self.hero_aliases:
+			if len(alias) > 2:
+				parts = []
+				tempstring = ""
+				for i in range(2, len(alias)):
+					tempstring += alias[i]
+					parts.append(tempstring)
+				parts.reverse()
+				result = f"{alias[:2]}(?:{'|'.join(parts)})?"
+				pattern_parts.append(result)
+			else:
+				pattern_parts.append(alias)
+		self.hero_regex = f"(?:{'|'.join(pattern_parts)})"
 
 	def get_wiki_url(self, obj):
 		if isinstance(obj, Hero):
