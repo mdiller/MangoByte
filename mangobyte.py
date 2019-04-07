@@ -48,10 +48,19 @@ deprecated_commands = {
 	"register": "userconfig steam"
 }
 
+on_ready_has_run = False
+
 @bot.event
 async def on_ready():
+	global on_ready_has_run
+	if on_ready_has_run:
+		appinfo = await bot.application_info()
+		await appinfo.owner.send("bot tried to run on_ready again")
+		return
+	on_ready_has_run = True
 	print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
 	print('Connecting to voice channels if specified in botdata.json ...')
+	start_time = datetime.datetime.now()
 
 	game = discord.Activity(
 		name="DOTA 3 [?help]", 
@@ -64,7 +73,6 @@ async def on_ready():
 	bot.help_command.cog = bot.get_cog("General")
 
 	# stuff to help track/log the connection of voice channels
-	start_time = datetime.datetime.now()
 	connected_count = 0
 	not_found_count = 0
 	timeout_count = 0
@@ -100,7 +108,8 @@ async def on_ready():
 		message += f"\n{not_found_count} voice channels not found"
 	if timeout_count > 0:
 		message += f"\n{timeout_count} voice channels timed out"
-
+	total_time = (datetime.datetime.now() - start_time).total_seconds()
+	message += f"\n\ntook {total_time:.2f} seconds"
 	appinfo = await bot.application_info()
 	if not settings.debug:
 		await appinfo.owner.send(message)
