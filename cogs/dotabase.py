@@ -39,11 +39,11 @@ for i in range(1, 20):
 
 # A variable that can specify a filter on a query
 class QueryVariable():
-	def __init__(self, name, aliases, query_filter, prefix=";"):
+	def __init__(self, name, aliases, query_filter, prefix=None):
 		self.name = name
 		self.aliases = aliases
 		self.query_filter = query_filter
-		self.prefix = prefix
+		self.prefix = prefix or ";"
 		self.value = None
 
 	def __repr__(self):

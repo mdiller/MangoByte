@@ -108,9 +108,9 @@ class DotaPlayer():
 		return cls(userinfo.steam, player.mention, is_author)
 
 class QueryArg():
-	def __init__(self, name, args_dict={}, post_filter=None):
+	def __init__(self, name, args_dict=None, post_filter=None):
 		self.name = name
-		self.args_dict = args_dict
+		self.args_dict = args_dict or {}
 		self.value = None
 		self.post_filter = None
 
@@ -183,8 +183,8 @@ class HeroArg(QueryArg):
 
 
 class MatchFilter():
-	def __init__(self, args=[]):
-		self.args = args
+	def __init__(self, args=None):
+		self.args = args or []
 
 	@classmethod
 	async def convert(cls, ctx, argument):

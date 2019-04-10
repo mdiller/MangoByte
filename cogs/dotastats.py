@@ -96,7 +96,10 @@ async def get_stratz_match(match_id):
 		raise UserError("Looks like this match has not been parsed by STRATZ yet. Try again in a bit")
 
 
-async def get_lastmatch_id(steamid, matchfilter=MatchFilter()):
+async def get_lastmatch_id(steamid, matchfilter=None):
+	if not matchfilter:
+		matchfilter = MatchFilter()
+
 	no_filter = matchfilter.to_query_args() == ""
 	matchfilter.set_arg("significant", 0, False)
 	matchfilter.set_arg("limit", 1)
@@ -406,10 +409,12 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed, file=match_image)
 
 	@commands.command(aliases=["lastgame", "lm"])
-	async def lastmatch(self, ctx, player: typing.Optional[DotaPlayer] = None, *, matchfilter : MatchFilter = MatchFilter()):
+	async def lastmatch(self, ctx, player: typing.Optional[DotaPlayer] = None, *, matchfilter : MatchFilter = None):
 		"""Gets info about the player's last dota game"""
 		await ctx.channel.trigger_typing()
 
+		if not matchfilter:
+			matchfilter = MatchFilter()
 		if not player:
 			player = await DotaPlayer.from_author(ctx)
 
@@ -507,7 +512,7 @@ class DotaStats(MangoCog):
 		await self.tell_match_story(game, player_data['isRadiant'], ctx, perspective)
 
 	@commands.command(aliases=["recentmatches", "recent"])
-	async def matches(self, ctx, player: typing.Optional[DotaPlayer] = None, *, matchfilter : MatchFilter = MatchFilter()):
+	async def matches(self, ctx, player: typing.Optional[DotaPlayer] = None, *, matchfilter : MatchFilter = None):
 		"""Gets a list of your matches
 
 		The date/time is localized based off of the server that the game was played on, which means it may not match your timezone.
@@ -524,7 +529,8 @@ class DotaStats(MangoCog):
 		`{cmdpfx}matches @PlayerPerson riki`"""
 		await ctx.channel.trigger_typing()
 
-
+		if not matchfilter:
+			matchfilter = MatchFilter()
 		if not player:
 			player = await DotaPlayer.from_author(ctx)
 		steam32 = player.steam_id
