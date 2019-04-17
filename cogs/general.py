@@ -18,6 +18,7 @@ import re
 import praw
 import os
 from .mangocog import *
+from concurrent.futures import ThreadPoolExecutor
 
 def load_words():
 	words = {}
@@ -303,7 +304,7 @@ class General(MangoCog):
 					raise UserError("Can't find things on wiki for that")
 				return getWikiPage(e.options[0])
 
-		page = getWikiPage(thing)
+		page = await ctx.bot.loop.run_in_executor(ThreadPoolExecutor(max_workers=1), getWikiPage, thing)
 		
 		page_html = await httpgetter.get(page.url, "text")
 
