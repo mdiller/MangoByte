@@ -15,6 +15,7 @@ hamburger
 hot dog
 ice cream
 macaroni
+mango
 nut
 omelet
 onion
