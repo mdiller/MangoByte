@@ -48,6 +48,17 @@ def fill_word_template(template, words):
 
 	return re.sub(r"\{([^}]+)\}", replace, template)
 
+# loads a markdown file as a dictionary
+def load_md_as_dict(filename):
+	with open(filename, "r") as f:
+		text = f.read()
+	result = {}
+	pattern = re.compile(r"\n# ([^\n]+)\n([\s\S]*?)(?=\n# |$)")
+	for match in pattern.finditer(text):
+		name = match.group(1).strip()
+		description = match.group(2).strip()
+		result[name] = description
+	return result
 
 class General(MangoCog):
 	"""Basic and admin commands
@@ -61,6 +72,7 @@ class General(MangoCog):
 		self.subscripts = read_json(settings.resource("json/subscripts.json"))
 		self.superscripts = read_json(settings.resource("json/superscripts.json"))
 		self.showerthoughts_data = read_json(settings.resource("json/showerthoughts.json"))
+		self.docs_data = load_md_as_dict(settings.resource("docs.md"))
 		self.words = load_words()
 
 	@commands.command()
@@ -557,6 +569,38 @@ class General(MangoCog):
 		if not len(options) > 0:
 			raise UserError("You gotta give me a couple different options, separated by spaces")
 		await ctx.send(random.choice(options))
+
+	@commands.command(aliases=["documentation"])
+	async def docs(self, ctx, *, topic : str = None):
+		"""Shows the documentation for the given topic
+
+		If no parameters are given, then this shows the available documentation
+		
+		**Example:**
+		`{cmdpfx}docs`
+		`{cmdpfx}docs Match Filter`
+		`{cmdpfx}docs matchfilter`
+		"""
+		if topic is None:
+			embed = discord.Embed()
+			embed.title = "Available Topics"
+			embed.description = "\n".join(map(lambda name: f"• {name}", list(self.docs_data.keys())))
+			await ctx.send(embed=embed)
+			return
+		found_topic = None
+		for name in self.docs_data:
+			simple_name = name.lower().replace(" ", "")
+			if topic in simple_name:
+				found_topic = name
+				break
+		if found_topic is None:
+			raise UserError(f"Couldn't find a topic called '{topic}'")
+
+		embed = discord.Embed()
+		embed.title = found_topic
+		embed.description = self.docs_data[found_topic]
+		await ctx.send(embed=embed)
+
 
 	@commands.Cog.listener()
 	async def on_message(self, message):
