@@ -410,7 +410,9 @@ class DotaStats(MangoCog):
 
 	@commands.command(aliases=["lastgame", "lm"])
 	async def lastmatch(self, ctx, player: typing.Optional[DotaPlayer] = None, *, matchfilter : MatchFilter = None):
-		"""Gets info about the player's last dota game"""
+		"""Gets info about the player's last dota game
+
+		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`"""
 		await ctx.channel.trigger_typing()
 
 		if not matchfilter:
@@ -517,11 +519,7 @@ class DotaStats(MangoCog):
 
 		The date/time is localized based off of the server that the game was played on, which means it may not match your timezone.
 
-		You can specify the following arguments:
-		__**User:**__
-		@mention a discord user to get their recent matches instead of yours
-		__**Hero:**__
-		Indicate a hero and I'll return your most recent matches with that hero
+		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`
 
 		**Example:**
 		`{cmdpfx}matches @PlayerPerson mid witch doctor ranked`
