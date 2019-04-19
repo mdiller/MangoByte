@@ -120,20 +120,28 @@ class Dotabase(MangoCog):
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name
 
-		pattern_parts = []
+		pattern_parts = {}
 		for alias in self.hero_aliases:
+			parts = []
 			if len(alias) > 2:
-				parts = []
 				tempstring = ""
 				for i in range(2, len(alias)):
 					tempstring += alias[i]
 					parts.append(tempstring)
-				parts.reverse()
-				result = f"{alias[:2]}(?:{'|'.join(parts)})?"
-				pattern_parts.append(result)
+			prefix = alias[:2]
+			if not prefix in pattern_parts:
+				pattern_parts[prefix] = []
+			pattern_parts[prefix].extend(parts)
+		patterns = []
+		for prefix in pattern_parts:
+			parts = list(set(pattern_parts[prefix]))
+			parts = sorted(parts, key=lambda p: len(p), reverse=True)
+			if len(parts) > 0:
+				result = f"{prefix}(?:{'|'.join(parts)})?"
+				patterns.append(result)
 			else:
-				pattern_parts.append(alias)
-		self.hero_regex = f"(?:{'|'.join(pattern_parts)})"
+				patterns.append(prefix)
+		self.hero_regex = f"(?:{'|'.join(patterns)})"
 
 	def get_wiki_url(self, obj):
 		if isinstance(obj, Hero):
