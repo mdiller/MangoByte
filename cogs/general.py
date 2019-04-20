@@ -3,14 +3,13 @@ from discord.ext import commands
 from __main__ import settings, botdata, invite_link, httpgetter
 from cogs.utils.helpers import *
 from cogs.utils.botdata import UserInfo
-from cogs.utils import checks, botdatatypes
+from cogs.utils import checks, botdatatypes, wikipedia
 from cogs.audio import AudioPlayerNotFoundError
 from sqlalchemy import func
 import cogs.utils.loggingdb as loggingdb
 import string
 import random
 import datetime
-import wikipedia
 import html
 from bs4 import BeautifulSoup, Tag
 from io import BytesIO
@@ -18,7 +17,6 @@ import re
 import praw
 import os
 from .mangocog import *
-from concurrent.futures import ThreadPoolExecutor
 
 def load_words():
 	words = {}
@@ -293,7 +291,7 @@ class General(MangoCog):
 	async def wiki(self, ctx, *, thing : str):
 		"""Looks up a thing on wikipedia
 		
-		Uses the [python Wikipedia API](https://wikipedia.readthedocs.io/en/latest/) to look up a thing. 
+		Uses my own implementation of the [Wikipedia API](https://www.mediawiki.org/wiki/API:Tutorial)
 
 		You can also try `{cmdpfx} wiki random` to get a random wiki page
 
@@ -302,21 +300,7 @@ class General(MangoCog):
 		"""
 		await ctx.channel.trigger_typing()
 
-		def getWikiPage(title):
-			try:
-				if title == "random":
-					return wikipedia.page(title=wikipedia.random(1), redirect=True, auto_suggest=True)
-				return wikipedia.page(title=title, redirect=True, auto_suggest=True)
-			except (wikipedia.exceptions.DisambiguationError, wikipedia.exceptions.PageError) as e:
-				if title == "random":
-					return getWikiPage(title)
-				if isinstance(e, wikipedia.exceptions.PageError) or len(e.options) == 0:
-					raise UserError(f"Couldn't find anythin' fer \"*{thing}*\"")
-				if e.options[0] == title:
-					raise UserError("Can't find things on wiki for that")
-				return getWikiPage(e.options[0])
-
-		page = await ctx.bot.loop.run_in_executor(ThreadPoolExecutor(max_workers=1), getWikiPage, thing)
+		page = await wikipedia.get_wikipedia_page(thing)
 		
 		page_html = await httpgetter.get(page.url, "text")
 
