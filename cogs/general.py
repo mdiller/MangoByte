@@ -301,98 +301,21 @@ class General(MangoCog):
 		await ctx.channel.trigger_typing()
 
 		page = await wikipedia.get_wikipedia_page(thing)
-		
-		page_html = await httpgetter.get(page.url, "text")
 
-		page_html = BeautifulSoup(page_html, 'html.parser')
-		page_html = page_html.find(id="mw-content-text")
-
-		def tagsToMarkdown(tag, plaintext=False):
-			if isinstance(tag, list):
-				result = ""
-				for i in tag:
-					result += tagsToMarkdown(i, plaintext)
-				return result
-			elif isinstance(tag, str):
-				return tag
-			elif isinstance(tag, Tag):
-				if plaintext:
-					return tagsToMarkdown(tag.contents, plaintext)
-				elif tag.name == "b":
-					return f"**{tagsToMarkdown(tag.contents)}**"
-				elif tag.name == "i":
-					return f"*{tagsToMarkdown(tag.contents)}*"
-				elif tag.name in [ "sub", "sup" ]:
-					if "reference" in tag.get("class", []):
-						return "" # dont include references
-					text = tagsToMarkdown(tag.contents, plaintext=True)
-					if len(text) and text[0] == "[" and text[-1] == "]":
-						return "" # this is a references thing you cant fool me
-					replacements = self.subscripts if tag.name == "sub" else self.superscripts
-					new_text = ""
-					for c in text:
-						new_text += replacements.get(c) if c in replacements else c
-					return new_text
-				elif tag.name == "a":
-					if tag.get("href") is None:
-						return tagsToMarkdown(tag.contents)
-					if tag["href"].startswith("#"):
-						return "" # dont include references
-					href = re.sub("^/wiki/", "https://en.wikipedia.org/wiki/", tag['href'])
-					href = re.sub(r"(\(|\))", r"\\\1", href)
-					return f"[{tagsToMarkdown(tag.contents)}]({href})"
-				else:
-					# raise UserError(f"Unrecognized tag: {tag.name}")
-					return tagsToMarkdown(tag.contents)
-			
-			return str(tag)
-
-		summary = tagsToMarkdown(page_html.find("div").find(lambda tag: tag.name == "p" and not tag.attrs, recursive=False).contents)
-
-		def markdownLength(text):
-			text = re.sub(r"\[([^\[]*)]\([^\(]*\)", r"\1", text)
-			return len(text)
-
-		matches = re.finditer(r"([^\s\.]+\.)(\s|$)", summary)
-		if matches:
-			for match in list(matches):
-				if markdownLength(summary[0:match.end()]) > 70:
-					summary = summary[0:match.end()]
-					break
-
-		embed = discord.Embed(description=summary)
+		embed = discord.Embed(description=page.markdown)
 		embed.title = f"**{page.title}**"
 		embed.url = page.url
 
-		for image in page_html.find_all(class_="navbox"):
-			image.decompose()
-		for image in page_html.find_all(class_="mbox-image"):
-			image.decompose()
-		for image in page_html.find_all(class_="metadata plainlinks stub"):
-			image.decompose()
-
-		page_html_text = page_html.prettify()
-
-		best_image = None
-		best_image_index = -1
-		for image in page.images:
-			if "Wikisource-logo" in image:
-				continue
-			if re.search(r"\.(png|jpg|jpeg|gif)$", image, re.IGNORECASE):
-				index = page_html_text.find(image.split('/')[-1])
-				if index != -1 and (best_image_index == -1 or index < best_image_index):
-					best_image = image
-					best_image_index = index
-
-		if best_image:
-			embed.set_image(url=best_image)
+		if page.image:
+			embed.set_image(url=page.image)
 
 		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 
-		if best_image and re.search(r"\.svg$", best_image, re.IGNORECASE):
-			await ctx.send(embed=embed, file=svg_png_image)
-		else:
-			await ctx.send(embed=embed)
+		# if page.image and re.search(r"\.svg$", page.image, re.IGNORECASE):
+		# 	await ctx.send(embed=embed, file=svg_png_image)
+		# 	return
+		
+		await ctx.send(embed=embed)
 
 	@commands.command()
 	async def reddit(self, ctx, url_or_id):
