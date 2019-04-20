@@ -212,7 +212,7 @@ class DotaStats(MangoCog):
 
 	async def create_dota_gif(self, match, stratz_match, start_time, end_time, ms_per_second=100):
 		await self.dota_gif_lock.acquire()
-		result = await drawdota.create_dota_gif(match, stratz_match, start_time, end_time, ms_per_second)
+		result = await drawdota.create_dota_gif(self.bot, match, stratz_match, start_time, end_time, ms_per_second)
 		self.dota_gif_lock.release()
 		return result
 

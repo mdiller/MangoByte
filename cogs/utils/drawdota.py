@@ -12,6 +12,7 @@ from .tabledraw import Table, ImageCell, TextCell, ColorCell, DoubleCell
 from io import BytesIO
 from .helpers import run_command, get_pretty_time, read_json, UserError, format_duration_simple
 from .imagetools import *
+from concurrent.futures import ThreadPoolExecutor
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -184,7 +185,7 @@ async def combine_image_halves(img_url1, img_url2):
 
 	return fp
 
-async def optimize_gif(uri, filename):
+def optimize_gif(uri, filename):
 
 	# if need further, try doing O3 only after colors instead of before
 	optimization = [
@@ -211,27 +212,31 @@ async def optimize_gif(uri, filename):
 
 # places an icon on the map at the indicated x/y using the dota coordinant system
 # scale is how much to scale the icon
-async def place_icon_on_map(map_image, icon, x, y):
+def place_icon_on_map(map_image, icon, x, y):
 	scale = map_image.width / 128
 	x = (x - 64) * scale
 	y = (128 - (y - 64)) * scale
 	return paste_image(map_image, icon, int(x - (icon.width / 2)), int(y - (icon.height / 2)))
 
-async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_second=100):
+# wraps the main gif creation code so it doesnt block
+async def create_dota_gif(bot, match, stratz_match, start_time, end_time, ms_per_second=100):
 	uri = f"match_gif:{match['match_id']}:{start_time}:{end_time}:{ms_per_second}"
-
-	reverse = end_time < start_time
-	if reverse:
-		temp = start_time
-		start_time = end_time
-		end_time = temp
 
 	filename = httpgetter.cache.get_filename(uri)
 	if filename and not settings.debug:
 		return filename
-
 	filename = await httpgetter.cache.new(uri, "gif")
 
+	hero_icons = {}
+
+	for player in stratz_match["players"]:
+		hero_id = player["hero"]
+		hero_icons[str(hero_id)] = await get_hero_icon(hero_id)
+
+	return await bot.loop.run_in_executor(ThreadPoolExecutor(max_workers=1), create_dota_gif_main, match, stratz_match, start_time, end_time, ms_per_second, filename, uri, hero_icons)
+
+# the main code for creating the dota gif. this should be run in a separate thread because it blocks
+def create_dota_gif_main(match, stratz_match, start_time, end_time, ms_per_second, filename, uri, hero_icons):
 	building_data = read_json(settings.resource("json/building_data.json"))
 
 	map_image = Image.open(settings.resource("images/map/dota_map.png"))
@@ -239,6 +244,12 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 
 	clock_bg_image = Image.open(settings.resource("images/map/clock_background.png"))
 	font = ImageFont.truetype(settings.resource("images/arial_unicode_bold.ttf"), 16)
+
+	reverse = end_time < start_time
+	if reverse:
+		temp = start_time
+		start_time = end_time
+		end_time = temp
 
 	match_start = -89
 	if start_time < match_start:
@@ -252,7 +263,7 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 		positionEvents = eventData["playerUpdatePositionEvents"]
 		deathEvents = eventData["deathEvents"]
 		scale = 0.75
-		icon = await get_hero_icon(player["hero"])
+		icon = hero_icons[str(player["hero"])]
 		icon = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
 		# icon = outline_image(icon, 2, (0, 255, 0) if player["isRadiant"] else (255, 0, 0))
 		x = 0
@@ -341,13 +352,13 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 		image = map_image.copy()
 		for building in buildings:
 			if t < building.get("death", t + 1):
-				image = await place_icon_on_map(image, building["icon"], building["x"], building["y"])
+				image = place_icon_on_map(image, building["icon"], building["x"], building["y"])
 		for player in players:
 			icon = player["icon"].convert("LA") if player[t]["dead"] else player["icon"]
-			image = await place_icon_on_map(image, icon, player[t]["x"], player[t]["y"])
+			image = place_icon_on_map(image, icon, player[t]["x"], player[t]["y"])
 		for rune in runes.get(t, {}):
 			rune = runes[t][rune]
-			image = await place_icon_on_map(image, rune_icons[rune["type"]], rune["x"], rune["y"])
+			image = place_icon_on_map(image, rune_icons[rune["type"]], rune["x"], rune["y"])
 
 		image = paste_image(image, clock_bg_image, (image.width // 2) - (clock_bg_image.width // 2), 0)
 		draw = ImageDraw.Draw(image)
@@ -357,12 +368,11 @@ async def create_dota_gif(match, stratz_match, start_time, end_time, ms_per_seco
 
 		image.save(process.stdin, "gif")
 		image.close()
-		await asyncio.sleep(0.001) # Checks in with the event loop so we dont block
 
 	process.stdin.close()
 	process.wait()
 
-	await optimize_gif(uri, filename)
+	optimize_gif(uri, filename)
 
 	return filename
 
