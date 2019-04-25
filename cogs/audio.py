@@ -127,7 +127,7 @@ class Audio(MangoCog):
 		clipsdir = settings.resource("clips/")
 		for root, dirs, files in os.walk(clipsdir):
 			for file in files:
-				match = re.search(f"clips/((?:.*/)?([^/]+)\.(?:{audio_extensions}))", os.path.join(root, file))
+				match = re.search(f"clips[/\\\\]((?:.*[/\\\\])?([^/\\\\]+)\.(?:{audio_extensions}))", os.path.join(root, file))
 				if match:
 					path = match.group(1)
 					name = match.group(2)
@@ -139,7 +139,7 @@ class Audio(MangoCog):
 								break
 						if not found:
 							info = { "path": path }
-							in_dir = re.search(f"(.+)/(?:.+)\.(?:{audio_extensions})", path)
+							in_dir = re.search(f"(.+)[/\\\\](?:.+)\.(?:{audio_extensions})", path)
 							if in_dir:
 								info["tags"] = in_dir.group(1)
 							clipinfos[name] = info
@@ -302,7 +302,6 @@ class Audio(MangoCog):
 				clip_format = "`{}`\n"
 			for clip in clips:
 				message += clip_format.format(clip)
-
 		await ctx.send(message)
 
 	@commands.command()
