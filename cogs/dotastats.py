@@ -1123,6 +1123,10 @@ class DotaStats(MangoCog):
 
 		if ms_per_second < 1 or ms_per_second > 655350:
 			raise UserError("That is outside the bounds of the `ms_per_second` value")
+
+		lastframe = match["duration"] - 1
+		if start > lastframe and end > lastframe:
+			raise UserError("The game didn't last that long")
 		
 
 		async with ctx.channel.typing():
