@@ -179,7 +179,10 @@ async def on_command_error(ctx, error):
 			if settings.debug:
 				await ctx.send(f"```{trace_string}```")
 	except discord.errors.Forbidden:
-		await ctx.author.send("Looks like I don't have permission to talk in that channel, sorry")
+		try:
+			await ctx.author.send("Looks like I don't have permission to talk in that channel, sorry")
+		except discord.errors.Forbidden:
+			pass
 
 error_file = "errors.json"
 
