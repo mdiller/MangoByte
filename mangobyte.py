@@ -51,6 +51,7 @@ deprecated_commands = {
 
 on_ready_has_run = False
 
+
 @bot.event
 async def on_ready():
 	global on_ready_has_run
@@ -77,25 +78,23 @@ async def on_ready():
 	connected_count = 0
 	not_found_count = 0
 	timeout_count = 0
+	error_count = 0
 
+	channel_tasks = []
 	for guildinfo in botdata.guildinfo_list():
 		if guildinfo.voicechannel is not None:
-			try:
-				print(f"connecting voice to: {guildinfo.voicechannel}")
-				await audio_cog.connect_voice(guildinfo.voicechannel)
-				print(f"connected: {guildinfo.voicechannel}")
-				connected_count += 1
-			except UserError as e:
-				if e.message == "channel not found":
-					guildinfo.voicechannel = None
-					print("channel not found!")
-					not_found_count += 1
-				else:
-					raise
-			except asyncio.TimeoutError:
-				guildinfo.voicechannel = None
-				print("timeout error when connecting to channel")
-				timeout_count += 1
+			channel_tasks.append(initial_channel_connect(audio_cog, guildinfo))
+
+	connection_results = await asyncio.gather(*channel_tasks)
+	for code in connection_results:
+		if code == 0:
+			connected_count += 1
+		if code == 1:
+			not_found_count += 1
+		if code == 2:
+			timeout_count += 1
+		if code == 3:
+			error_count += 1
 
 	print("\nupdating guilds")
 	await loggingdb.update_guilds(bot.guilds)
@@ -109,6 +108,8 @@ async def on_ready():
 		message += f"\n{not_found_count} voice channels not found"
 	if timeout_count > 0:
 		message += f"\n{timeout_count} voice channels timed out"
+	if error_count > 0:
+		message += f"\n{error_count} voice channels encountered a weird usererror"
 	total_time = (datetime.datetime.now() - start_time).total_seconds()
 	message += f"\n\ntook {total_time:.2f} seconds"
 	appinfo = await bot.application_info()
@@ -125,6 +126,28 @@ async def invalid_command_reporting(ctx):
 		return True
 	else:
 		return botdata.guildinfo(ctx.message.guild.id).invalidcommands
+
+
+# returns 0 on successful connect, 1 on not found, and 2 on timeout, 3 on error
+async def initial_channel_connect(audio_cog, guildinfo):
+	try:
+		print(f"connecting voice to: {guildinfo.voicechannel}")
+		await audio_cog.connect_voice(guildinfo.voicechannel)
+		print(f"connected: {guildinfo.voicechannel}")
+		return 0
+	except UserError as e:
+		if e.message == "channel not found":
+			guildinfo.voicechannel = None
+			print("channel not found!")
+			return 1
+		else:
+			print(f"weird usererror in on_ready for '{channel}':{e.message}")
+			return 3
+	except asyncio.TimeoutError:
+		guildinfo.voicechannel = None
+		print("timeout error when connecting to channel")
+		return 2
+
 
 @bot.event
 async def on_command_error(ctx, error):
