@@ -31,8 +31,8 @@ Before installing and running your own instance of mangobyte, you will first nee
 * Python 3.6
 * Pip
 * Dependencies: `python3.6 -m pip install -r requirements.txt`
-* The rewrite version of [discord.py](https://github.com/Rapptz/discord.py) with voice support: `python3.6 -m pip install -U git+https://github.com/Rapptz/discord.py@rewrite#egg=discord.py[voice]`
 * [ffmpeg](https://ffmpeg.org) (the tool used for playing audio)
+* [gifsicle](https://www.lcdf.org/gifsicle/) (the tool used for creating gifs)
 
 If you run `python3.6 mangobyte.py`, you will probably get an error message because the bot token isn't set. You'll have to [create a bot account](https://twentysix26.github.io/Red-Docs/red_guide_bot_accounts/) through discord in order to get one of these tokens. Note that the above link is for a different discord bot, and so the "Logging in with a token" section does not apply here. Now that you have a bot account, set the `token` field in the `settings.json` file to your new bot's token. After you have done this, and have invited your bot to your server, don't forget to add the ID of the voice channel you want to connect it to in the `defaultvoice` field in the `settings.json` file.
 
