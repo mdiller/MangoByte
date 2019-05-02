@@ -2,9 +2,8 @@ import discord
 from discord.ext import commands
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
-from __main__ import settings, botdata, report_error, loggingdb_session
+from __main__ import settings, botdata, report_error, loggingdb
 from cogs.utils import checks
-import cogs.utils.loggingdb as loggingdb
 import cogs.utils.botdatatypes as botdatatypes
 import asyncio
 import os
@@ -489,7 +488,7 @@ class Audio(MangoCog):
 			if ttschannel == message.channel.id:
 				if message.content.startswith("//") or message.content.startswith("#"):
 					return # commented out stuff should be ignored
-				loggingdb.insert_message(message, "smarttts", loggingdb_session)
+				await loggingdb.insert_message(message, "smarttts")
 				try:
 					if guildinfo.announcetts:
 						name = message.author.name
@@ -502,7 +501,7 @@ class Audio(MangoCog):
 					await message.channel.send(e.message)
 				except Exception as e:
 					await message.channel.send("Uh-oh, sumthin dun gone wrong 😱")
-					report_error(message, TtsChannelError(e))
+					await report_error(message, TtsChannelError(e))
 
 
 	@commands.command()

@@ -1,12 +1,11 @@
 import discord
 from discord.ext import commands
-from __main__ import settings, botdata, invite_link, httpgetter
+from __main__ import settings, botdata, invite_link, httpgetter, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.botdata import UserInfo
 from cogs.utils import checks, botdatatypes, wikipedia
 from cogs.audio import AudioPlayerNotFoundError
 from sqlalchemy import func
-import cogs.utils.loggingdb as loggingdb
 import string
 import random
 import datetime
@@ -200,9 +199,7 @@ class General(MangoCog):
 	@commands.command()
 	async def botstats(self, ctx):
 		"""Displays some bot statistics"""
-
-		await ctx.send("Due to scaling issues with my stats, I'm disabling use of this command for now. Going to rework the way it works, and enable it after thats done")
-		return
+		await ctx.channel.trigger_typing()
 
 		embed = discord.Embed(color=discord.Color.green())
 
@@ -211,21 +208,28 @@ class General(MangoCog):
 		embed.add_field(name="Servers/Guilds", value="{:,}".format(len(self.bot.guilds)))
 		embed.add_field(name="Registered Users", value="{:,}".format(len(list(filter(lambda user: user.steam, botdata.userinfo_list())))))
 
-		commands = loggingdb_session.query(loggingdb.Message).filter(loggingdb.Message.command != None)
-		commands_weekly = commands.filter(loggingdb.Message.timestamp > datetime.datetime.utcnow() - datetime.timedelta(weeks=1))
-		embed.add_field(name="Commands", value=f"{commands.count():,}")
-		embed.add_field(name="Commands (This Week)", value=f"{commands_weekly.count():,}")
+		thisweek = "timestamp between datetime('now', '-7 days') AND datetime('now', 'localtime')"
+		query_results = await loggingdb.query_multiple([
+			f"select count(*) from messages where command is not null",
+			f"select count(*) from messages where command is not null and {thisweek}",
+			f"select command from messages where command is not null group by command order by count(command) desc limit 3",
+			f"select command from messages where command is not null and {thisweek} group by command order by count(command) desc limit 3"
+		])
+
+
+		embed.add_field(name="Commands", value=f"{query_results[0][0][0]:,}")
+		embed.add_field(name="Commands (This Week)", value=f"{query_results[1][0][0]:,}")
 
 		cmdpfx = self.cmdpfx(ctx)
-		top_commands = loggingdb_session.query(loggingdb.Message.command, func.count(loggingdb.Message.command)).filter(loggingdb.Message.command != None).group_by(loggingdb.Message.command).order_by(func.count(loggingdb.Message.command).desc())
-		if top_commands.count() >= 3:
+		top_commands = query_results[2]
+		if len(top_commands) >= 3:
 			embed.add_field(name="Top Commands", value=(
 				f"`{cmdpfx}{top_commands[0][0]}`\n"
 				f"`{cmdpfx}{top_commands[1][0]}`\n"
 				f"`{cmdpfx}{top_commands[2][0]}`\n"))
 
-		top_commands_weekly = top_commands.filter(loggingdb.Message.timestamp > datetime.datetime.utcnow() - datetime.timedelta(weeks=1))
-		if top_commands_weekly.count() >= 3:
+		top_commands_weekly = query_results[3]
+		if len(top_commands_weekly) >= 3:
 			embed.add_field(name="Top Commands (This Week)", value=(
 				f"`{cmdpfx}{top_commands_weekly[0][0]}`\n"
 				f"`{cmdpfx}{top_commands_weekly[1][0]}`\n"
@@ -532,21 +536,21 @@ class General(MangoCog):
 
 	@commands.Cog.listener()
 	async def on_command(self, ctx):
-		msg = loggingdb.insert_message(ctx.message, ctx.command.name, loggingdb_session)
-		loggingdb.insert_command(ctx, loggingdb_session)
+		msg = await loggingdb.insert_message(ctx.message, ctx.command.name)
+		await loggingdb.insert_command(ctx)
 		print(msg)
 
 	@commands.Cog.listener()
 	async def on_command_completion(self, ctx):
-		loggingdb.command_finished(ctx, "completed", None, loggingdb_session)
+		await loggingdb.command_finished(ctx, "completed", None)
 
 	@commands.Cog.listener()
 	async def on_guild_join(self, guild):
-		loggingdb.update_guilds(self.bot.guilds, loggingdb_session)
+		await loggingdb.update_guilds(self.bot.guilds)
 
 	@commands.Cog.listener()
 	async def on_guild_remove(self, guild):
-		loggingdb.update_guilds(self.bot.guilds, loggingdb_session)
+		await loggingdb.update_guilds(self.bot.guilds)
 
 	@commands.command(aliases=[ "tipjar", "donation" ])
 	async def donate(self, ctx):

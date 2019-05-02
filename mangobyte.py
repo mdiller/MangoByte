@@ -6,8 +6,8 @@ settings = Settings()
 from cogs.utils.botdata import BotData
 botdata = BotData()
 
-import cogs.utils.loggingdb as loggingdb
-loggingdb_session = loggingdb.create_session(settings.resource("loggingdb.db"))
+from cogs.utils.loggingdb import LoggingDb
+loggingdb = LoggingDb(settings.resource("loggingdb.db"))
 
 from cogs.utils.httpgetter import HttpGetter
 httpgetter = HttpGetter()
@@ -98,7 +98,7 @@ async def on_ready():
 				timeout_count += 1
 
 	print("\nupdating guilds")
-	loggingdb.update_guilds(bot.guilds, loggingdb_session)
+	await loggingdb.update_guilds(bot.guilds)
 	
 	print("\ninitialization finished\n")
 
@@ -133,7 +133,7 @@ async def on_command_error(ctx, error):
 
 	cmdpfx = botdata.command_prefix(ctx)
 
-	loggingdb.command_finished(ctx, "errored", type(error).__name__, loggingdb_session)
+	await loggingdb.command_finished(ctx, "errored", type(error).__name__)
 	try:
 		if isinstance(error, commands.CommandNotFound):
 			cmd = ctx.message.content[1:].split(" ")[0]
@@ -171,11 +171,11 @@ async def on_command_error(ctx, error):
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.HTTPException):
 			await ctx.send("Looks like there was a problem with discord just then. Try again in a bit.")
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
-			loggingdb.command_finished(ctx, "user_errored", error.original.message, loggingdb_session)
+			await loggingdb.command_finished(ctx, "user_errored", error.original.message)
 			await error.original.send_self(ctx, botdata)
 		else:
 			await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
-			trace_string = report_error(ctx.message, error, skip_lines=4)
+			trace_string = await report_error(ctx.message, error, skip_lines=4)
 			if settings.debug:
 				await ctx.send(f"```{trace_string}```")
 	except discord.errors.Forbidden:
@@ -186,7 +186,7 @@ error_file = "errors.json"
 async def print_missing_perms(ctx, error):
 	if not (ctx.guild):
 		await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
-		trace_string = report_error(ctx.message, error, skip_lines=0)
+		trace_string = await report_error(ctx.message, error, skip_lines=0)
 	my_perms = ctx.channel.permissions_for(ctx.guild.me)
 	perms_strings = read_json(settings.resource("json/permissions.json"))
 	perms = []
@@ -202,7 +202,7 @@ async def print_missing_perms(ctx, error):
 		await ctx.send(f"Looks like I'm missing permissions 😢. Have an admin giff me back my permissions, or re-invite me to the server using this invite link: {invite_link}")
 
 
-def report_error(message, error, skip_lines=2):
+async def report_error(message, error, skip_lines=2):
 	if os.path.isfile(error_file):
 		error_list = read_json(error_file)
 	else:
@@ -218,7 +218,7 @@ def report_error(message, error, skip_lines=2):
 	
 	trace_string = "\n".join(trace)
 
-	loggingdb.insert_error(message, error, trace_string, loggingdb_session)
+	await loggingdb.insert_error(message, error, trace_string)
 
 	print(f"\nError on: {message.clean_content}\n{trace_string}\n")
 	return trace_string

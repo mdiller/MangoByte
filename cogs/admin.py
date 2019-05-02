@@ -2,12 +2,11 @@ import discord
 import asyncio
 import shutil
 from discord.ext import commands
-from __main__ import settings, botdata, httpgetter, loggingdb_session
+from __main__ import settings, botdata, httpgetter, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.botdata import GuildInfo
 from cogs.utils.clip import GttsLang
 from cogs.utils import checks
-from cogs.utils import loggingdb
 from cogs.utils import botdatatypes
 from .mangocog import *
 
