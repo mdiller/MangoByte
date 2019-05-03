@@ -90,6 +90,14 @@ ENV/
 
 .DS_Store
 
+# C# stuff
+*.DotSettings.user
+bin/
+obj/
+.vs/
+
+# Other
+
 *.db
 
 botdata.json
