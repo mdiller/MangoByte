@@ -3,6 +3,7 @@ from discord.ext import commands
 from __main__ import settings, botdata, thinker, httpgetter
 from cogs.utils import checks
 from cogs.utils.helpers import *
+from cogs.utils.commandargs import *
 from cogs.utils import drawdota
 import asyncio
 import async_timeout
@@ -17,17 +18,9 @@ import time
 import statistics
 import random
 import aiohttp
+import typing
 from types import *
 from .mangocog import *
-
-class SteamNotLinkedError(UserError):
-	def __init__(self, user=None):
-		self.is_author = user is None
-		self.user = user
-		if not self.is_author:
-			super().__init__(f"{user.name} doesn't have a steam account linked. They should try `{{cmdpfx}}userconfig steam` to see how to link their steam account.")
-		else:
-			super().__init__("Yer steam account isn't linked to yer discord account yet.\nTry doin `{cmdpfx}userconfig steam` to see how to link a steam account.")
 
 class MatchNotParsedError(UserError):
 	def __init__(self, match_id, action=None):
@@ -37,13 +30,6 @@ class MatchNotParsedError(UserError):
 class InvalidMatchIdError(UserError):
 	def __init__(self, match_id):
 		super().__init__(f"Sorry, looks like `{match_id}` isn't a valid match id")
-
-class NoMatchHistoryError(UserError):
-	def __init__(self, steam_id):
-		super().__init__(f"")
-		self.embed = discord.Embed(description=f"It looks like you either haven't played dota on this account, or the matches you've played are hidden. If you've played matches on this account, you should try enabling the **Expose Public Match Data** option in dota (see image below). Once you've done that, go to [your opendota profile](http://www.opendota.com/players/{steam_id}) and click the button under your name that says **REFRESH**")
-		self.file = discord.File(settings.resource("images/expose_match_data.png"), "tip.png")
-		self.embed.set_image(url=f"attachment://{self.file.filename}")
 
 opendota_html_errors = {
 	404: "Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com",
@@ -110,12 +96,21 @@ async def get_stratz_match(match_id):
 		raise UserError("Looks like this match has not been parsed by STRATZ yet. Try again in a bit")
 
 
-async def get_lastmatch_id(steamid):
-	matches = await opendota_query(f"/players/{steamid}/recentmatches")
+async def get_lastmatch_id(steamid, matchfilter=None):
+	if not matchfilter:
+		matchfilter = MatchFilter()
+
+	no_filter = matchfilter.to_query_args() == ""
+	matchfilter.set_arg("significant", 0, False)
+	matchfilter.set_arg("limit", 1)
+	matches = await opendota_query(f"/players/{steamid}/matches?{matchfilter.to_query_args()}")
 	if matches:
 		return matches[0]["match_id"]
 	else:
-		raise NoMatchHistoryError(steamid)
+		if no_filter:
+			raise NoMatchHistoryError(steamid)
+		else:
+			raise UserError("No matches found using that filter")
 
 
 def s_if_plural(text, n):
@@ -170,56 +165,6 @@ def is_parsed(match):
 def is_stratz_parsed(match):
 	return match.get("parsedDate") and match["players"][0].get("eventData") and match["players"][0].get("eventData").get("playerUpdatePositionEvents")
 
-# gets the steam32 id from the user or steamid and checks that it is valid before returning
-# If ref is specified, returns either a link or a discord user mention, depending on the input
-async def get_check_steamid(player, ctx, mention=False, no_error=False):
-	is_author = player is None
-	if is_author:
-		player = ctx.message.author
-
-	try:
-		player = int(player)
-	except (ValueError, TypeError):
-		pass # This either this is a discord user or an invalid argument
-
-
-	if isinstance(player, int):
-		if player > 76561197960265728:
-			player -= 76561197960265728
-
-		# Don't have to rate limit here because this will be first query ran
-		player_info = await opendota_query(f"/players/{player}")
-
-		if player_info.get("profile") is None:
-			raise NoMatchHistoryError(player)
-		if mention:
-			return player, f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{player})"
-		else:
-			return player
-
-	if not isinstance(player, discord.User):
-		try:
-			player = await commands.MemberConverter().convert(ctx, str(player))
-		except commands.BadArgument:
-			if no_error:
-				return None
-			raise UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me a their steam id")
-
-	userinfo = botdata.userinfo(player.id)
-	if userinfo.steam is None:
-		if no_error:
-			return None
-		if is_author:
-			raise SteamNotLinkedError()
-		else:
-			raise SteamNotLinkedError(player)
-
-	if mention:
-		return userinfo.steam, player.mention
-	else:
-		return userinfo.steam
-
-
 def format_teamfight(teamfight):
 	if teamfight['our_dead'] is None and teamfight['their_dead'] is None:
 		format_str = "There was a teamfight with no deaths"
@@ -252,21 +197,25 @@ class DotaStats(MangoCog):
 		self.chat_wheel_info = dotabase.get_chat_wheel_infos()
 		self.dota_gif_lock = asyncio.Lock()
 
-	def get_pretty_hero(self, player):
+	def get_pretty_hero(self, player, use_icons=False):
 		dotabase = self.bot.get_cog("Dotabase")
 		name = self.hero_info[player["hero_id"]]["name"]
-		emoji = self.hero_info[player["hero_id"]]["emoji"]
-		return f"{emoji}**{name}**"
+		if use_icons:
+			emoji = self.hero_info[player["hero_id"]]["emoji"]
+			return f"{emoji}**{name}**"
+		return f"**{name}**"
 
 	async def get_player_mention(self, steamid, ctx):
 		# expects that steamid is a valid int
-		steamid, mention = await get_check_steamid(steamid, ctx, True)
-		return mention
+		player = await DotaPlayer.convert(ctx, steamid)
+		return player.mention
 
 	async def create_dota_gif(self, match, stratz_match, start_time, end_time, ms_per_second=100):
 		await self.dota_gif_lock.acquire()
-		result = await drawdota.create_dota_gif(match, stratz_match, start_time, end_time, ms_per_second)
-		self.dota_gif_lock.release()
+		try:
+			result = await drawdota.create_dota_gif(self.bot, match, stratz_match, start_time, end_time, ms_per_second)
+		finally:
+			self.dota_gif_lock.release()
 		return result
 
 	async def get_teamfights(self, game, is_radiant):
@@ -348,7 +297,7 @@ class DotaStats(MangoCog):
 		timeline = sorted(timeline, key=lambda t: t['time'])
 		return list(map(lambda t: t["formatted"], timeline))
 
-	async def get_lane_story(self, players, laneid, is_radiant):
+	async def get_lane_story(self, players, laneid, is_radiant, use_icons=False):
 		our_eff = 0
 		their_eff = 0
 		our_heroes = []
@@ -356,13 +305,13 @@ class DotaStats(MangoCog):
 		for player in players:
 			if player['lane'] == laneid and not player.get('is_roaming', False):
 				if (player['isRadiant'] == is_radiant): #on our team
-					if player['lane_efficiency'] > our_eff:
+					if player.get('lane_efficiency', 0) > our_eff:
 						our_eff = player['lane_efficiency']
-					our_heroes.append(self.get_pretty_hero(player))
+					our_heroes.append(self.get_pretty_hero(player, use_icons))
 				else: #on their team
-					if player['lane_efficiency'] > their_eff:
+					if player.get('lane_efficiency', 0) > their_eff:
 						their_eff = player['lane_efficiency']
-					their_heroes.append(self.get_pretty_hero(player))
+					their_heroes.append(self.get_pretty_hero(player, use_icons))
 		return {
 			"us": pretty_list(our_heroes, "An empty lane"),
 			"won_lost": "won" if our_eff > their_eff else "lost",
@@ -370,12 +319,12 @@ class DotaStats(MangoCog):
 		}
 
 	# gets the story for all of the lanes
-	async def get_lane_stories(self, game, is_radiant):
+	async def get_lane_stories(self, game, is_radiant, use_icons=False):
 		story = ""
 		lanes = {1: "bottom", 2: "middle", 3: "top"}
 		for laneid in lanes:
-			story += "• {0[us]} {0[won_lost]} {1} lane vs {0[them]}\n".format(await self.get_lane_story(game['players'], laneid, is_radiant), lanes[laneid])
-		roamers = [self.get_pretty_hero(p) for p in game['players'] if p.get('is_roaming')]
+			story += "• {0[us]} {0[won_lost]} {1} lane vs {0[them]}\n".format(await self.get_lane_story(game['players'], laneid, is_radiant, use_icons), lanes[laneid])
+		roamers = [self.get_pretty_hero(p, use_icons) for p in game['players'] if p.get('is_roaming')]
 		if roamers:
 			story += f"• {pretty_list(roamers)} roamed\n"
 		return story
@@ -404,7 +353,7 @@ class DotaStats(MangoCog):
 
 		i = 0
 		while i < len(teamfights) and (len(story) + len(teamfights[i]) + len(story_end)) < 2000:
-			story += f"\n{teamfights[i]}"
+			story += f"\n\n{teamfights[i]}"
 			i += 1
 
 		embed = discord.Embed(description=story, color=self.embed_color)
@@ -462,13 +411,19 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed, file=match_image)
 
 	@commands.command(aliases=["lastgame", "lm"])
-	async def lastmatch(self, ctx, player=None):
-		"""Gets info about the player's last dota game"""
+	async def lastmatch(self, ctx, player: typing.Optional[DotaPlayer] = None, *, matchfilter : MatchFilter = None):
+		"""Gets info about the player's last dota game
+
+		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`"""
 		await ctx.channel.trigger_typing()
 
-		steamid = await get_check_steamid(player, ctx)
-		match_id = await get_lastmatch_id(steamid)
-		await self.player_match_stats(steamid, match_id, ctx)
+		if not matchfilter:
+			matchfilter = MatchFilter()
+		if not player:
+			player = await DotaPlayer.from_author(ctx)
+
+		match_id = await get_lastmatch_id(player.steam_id, matchfilter)
+		await self.player_match_stats(player.steam_id, match_id, ctx)
 
 	async def print_match_stats(self, ctx, match_id):
 		match = await get_match(match_id)
@@ -509,7 +464,11 @@ class DotaStats(MangoCog):
 		"""Tells the story of the match from the given perspective"""
 		await ctx.channel.trigger_typing()
 
-		steamid = await get_check_steamid(None, ctx, no_error=True)
+		try:
+			player = await DotaPlayer.from_author(ctx)
+			steamid = player.steam_id
+		except Exception as e:
+			pass
 
 		match = await get_match(match_id)
 
@@ -533,15 +492,17 @@ class DotaStats(MangoCog):
 		await self.tell_match_story(match, is_radiant, ctx, perspective)
 
 	@commands.command(aliases=["lastgamestory"])
-	async def lastmatchstory(self, ctx, player=None):
+	async def lastmatchstory(self, ctx, player : DotaPlayer = None):
 		"""Tells the story of the player's last match
 
 		Input must be either a discord user, a steam32 id, or a steam64 id"""
 		await ctx.channel.trigger_typing()
+		if not player:
+			player = await DotaPlayer.from_author(ctx)
 
-		steamid, perspective = await get_check_steamid(player, ctx, mention=True)
+		perspective = player.mention
 		try:
-			match_id = (await opendota_query(f"/players/{steamid}/matches?limit=1"))[0]['match_id']
+			match_id = (await opendota_query(f"/players/{player.steam_id}/matches?limit=1"))[0]['match_id']
 			game = await get_match(match_id)
 		except UserError:
 			await ctx.send("I can't find the last game this player played")
@@ -549,63 +510,43 @@ class DotaStats(MangoCog):
 		if player is None:
 			player = ctx.message.author.mention
 
-		player_data = next((p for p in game['players'] if p['account_id'] == steamid), None)
+		player_data = next((p for p in game['players'] if p['account_id'] == player.steam_id), None)
 		perspective += "({0}, {1})".format(self.get_pretty_hero(player_data), "Radiant" if player_data['isRadiant'] else "Dire")
 
 		await self.tell_match_story(game, player_data['isRadiant'], ctx, perspective)
 
-	@commands.command(aliases=["recentmatches", "matches"])
-	async def recent(self, ctx, *, arguments=""):
-		"""Gets a list of your recent matches
+	@commands.command(aliases=["recentmatches", "recent"])
+	async def matches(self, ctx, player: typing.Optional[DotaPlayer] = None, *, matchfilter : MatchFilter = None):
+		"""Gets a list of your matches
 
 		The date/time is localized based off of the server that the game was played on, which means it may not match your timezone.
 
-		You can specify the following arguments in any order:
-		__**User:**__
-		@mention a discord user to get their recent matches instead of yours
-		__**Hero:**__
-		Indicate a hero and I'll return your most recent matches with that hero
-		__**Match Count:**__
-		A number indicating the number of matches to show. The default is 10, and the maximum is 20
+		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`
 
 		**Example:**
-		`{cmdpfx}recent @PlayerPerson 5`
-		`{cmdpfx}recent natures prophet`
-		`{cmdpfx}recent @PlayerPerson riki`"""
+		`{cmdpfx}matches @PlayerPerson mid witch doctor ranked`
+		`{cmdpfx}matches natures prophet`
+		`{cmdpfx}matches @PlayerPerson riki`"""
 		await ctx.channel.trigger_typing()
-		arguments = arguments.lower().split(" ")
-		player = None
-		if ctx.message.mentions:
-			if len(ctx.message.mentions) > 1:
-				raise UserError("I can only get recent matches for one user")
-			player = ctx.message.mentions[0]
-		steam32 = await get_check_steamid(player, ctx)
-		arguments = list(filter(lambda i: not re.match(r"<.*>", i), arguments))
 
-		matchcount = 10
-		for arg in arguments:
-			if arg.isdigit():
-				matchcount = int(arg)
-		arguments = list(filter(lambda i: not re.match(r"[0-9]+", i), arguments))
-		if matchcount < 1:
-			raise UserError("Gotta have a matchcount of 1 or more")
-		if matchcount > 20:
-			raise UserError("Sorries, 20 is the maximum number of matches for this command")
+		if not matchfilter:
+			matchfilter = MatchFilter()
+		if not player:
+			player = await DotaPlayer.from_author(ctx)
+		steam32 = player.steam_id
 
-		arguments = list(filter(lambda i: not re.match(r"(with|as|)$", i), arguments))
-		hero_text = " ".join(arguments)
-		hero = self.lookup_hero(hero_text)
-		if hero_text != "" and not hero:
-			raise UserError(f"Couldn't find a hero called '{hero_text}'")
+		matchfilter.set_arg("limit", 10, False)
+		matchfilter.set_arg("significant", 0, False)
 
+		if matchfilter.get_arg("limit") > 20:
+			matchfilter.set_arg("limit", 20, True)
+
+		hero = matchfilter.hero
 
 		projections = [ "kills", "deaths", "assists", "hero_id", "version", "game_mode", "lobby_type", "region", "duration", "start_time" ]
 		projections = "&".join(map(lambda p: f"project={p}", projections))
 
-		queryargs = f"?significant=0&limit={matchcount}&{projections}"
-
-		if hero:
-			queryargs += f"&hero_id={hero.id}"
+		queryargs = f"?{matchfilter.to_query_args()}&{projections}"
 
 		matches = await opendota_query(f"/players/{steam32}/matches{queryargs}")
 		if not matches:
@@ -632,16 +573,18 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed, file=matches_image)
 
 	@commands.command(aliases=["whois"])
-	async def profile(self, ctx, player=None):
+	async def profile(self, ctx, player : DotaPlayer = None):
 		"""Displays information about the player's dota profile
 
 		The argument for this command can be either a steam32 id, a steam64 id, or an @mention of a discord user who has a steamid set"""
-		steam32 = await get_check_steamid(player, ctx)
+		if not player:
+			player = await DotaPlayer.from_author(ctx)
+		steam32 = player.steam_id
 
 		await ctx.channel.trigger_typing()
 
 		playerinfo = await opendota_query(f"/players/{steam32}")
-		matches = await opendota_query(f"/players/{steam32}/matches?significant=0")
+		matches = await opendota_query(f"/players/{steam32}/matches")
 		matches = list(filter(lambda m: m.get('player_slot') is not None, matches))
 
 		rank_strings = [ "Unranked", "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine", "Immortal" ]
@@ -746,15 +689,11 @@ class DotaStats(MangoCog):
 			f"**Recent**: {recent_activity_delta}\n"
 			f"**Overall**: {overall_activity_delta}\n"), inline=False)
 
-		if player is None:
+		
+		if player.is_author:
 			player_mention = ""
 		else:
-			try:
-				player_user = await commands.MemberConverter().convert(ctx, player)
-				player_mention = f"@{player_user.nick if player_user.nick else player_user.name}"
-			except commands.BadArgument:
-				# This is a steamid
-				player_mention = player
+			player_mention = player.steam_id
 
 		embed.set_footer(text=f"For more info, try {self.cmdpfx(ctx)}playerstats {player_mention}")
 
@@ -765,11 +704,14 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed, file=rank_icon)
 
 	@commands.command()
-	async def playerstats(self, ctx, *, player=None):
+	async def playerstats(self, ctx, *, player : DotaPlayer = None):
 		"""Gets stats from the given player's last 20 parsed games
 
 		Note that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available"""
-		steam32 = await get_check_steamid(player, ctx)
+		if not player:
+			player = await DotaPlayer.from_author(ctx)
+		steam32 = player.steam_id
+
 		with ctx.channel.typing():
 			await thinker.think(ctx.message)
 
@@ -944,7 +886,8 @@ class DotaStats(MangoCog):
 					i += 1
 			player = ctx.message.mentions[0]
 
-		steam32 = await get_check_steamid(player, ctx)
+		player = await DotaPlayer.convert(ctx, player)
+		steam32 = player.steam_id
 
 
 		lane_args = [
@@ -1086,14 +1029,15 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed)
 
 	@commands.command()
-	async def friendstats(self, ctx, player):
+	async def friendstats(self, ctx, friend : DotaPlayer):
 		"""Statistics of games played with a friend"""
 		await ctx.channel.trigger_typing()
 		author_id = botdata.userinfo(ctx.message.author.id).steam
 		if not author_id:
 			raise SteamNotLinkedError()
 
-		friend_id, friend_mention = await get_check_steamid(player, ctx, mention=True)
+		friend_id = friend.steam_id
+		friend_mention = friend.mention
 		author_mention = ctx.message.author.mention
 
 		if author_id == friend_id:
@@ -1179,6 +1123,10 @@ class DotaStats(MangoCog):
 
 		if ms_per_second < 1 or ms_per_second > 655350:
 			raise UserError("That is outside the bounds of the `ms_per_second` value")
+
+		lastframe = match["duration"] - 1
+		if start > lastframe and end > lastframe:
+			raise UserError("The game didn't last that long")
 		
 
 		async with ctx.channel.typing():
@@ -1196,8 +1144,9 @@ class DotaStats(MangoCog):
 		If no match id is given and the user has a steam account connected, use the most recent game"""
 		await ctx.channel.trigger_typing()
 		try:
-			steamid = await get_check_steamid(None, ctx)
-		except SteamNotLinkedError:
+			player = await DotaPlayer.from_author(ctx)
+			steamid = player.steam_id
+		except CustomBadArgument:
 			steamid = None
 			pass
 		if match_id is None:
@@ -1219,7 +1168,7 @@ class DotaStats(MangoCog):
 			player_data = next((p for p in match['players'] if p['account_id'] == steamid), None)
 		perspective = player_data.get("isRadiant") if player_data else True
 
-		embed = discord.Embed(description=await self.get_lane_stories(match, perspective))
+		embed = discord.Embed(description=await self.get_lane_stories(match, perspective, True))
 
 		embed.title = f"Laning"
 		embed.url = f"https://www.opendota.com/matches/{match_id}/laning"

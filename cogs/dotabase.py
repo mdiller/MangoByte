@@ -39,11 +39,11 @@ for i in range(1, 20):
 
 # A variable that can specify a filter on a query
 class QueryVariable():
-	def __init__(self, name, aliases, query_filter, prefix=";"):
+	def __init__(self, name, aliases, query_filter, prefix=None):
 		self.name = name
 		self.aliases = aliases
 		self.query_filter = query_filter
-		self.prefix = prefix
+		self.prefix = prefix or ";"
 		self.value = None
 
 	def __repr__(self):
@@ -98,11 +98,12 @@ class Dotabase(MangoCog):
 		self.item_colors = read_json(settings.resource("json/dota_item_colors.json"))
 		self.hero_aliases = {}
 		self.item_aliases = {}
-		self.build_aliases()
+		self.hero_regex = ""
+		self.build_helpers()
 		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
 		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos())
 
-	def build_aliases(self):
+	def build_helpers(self):
 		for hero in session.query(Hero):
 			aliases = hero.aliases.split("|")
 			for alias in aliases:
@@ -118,6 +119,29 @@ class Dotabase(MangoCog):
 
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name
+
+		pattern_parts = {}
+		for alias in self.hero_aliases:
+			parts = []
+			if len(alias) > 2:
+				tempstring = ""
+				for i in range(2, len(alias)):
+					tempstring += alias[i]
+					parts.append(tempstring)
+			prefix = alias[:2]
+			if not prefix in pattern_parts:
+				pattern_parts[prefix] = []
+			pattern_parts[prefix].extend(parts)
+		patterns = []
+		for prefix in pattern_parts:
+			parts = list(set(pattern_parts[prefix]))
+			parts = sorted(parts, key=lambda p: len(p), reverse=True)
+			if len(parts) > 0:
+				result = f"{prefix}(?:{'|'.join(parts)})?"
+				patterns.append(result)
+			else:
+				patterns.append(prefix)
+		self.hero_regex = f"(?:{'|'.join(patterns)})"
 
 	def get_wiki_url(self, obj):
 		if isinstance(obj, Hero):

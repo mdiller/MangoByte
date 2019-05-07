@@ -4,12 +4,12 @@ import asyncio
 import shutil
 from sqlalchemy import desc
 from discord.ext import commands
-from __main__ import settings, botdata, httpgetter, loggingdb_session
+from __main__ import settings, botdata, httpgetter, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.botdata import GuildInfo
 from cogs.utils.clip import GttsLang
 from cogs.utils import checks
-from cogs.utils import loggingdb
+from cogs.utils import loggingdb as loggingdb_spec
 from cogs.utils import botdatatypes
 from .mangocog import *
 from concurrent.futures import ThreadPoolExecutor
@@ -200,7 +200,7 @@ class Owner(MangoCog):
 	async def errors(self, ctx, count : int=5, page : int=0, excludestring=None):
 		"""Gets a list of the most recent errors from loggingdb"""
 
-		for error in loggingdb_session.query(loggingdb.Error).order_by(desc(loggingdb.Error.timestamp)).offset(page * count):
+		for error in loggingdb.session.query(loggingdb_spec.Error).order_by(desc(loggingdb_spec.Error.timestamp)).offset(page * count):
 			if count <= 0:
 				return
 			error_chunks = error.error_text_chunks()
@@ -223,21 +223,26 @@ class Owner(MangoCog):
 	async def loggingdb(self, ctx, table, identifier):
 		"""Gets a list of the most recent errors from loggingdb"""
 		if table in [ "error", "errors", "bugs", "bug" ]:
-			table = loggingdb.Error
+			table = loggingdb_spec.Error
 			filterer = lambda q: q.filter_by(message_id=identifier)
 		elif table in [ "message", "messages", "msg", "messages" ]:
-			table = loggingdb.Message
+			table = loggingdb_spec.Message
 			filterer = lambda q: q.filter_by(id=identifier)
 		elif table in [ "command", "commands", "cmd", "cmds" ]:
-			table = loggingdb.Command
+			table = loggingdb_spec.Command
 			filterer = lambda q: q.filter_by(message_id=identifier)
 		else:
 			raise UserError("Dont know what table you're talking about")
-
-		for obj in filterer(loggingdb_session.query(table)):
+		found = False
+		for obj in filterer(loggingdb.session.query(table)):
+			found = True
 			await ctx.send(embed=obj.to_embed(self))
-			if table == loggingdb.Error:
-				await ctx.send(obj.error_text())
+			if table == loggingdb_spec.Error:
+				chunks = obj.error_text_chunks()
+				for chunk in chunks:
+					await ctx.send(chunk)
+		if not found:
+			raise UserError("Couldn't find anything for that")
 
 def setup(bot):
 	bot.add_cog(Owner(bot))

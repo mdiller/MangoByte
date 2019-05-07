@@ -1,17 +1,14 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands.bot import _mention_pattern, _mentions_transforms
-from __main__ import settings, botdata, invite_link, httpgetter
+from __main__ import settings, botdata, invite_link, httpgetter, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.botdata import UserInfo
-from cogs.utils import checks, botdatatypes
+from cogs.utils import checks, botdatatypes, wikipedia
 from cogs.audio import AudioPlayerNotFoundError
 from sqlalchemy import func
-import cogs.utils.loggingdb as loggingdb
 import string
 import random
 import datetime
-import wikipedia
 import html
 from bs4 import BeautifulSoup, Tag
 from io import BytesIO
@@ -48,6 +45,17 @@ def fill_word_template(template, words):
 
 	return re.sub(r"\{([^}]+)\}", replace, template)
 
+# loads a markdown file as a dictionary
+def load_md_as_dict(filename):
+	with open(filename, "r") as f:
+		text = f.read()
+	result = {}
+	pattern = re.compile(r"\n# ([^\n]+)\n([\s\S]*?)(?=\n# |$)")
+	for match in pattern.finditer(text):
+		name = match.group(1).strip()
+		description = match.group(2).strip()
+		result[name] = description
+	return result
 
 class General(MangoCog):
 	"""Basic and admin commands
@@ -61,6 +69,7 @@ class General(MangoCog):
 		self.subscripts = read_json(settings.resource("json/subscripts.json"))
 		self.superscripts = read_json(settings.resource("json/superscripts.json"))
 		self.showerthoughts_data = read_json(settings.resource("json/showerthoughts.json"))
+		self.docs_data = load_md_as_dict(settings.resource("docs.md"))
 		self.words = load_words()
 
 	@commands.command()
@@ -190,6 +199,8 @@ class General(MangoCog):
 	@commands.command()
 	async def botstats(self, ctx):
 		"""Displays some bot statistics"""
+		await ctx.channel.trigger_typing()
+
 		embed = discord.Embed(color=discord.Color.green())
 
 		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url)
@@ -197,21 +208,28 @@ class General(MangoCog):
 		embed.add_field(name="Servers/Guilds", value="{:,}".format(len(self.bot.guilds)))
 		embed.add_field(name="Registered Users", value="{:,}".format(len(list(filter(lambda user: user.steam, botdata.userinfo_list())))))
 
-		commands = loggingdb_session.query(loggingdb.Message).filter(loggingdb.Message.command != None)
-		commands_weekly = commands.filter(loggingdb.Message.timestamp > datetime.datetime.utcnow() - datetime.timedelta(weeks=1))
-		embed.add_field(name="Commands", value=f"{commands.count():,}")
-		embed.add_field(name="Commands (This Week)", value=f"{commands_weekly.count():,}")
+		thisweek = "timestamp between datetime('now', '-7 days') AND datetime('now', 'localtime')"
+		query_results = await loggingdb.query_multiple([
+			f"select count(*) from messages where command is not null",
+			f"select count(*) from messages where command is not null and {thisweek}",
+			f"select command from messages where command is not null group by command order by count(command) desc limit 3",
+			f"select command from messages where command is not null and {thisweek} group by command order by count(command) desc limit 3"
+		])
+
+
+		embed.add_field(name="Commands", value=f"{query_results[0][0][0]:,}")
+		embed.add_field(name="Commands (This Week)", value=f"{query_results[1][0][0]:,}")
 
 		cmdpfx = self.cmdpfx(ctx)
-		top_commands = loggingdb_session.query(loggingdb.Message.command, func.count(loggingdb.Message.command)).filter(loggingdb.Message.command != None).group_by(loggingdb.Message.command).order_by(func.count(loggingdb.Message.command).desc())
-		if top_commands.count() >= 3:
+		top_commands = query_results[2]
+		if len(top_commands) >= 3:
 			embed.add_field(name="Top Commands", value=(
 				f"`{cmdpfx}{top_commands[0][0]}`\n"
 				f"`{cmdpfx}{top_commands[1][0]}`\n"
 				f"`{cmdpfx}{top_commands[2][0]}`\n"))
 
-		top_commands_weekly = top_commands.filter(loggingdb.Message.timestamp > datetime.datetime.utcnow() - datetime.timedelta(weeks=1))
-		if top_commands_weekly.count() >= 3:
+		top_commands_weekly = query_results[3]
+		if len(top_commands_weekly) >= 3:
 			embed.add_field(name="Top Commands (This Week)", value=(
 				f"`{cmdpfx}{top_commands_weekly[0][0]}`\n"
 				f"`{cmdpfx}{top_commands_weekly[1][0]}`\n"
@@ -227,10 +245,10 @@ class General(MangoCog):
 		await ctx.send(file=discord.File(settings.resource("images/lasagna.jpg")))
 
 	@commands.command()
-	async def help(self, ctx, command : str=None):
+	async def helpold(self, ctx, command : str=None):
 		"""Shows this message."""
 		def repl(obj):
-			return _mentions_transforms.get(obj.group(0), '')
+			return MENTION_TRANSFORMS.get(obj.group(0), '')
 
 		# help by itself just lists our own commands.
 		if command == "all":
@@ -239,7 +257,7 @@ class General(MangoCog):
 			embed = await self.bot.formatter.format_as_embed(ctx, self.bot, False)
 		else:
 			# try to see if it is a cog name
-			name = _mention_pattern.sub(repl, command).lower()
+			name = MENTION_PATTERN.sub(repl, command).lower()
 			if name in map(lambda c: c.lower(), self.bot.cogs):
 				for cog in self.bot.cogs:
 					if cog.lower() == name:
@@ -277,7 +295,7 @@ class General(MangoCog):
 	async def wiki(self, ctx, *, thing : str):
 		"""Looks up a thing on wikipedia
 		
-		Uses the [python Wikipedia API](https://wikipedia.readthedocs.io/en/latest/) to look up a thing. 
+		Uses my own implementation of the [Wikipedia API](https://www.mediawiki.org/wiki/API:Tutorial)
 
 		You can also try `{cmdpfx} wiki random` to get a random wiki page
 
@@ -286,113 +304,22 @@ class General(MangoCog):
 		"""
 		await ctx.channel.trigger_typing()
 
-		def getWikiPage(title):
-			try:
-				if title == "random":
-					return wikipedia.page(title=wikipedia.random(1), redirect=True, auto_suggest=True)
-				return wikipedia.page(title=title, redirect=True, auto_suggest=True)
-			except (wikipedia.exceptions.DisambiguationError, wikipedia.exceptions.PageError) as e:
-				if title == "random":
-					return getWikiPage(title)
-				if isinstance(e, wikipedia.exceptions.PageError) or len(e.options) == 0:
-					raise UserError(f"Couldn't find anythin' fer \"*{thing}*\"")
-				if e.options[0] == title:
-					raise UserError("Can't find things on wiki for that")
-				return getWikiPage(e.options[0])
+		page = await wikipedia.get_wikipedia_page(thing)
 
-		page = getWikiPage(thing)
-		
-		page_html = await httpgetter.get(page.url, "text")
-
-		page_html = BeautifulSoup(page_html, 'html.parser')
-		page_html = page_html.find(id="mw-content-text")
-
-		def tagsToMarkdown(tag, plaintext=False):
-			if isinstance(tag, list):
-				result = ""
-				for i in tag:
-					result += tagsToMarkdown(i, plaintext)
-				return result
-			elif isinstance(tag, str):
-				return tag
-			elif isinstance(tag, Tag):
-				if plaintext:
-					return tagsToMarkdown(tag.contents, plaintext)
-				elif tag.name == "b":
-					return f"**{tagsToMarkdown(tag.contents)}**"
-				elif tag.name == "i":
-					return f"*{tagsToMarkdown(tag.contents)}*"
-				elif tag.name in [ "sub", "sup" ]:
-					if "reference" in tag.get("class", []):
-						return "" # dont include references
-					text = tagsToMarkdown(tag.contents, plaintext=True)
-					if len(text) and text[0] == "[" and text[-1] == "]":
-						return "" # this is a references thing you cant fool me
-					replacements = self.subscripts if tag.name == "sub" else self.superscripts
-					new_text = ""
-					for c in text:
-						new_text += replacements.get(c) if c in replacements else c
-					return new_text
-				elif tag.name == "a":
-					if tag.get("href") is None:
-						return tagsToMarkdown(tag.contents)
-					if tag["href"].startswith("#"):
-						return "" # dont include references
-					href = re.sub("^/wiki/", "https://en.wikipedia.org/wiki/", tag['href'])
-					href = re.sub(r"(\(|\))", r"\\\1", href)
-					return f"[{tagsToMarkdown(tag.contents)}]({href})"
-				else:
-					# raise UserError(f"Unrecognized tag: {tag.name}")
-					return tagsToMarkdown(tag.contents)
-			
-			return str(tag)
-
-		summary = tagsToMarkdown(page_html.find("div").find(lambda tag: tag.name == "p" and not tag.attrs, recursive=False).contents)
-
-		def markdownLength(text):
-			text = re.sub(r"\[([^\[]*)]\([^\(]*\)", r"\1", text)
-			return len(text)
-
-		matches = re.finditer(r"([^\s\.]+\.)(\s|$)", summary)
-		if matches:
-			for match in list(matches):
-				if markdownLength(summary[0:match.end()]) > 70:
-					summary = summary[0:match.end()]
-					break
-
-		embed = discord.Embed(description=summary)
+		embed = discord.Embed(description=page.markdown)
 		embed.title = f"**{page.title}**"
 		embed.url = page.url
 
-		for image in page_html.find_all(class_="navbox"):
-			image.decompose()
-		for image in page_html.find_all(class_="mbox-image"):
-			image.decompose()
-		for image in page_html.find_all(class_="metadata plainlinks stub"):
-			image.decompose()
-
-		page_html_text = page_html.prettify()
-
-		best_image = None
-		best_image_index = -1
-		for image in page.images:
-			if "Wikisource-logo" in image:
-				continue
-			if re.search(r"\.(png|jpg|jpeg|gif)$", image, re.IGNORECASE):
-				index = page_html_text.find(image.split('/')[-1])
-				if index != -1 and (best_image_index == -1 or index < best_image_index):
-					best_image = image
-					best_image_index = index
-
-		if best_image:
-			embed.set_image(url=best_image)
+		if page.image:
+			embed.set_image(url=page.image)
 
 		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 
-		if best_image and re.search(r"\.svg$", best_image, re.IGNORECASE):
-			await ctx.send(embed=embed, file=svg_png_image)
-		else:
-			await ctx.send(embed=embed)
+		# if page.image and re.search(r"\.svg$", page.image, re.IGNORECASE):
+		# 	await ctx.send(embed=embed, file=svg_png_image)
+		# 	return
+		
+		await ctx.send(embed=embed)
 
 	@commands.command()
 	async def reddit(self, ctx, url_or_id):
@@ -483,7 +410,7 @@ class General(MangoCog):
 		random.seed(question)
 		for check in self.questions:
 			if re.search(check["regex"], question):
-				clip = await self.get_clip(f"dota:{random.choice(check['responses'])}", ctx)
+				clip = await self.get_clip(random.choice(check['responses']), ctx)
 				await ctx.send(clip.text)
 				try:
 					await self.play_clip(clip, ctx)
@@ -554,6 +481,38 @@ class General(MangoCog):
 			raise UserError("You gotta give me a couple different options, separated by spaces")
 		await ctx.send(random.choice(options))
 
+	@commands.command(aliases=["documentation"])
+	async def docs(self, ctx, *, topic : str = None):
+		"""Shows the documentation for the given topic
+
+		If no parameters are given, then this shows the available documentation
+		
+		**Example:**
+		`{cmdpfx}docs`
+		`{cmdpfx}docs Match Filter`
+		`{cmdpfx}docs matchfilter`
+		"""
+		if topic is None:
+			embed = discord.Embed()
+			embed.title = "Available Topics"
+			embed.description = "\n".join(map(lambda name: f"• {name}", list(self.docs_data.keys())))
+			await ctx.send(embed=embed)
+			return
+		found_topic = None
+		for name in self.docs_data:
+			simple_name = name.lower().replace(" ", "")
+			if topic in simple_name:
+				found_topic = name
+				break
+		if found_topic is None:
+			raise UserError(f"Couldn't find a topic called '{topic}'")
+
+		embed = discord.Embed()
+		embed.title = found_topic
+		embed.description = self.docs_data[found_topic]
+		await ctx.send(embed=embed)
+
+
 	@commands.Cog.listener()
 	async def on_message(self, message):
 		if message.guild is not None and not botdata.guildinfo(message.guild.id).reactions:
@@ -577,21 +536,21 @@ class General(MangoCog):
 
 	@commands.Cog.listener()
 	async def on_command(self, ctx):
-		msg = loggingdb.insert_message(ctx.message, ctx.command.name, loggingdb_session)
-		loggingdb.insert_command(ctx, loggingdb_session)
+		msg = await loggingdb.insert_message(ctx.message, ctx.command.name)
+		await loggingdb.insert_command(ctx)
 		print(msg)
 
 	@commands.Cog.listener()
 	async def on_command_completion(self, ctx):
-		loggingdb.command_finished(ctx, "completed", None, loggingdb_session)
+		await loggingdb.command_finished(ctx, "completed", None)
 
 	@commands.Cog.listener()
 	async def on_guild_join(self, guild):
-		loggingdb.update_guilds(self.bot.guilds, loggingdb_session)
+		await loggingdb.update_guilds(self.bot.guilds)
 
 	@commands.Cog.listener()
 	async def on_guild_remove(self, guild):
-		loggingdb.update_guilds(self.bot.guilds, loggingdb_session)
+		await loggingdb.update_guilds(self.bot.guilds)
 
 	@commands.command(aliases=[ "tipjar", "donation" ])
 	async def donate(self, ctx):

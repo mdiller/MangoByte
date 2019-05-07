@@ -2,9 +2,8 @@ import discord
 from discord.ext import commands
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
-from __main__ import settings, botdata, report_error, loggingdb_session
+from __main__ import settings, botdata, report_error, loggingdb
 from cogs.utils import checks
-import cogs.utils.loggingdb as loggingdb
 import cogs.utils.botdatatypes as botdatatypes
 import asyncio
 import os
@@ -127,7 +126,7 @@ class Audio(MangoCog):
 		clipsdir = settings.resource("clips/")
 		for root, dirs, files in os.walk(clipsdir):
 			for file in files:
-				match = re.search(f"clips/((?:.*/)?([^/]+)\.(?:{audio_extensions}))", os.path.join(root, file))
+				match = re.search(f"clips[/\\\\]((?:.*[/\\\\])?([^/\\\\]+)\.(?:{audio_extensions}))", os.path.join(root, file))
 				if match:
 					path = match.group(1)
 					name = match.group(2)
@@ -139,7 +138,7 @@ class Audio(MangoCog):
 								break
 						if not found:
 							info = { "path": path }
-							in_dir = re.search(f"(.+)/(?:.+)\.(?:{audio_extensions})", path)
+							in_dir = re.search(f"(.+)[/\\\\](?:.+)\.(?:{audio_extensions})", path)
 							if in_dir:
 								info["tags"] = in_dir.group(1)
 							clipinfos[name] = info
@@ -302,7 +301,6 @@ class Audio(MangoCog):
 				clip_format = "`{}`\n"
 			for clip in clips:
 				message += clip_format.format(clip)
-
 		await ctx.send(message)
 
 	@commands.command()
@@ -490,7 +488,7 @@ class Audio(MangoCog):
 			if ttschannel == message.channel.id:
 				if message.content.startswith("//") or message.content.startswith("#"):
 					return # commented out stuff should be ignored
-				loggingdb.insert_message(message, "smarttts", loggingdb_session)
+				await loggingdb.insert_message(message, "smarttts")
 				try:
 					if guildinfo.announcetts:
 						name = message.author.name
@@ -503,7 +501,7 @@ class Audio(MangoCog):
 					await message.channel.send(e.message)
 				except Exception as e:
 					await message.channel.send("Uh-oh, sumthin dun gone wrong 😱")
-					report_error(message, TtsChannelError(e))
+					await report_error(message, TtsChannelError(e))
 
 
 	@commands.command()
