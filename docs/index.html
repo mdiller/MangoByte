@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+
+<head>
+	<title>Mangobyte Docs</title>
+</head>
+
+<style>
+
+@font-face {
+	font-family: Whitney;
+	src: url(https://discordapp.com/assets/6c6374bad0b0b6d204d8d6dc4a18d820.woff);
+	font-weight: 300;
+}
+
+@font-face {
+	font-family: Whitney;
+	src: url(https://discordapp.com/assets/e8acd7d9bf6207f99350ca9f9e23b168.woff);
+	font-weight: 400;
+}
+
+@font-face {
+	font-family: Whitney;
+	src: url(https://discordapp.com/assets/3bdef1251a424500c1b3a78dea9b7e57.woff);
+	font-weight: 500;
+}
+
+@font-face {
+	font-family: Whitney;
+	src: url(https://discordapp.com/assets/be0060dafb7a0e31d2a1ca17c0708636.woff);
+	font-weight: 600;
+}
+
+@font-face {
+	font-family: Whitney;
+	src: url(https://discordapp.com/assets/8e12fb4f14d9c4592eb8ec9f22337b04.woff);
+	font-weight: 700;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html, body, #app {
+	font-family: "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	background-color: #2f3136;
+	width: 100%;
+	height: 100%;
+	margin: 0px;
+	padding: 0px;
+}
+
+#app {
+	display: flex;
+	flex-direction: column;
+}
+
+#header {
+	flex: 42px;
+	background-color: #282b30;
+	border-bottom: 1px solid #1c1e22;
+}
+
+#header > div {
+	position: relative;
+	line-height: 42px;
+	font-size: 24px;
+	font-weight: 600;
+	padding-left: 45px;
+	color: white;
+	display: inline-block;
+}
+
+#header img {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	margin: 5px;
+}
+
+#mainrow {
+	display: flex;
+	flex-direction: row;
+	flex-grow: 1;
+	flex-basis: 100%;
+}
+
+#sidebar > div {
+	color: #72767d;
+	padding: 8px 12px;
+	margin: 5px;
+	border-radius: 3px;
+	min-width: 200px;
+	cursor: pointer;
+	flex: 200px;
+	font-weight: 500;
+}
+
+#sidebar .selected {
+	color: white;
+	background-color: #40444b;
+}
+
+#sidebar .category {
+	font-size: 12px;
+	padding: 4px 6px;
+}
+
+#content {
+	flex-grow: 1;
+	flex-basis: 100%;
+	padding: 5px;
+}
+
+iframe {
+	border: none;
+	width: 100%;
+	height: 100%;
+}
+
+iframe.invisible {
+	display: none !important;
+}
+
+</style>
+
+<body>
+	<div id="app">
+		<div id="header">
+			<div>
+				<img src="./mangobyte.png" />
+				Mangobyte Documentation
+			</div>
+		</div>
+		<div id="mainrow">
+			<div id="sidebar">
+				<div class="category">
+					COMMAND EXAMPLES:
+				</div>
+				<div
+					v-for="channel in channels"
+					:class="{ selected: channel.selected }"
+					@click="select(channel)">
+					# {{channel.name}}
+				</div>
+			</div>
+			<div id="content">
+				<iframe 
+					v-for="channel in channels" 
+					:src="channel.url"
+					:class="{ invisible: !channel.selected }"
+					scrolling="yes" ></iframe>
+			</div>
+		</div>
+	</div>
+</body>
+
+<script src="https://unpkg.com/vue"></script>
+<script>
+	console.log("hello");
+const app = new Vue({
+	el: "#app",
+	data: {
+		channels: [
+			{
+				name: "general",
+				url: "./channel_general.html",
+				selected: true
+			},
+			{
+				name: "dotabase",
+				url: "./channel_dotabase.html",
+				selected: false
+			}
+		]
+	},
+	methods: {
+		select(channel) {
+			this.channels.forEach(c => {
+				c.selected = false;
+			});
+			channel.selected = true;
+		}
+	},
+	created() {
+	}
+});
+</script>
