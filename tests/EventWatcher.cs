@@ -45,7 +45,7 @@ namespace MangoTester
       await itemLock.WaitAsync();
       try
       {
-        if (request != null)
+        if (request != null && !request.Task.IsCompleted)
         {
           request.SetResult(item);
         }
@@ -73,6 +73,7 @@ namespace MangoTester
     public async Task<T> Retrieve(int timeout = 20000)
     {
       await itemLock.WaitAsync();
+      CancellationTokenSource canceler;
       try
       {
         if (items.Any())
@@ -82,7 +83,7 @@ namespace MangoTester
         else
         {
           request = new TaskCompletionSource<T>();
-          var canceler = new CancellationTokenSource(timeout);
+          canceler = new CancellationTokenSource(timeout);
           canceler.Token.Register(() => request.TrySetCanceled(), useSynchronizationContext: false);
         }
       }
@@ -90,7 +91,12 @@ namespace MangoTester
       {
         itemLock.Release();
       }
-      return await request.Task;
+      var item = await request.Task;
+      await itemLock.WaitAsync();
+      request = null;
+      canceler.Dispose();
+      itemLock.Release();
+      return item;
     }
   }
 }

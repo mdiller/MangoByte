@@ -41,10 +41,11 @@ namespace MangoTester.TestFixtures
       var name = this.GetType().Name.ToLower();
       var server = await Bot.GetGuildAsync(MangoSetupFixture.Config.ServerId);
       Channel = server.Channels.FirstOrDefault(c => c.Name == name && c.Type == ChannelType.Text);
-      if (Channel == null)
+      if (Channel != null)
       {
-        Channel = await server.CreateChannelAsync(name, ChannelType.Text);
+        await Channel.DeleteAsync("starting a new test");
       }
+      Channel = await server.CreateChannelAsync(name, ChannelType.Text);
 
       MessageWatcher = new EventWatcher<DiscordMessage, MessageCreateEventArgs>(e =>
       {
@@ -68,7 +69,9 @@ namespace MangoTester.TestFixtures
     /// <returns>The message recieved</returns>
     public async Task<DiscordMessage> WaitForMessage(int timeout = 20000)
     {
-      return await MessageWatcher.Retrieve(timeout);
+      var message = await MessageWatcher.Retrieve(timeout);
+      Assert.That(message.Content, Does.Not.Contains("Uh-oh, sumthin dun gone wrong"));
+      return message;
     }
   }
 }

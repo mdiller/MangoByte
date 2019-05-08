@@ -12,5 +12,15 @@ namespace MangoTester
     {
       return message.Embeds.Count == 1;
     }
+
+    public static bool HasContent(this DiscordMessage message)
+    {
+      return !string.IsNullOrEmpty(message.Content);
+    }
+
+    public static bool HasImage(this DiscordMessage message)
+    {
+      return message.Attachments.Count == 1;
+    }
   }
 }
