@@ -206,7 +206,7 @@ class General(MangoCog):
 		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url)
 
 		embed.add_field(name="Servers/Guilds", value="{:,}".format(len(self.bot.guilds)))
-		embed.add_field(name="Registered Users", value="{:,}".format(len(list(filter(lambda user: user.steam, botdata.userinfo_list())))))
+		embed.add_field(name="Registered Users", value="{:,}".format(botdata.count_users_with_key("steam")))
 
 		thisweek = "timestamp between datetime('now', '-7 days') AND datetime('now', 'localtime')"
 		query_results = await loggingdb.query_multiple([

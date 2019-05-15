@@ -266,12 +266,12 @@ class BotData:
 			guildinfos.append(GuildInfo(self, data['id']))
 		return guildinfos
 
-	def userinfo_list(self):
-		userinfos = []
+	def count_users_with_key(self, key):
+		count = 0
 		for data in self.json_data['userinfo']:
-			userinfos.append(UserInfo(self, data["discord"]))
-		return userinfos
-
+			if key in data and data[key]:
+				count += 1
+		return count
 
 	# gets the command prefix
 	def command_prefix(self, ctx):
