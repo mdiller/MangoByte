@@ -15,14 +15,15 @@ __Filter options:__
 - won/lost
 - ranked/unranked
 - radiant/dire
-- significant/not-significant (turbo matches, etc.)
-- mid/safe/off/roaming (lane)
+- significant/not-significant (*turbo matches, etc.*)
+- mid/safe/off/roaming (*lane*)
 - 5 days/2 weeks/1 year
-- as <hero>
-- against/vs <hero>
-- with <hero>
-
-The order you give these options in doesn't matter, and for the most part it should be able to figure out what you mean. I'm also planning on adding support for "with <player>" and "against <player>", I just haven't gotten around to it yet.
+- limit/count `<number>` (*number of matches*)
+- with `<player>` (*they were in the match, not necessarily on your team*)
+- without `<player>`
+- as `<hero>`
+- against/vs `<hero>`
+- with `<hero>`
 
 __Examples:__
 `?matches won as tinker in the last year`

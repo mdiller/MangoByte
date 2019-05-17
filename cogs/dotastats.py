@@ -541,6 +541,9 @@ class DotaStats(MangoCog):
 		if matchfilter.get_arg("limit") > 20:
 			matchfilter.set_arg("limit", 20, True)
 
+		if matchfilter.get_arg("limit") < 1:
+			raise UserError("Limit of matches can't be less than 1")
+
 		hero = matchfilter.hero
 
 		projections = [ "kills", "deaths", "assists", "hero_id", "version", "game_mode", "lobby_type", "region", "duration", "start_time" ]

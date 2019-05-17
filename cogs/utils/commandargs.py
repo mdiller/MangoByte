@@ -52,7 +52,7 @@ class InputParser():
 	def take_regex(self, pattern, add_word_boundary=True):
 		if isinstance(pattern, str):
 			if add_word_boundary:
-				pattern = f"\\b(?:{pattern})\\b"
+				pattern = f"\\b(?:{pattern})(?:\\b|(?=( |$)))"
 			pattern = re.compile(pattern, re.IGNORECASE)
 		match = re.search(pattern, self.text)
 		if match is None:
@@ -114,10 +114,14 @@ class QueryArg():
 		self.value = None
 		self.post_filter = None
 
-	def parse(self, text):
+	async def parse(self, text):
 		for key in self.args_dict:
-			if re.match(key, text):
-				self.value = self.args_dict[key]
+			match = re.match(key, text)
+			if match:
+				value = self.args_dict[key]
+				if callable(value):
+					value = value(match)
+				self.value = value
 
 	def has_value(self):
 		return self.value is not None
@@ -146,7 +150,7 @@ class TimeSpanArg(QueryArg):
 		self.count = None
 		self.chunk = None
 
-	def parse(self, text):
+	async def parse(self, text):
 		match = re.match(self.regex(), text)
 		self.count = int(match.group(2) or "1")
 		self.chunk = match.group(3)
@@ -176,11 +180,25 @@ class HeroArg(QueryArg):
 	def regex(self):
 		return get_cache_hero_pattern(self.dotabase, self.prefix)
 
-	def parse(self, text):
+	async def parse(self, text):
 		text = re.sub(self.prefix, "", text)
 		self.hero = self.dotabase.lookup_hero(text)
 		self.value = self.hero.id
 
+class PlayerArg(QueryArg):
+	def __init__(self, ctx, name, prefix):
+		super().__init__(name)
+		self.ctx = ctx
+		self.prefix = prefix
+		self.player = None
+
+	def regex(self):
+		return f"{self.prefix}(\d+|<@!?[0-9]+>)"
+
+	async def parse(self, text):
+		text = re.sub(self.prefix, "", text)
+		self.player = await DotaPlayer.convert(self.ctx, text)
+		self.value = self.player.steam_id
 
 class MatchFilter():
 	def __init__(self, args=None):
@@ -206,6 +224,9 @@ class MatchFilter():
 				r"(significant|standard)": 1,
 				r"(not|non)(-| )?(significant|standard)": 0
 			}),
+			QueryArg("limit", {
+				r"(?:limit|count) (\d+)": lambda m: int(m.group(1))
+			}),
 			QueryArg("lane_role", {
 				r"safe( ?lane)?": 1,
 				r"mid(dle)?( ?lane)?": 2,
@@ -216,6 +237,8 @@ class MatchFilter():
 				r"roam(ing)?|gank(ing)?": True
 			}, lambda p: p.get("is_roaming")),
 			TimeSpanArg(),
+			PlayerArg(ctx, "included_account_id", "with "),
+			PlayerArg(ctx, "excluded_account_id", "without "),
 			HeroArg(ctx, "against_hero_id", "(?:against|vs) "),
 			HeroArg(ctx, "with_hero_id", "with "),
 			HeroArg(ctx, "hero_id", "(?:as )?")
@@ -223,7 +246,7 @@ class MatchFilter():
 		for arg in args:
 			value = parser.take_regex(arg.regex())
 			if value:
-				arg.parse(value)
+				await arg.parse(value)
 		if parser.text:
 			raise CustomBadArgument(UserError(f"I'm not sure what you mean by '{parser.text}'"))
 		return cls(args)
