@@ -35,8 +35,13 @@ def tagsToMarkdown(tag, plaintext=False):
 			if tag["href"].startswith("#"):
 				return "" # dont include references
 			href = re.sub("^/wiki/", "https://en.wikipedia.org/wiki/", tag['href'])
+			href = re.sub("^//upload.wikimedia.org", "https://upload.wikimedia.org", href)
 			href = re.sub(r"(\(|\))", r"\\\1", href)
-			return f"[{tagsToMarkdown(tag.contents)}]({href})"
+
+			contents = tagsToMarkdown(tag.contents)
+			if contents == "":
+				return ""
+			return f"[{contents}]({href})"
 		else:
 			# raise UserError(f"Unrecognized tag: {tag.name}")
 			return tagsToMarkdown(tag.contents)
@@ -85,7 +90,9 @@ class WikipediaPage():
 		page_html = BeautifulSoup(page_html, "html.parser")
 		page_html = page_html.find(id="mw-content-text")
 
-		summary = tagsToMarkdown(page_html.find("div").find(lambda tag: tag.name == "p" and not tag.attrs, recursive=False).contents)
+		summary_html = page_html.find("div").find(lambda tag: tag.name == "p" and not tag.attrs, recursive=False).contents
+
+		summary = tagsToMarkdown(summary_html)
 		def markdownLength(text):
 			text = re.sub(r"\[([^\[]*)]\([^\(]*\)", r"\1", text)
 			return len(text)
