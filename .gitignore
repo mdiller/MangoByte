@@ -90,6 +90,8 @@ ENV/
 
 .DS_Store
 
+logs/
+
 *.db
 
 botdata.json
