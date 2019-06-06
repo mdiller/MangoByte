@@ -180,7 +180,9 @@ async def on_command_error(ctx, error):
 				await ctx.message.add_reaction(bot.get_emoji(emoji_dict["unauthorized"]))
 			return # The user does not have permissions
 		elif isinstance(error, commands.MissingRequiredArgument):
-			await bot.help_command.command_callback(ctx, command=ctx.command.name)
+			help_command = bot.help_command.copy()
+			help_command.context = ctx
+			await help_command.command_callback(ctx, command=ctx.command.name)
 		elif isinstance(error, CustomBadArgument):
 			await error.user_error.send_self(ctx, botdata)
 		elif isinstance(error, commands.BadArgument):

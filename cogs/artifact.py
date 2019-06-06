@@ -168,6 +168,8 @@ class Artifact(MangoCog):
 			cards.append(self.get_card(card_info["id"]))
 			card_counts[card_info["id"]] = card_info["count"]
 
+		cards = list(filter(lambda c: c is not None, cards))
+
 		embed = discord.Embed()
 
 		embed.title = deck_info["name"]

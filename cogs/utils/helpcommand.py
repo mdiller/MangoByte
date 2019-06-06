@@ -107,7 +107,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 			return "`<empty>`"
 	
 	def get_command_signature(self, command):
-		return '%s%s %s' % (self.clean_prefix, command.qualified_name, command.signature)
+		return '%s%s %s' % (botdata.command_prefix(self.context), command.qualified_name, command.signature)
 
 	def fill_template(self, text):
 		text = re.sub("\{config_help\}", get_config_help(GuildInfo.variables, "config"), text)
