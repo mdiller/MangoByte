@@ -109,7 +109,7 @@ async def on_ready():
 	if timeout_count > 0:
 		message += f"\n{timeout_count} voice channels timed out"
 	if error_count > 0:
-		message += f"\n{error_count} voice channels encountered a weird usererror"
+		message += f"\n{error_count} voice channels encountered some weird exceptions!"
 	total_time = (datetime.datetime.now() - start_time).total_seconds()
 	message += f"\n\ntook {total_time:.2f} seconds"
 	appinfo = await bot.application_info()
@@ -147,6 +147,10 @@ async def initial_channel_connect(audio_cog, guildinfo):
 		guildinfo.voicechannel = None
 		print("timeout error when connecting to channel")
 		return 2
+	except Exception as e:
+		guildinfo.voicechannel = None
+		print(f"Unknown exception encountered on connection to channel ({channel}): {e}")
+		return 3
 
 
 @bot.event
