@@ -38,6 +38,8 @@ opendota_html_errors = {
 	"default": "OpenDota said we did things wrong 😢. status code: {}"
 }
 
+default_steam_icon = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/fe/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg"
+
 def opendota_query_get_url(querystring):
 	if settings.odota:
 		if "?" in querystring:
@@ -390,7 +392,7 @@ class DotaStats(MangoCog):
 
 		embed = discord.Embed(description=description, color=self.embed_color, timestamp=datetime.datetime.utcfromtimestamp(match['start_time']))
 
-		embed.set_author(name=player['personaname'], icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
+		embed.set_author(name=player['personaname'] or "Anonymous", icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
 
 		embed.add_field(name="Damage", value=(
 			"KDA: **{kills}**/**{deaths}**/**{assists}**\n"
@@ -668,9 +670,9 @@ class DotaStats(MangoCog):
 		embed = discord.Embed(color=self.embed_color)
 
 		embed.set_author(
-			name=playerinfo["profile"]["personaname"], 
-			icon_url=playerinfo["profile"]["avatar"], 
-			url=playerinfo["profile"]["profileurl"])
+			name=playerinfo["profile"]["personaname"] or "Anonymous", 
+			icon_url=playerinfo["profile"]["avatar"] or default_steam_icon, 
+			url=playerinfo["profile"]["profileurl"] or f"https://www.opendota.com/players/{steam32}")
 
 		embed.add_field(name="General", value=(
 			f"Winrate of **{winrate}** over **{gamesplayed}** games\n"
@@ -743,8 +745,8 @@ class DotaStats(MangoCog):
 		embed = discord.Embed(description=f"*The following are averages and percentages based on the last {len(matches)} parsed matches*", color=self.embed_color)
 
 		embed.set_author(
-			name=playerinfo["profile"]["personaname"], 
-			icon_url=playerinfo["profile"]["avatar"], 
+			name=playerinfo["profile"]["personaname"] or "Anonymous", 
+			icon_url=playerinfo["profile"]["avatar"] or default_steam_icon, 
 			url=f"https://www.opendota.com/players/{steam32}")
 
 		def avg(key, round_place=0):
@@ -1092,7 +1094,7 @@ class DotaStats(MangoCog):
 			name=f"{author_info['profile']['personaname']} + {friend_info['profile']['personaname']}", 
 			url=f"https://www.opendota.com{url}")
 
-		image = discord.File(await drawdota.combine_image_halves(author_info['profile']['avatarfull'], friend_info['profile']['avatarfull']), "profile.png")
+		image = discord.File(await drawdota.combine_image_halves(author_info['profile']['avatarfull'] or default_steam_icon, friend_info['profile']['avatarfull'] or default_steam_icon), "profile.png")
 		embed.set_thumbnail(url=f"attachment://{image.filename}")
 
 		await ctx.send(embed=embed, file=image)
