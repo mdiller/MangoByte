@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Mango Testing - dotabase</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+
+    <style>
+        /* === GENERAL === */
+
+@font-face {
+    font-family: Whitney;
+    src: url(https://discordapp.com/assets/6c6374bad0b0b6d204d8d6dc4a18d820.woff);
+    font-weight: 300;
+}
+
+@font-face {
+    font-family: Whitney;
+    src: url(https://discordapp.com/assets/e8acd7d9bf6207f99350ca9f9e23b168.woff);
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: Whitney;
+    src: url(https://discordapp.com/assets/3bdef1251a424500c1b3a78dea9b7e57.woff);
+    font-weight: 500;
+}
+
+@font-face {
+    font-family: Whitney;
+    src: url(https://discordapp.com/assets/be0060dafb7a0e31d2a1ca17c0708636.woff);
+    font-weight: 600;
+}
+
+@font-face {
+    font-family: Whitney;
+    src: url(https://discordapp.com/assets/8e12fb4f14d9c4592eb8ec9f22337b04.woff);
+    font-weight: 700;
+}
+
+body {
+    font-family: "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+img {
+    object-fit: contain;
+}
+
+.markdown {
+    white-space: pre-wrap;
+    line-height: 1.3;
+    overflow-wrap: break-word;
+}
+
+.spoiler {
+    border-radius: 3px;
+}
+
+.pre {
+    font-family: "Consolas", "Courier New", Courier, Monospace;
+}
+
+.pre--multiline {
+    margin-top: 4px;
+    padding: 8px;
+    border: 2px solid;
+    border-radius: 5px;    
+}
+
+.pre--inline {
+    padding: 2px;
+    border-radius: 3px;
+    font-size: 85%;
+}
+
+.mention {
+    font-weight: 500;
+}
+
+.emoji {
+    width: 1.45em;
+    height: 1.45em;
+    margin: 0 1px;
+    vertical-align: -0.4em;
+}
+
+.emoji--small {
+    width: 1rem;
+    height: 1rem;
+}
+
+.emoji--large {
+    width: 2rem;
+    height: 2rem;
+}
+
+/* === INFO === */
+
+.info {
+    display: flex;
+    max-width: 100%;
+    margin: 0 5px 10px 5px;    
+}
+
+.info__guild-icon-container {
+    flex: 0;
+}
+
+.info__guild-icon {
+    max-width: 88px;
+    max-height: 88px;
+}
+
+.info__metadata {
+    flex: 1;
+    margin-left: 10px;
+}
+
+.info__guild-name {
+    font-size: 1.4em;
+}
+
+.info__channel-name {
+    font-size: 1.2em;
+}
+
+.info__channel-topic {
+    margin-top: 2px;
+}
+
+.info__channel-message-count {
+    margin-top: 2px;
+}
+
+.info__channel-date-range {
+    margin-top: 2px;
+}
+
+/* === CHATLOG === */
+
+.chatlog {
+    max-width: 100%;
+    margin-bottom: 24px;
+}
+
+.chatlog__message-group {
+    display: flex;
+    margin: 0 10px;
+    padding: 15px 0;
+    border-top: 1px solid;
+}
+
+.chatlog__author-avatar-container {
+    flex: 0;
+    width: 40px;
+    height: 40px;
+}
+
+.chatlog__author-avatar {
+    border-radius: 50%;
+    height: 40px;
+    width: 40px;
+}
+
+.chatlog__messages {
+    flex: 1;
+    min-width: 50%;
+    margin-left: 20px;
+}
+
+.chatlog__author-name {
+    font-size: 1em;
+    font-weight: 500;
+}
+
+.chatlog__timestamp {
+    margin-left: 5px;
+    font-size: .75em;
+}
+
+.chatlog__content {
+    padding-top: 5px;
+    font-size: .9375em;
+    word-wrap: break-word;
+}
+
+.chatlog__edited-timestamp {
+    margin-left: 3px;
+    font-size: .8em;
+}
+
+.chatlog__attachment {
+    margin: 5px 0;
+}
+
+.chatlog__attachment-thumbnail {
+    max-width: 50%;
+    max-height: 500px;
+    border-radius: 3px;
+}
+
+.chatlog__embed {
+    display: flex;
+    max-width: 520px;
+    margin-top: 5px;
+}
+
+.chatlog__embed-color-pill {
+    flex-shrink: 0;
+    width: 4px;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+}
+
+.chatlog__embed-content-container {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 10px;
+    border: 1px solid;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+.chatlog__embed-content {
+    width: 100%;
+    display: flex;
+}
+
+.chatlog__embed-text {
+    flex: 1;
+}
+
+.chatlog__embed-author {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.chatlog__embed-author-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 9px;
+    border-radius: 50%;
+}
+
+.chatlog__embed-author-name {
+    font-size: .875em;
+    font-weight: 600;
+}
+
+.chatlog__embed-title {
+    margin-bottom: 4px;
+    font-size: .875em;
+    font-weight: 600;
+}
+
+.chatlog__embed-description {
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.chatlog__embed-fields {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.chatlog__embed-field {
+    flex: 0;
+    min-width: 100%;
+    max-width: 506px;
+    padding-top: 10px;
+}
+
+.chatlog__embed-field--inline {
+    flex: 1;
+    flex-basis: auto;
+    min-width: 150px;
+}
+
+.chatlog__embed-field-name {
+    margin-bottom: 4px;
+    font-size: .875em;
+    font-weight: 600;
+}
+
+.chatlog__embed-field-value {
+    font-size: .875em;
+    font-weight: 500;
+}
+
+.chatlog__embed-thumbnail {
+    flex: 0;
+    margin-left: 20px;
+    max-width: 80px;
+    max-height: 80px;
+    border-radius: 3px;
+}
+
+.chatlog__embed-image-container {
+    margin-top: 10px;
+}
+
+.chatlog__embed-image {    
+    max-width: 500px;
+    max-height: 400px;
+    border-radius: 3px;
+}
+
+.chatlog__embed-footer {
+    margin-top: 10px;
+}
+
+.chatlog__embed-footer-icon {
+    margin-right: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    vertical-align: middle;
+}
+
+.chatlog__embed-footer-text {
+    font-weight: 500;
+    font-size: .75em;
+}
+
+.chatlog__reactions {
+    display: flex;
+}
+
+.chatlog__reaction {
+    display: flex;
+    align-items: center;
+    margin: 6px 2px 2px 2px;
+    padding: 3px 6px;
+    border-radius: 3px;
+}
+
+.chatlog__reaction-count {
+    min-width: 9px;
+    margin-left: 6px;
+    font-size: .875em;
+}
+
+.chatlog__bot-tag {
+    margin-left: 0.3em;
+    background: #7289da;
+    color: #ffffff;
+    font-size: 0.625em;
+    padding: 1px 2px;
+    border-radius: 3px;
+    vertical-align: middle;
+    line-height: 1.3;
+    position: relative;
+    top: -.2em;
+}
+    </style>
+    <style>
+        /* === GENERAL === */
+
+body {
+    background-color: #36393e;
+    color: #dcddde;
+}
+
+a {
+    color: #0096cf;
+}
+
+.spoiler {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.pre {
+    background-color: #2f3136 !important;
+}
+
+.pre--multiline {
+    border-color: #282b30 !important;
+    color: #839496 !important;
+}
+
+.mention {
+    color: #7289da;
+}
+
+/* === INFO === */
+
+.info__guild-name {
+    color: #ffffff;
+}
+
+.info__channel-name {
+    color: #ffffff;
+}
+
+.info__channel-topic {
+    color: #ffffff;
+}
+
+/* === CHATLOG === */
+
+.chatlog__message-group {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.chatlog__author-name {
+    color: #ffffff;
+}
+
+.chatlog__timestamp {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.chatlog__edited-timestamp {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.chatlog__embed-content-container {
+    background-color: rgba(46, 48, 54, 0.3);
+    border-color: rgba(46, 48, 54, 0.6);
+}
+
+.chatlog__embed-author-name {
+    color: #ffffff;
+}
+
+.chatlog__embed-author-name-link {
+    color: #ffffff;
+}
+
+.chatlog__embed-title {
+    color: #ffffff;
+}
+
+.chatlog__embed-description {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.chatlog__embed-field-name {
+    color: #ffffff;
+}
+
+.chatlog__embed-field-value {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.chatlog__embed-footer {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.chatlog__reaction {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.chatlog__reaction-count {
+    color: rgba(255, 255, 255, 0.3);
+}
+    </style>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/solarized-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.pre--multiline').forEach((block) => {
+                hljs.highlightBlock(block);
+            });
+        });
+    </script>
+</head>
+<body>
+    
+<div class="chatlog">
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/573638788073652255/fb8628818d6236f5b196a3840833d56e.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="FruitInspector#0355" data-user-id="573638788073652255">FruitInspector</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown">?ability black hole</span>
+
+                        </div>
+
+
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/215645351233716226/0ad27595b563942fb7a7f3e986b444d3.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="MangoDev#3370" data-user-id="215645351233716226">MangoDev</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown"></span>
+
+                        </div>
+
+
+                        <div class="chatlog__embed">
+                            <div class="chatlog__embed-color-pill" style="background-color: rgba(79,84,92,255)"></div>
+                            <div class="chatlog__embed-content-container">
+                                <div class="chatlog__embed-content">
+                                    <div class="chatlog__embed-text">
+
+                                            <div class="chatlog__embed-title">
+                                                    <a class="chatlog__embed-title-link" href="http://dota2.gamepedia.com/Enigma#Black_Hole"><span class="markdown">Black Hole</span></a>
+                                            </div>
+
+                                        <div class="chatlog__embed-description"><span class="markdown"><strong>Ability:</strong> Channelled (AOE)
+<strong>Damage Type:</strong> Pure
+<strong>Pierces Spell Immunity:</strong> Yes
+
+CHANNELED - Summons a vortex that sucks in nearby enemy units.  Enemies affected by Black Hole cannot move, attack, or cast spells.
+
+<strong><img class="emoji " alt="aghanim" title="aghanim" src="https://cdn.discordapp.com/emojis/409527307263279116.png" /> Upgradable by Aghanim&#39;s Scepter</strong>
+<em>Adds the current level of Midnight Pulse to Black Hole.</em>
+
+<strong>Damage Per Second:</strong> 50 / 100 / 150
+<strong>Radius:</strong> 420
+<strong>Duration:</strong> 4</span></div>
+
+                                            <div class="chatlog__embed-fields">
+                                                    <div class="chatlog__embed-field  chatlog__embed-field--inline ">
+                                                            <div class="chatlog__embed-field-name"><span class="markdown">​</span></div>
+                                                            <div class="chatlog__embed-field-value"><span class="markdown"><img class="emoji " alt="cooldown" title="cooldown" src="https://cdn.discordapp.com/emojis/335985500408250368.png" /> 200 / 180 / 160</span></div>
+                                                    </div>
+                                                    <div class="chatlog__embed-field  chatlog__embed-field--inline ">
+                                                            <div class="chatlog__embed-field-name"><span class="markdown">​</span></div>
+                                                            <div class="chatlog__embed-field-value"><span class="markdown"><img class="emoji " alt="mana_cost" title="mana_cost" src="https://cdn.discordapp.com/emojis/335986508714475520.png" /> 275 / 325 / 375</span></div>
+                                                    </div>
+                                            </div>
+                                    </div>
+
+                                        <div class="chatlog__embed-thumbnail-container">
+                                            <a class="chatlog__embed-thumbnail-link" href="http://dotabase.dillerm.io/dota-vpk/panorama/images/spellicons/enigma_black_hole_png.png">
+                                                <img class="chatlog__embed-thumbnail" src="http://dotabase.dillerm.io/dota-vpk/panorama/images/spellicons/enigma_black_hole_png.png" />
+                                            </a>
+                                        </div>
+                                </div>    
+
+
+                                    <div class="chatlog__embed-footer">
+                                        
+                                        <span class="chatlog__embed-footer-text">
+                                                    The ground trembles as Enigma channels his ultimate vortex of destruction, a singularity with the power to end worlds.
+                                                    
+
+                                        </span>
+                                    </div>
+                            </div>
+                        </div>
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/573638788073652255/fb8628818d6236f5b196a3840833d56e.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="FruitInspector#0355" data-user-id="573638788073652255">FruitInspector</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown">?courage</span>
+
+                        </div>
+
+
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/215645351233716226/0ad27595b563942fb7a7f3e986b444d3.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="MangoDev#3370" data-user-id="215645351233716226">MangoDev</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown"></span>
+
+                        </div>
+
+                        <div class="chatlog__attachment">
+                            <a href="https://cdn.discordapp.com/attachments/575486456345264148/575486461273571328/courage.png">
+                                
+                                    <img class="chatlog__attachment-thumbnail" src="https://cdn.discordapp.com/attachments/575486456345264148/575486461273571328/courage.png" />
+                            </a>
+                        </div>
+
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/573638788073652255/fb8628818d6236f5b196a3840833d56e.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="FruitInspector#0355" data-user-id="573638788073652255">FruitInspector</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown">?emoticon cocky</span>
+
+                        </div>
+
+
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/215645351233716226/0ad27595b563942fb7a7f3e986b444d3.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="MangoDev#3370" data-user-id="215645351233716226">MangoDev</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown"></span>
+
+                        </div>
+
+                        <div class="chatlog__attachment">
+                            <a href="https://cdn.discordapp.com/attachments/575486456345264148/575486465044119562/cocky.gif">
+                                
+                                    <img class="chatlog__attachment-thumbnail" src="https://cdn.discordapp.com/attachments/575486456345264148/575486465044119562/cocky.gif" />
+                            </a>
+                        </div>
+
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/573638788073652255/fb8628818d6236f5b196a3840833d56e.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="FruitInspector#0355" data-user-id="573638788073652255">FruitInspector</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown">?fuseheroes</span>
+
+                        </div>
+
+
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/215645351233716226/0ad27595b563942fb7a7f3e986b444d3.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="MangoDev#3370" data-user-id="215645351233716226">MangoDev</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown"></span>
+
+                        </div>
+
+
+                        <div class="chatlog__embed">
+                            <div class="chatlog__embed-color-pill" style="background-color: rgba(79,84,92,255)"></div>
+                            <div class="chatlog__embed-content-container">
+                                <div class="chatlog__embed-content">
+                                    <div class="chatlog__embed-text">
+
+                                            <div class="chatlog__embed-title">
+                                                    <span class="markdown">Batrom</span>
+                                            </div>
+
+                                        <div class="chatlog__embed-description"><span class="markdown"><img class="emoji " alt="dota_hero_batrider" title="dota_hero_batrider" src="https://cdn.discordapp.com/emojis/448687424080445471.png" /> + <img class="emoji " alt="dota_hero_doom_bringer" title="dota_hero_doom_bringer" src="https://cdn.discordapp.com/emojis/448687443785547787.png" /></span></div>
+
+                                    </div>
+
+                                        <div class="chatlog__embed-thumbnail-container">
+                                            <a class="chatlog__embed-thumbnail-link" href="https://cdn.discordapp.com/attachments/575486456345264148/575486469796397107/hero.png">
+                                                <img class="chatlog__embed-thumbnail" src="https://cdn.discordapp.com/attachments/575486456345264148/575486469796397107/hero.png" />
+                                            </a>
+                                        </div>
+                                </div>    
+
+
+                            </div>
+                        </div>
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/573638788073652255/fb8628818d6236f5b196a3840833d56e.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="FruitInspector#0355" data-user-id="573638788073652255">FruitInspector</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown">?hero ember</span>
+
+                        </div>
+
+
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/215645351233716226/0ad27595b563942fb7a7f3e986b444d3.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="MangoDev#3370" data-user-id="215645351233716226">MangoDev</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown"></span>
+
+                        </div>
+
+
+                        <div class="chatlog__embed">
+                            <div class="chatlog__embed-color-pill" style="background-color: rgba(218,37,7,1)"></div>
+                            <div class="chatlog__embed-content-container">
+                                <div class="chatlog__embed-content">
+                                    <div class="chatlog__embed-text">
+                                            <div class="chatlog__embed-author">
+                                                    <img class="chatlog__embed-author-icon" src="http://dotabase.dillerm.io/dota-vpk/panorama/images/heroes/icons/npc_dota_hero_ember_spirit_png.png" />
+
+                                                    <span class="chatlog__embed-author-name">
+                                                            <a class="chatlog__embed-author-name-link" href="http://dota2.gamepedia.com/Ember_Spirit">Ember Spirit</a>
+                                                    </span>
+                                            </div>
+
+
+                                        <div class="chatlog__embed-description"><span class="markdown"><img class="emoji " alt="attr_strength" title="attr_strength" src="https://cdn.discordapp.com/emojis/288225269293121536.png" /> 21 + 2.6
+<img class="emoji " alt="attr_agility" title="attr_agility" src="https://cdn.discordapp.com/emojis/288225203518046209.png" /> <strong>22 + 2.1</strong>
+<img class="emoji " alt="attr_intelligence" title="attr_intelligence" src="https://cdn.discordapp.com/emojis/288225245050044417.png" /> 20 + 1.8</span></div>
+
+                                            <div class="chatlog__embed-fields">
+                                                    <div class="chatlog__embed-field  chatlog__embed-field--inline ">
+                                                            <div class="chatlog__embed-field-name"><span class="markdown">Attack</span></div>
+                                                            <div class="chatlog__embed-field-value"><span class="markdown"><img class="emoji " alt="hero_damage" title="hero_damage" src="https://cdn.discordapp.com/emojis/312025241515720709.png" /> 55 - 59
+<img class="emoji " alt="hero_attack_rate" title="hero_attack_rate" src="https://cdn.discordapp.com/emojis/312024545865236493.png" /> 1.7
+<img class="emoji " alt="hero_attack_range" title="hero_attack_range" src="https://cdn.discordapp.com/emojis/312024330974396428.png" /> 150</span></div>
+                                                    </div>
+                                                    <div class="chatlog__embed-field  chatlog__embed-field--inline ">
+                                                            <div class="chatlog__embed-field-name"><span class="markdown">Defence</span></div>
+                                                            <div class="chatlog__embed-field-value"><span class="markdown"><img class="emoji " alt="hero_armor" title="hero_armor" src="https://cdn.discordapp.com/emojis/312025149899800579.png" /> 3.1
+<img class="emoji " alt="hero_magic_resist" title="hero_magic_resist" src="https://cdn.discordapp.com/emojis/312024570221821953.png" /> 25%</span></div>
+                                                    </div>
+                                                    <div class="chatlog__embed-field  chatlog__embed-field--inline ">
+                                                            <div class="chatlog__embed-field-name"><span class="markdown">Mobility</span></div>
+                                                            <div class="chatlog__embed-field-value"><span class="markdown"><img class="emoji " alt="hero_speed" title="hero_speed" src="https://cdn.discordapp.com/emojis/312024594284544001.png" /> 305
+<img class="emoji " alt="hero_turn_rate" title="hero_turn_rate" src="https://cdn.discordapp.com/emojis/312024659040272395.png" /> 0.5
+<img class="emoji " alt="hero_vision_range" title="hero_vision_range" src="https://cdn.discordapp.com/emojis/312026060055117824.png" /> 1,800 / 800</span></div>
+                                                    </div>
+                                                    <div class="chatlog__embed-field  chatlog__embed-field--inline ">
+                                                            <div class="chatlog__embed-field-name"><span class="markdown">Real Name</span></div>
+                                                            <div class="chatlog__embed-field-value"><span class="markdown">Xin</span></div>
+                                                    </div>
+                                                    <div class="chatlog__embed-field  chatlog__embed-field--inline ">
+                                                            <div class="chatlog__embed-field-name"><span class="markdown">Roles</span></div>
+                                                            <div class="chatlog__embed-field-value"><span class="markdown">Carry, Escape, Nuker, Disabler, Initiator</span></div>
+                                                    </div>
+                                            </div>
+                                    </div>
+
+                                        <div class="chatlog__embed-thumbnail-container">
+                                            <a class="chatlog__embed-thumbnail-link" href="http://dotabase.dillerm.io/dota-vpk/panorama/images/heroes/selection/npc_dota_hero_ember_spirit_png.png">
+                                                <img class="chatlog__embed-thumbnail" src="http://dotabase.dillerm.io/dota-vpk/panorama/images/heroes/selection/npc_dota_hero_ember_spirit_png.png" />
+                                            </a>
+                                        </div>
+                                </div>    
+
+
+                            </div>
+                        </div>
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/573638788073652255/fb8628818d6236f5b196a3840833d56e.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="FruitInspector#0355" data-user-id="573638788073652255">FruitInspector</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown">?item blink</span>
+
+                        </div>
+
+
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/215645351233716226/0ad27595b563942fb7a7f3e986b444d3.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="MangoDev#3370" data-user-id="215645351233716226">MangoDev</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown"></span>
+
+                        </div>
+
+
+                        <div class="chatlog__embed">
+                            <div class="chatlog__embed-color-pill" style="background-color: rgba(255,255,255,1)"></div>
+                            <div class="chatlog__embed-content-container">
+                                <div class="chatlog__embed-content">
+                                    <div class="chatlog__embed-text">
+
+                                            <div class="chatlog__embed-title">
+                                                    <a class="chatlog__embed-title-link" href="http://dota2.gamepedia.com/Blink_Dagger"><span class="markdown">Blink Dagger</span></a>
+                                            </div>
+
+                                        <div class="chatlog__embed-description"><span class="markdown"><u><strong>Active: Blink</strong></u>
+Teleport to a target point up to <strong>1200</strong> units away. 
+
+Blink Dagger cannot be used for <strong>3</strong> seconds after taking damage from an enemy hero or Roshan.
+
+<img class="emoji " alt="gold" title="gold" src="https://cdn.discordapp.com/emojis/407738818754641921.png" /> 2,250
+<img class="emoji " alt="cooldown" title="cooldown" src="https://cdn.discordapp.com/emojis/335985500408250368.png" /> 15</span></div>
+
+                                    </div>
+
+                                        <div class="chatlog__embed-thumbnail-container">
+                                            <a class="chatlog__embed-thumbnail-link" href="http://dotabase.dillerm.io/dota-vpk/panorama/images/items/blink_png.png">
+                                                <img class="chatlog__embed-thumbnail" src="http://dotabase.dillerm.io/dota-vpk/panorama/images/items/blink_png.png" />
+                                            </a>
+                                        </div>
+                                </div>    
+
+
+                                    <div class="chatlog__embed-footer">
+                                        
+                                        <span class="chatlog__embed-footer-text">
+                                                    The fabled dagger used by the fastest assassin ever to walk the lands.
+                                                    
+
+                                        </span>
+                                    </div>
+                            </div>
+                        </div>
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/573638788073652255/fb8628818d6236f5b196a3840833d56e.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="FruitInspector#0355" data-user-id="573638788073652255">FruitInspector</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown">?lore tinker</span>
+
+                        </div>
+
+
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/215645351233716226/0ad27595b563942fb7a7f3e986b444d3.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="MangoDev#3370" data-user-id="215645351233716226">MangoDev</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown"></span>
+
+                        </div>
+
+
+                        <div class="chatlog__embed">
+                            <div class="chatlog__embed-color-pill" style="background-color: rgba(79,84,92,255)"></div>
+                            <div class="chatlog__embed-content-container">
+                                <div class="chatlog__embed-content">
+                                    <div class="chatlog__embed-text">
+
+                                            <div class="chatlog__embed-title">
+                                                    <a class="chatlog__embed-title-link" href="http://dota2.gamepedia.com/Tinker"><span class="markdown">Tinker</span></a>
+                                            </div>
+
+                                        <div class="chatlog__embed-description"><span class="markdown">Boush the Tinker&#39;s diminutive race is known for its intelligence, its cunning, and its prickly relationship with magic. As a matter of pride, they survive by their wits, and use only those powers of nature that may be unlocked through rational methodologies. Even this forbearance has led to a great deal of trouble, as Boush can attest. Once a key investigator of natural law, Boush the Tinker led a vast intellectual investigation into the workings of nature, founding a subterranean laboratory in the rumored, mist-wreathed wastes of the Violet Plateau. While scorning mages for the dangers they visit upon the world, Boush and his Tinker associates haughtily wrenched open a portal to some realm beyond comprehension and ushered in some nightmares of their own. A black mist rose from the cavernous interior of the Violet Plateau, shrouding it in permanent darkness from which sounds of horror perpetually emanate. Boush escaped with only his wits and the contraptions he carried, the sole Tinker to survive the Violet Plateau Incident.</span></div>
+
+                                    </div>
+
+                                        <div class="chatlog__embed-thumbnail-container">
+                                            <a class="chatlog__embed-thumbnail-link" href="http://dotabase.dillerm.io/dota-vpk/panorama/images/heroes/selection/npc_dota_hero_tinker_png.png">
+                                                <img class="chatlog__embed-thumbnail" src="http://dotabase.dillerm.io/dota-vpk/panorama/images/heroes/selection/npc_dota_hero_tinker_png.png" />
+                                            </a>
+                                        </div>
+                                </div>    
+
+
+                            </div>
+                        </div>
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/573638788073652255/fb8628818d6236f5b196a3840833d56e.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="FruitInspector#0355" data-user-id="573638788073652255">FruitInspector</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown">?talents sniper</span>
+
+                        </div>
+
+
+
+            </div>
+        </div>
+        <div class="chatlog__message-group">
+            <div class="chatlog__author-avatar-container">
+                <img class="chatlog__author-avatar" src="https://cdn.discordapp.com/avatars/215645351233716226/0ad27595b563942fb7a7f3e986b444d3.png" />
+            </div>            
+            <div class="chatlog__messages">
+                <span class="chatlog__author-name" title="MangoDev#3370" data-user-id="215645351233716226">MangoDev</span>
+                    <span class="chatlog__bot-tag">BOT</span>
+                <span class="chatlog__timestamp">07-May-2019 5:57 PM</span>
+
+                        <div class="chatlog__content">
+                            <span class="markdown"></span>
+
+                        </div>
+
+                        <div class="chatlog__attachment">
+                            <a href="https://cdn.discordapp.com/attachments/575486456345264148/575486487399759893/sniper_talents.png">
+                                
+                                    <img class="chatlog__attachment-thumbnail" src="https://cdn.discordapp.com/attachments/575486456345264148/575486487399759893/sniper_talents.png" />
+                            </a>
+                        </div>
+
+
+            </div>
+        </div>
+</div>
+
+</body>
+</html>

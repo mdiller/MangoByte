@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -41,6 +45,7 @@ namespace MangoTester.TestFixtures
       var name = this.GetType().Name.ToLower();
       var server = await Bot.GetGuildAsync(MangoSetupFixture.Config.ServerId);
       Channel = server.Channels.FirstOrDefault(c => c.Name == name && c.Type == ChannelType.Text);
+
       if (Channel != null)
       {
         await Channel.DeleteAsync("starting a new test");
@@ -58,9 +63,38 @@ namespace MangoTester.TestFixtures
     /// Cleans up after all the tests have been run
     /// </summary>
     [OneTimeTearDown]
-    public void FixtureTeardown()
+    public async Task FixtureTeardown()
     {
       Bot.MessageCreated -= MessageWatcher.Handler;
+
+      await ExportChannel();
+    }
+
+    /// <summary>
+    /// Exports the current channel to an html file using DiscordChatExporter
+    /// </summary>
+    public async Task ExportChannel()
+    {
+      string exporterPath = Path.Combine(MangoSetupFixture.ExecutingDirectory, "DiscordChatExporter/DiscordChatExporter.Cli.exe");
+      string outfile = Path.Combine(MangoSetupFixture.MangoDirectory, $"docs/channel_{Channel.Name}.html");
+
+      Process process = new Process();
+      ProcessStartInfo startInfo = new ProcessStartInfo
+      {
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true,
+        FileName = exporterPath,
+        Arguments = $"export -c {Channel.Id} -b -t {MangoSetupFixture.Config.Token} -o {outfile} --dateformat \"dd-MMM-yyyy h:mm tt\""
+      };
+      process.StartInfo = startInfo;
+      process.Start();
+      await process.WaitForExitAsync();
+
+      string html = File.ReadAllText(outfile);
+      html = Regex.Replace(html, "<div class=\"info\">.*(?=<div class=\"chatlog\">)", "", RegexOptions.Singleline);
+      File.WriteAllText(outfile, html);
     }
 
     /// <summary>

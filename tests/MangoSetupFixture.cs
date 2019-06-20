@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using DSharpPlus;
@@ -14,6 +16,8 @@ namespace MangoTester
   [SetUpFixture]
   public class MangoSetupFixture
   {
+    public static string ExecutingDirectory { get; private set; }
+    public static string MangoDirectory { get; private set; }
     public static TesterBot Bot { get; private set; }
     public static Config Config { get; private set; }
 
@@ -23,7 +27,10 @@ namespace MangoTester
     [OneTimeSetUp]
     public static async Task MainSetup()
     {
-      Config = Config.FromFile("../../../../settings.json");
+      UriBuilder uri = new UriBuilder(Assembly.GetExecutingAssembly().CodeBase);
+      ExecutingDirectory = Path.GetDirectoryName(Uri.UnescapeDataString(uri.Path));
+      MangoDirectory = "../../../../";
+      Config = Config.FromFile(Path.Combine(MangoDirectory, "settings.json"));
 
       Bot = new TesterBot(new DiscordConfiguration
       {
