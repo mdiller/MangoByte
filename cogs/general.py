@@ -515,6 +515,9 @@ class General(MangoCog):
 
 	@commands.Cog.listener()
 	async def on_message(self, message):
+		if message.author.bot and settings.debug:
+			ctx = await self.bot.get_context(message)
+			await self.bot.invoke(ctx)
 		if message.guild is not None and not botdata.guildinfo(message.guild.id).reactions:
 			return
 
