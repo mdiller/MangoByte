@@ -27,6 +27,10 @@ class MatchNotParsedError(UserError):
 		self.action = action if action else "do that"
 		super().__init__(f"This match must be parsed before I can {self.action}.\nTry `{{cmdpfx}}parse {match_id}` to request a parse.")
 
+class StratzMatchNotParsedError(UserError):
+	def __init__(self, match_id):
+		super().__init__(f"It looks like match `{match_id}` hasn't been parsed by STRATZ. To have your matches parsed by STRATZ a bit faster, you can login to their site: <https://stratz.com>")
+
 class InvalidMatchIdError(UserError):
 	def __init__(self, match_id):
 		super().__init__(f"Sorry, looks like `{match_id}` isn't a valid match id")
@@ -92,10 +96,11 @@ async def get_stratz_match(match_id):
 
 	try:
 		return await httpgetter.get(url, cache=True, errors={
-			500: "Looks like something wrong with the STRATZ api"
+			500: "Looks like something wrong with the STRATZ api",
+			204: "STRATZ hasn't recieved this match yet. Try again a bit later"
 		})
 	except aiohttp.ClientConnectorError:
-		raise UserError("Looks like this match has not been parsed by STRATZ yet. Try again in a bit")
+		raise StratzMatchNotParsedError(match_id)
 
 
 async def get_lastmatch_id(steamid, matchfilter=None):
@@ -1117,7 +1122,7 @@ class DotaStats(MangoCog):
 
 		stratz_match = await get_stratz_match(match_id)
 		if not is_stratz_parsed(stratz_match):
-			raise UserError(f"It looks like match `{match_id}` hasn't been parsed by STRATZ")
+			raise StratzMatchNotParsedError(match_id)
 
 
 		start = int(get_time(start))
@@ -1166,7 +1171,7 @@ class DotaStats(MangoCog):
 
 		stratz_match = await get_stratz_match(match_id)
 		if not is_stratz_parsed(stratz_match):
-			raise UserError(f"It looks like match `{match_id}` hasn't been parsed by STRATZ")
+			raise StratzMatchNotParsedError(match_id)
 
 		player_data = None
 		if steamid:
