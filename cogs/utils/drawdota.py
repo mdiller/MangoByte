@@ -230,7 +230,7 @@ async def create_dota_gif(bot, match, stratz_match, start_time, end_time, ms_per
 	hero_icons = {}
 
 	for player in stratz_match["players"]:
-		hero_id = player["hero"]
+		hero_id = player["heroId"]
 		hero_icons[str(hero_id)] = await get_hero_icon(hero_id)
 
 	return await bot.loop.run_in_executor(ThreadPoolExecutor(max_workers=1), create_dota_gif_main, match, stratz_match, start_time, end_time, ms_per_second, filename, uri, hero_icons)
@@ -259,11 +259,11 @@ def create_dota_gif_main(match, stratz_match, start_time, end_time, ms_per_secon
 
 	players = []
 	for player in stratz_match["players"]:
-		eventData = player["eventData"]
-		positionEvents = eventData["playerUpdatePositionEvents"]
-		deathEvents = eventData["deathEvents"]
+		playbackData = player["playbackData"]
+		positionEvents = playbackData["playerUpdatePositionEvents"]
+		deathEvents = playbackData["deathEvents"]
 		scale = 0.75
-		icon = hero_icons[str(player["hero"])]
+		icon = hero_icons[str(player["heroId"])]
 		icon = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
 		# icon = outline_image(icon, 2, (0, 255, 0) if player["isRadiant"] else (255, 0, 0))
 		x = 0
@@ -317,7 +317,7 @@ def create_dota_gif_main(match, stratz_match, start_time, end_time, ms_per_secon
 	buildings = sorted(buildings, key=lambda b: b["x"] + b["y"], reverse=True)
 
 	# runes
-	runeEvents = stratz_match["eventData"]["runeEvents"]
+	runeEvents = stratz_match["playbackData"]["runeEvents"]
 	current_runes = {}
 	runes = {}
 	for t in range(match_start, end_time + 1):

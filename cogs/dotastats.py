@@ -100,6 +100,7 @@ async def get_stratz_match(match_id):
 			204: "STRATZ hasn't recieved this match yet. Try again a bit later"
 		})
 	except aiohttp.ClientConnectorError:
+		print("ClientConnectorError on stratz api result")
 		raise StratzMatchNotParsedError(match_id)
 
 
@@ -170,7 +171,7 @@ def is_parsed(match):
 
 
 def is_stratz_parsed(match):
-	return match.get("parsedDate") and match["players"][0].get("eventData") and match["players"][0].get("eventData").get("playerUpdatePositionEvents")
+	return match.get("parsedDateTime") and match["players"][0].get("playbackData") and match["players"][0].get("playbackData").get("playerUpdatePositionEvents")
 
 def format_teamfight(teamfight):
 	if teamfight['our_dead'] is None and teamfight['their_dead'] is None:
