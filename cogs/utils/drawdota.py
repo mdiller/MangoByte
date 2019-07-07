@@ -493,8 +493,8 @@ async def draw_matches_table(matches, game_strings):
 	first = True
 	for match in matches:
 		won_match = bool(match["radiant_win"]) == bool(match["player_slot"] < 128)
-		game_mode = game_strings[f"game_mode_{match['game_mode']}"]
-		lobby_type = game_strings[f"lobby_type_{match['lobby_type']}"]
+		game_mode = game_strings.get(f"game_mode_{match['game_mode']}", "Unknown")
+		lobby_type = game_strings.get(f"lobby_type_{match['lobby_type']}", "Unknown")
 		if first:
 			first = False
 		else:
