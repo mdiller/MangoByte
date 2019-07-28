@@ -213,7 +213,7 @@ class Dotabase(MangoCog):
 					# use this instead of directly using ability_slot because there are some filler generic_ability things
 					abilities = session.query(Ability).filter_by(hero_id=hero.id).order_by(Ability.ability_slot).all()
 					if ability_position > len(abilities):
-						raise Exception(f"{hero.localized_name} doesn't have that many abilities")
+						raise UserError(f"{hero.localized_name} doesn't have that many abilities")
 					if key == "r": # if is ultimate and not invoker, get last ability in list
 						if str(hero.id) in ABILITY_ULTI_KEY_MAP:
 							ability_position = ABILITY_ULTI_KEY_MAP[str(hero.id)]
