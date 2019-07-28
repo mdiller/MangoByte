@@ -673,6 +673,10 @@ class DotaStats(MangoCog):
 		# overall_activity_count = int(statistics.mean(activity_count))
 		# recent_activity_count = int(statistics.mean(activity_count[:recent_count]))
 
+		plus_text = ""
+		if playerinfo["profile"].get("plus"):
+			plus_text = "Has Dota Plus\n"
+
 		embed = discord.Embed(color=self.embed_color)
 
 		embed.set_author(
@@ -683,6 +687,7 @@ class DotaStats(MangoCog):
 		embed.add_field(name="General", value=(
 			f"Winrate of **{winrate}** over **{gamesplayed}** games\n"
 			f"Total Hours In Game: **{overall_time_played // 3600:,}**\n"
+			f"{plus_text}"
 			f"{rank_string}"))
 
 		embed.add_field(name="Profiles", value=(
