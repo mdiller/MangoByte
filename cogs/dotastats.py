@@ -675,7 +675,7 @@ class DotaStats(MangoCog):
 
 		plus_text = ""
 		if playerinfo["profile"].get("plus"):
-			plus_text = "Has Dota Plus\n"
+			plus_text = f"{self.get_emoji('dota_plus')} Dota Plus\n"
 
 		embed = discord.Embed(color=self.embed_color)
 
