@@ -1138,7 +1138,8 @@ class DotaStats(MangoCog):
 		lastframe = match["duration"] - 1
 		if start > lastframe and end > lastframe:
 			raise UserError("The game didn't last that long")
-		
+
+		# "https://stratz.com/en-us/match/{match_id}/playback?pb_time={seconds}"
 
 		async with ctx.channel.typing():
 			await thinker.think(ctx.message)
@@ -1182,7 +1183,7 @@ class DotaStats(MangoCog):
 		embed = discord.Embed(description=await self.get_lane_stories(match, perspective, True))
 
 		embed.title = f"Laning"
-		embed.url = f"https://www.opendota.com/matches/{match_id}/laning"
+		embed.url = f"https://stratz.com/en-us/match/{match_id}/playback"
 
 
 		async with ctx.channel.typing():
