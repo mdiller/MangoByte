@@ -111,7 +111,6 @@ class HttpGetter:
 
 	async def get(self, url, return_type="json", cache=False, errors={}):
 		if cache and self.cache.get_filename(url):
-			await loggingdb.insert_http_request(url, 0, True, True)
 			return self.cache.get(url, return_type)
 
 		async with self.session.get(url) as r:
