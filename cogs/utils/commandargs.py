@@ -209,6 +209,7 @@ class PlayerArg(QueryArg):
 class MatchFilter():
 	def __init__(self, args=None):
 		self.args = args or []
+		self.projections = []
 
 	@classmethod
 	async def init(cls, matchfilter, ctx):
@@ -237,7 +238,7 @@ class MatchFilter():
 				r"(not|non)(-| )?(significant|standard)": 0
 			}),
 			QueryArg("limit", {
-				r"(?:limit|count) (\d+)": lambda m: int(m.group(1))
+				r"(?:limit|count|show) (\d+)": lambda m: int(m.group(1))
 			}),
 			QueryArg("lane_role", {
 				r"safe( ?lane)?": 1,
@@ -309,11 +310,20 @@ class MatchFilter():
 					return
 			self.args.append(SimpleQueryArg(name, value))
 
+	def add_projections(self, projections):
+		self.projections.extend(projections)
+
 	def to_query_args(self):
 		args = filter(lambda a: a.has_value() and not a.name.startswith("_"), self.args)
-		args = map(lambda a: a.to_query_arg(), args)
+		args = list(map(lambda a: a.to_query_arg(), args))
+		if len(self.projections) > 0:
+			args.extend(map(lambda p: f"project={p}", self.projections))
 		return "&".join(args)
 
 	def post_filter(self, p):
 		return all(a.post_filter_check() for a in self.args)
+
+	def to_query_url(self):
+		args = self.to_query_args()
+		return f"/players/{self.player.steam_id}/matches?{args}"
 

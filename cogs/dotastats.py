@@ -103,20 +103,16 @@ async def get_stratz_match(match_id):
 		print("ClientConnectorError on stratz api result")
 		raise StratzMatchNotParsedError(match_id)
 
-
-async def get_lastmatch_id(steamid, matchfilter=None):
-	if not matchfilter:
-		matchfilter = MatchFilter()
-
+async def get_lastmatch_id(matchfilter):
 	no_filter = matchfilter.to_query_args() == ""
 	matchfilter.set_arg("significant", 0, False)
 	matchfilter.set_arg("limit", 1)
-	matches = await opendota_query(f"/players/{steamid}/matches?{matchfilter.to_query_args()}")
+	matches = await opendota_query(matchfilter.to_query_url())
 	if matches:
 		return matches[0]["match_id"]
 	else:
 		if no_filter:
-			raise NoMatchHistoryError(steamid)
+			raise NoMatchHistoryError(matchfilter.player.steam_id)
 		else:
 			raise UserError("No matches found using that filter")
 
@@ -428,7 +424,7 @@ class DotaStats(MangoCog):
 		matchfilter = await MatchFilter.init(matchfilter, ctx)
 		player = matchfilter.player
 
-		match_id = await get_lastmatch_id(player.steam_id, matchfilter)
+		match_id = await get_lastmatch_id(matchfilter)
 		await self.player_match_stats(player.steam_id, match_id, ctx)
 
 	async def print_match_stats(self, ctx, match_id):
@@ -550,12 +546,9 @@ class DotaStats(MangoCog):
 
 		hero = matchfilter.hero
 
-		projections = [ "kills", "deaths", "assists", "hero_id", "version", "game_mode", "lobby_type", "region", "duration", "start_time" ]
-		projections = "&".join(map(lambda p: f"project={p}", projections))
+		matchfilter.add_projections([ "kills", "deaths", "assists", "hero_id", "version", "game_mode", "lobby_type", "region", "duration", "start_time" ])
 
-		queryargs = f"?{matchfilter.to_query_args()}&{projections}"
-
-		matches = await opendota_query(f"/players/{steam32}/matches{queryargs}")
+		matches = await opendota_query(matchfilter.to_query_url())
 		if not matches:
 			if hero:
 				raise UserError(f"Looks like this player hasn't played any matches as {hero.localized_name}")
@@ -1165,7 +1158,8 @@ class DotaStats(MangoCog):
 		if match_id is None:
 			if steamid is None:
 				raise SteamNotLinkedError()
-			match_id = await get_lastmatch_id(steamid)
+			matchfilter = await MatchFilter.init(None, ctx)
+			match_id = await get_lastmatch_id(matchfilter)
 		
 
 		match = await get_match(match_id)
