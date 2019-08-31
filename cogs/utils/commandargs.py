@@ -213,7 +213,7 @@ class MatchFilter():
 	@classmethod
 	async def init(cls, matchfilter, ctx):
 		if matchfilter is None:
-			matchfilter = MatchFilter.convert(ctx, "")
+			matchfilter = await MatchFilter.convert(ctx, "")
 		return matchfilter
 
 	@classmethod
