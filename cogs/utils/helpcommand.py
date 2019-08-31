@@ -102,7 +102,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 			entry = '`{0:{2}<{width}} | {1}`'.format(command.name, command.short_doc, u"\u00A0", width=self.get_max_size(commands))
 			results.append(self.shorten_text(entry))
 		if results:
-			return "\n".join(results)
+			return self.fill_template("\n".join(results))
 		else:
 			return "`<empty>`"
 	
