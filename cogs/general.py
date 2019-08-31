@@ -54,6 +54,7 @@ def load_md_as_dict(filename):
 	for match in pattern.finditer(text):
 		name = match.group(1).strip()
 		description = match.group(2).strip()
+		description = re.sub("\n`", u"\n\u200b`", description)
 		result[name] = description
 	return result
 

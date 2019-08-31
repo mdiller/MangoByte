@@ -113,6 +113,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 		text = re.sub("\{config_help\}", get_config_help(GuildInfo.variables, "config"), text)
 		text = re.sub("\{userconfig_help\}", get_config_help(UserInfo.variables, "userconfig"), text)
 		text = re.sub("\{cmdpfx\}", botdata.command_prefix(self.context), text)
+		text = re.sub("\n`", u"\n\u200b`", text)
 		return text
 
 	def cog_short_doc(self, cog):

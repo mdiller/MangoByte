@@ -11,6 +11,7 @@ __So far this works on the following commands:__
 I'll probably add it to more commands once I get the implementation a little more fleshed out.
 
 __Filter options:__
+
 *Note: Many of these options allow for slight variations on the text. If you want more info and can read regular expressions, see the MatchFilter class in [this file](https://github.com/mdiller/MangoByte/blob/master/cogs/utils/commandargs.py)*
 
 - won/lost
