@@ -246,33 +246,6 @@ class General(MangoCog):
 		await ctx.send(file=discord.File(settings.resource("images/lasagna.jpg")))
 
 	@commands.command()
-	async def helpold(self, ctx, command : str=None):
-		"""Shows this message."""
-		def repl(obj):
-			return MENTION_TRANSFORMS.get(obj.group(0), '')
-
-		# help by itself just lists our own commands.
-		if command == "all":
-			embed = await self.bot.formatter.format_as_embed(ctx, self.bot, True)
-		elif command == None:
-			embed = await self.bot.formatter.format_as_embed(ctx, self.bot, False)
-		else:
-			# try to see if it is a cog name
-			name = MENTION_PATTERN.sub(repl, command).lower()
-			if name in map(lambda c: c.lower(), self.bot.cogs):
-				for cog in self.bot.cogs:
-					if cog.lower() == name:
-						command = self.bot.cogs[cog]
-			else:
-				command = self.bot.all_commands.get(name)
-				if command is None:
-					await ctx.send(self.bot.command_not_found.format(name))
-					return
-			embed = await self.bot.formatter.format_as_embed(ctx, command)
-
-		await ctx.send(embed=embed)
-
-	@commands.command()
 	async def scramble(self, ctx, *, message : str):
 		"""Scrambles the insides of words"""
 
