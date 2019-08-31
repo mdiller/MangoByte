@@ -675,7 +675,7 @@ class DotaStats(MangoCog):
 
 		plus_text = ""
 		if playerinfo["profile"].get("plus"):
-			plus_text = f"{self.get_emoji('dota_plus')} Dota Plus\n"
+			plus_text = f"\n{self.get_emoji('dota_plus')} has Dota Plus"
 
 		embed = discord.Embed(color=self.embed_color)
 
@@ -687,8 +687,8 @@ class DotaStats(MangoCog):
 		embed.add_field(name="General", value=(
 			f"Winrate of **{winrate}** over **{gamesplayed}** games\n"
 			f"Total Hours In Game: **{overall_time_played // 3600:,}**\n"
-			f"{plus_text}"
-			f"{rank_string}"))
+			f"{rank_string}"
+			f"{plus_text}"))
 
 		embed.add_field(name="Profiles", value=(
 			f"[Steam]({playerinfo['profile']['profileurl']})\n"
