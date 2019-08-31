@@ -715,7 +715,7 @@ class DotaStats(MangoCog):
 
 		await ctx.send(embed=embed, file=rank_icon)
 
-	@commands.command()
+	@commands.command(aliases=["twenty"])
 	async def playerstats(self, ctx, *, player : DotaPlayer = None):
 		"""Gets stats from the given player's last 20 parsed games
 
