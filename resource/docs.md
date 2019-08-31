@@ -25,9 +25,11 @@ __Filter options:__
 - against/vs `<hero>`
 - with `<hero>`
 
+You can also specify to get matches for someone other than yourself by just @mentioning them or adding their steam id to the query
+
 __Examples:__
 `?matches won as tinker in the last year`
 `?lastmatch grim safelane radiant`
 `?matches ranked won this week`
 `?lastmatch offlane on dire as shaker`
-`?matches lost vs axe`
+`?matches @Player lost vs axe`

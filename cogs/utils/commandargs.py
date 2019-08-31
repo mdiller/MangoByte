@@ -193,16 +193,28 @@ class PlayerArg(QueryArg):
 		self.player = None
 
 	def regex(self):
-		return f"{self.prefix}(\d+|<@!?[0-9]+>)"
+		pattern = "(<@[!&]?[0-9]+>|\d+)"
+		if self.prefix == "":
+			return re.compile(pattern)
+		return f"{self.prefix}{pattern}"
+
+	def set_player(self, player):
+		self.player = player
+		self.value = player.steam_id
 
 	async def parse(self, text):
 		text = re.sub(self.prefix, "", text)
-		self.player = await DotaPlayer.convert(self.ctx, text)
-		self.value = self.player.steam_id
+		self.set_player(await DotaPlayer.convert(self.ctx, text))
 
 class MatchFilter():
 	def __init__(self, args=None):
 		self.args = args or []
+
+	@classmethod
+	async def init(cls, matchfilter, ctx):
+		if matchfilter is None:
+			matchfilter = MatchFilter.convert(ctx, "")
+		return matchfilter
 
 	@classmethod
 	async def convert(cls, ctx, argument):
@@ -241,12 +253,16 @@ class MatchFilter():
 			PlayerArg(ctx, "excluded_account_id", "without "),
 			HeroArg(ctx, "against_hero_id", "(?:against|vs) "),
 			HeroArg(ctx, "with_hero_id", "with "),
-			HeroArg(ctx, "hero_id", "(?:as )?")
+			HeroArg(ctx, "hero_id", "(?:as )?"),
+			PlayerArg(ctx, "_player", "")
 		]
 		for arg in args:
 			value = parser.take_regex(arg.regex())
 			if value:
 				await arg.parse(value)
+		playerarg = MatchFilter._get_arg(args, "_player")
+		if playerarg.player is None:
+			playerarg.set_player(await DotaPlayer.from_author(ctx))
 		if parser.text:
 			raise CustomBadArgument(UserError(f"I'm not sure what you mean by '{parser.text}'"))
 		return cls(args)
@@ -261,17 +277,29 @@ class MatchFilter():
 				return arg.hero
 		return None
 
+	@property
+	def player(self):
+		for arg in self.args:
+			if arg.name == "_player":
+				return arg.player
+		return None
+
 	def has_value(self, name):
 		for arg in self.args:
 			if arg.name == name:
 				return arg.has_value()
 		return False
 
-	def get_arg(self, name):
-		for arg in self.args:
+	@classmethod
+	def _get_arg(cls, args, name):
+		for arg in args:
 			if arg.name == name:
-				return arg.value
+				return arg
 		return None
+
+	def get_arg(self, name):
+		arg = MatchFilter._get_arg(self.args, name)
+		return None if arg is None else arg.value
 
 	def set_arg(self, name, value, overwrite=True):
 		if (not self.has_value(name)) or overwrite:
@@ -282,7 +310,9 @@ class MatchFilter():
 			self.args.append(SimpleQueryArg(name, value))
 
 	def to_query_args(self):
-		return "&".join(map(lambda a: a.to_query_arg(), filter(lambda a: a.has_value(), self.args)))
+		args = filter(lambda a: a.has_value() and not a.name.startswith("_"), self.args)
+		args = map(lambda a: a.to_query_arg(), args)
+		return "&".join(args)
 
 	def post_filter(self, p):
 		return all(a.post_filter_check() for a in self.args)

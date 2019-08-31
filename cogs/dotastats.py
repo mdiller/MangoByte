@@ -419,16 +419,14 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed, file=match_image)
 
 	@commands.command(aliases=["lastgame", "lm"])
-	async def lastmatch(self, ctx, player: typing.Optional[DotaPlayer] = None, *, matchfilter : MatchFilter = None):
+	async def lastmatch(self, ctx, *, matchfilter : MatchFilter = None):
 		"""Gets info about the player's last dota game
 
 		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`"""
 		await ctx.channel.trigger_typing()
-
-		if not matchfilter:
-			matchfilter = MatchFilter()
-		if not player:
-			player = await DotaPlayer.from_author(ctx)
+		
+		matchfilter = await MatchFilter.init(matchfilter, ctx)
+		player = matchfilter.player
 
 		match_id = await get_lastmatch_id(player.steam_id, matchfilter)
 		await self.player_match_stats(player.steam_id, match_id, ctx)
@@ -524,7 +522,7 @@ class DotaStats(MangoCog):
 		await self.tell_match_story(game, player_data['isRadiant'], ctx, perspective)
 
 	@commands.command(aliases=["recentmatches", "recent"])
-	async def matches(self, ctx, player: typing.Optional[DotaPlayer] = None, *, matchfilter : MatchFilter = None):
+	async def matches(self, ctx, *, matchfilter : MatchFilter = None):
 		"""Gets a list of your matches
 
 		The date/time is localized based off of the server that the game was played on, which means it may not match your timezone.
@@ -537,11 +535,9 @@ class DotaStats(MangoCog):
 		`{cmdpfx}matches @PlayerPerson riki`"""
 		await ctx.channel.trigger_typing()
 
-		if not matchfilter:
-			matchfilter = MatchFilter()
-		if not player:
-			player = await DotaPlayer.from_author(ctx)
-		steam32 = player.steam_id
+		matchfilter = await MatchFilter.init(matchfilter, ctx)
+
+		steam32 = matchfilter.player.steam_id
 
 		matchfilter.set_arg("limit", 10, False)
 		matchfilter.set_arg("significant", 0, False)
