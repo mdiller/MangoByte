@@ -709,19 +709,24 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed, file=rank_icon)
 
 	@commands.command(aliases=["twenty"])
-	async def playerstats(self, ctx, *, player : DotaPlayer = None):
+	async def playerstats(self, ctx, *, matchfilter : MatchFilter = None):
 		"""Gets stats from the given player's last 20 parsed games
 
-		Note that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available"""
-		if not player:
-			player = await DotaPlayer.from_author(ctx)
-		steam32 = player.steam_id
+		Note that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available
+
+		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`"""
+
+		matchfilter = await MatchFilter.init(matchfilter, ctx)
+
+		matchfilter.set_arg("limit", None)
+
+		steam32 = matchfilter.player.steam_id
 
 		with ctx.channel.typing():
 			await thinker.think(ctx.message)
 
 			playerinfo = await opendota_query(f"/players/{steam32}")
-			matches_info = await opendota_query(f"/players/{steam32}/matches")
+			matches_info = await opendota_query(matchfilter.to_query_url())
 			player_matches = []
 			matches = []
 			i = 0
