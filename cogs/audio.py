@@ -86,7 +86,14 @@ class AudioPlayer:
 	async def play_next_clip(self):
 		clip = self.next_clip()
 
-		self.voice.play(discord.FFmpegPCMAudio(clip.audiopath), after=self.done_talking)
+		try:
+			self.voice.play(discord.FFmpegPCMAudio(clip.audiopath), after=self.done_talking)
+		except discord.errors.ClientException as e:
+			if str(e) == "Not connected to voice.":
+				raise UserError("Error playing clip. Try doing `?resummon`.")
+			else:
+				raise
+
 		self.voice.source = discord.PCMVolumeTransformer(self.voice.source)
 		self.voice.source.volume = clip.volume
 		print("playing: " + clip.audiopath)
