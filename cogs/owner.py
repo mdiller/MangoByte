@@ -218,6 +218,43 @@ class Owner(MangoCog):
 			await asyncio.sleep(0.5)
 			count -= 1
 
+	@commands.command()
+	async def remoteresummon(self, ctx, guild_id : int):
+		"""Removes and then re-summons the bot to the voice channel of the guild
+
+		This command is useful if you are having issues with mangobyte not being responsive"""
+		audio = self.bot.get_cog("Audio")
+		if not audio:
+			raise UserError("You must have the Audio cog enabled to do this")
+
+		guild = self.bot.get_guild(guild_id)
+
+		if guild is None:
+			raise UserError(f"guild '{guild_id}' not found")
+
+		guildinfo = botdata.guildinfo(guild_id)
+
+		channel = None
+		if guild.me.voice:
+			channel = guild.me.voice.channel
+		elif guildinfo.voicechannel is not None:
+			channel = self.bot.get_channel(guildinfo.voicechannel)
+		else:
+			raise UserError("I'm not sure where you want me to resummon to. I'm not in any channel currently.")
+
+		await audio.disconnect(guild)
+
+		await asyncio.sleep(1)
+
+		try:
+			await audio.connect_voice(channel)
+			guildinfo.voicechannel = channel.id
+		except asyncio.TimeoutError:
+			cmdpfx = botdata.command_prefix(ctx)
+			raise UserError(f"There was a timeout when attempting to do the `{cmdpfx}summon`")
+
+		await ctx.message.add_reaction("✅")
+
 
 	@commands.command(aliases=["logs", "logger"])
 	async def loggingdb(self, ctx, table, identifier):
