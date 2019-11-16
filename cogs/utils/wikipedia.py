@@ -90,7 +90,14 @@ class WikipediaPage():
 		page_html = BeautifulSoup(page_html, "html.parser")
 		page_html = page_html.find(id="mw-content-text")
 
-		summary_html = page_html.find("div").find(lambda tag: tag.name == "p" and not tag.attrs, recursive=False).contents
+		def findSummaryParagraph(tag):
+			has_content = False
+			for child in tag.contents:
+				if child.name != "span" and str(child).strip() != "":
+					has_content = True
+			return tag.name == "p" and not tag.attrs and has_content
+
+		summary_html = page_html.find("div").find(findSummaryParagraph, recursive=False).contents
 
 		summary = tagsToMarkdown(summary_html)
 		def markdownLength(text):
