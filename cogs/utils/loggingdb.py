@@ -209,21 +209,31 @@ class LoggingDb():
 
 	async def command_finished(self, ctx, status, error):
 		start_time = datetime.datetime.now()
-		async with Database(self.database_url) as database:
-			if ctx.command is None:
-				return # no command to finish
-			values = {
-				"status": status,
-				"finish_time": datetime.datetime.utcnow()
-			}
-			if error:
-				values["error"] = error
+		if ctx.command is None:
+			return
 
-			cmdtable = Command.__table__
-			query = cmdtable.update().where(cmdtable.c.message_id==ctx.message.id).values(**values)
-			await database.execute(query=query)
-			total_time = (datetime.datetime.now() - start_time).total_seconds()
-			print_debug(f"command_finished(): {total_time * 1000:.2f}ms")
+		cmd = self.session.query(Command).filter_by(message_id=ctx.message.id).order_by(sqlalchemy.desc(Command.id)).first()
+		cmd.status = status
+		cmd.finish_time = datetime.datetime.utcnow()
+		self.session.commit()
+
+		total_time = (datetime.datetime.now() - start_time).total_seconds()
+		print_debug(f"command_finished(): {total_time * 1000:.2f}ms")
+
+		# async with Database(self.database_url) as database:
+			# if ctx.command is None:
+			# 	return # no command to finish
+
+			# values = {
+			# 	"status": status,
+			# 	"finish_time": datetime.datetime.utcnow()
+			# }
+			# if error:
+			# 	values["error"] = error
+
+			# cmdtable = Command.__table__
+			# query = cmdtable.update().where(cmdtable.c.message_id==ctx.message.id).values(**values)
+			# await database.execute(query=query)
 
 	async def insert_error(self, message, the_error, trace):
 		start_time = datetime.datetime.now()
@@ -240,7 +250,7 @@ class LoggingDb():
 			print_debug(f"insert_error(): {total_time * 1000:.2f}ms")
 			return error
 
-	async def insert_http_request(self, url, status, was_cached, cached):
+	async def insert_http_request(self, url, status, cached):
 		start_time = datetime.datetime.now()
 		async with Database(self.database_url) as database:
 			request = HttpRequest()
@@ -248,7 +258,7 @@ class LoggingDb():
 			request.url = url
 			request.timestamp = datetime.datetime.utcnow()
 			request.status = status
-			request.was_cached = was_cached
+			request.was_cached = False
 			request.cached = cached
 
 			await self.insert_row(database, HttpRequest, request)

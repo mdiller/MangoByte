@@ -114,7 +114,7 @@ class HttpGetter:
 			return self.cache.get(url, return_type)
 
 		async with self.session.get(url) as r:
-			await loggingdb.insert_http_request(url, r.status, False, cache)
+			await loggingdb.insert_http_request(url, r.status, cache)
 			if r.status == 200:
 				if cache:
 					await self.cache.save(url, return_type, r)
@@ -134,7 +134,7 @@ class HttpGetter:
 
 	async def post(self, url, return_type="json", errors={}):
 		async with self.session.post(url) as r:
-			await loggingdb.insert_http_request(url, r.status, False, False)
+			await loggingdb.insert_http_request(url, r.status, False)
 			if r.status == 200:
 				if return_type == "json":
 					return json.loads(await r.text(), object_pairs_hook=OrderedDict)
