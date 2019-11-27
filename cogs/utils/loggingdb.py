@@ -213,12 +213,14 @@ class LoggingDb():
 			return
 
 		cmd = self.session.query(Command).filter_by(message_id=ctx.message.id).order_by(sqlalchemy.desc(Command.id)).first()
-		cmd.status = status
-		cmd.finish_time = datetime.datetime.utcnow()
-		self.session.commit()
+		if cmd:
+			print("couldnt find cmd to finish")
+			cmd.status = status
+			cmd.finish_time = datetime.datetime.utcnow()
+			self.session.commit()
 
-		total_time = (datetime.datetime.now() - start_time).total_seconds()
-		print_debug(f"command_finished(): {total_time * 1000:.2f}ms")
+			total_time = (datetime.datetime.now() - start_time).total_seconds()
+			print_debug(f"command_finished(): {total_time * 1000:.2f}ms")
 
 		# async with Database(self.database_url) as database:
 			# if ctx.command is None:
