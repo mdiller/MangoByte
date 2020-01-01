@@ -42,15 +42,18 @@ class Owner(MangoCog):
 		return await self.bot.loop.run_in_executor(ThreadPoolExecutor(max_workers=1), youtube_download_func, youtube_id, video_file)
 
 	@commands.command()
-	async def updateemoji(self, ctx):
-		"""Updates the emoji information for the bot"""
+	async def updateemoji(self, ctx, name=None):
+		"""Updates the emoji information for the bot
+
+		passing in a name will target that emoji specifically"""
 		emoji_json = read_json(settings.resource("json/emoji.json"))
 		with ctx.channel.typing():
 			for emoji in ctx.guild.emojis:
-				imgpath = settings.resource(f"images/emojis/{emoji.name}.png")
-				with open(imgpath, 'wb+') as f:
-					f.write((await httpgetter.get(emoji.url, return_type="bytes")).read())
-				emoji_json[emoji.name] = emoji.id
+				if name is None or name == emoji.name:
+					imgpath = settings.resource(f"images/emojis/{emoji.name}.png")
+					with open(imgpath, 'wb+') as f:
+						f.write((await httpgetter.get(str(emoji.url), return_type="bytes")).read())
+					emoji_json[emoji.name] = emoji.id
 		write_json(settings.resource("json/emoji.json"), emoji_json)
 		await ctx.send("done!")
 
