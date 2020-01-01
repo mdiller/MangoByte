@@ -157,6 +157,8 @@ class UrlClip(Clip):
 	def type(cls):
 		return "url"
 
+voice_actor_links = read_json(settings.resource("json/voice_actor_links.json"))
+
 class DotaClip(Clip):
 	async def init(self, responsename, bot, ctx):
 		dotabase = bot.get_cog("Dotabase")
@@ -180,7 +182,10 @@ class DotaClip(Clip):
 		if self.response.criteria != "":
 			embed.add_field(name="Criteria", value=self.response.pretty_criteria.replace('|', '\n'))
 		if self.response.voice.voice_actor:
-			embed.add_field(name="Voice Actor", value=self.response.voice.voice_actor)
+			actor_name = self.response.voice.voice_actor
+			if actor_name in voice_actor_links:
+				actor_name = f"[{actor_name}]({voice_actor_links[actor_name]})"
+			embed.add_field(name="Voice Actor", value=actor_name)
 		if self.voice_thumbnail:
 			embed.set_thumbnail(url=self.voice_thumbnail)
 
