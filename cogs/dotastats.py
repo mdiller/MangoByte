@@ -1222,17 +1222,25 @@ class DotaStats(MangoCog):
 
 		jobId = data["job"]["jobId"]
 		await asyncio.sleep(3)
+		seconds_per_check = 20
+		seconds_till_timeout = 120
 
-		while True:
+		while seconds_till_timeout > 0:
 			data = await opendota_query(f"/request/{jobId}", False)
 
 			if data is not None:
-				await asyncio.sleep(3)
+				await asyncio.sleep(seconds_per_check)
+				seconds_till_timeout -= seconds_per_check
 			else:
 				await ctx.message.remove_reaction("⏳", self.bot.user)
 				await ctx.message.add_reaction("✅")
 				await ctx.send(f"✅ Parsing of match {match_id} has completed!", delete_after=10)
 				return
+
+		# if we get to here, timeout
+		await ctx.message.remove_reaction("⏳", self.bot.user)
+		await ctx.message.add_reaction("❌")
+		await ctx.send(f"❌ Parsing of match {match_id} timed out. Try again later or on the opendota site.", delete_after=10)
 
 
 	@commands.command(aliases=["profiles"])
