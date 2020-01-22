@@ -418,7 +418,7 @@ class General(MangoCog):
 		result = fill_word_template(template, self.words)
 
 		await ctx.send(start + result)
-		if ctx.guild.me.voice:
+		if ctx.guild and ctx.guild.me.voice:
 			await self.play_clip(f"tts:{start_local}{result}", ctx)
 		
 	

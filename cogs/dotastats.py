@@ -396,11 +396,14 @@ class DotaStats(MangoCog):
 
 		embed.set_author(name=player['personaname'] or "Anonymous", icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
 
-		embed.add_field(name="Damage", value=(
-			"KDA: **{kills}**/**{deaths}**/**{assists}**\n"
-			"Hero Damage: {hero_damage:,}\n"
-			"Hero Healing: {hero_healing:,}\n"
-			"Tower Damage: {tower_damage:,}\n".format(**player)))
+		damage_format = "KDA: **{kills}**/**{deaths}**/**{assists}**\n"
+		if player.get("hero_damage") is not None:
+			damage_format += "Hero Damage: {hero_damage:,}\n"
+		if player.get("hero_healing") is not None:
+			damage_format += "Hero Healing: {hero_healing:,}\n"
+		if player.get("tower_damage") is not None:
+			damage_format += "Tower Damage: {tower_damage:,}\n"
+		embed.add_field(name="Damage", value=damage_format.format(**player))
 
 		embed.add_field(name="Economy", value=(
 			"Net Worth: {total_gold:,}\n"
@@ -466,6 +469,7 @@ class DotaStats(MangoCog):
 		"""Tells the story of the match from the given perspective"""
 		await ctx.channel.trigger_typing()
 
+		steamid = None
 		try:
 			player = await DotaPlayer.from_author(ctx)
 			steamid = player.steam_id
@@ -733,13 +737,15 @@ class DotaStats(MangoCog):
 			while i < len(matches_info) and len(player_matches) < 20:
 				if matches_info[i].get('version', None) is not None:
 					match = await get_match(matches_info[i]['match_id'])
-					player_matches.append(next((p for p in match['players'] if p['account_id'] == steam32), None))
-					matches.append(match)
-					
-					player_matches[-1]['party_size'] = 0
-					for player in match['players']:
-						if player['party_id'] == player_matches[-1]['party_id']:
-							player_matches[-1]['party_size'] = player_matches[-1].get('party_size', 0) + 1
+					player_match = next((p for p in match['players'] if p['account_id'] == steam32), None)
+					if player_match is not None:
+						player_matches.append(player_match)
+						matches.append(match)
+						
+						player_matches[-1]['party_size'] = 0
+						for player in match['players']:
+							if player['party_id'] == player_matches[-1]['party_id']:
+								player_matches[-1]['party_size'] = player_matches[-1].get('party_size', 0) + 1
 				i += 1
 
 		await thinker.stop_thinking(ctx.message)
@@ -1008,9 +1014,12 @@ class DotaStats(MangoCog):
 		if chosen_lane:
 			url += chosen_lane.get("url_query", "")
 
+		winrate = percent(lambda p: p['radiant_win'] == (p['player_slot'] < 128), round_place=2)
+		winrate = f"{winrate:.2f}"
+		winrate = re.sub("\.0+$", "", winrate)
 		embed = discord.Embed(description=(
 			f"[Games Played]({url}): **{len(matches)}**\n"
-			f"Winrate: **{percent(lambda p: p['radiant_win'] == (p['player_slot'] < 128), round_place=2)}%**\n"
+			f"Winrate: **{winrate}%**\n"
 			f"Avg KDA: **{avg('kills')}**/**{avg('deaths')}**/**{avg('assists')}**\n"), color=self.embed_color)
 
 		embed.color = discord.Color(int(hero.color[1:], 16))

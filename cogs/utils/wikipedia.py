@@ -1,5 +1,6 @@
 from __main__ import settings, httpgetter
 from bs4 import BeautifulSoup, Tag
+from .helpers import *
 import re
 
 
@@ -59,6 +60,8 @@ async def find_disambiguations(pageid):
 
 async def retrieve_page_info(title):
 	data = await httpgetter.get(f"{base_query}&list=search&srprop&srlimit=1&srinfo=suggestion&srsearch={title}")
+	if len(data["query"]["search"]) == 0:
+		raise UserError("Couldn't find anything for that")
 	info = data["query"]["search"][0]
 	title = info["title"]
 	pageid = info["pageid"]
