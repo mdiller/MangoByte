@@ -30,7 +30,7 @@ ABILITY_KEY_MAP = {
 ABILITY_ULTI_KEY_MAP = {
 	"3": 4, "10": 6, "19": 4, "23": 4, 
 	"54": 4, "68": 4, "73": 4, "74": 6, 
-	"80": 5, "86": 6, "88": 5, "89": 4, 
+	"86": 6, "88": 5, "89": 4, 
 	"90": 4, "91": 4, "98": 5, "100": 5, 
 	"103": 4, "108": 4, "110": 5, "114": 6, "120": 4
 }
@@ -215,8 +215,9 @@ class Dotabase(MangoCog):
 					if ability_position > len(abilities):
 						raise UserError(f"{hero.localized_name} doesn't have that many abilities")
 					if key == "r": # if is ultimate and not invoker, get last ability in list
-						if str(hero.id) in ABILITY_ULTI_KEY_MAP:
-							ability_position = ABILITY_ULTI_KEY_MAP[str(hero.id)]
+						custom_position = ABILITY_ULTI_KEY_MAP.get(str(hero.id))
+						if custom_position is not None and custom_position < len(abilities):
+							ability_position = custom_position
 						else: 
 							ability_position = len(abilities)
 					return abilities[ability_position - 1]

@@ -208,6 +208,8 @@ class LoggingDb():
 			return command
 
 	async def command_finished(self, ctx, status, error):
+		#async with Database(self.database_url) as database:
+		await asyncio.sleep(1)
 		start_time = datetime.datetime.now()
 		if ctx.command is None:
 			return
