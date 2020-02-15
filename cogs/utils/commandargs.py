@@ -181,7 +181,7 @@ class HeroArg(QueryArg):
 		return get_cache_hero_pattern(self.dotabase, self.prefix)
 
 	async def parse(self, text):
-		text = re.sub(self.prefix, "", text)
+		text = re.sub(self.prefix, "", text, flags=re.IGNORECASE)
 		self.hero = self.dotabase.lookup_hero(text)
 		self.value = self.hero.id
 
@@ -203,7 +203,7 @@ class PlayerArg(QueryArg):
 		self.value = player.steam_id
 
 	async def parse(self, text):
-		text = re.sub(self.prefix, "", text)
+		text = re.sub(self.prefix, "", text, flags=re.IGNORECASE)
 		self.set_player(await DotaPlayer.convert(self.ctx, text))
 
 class MatchFilter():

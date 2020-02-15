@@ -47,7 +47,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 					continue
 				commands = list(commands)
 				if len(commands) > 0:
-					embed.add_field(name=category, value=self.list_commands(commands))
+					embed.add_field(name=category, value=self.list_commands(commands), inline=False)
 		else:
 			embed = self.embed_description(self.bot.description + "\n\nTo get more information about a specific category, try `{cmdpfx}help <category>`\nTo show all commands, try `{cmdpfx}help all`", self.bot)
 			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url, url="https://github.com/mdiller/MangoByte")
