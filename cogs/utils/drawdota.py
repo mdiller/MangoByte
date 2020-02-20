@@ -679,13 +679,22 @@ async def draw_artifact_deck(deck_string, cards, hero_turns, card_counts):
 
 	return filename
 
-
-neutral_tier_colors = {
+# from vpk/panorama/styles/dotastyles.css
+neutral_tier_text_colors = {
 	"1": "#BEBEBE",
 	"2": "#92E47E",
 	"3": "#7F93FC",
 	"4": "#D57BFF",
 	"5": "#FFE195",
+}
+
+# from in-game screenshot
+neutral_tier_colors = {
+	"1": "#958a97",
+	"2": "#0ea243",
+	"3": "#4c6ee8",
+	"4": "#9b2bf6",
+	"5": "#e47b17",
 }
 
 # taken from https://stackoverflow.com/questions/4998427
@@ -716,7 +725,7 @@ async def draw_neutralitems(selected_tier, all_neutral_items):
 	table = Table(background=trim_color)
 	for tier in range(1, 6):
 		header_row = [ColorCell(color=background_color) for i in range(items_per_row)]
-		header_row[0] = TextCell(f"Tier {tier}", color=neutral_tier_colors[str(tier)], font_size=25, padding=[10, 0, 10, 10], background=background_color)
+		header_row[0] = TextCell(f"Tier {tier}", color=neutral_tier_text_colors[str(tier)], font_size=25, padding=[10, 0, 10, 10], background=background_color)
 		table.add_row(header_row)
 		items = list(filter(lambda i: i.neutral_tier == str(tier), all_neutral_items))
 		item_img_cells = []
