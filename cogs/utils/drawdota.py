@@ -6,6 +6,7 @@ import sys
 import subprocess
 import os
 import numpy
+import math
 from datetime import datetime, timedelta
 from PIL import Image, ImageDraw, ImageFont
 from .tabledraw import Table, ImageCell, TextCell, ColorCell, DoubleCell
@@ -738,6 +739,66 @@ async def draw_neutralitems(selected_tier, all_neutral_items):
 		table.add_row(footer_row)
 
 	image = table.render()
+
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
+
+	return fp
+
+def get_poly_points(n, radius, origin=(0, 0), radius_percentages=None):
+	radii = [radius for i in range(n)]
+	if radius_percentages:
+		radii = [radius * radius_percentages[i] for i in range(n)]
+	rot_start = 0 - (math.pi / 2)
+	return [
+		(math.cos(rot_start + th) * radii[j] + origin[0], 
+		 math.sin(rot_start + th) * radii[j] + origin[1]) 
+		for j, th in enumerate([i * (2 * math.pi) / n for i in range(n)])
+	]
+
+def draw_poly_label(draw, point, center, text):
+	font = ImageFont.truetype(settings.resource("images/arial_unicode_bold.ttf"), 16)
+	font_size = font.getsize(text)
+	point = list(point)
+	if point[0] < center[0]:
+		point[0] -= font_size[0]
+	if point[1] < center[1]:
+		point[1] -= font_size[1]
+	if point[0] == center[0]:
+		point[0] -= font_size[0] / 2
+	if point[1] == center[1]:
+		point[1] -= font_size[1] / 2
+	draw.text(tuple(point), text, font=font, fill="#ffffff")
+
+def draw_polygraph(values, labels):
+	size = (500, 500)
+	polygon_radius = 175
+	point_count = len(values)
+
+	center = (size[0] / 2, size[1] / 2)
+
+	image = Image.new('RGBA', size)
+	draw = ImageDraw.Draw(image)
+	draw.rectangle([0, 0, image.size[0], image.size[1]], fill="#23272A")
+
+	points = get_poly_points(point_count, polygon_radius, center)
+
+	draw.polygon(points, fill="#2C2F33", outline="#111111")
+	for point in points:
+		draw.line((center[0], center[1], point[0], point[1]), fill="#111111")
+
+	for i in range(len(points)):
+		draw_poly_label(draw, points[i], center, labels[i])
+
+	image2 = Image.new('RGBA', size)
+	draw2 = ImageDraw.Draw(image2)
+	data_points = get_poly_points(point_count, polygon_radius, center, values)
+	draw2.polygon(data_points, fill="#FFDF0044", outline="#FFDF00")
+	for p in data_points:
+		dot_rad = 2
+		draw2.ellipse([(p[0] - dot_rad, p[1] - dot_rad), (p[0] + dot_rad, p[1] + dot_rad)], fill="#FFDF00")
+	image = paste_image(image, image2, 0, 0)
 
 	fp = BytesIO()
 	image.save(fp, format="PNG")

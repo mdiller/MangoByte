@@ -1298,9 +1298,6 @@ class DotaStats(MangoCog):
 
 		await ctx.send(embed=embed)
 
-
-
-
 	@commands.command()
 	async def opendota(self, ctx, *, query):
 		"""Queries the opendota api
@@ -1323,6 +1320,51 @@ class DotaStats(MangoCog):
 		write_json(filename, data)
 		await ctx.send(file=discord.File(filename))
 		os.remove(filename)
+
+	@commands.command()
+	async def rolesgraph(self, ctx, player : DotaPlayer = None):
+		"""Gets a graph displaying the player's hero roles
+
+		The graph is based on the last 3 months of the player's activity
+		"""
+		if not player:
+			player = await DotaPlayer.from_author(ctx)
+
+		# playerinfo = await opendota_query(f"/players/{steam32}")
+		matches = await opendota_query(f"/players/{player.steam_id}/matches?date=90")
+
+		hero_ids = []
+		for match in matches:
+			hero_ids.append(match["hero_id"])
+		# hero_ids = list(set(hero_ids))
+		roles = [ "Escape", "Nuker", "Support", "Pusher", "Disabler", "Jungler", "Carry", "Durable", "Initiator" ]
+		role_scores = {}
+		for role in roles:
+			role_scores[role] = 0
+
+		dotabase = self.bot.get_cog("Dotabase")
+		for heroid in hero_ids:
+			hero = dotabase.lookup_hero(heroid)
+			hero_roles = hero.roles.split("|")
+			hero_role_levels = hero.role_levels.split("|")
+			for i in range(len(hero_roles)):
+				role_scores[hero_roles[i]] += int(hero_role_levels[i])
+
+		role_scores = [role_scores[role] for role in roles]
+		divisor = max(role_scores)
+		role_scores = list(map(lambda x: x / divisor, role_scores))
+
+		embed = discord.Embed()
+		embed.title = "roles graph"
+		image = discord.File(drawdota.draw_polygraph(role_scores, roles), "rolesgraph.png")
+		embed.set_image(url=f"attachment://{image.filename}")
+		await ctx.send(embed=embed, file=image)
+
+
+
+
+
+
 
 
 def setup(bot):
