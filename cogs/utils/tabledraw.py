@@ -147,9 +147,10 @@ class ImageCell(Cell):
 
 
 class Table:
-	def __init__(self, background=None):
+	def __init__(self, background=None, border_size=0):
 		self.rows = []
 		self.background = background
+		self.border_size = border_size
 
 	def add_row(self, row):
 		self.rows.append(row)
@@ -159,30 +160,34 @@ class Table:
 		for row in self.rows:
 			height = None
 			for cell in row:
-				if cell.height:
+				if cell and cell.height:
 					if not height or  height < cell.height:
 						height = cell.height
 			row_height.append(height)
 
-		column_count = len(self.rows[0])
+		column_count = max(map(len, self.rows))
 		column_width = []
 		for col in range(column_count):
 			width = None
 			for row in self.rows:
+				if len(row) <= col or row[col] is None:
+					continue
 				if row[col].width:
 						if not width or  width < row[col].width:
 							width = row[col].width
 			column_width.append(width)
 
-		image = Image.new('RGBA', (sum(column_width), sum(row_height)))
+		image = Image.new('RGBA', (sum(column_width) + (self.border_size * 2), sum(row_height) + self.border_size * 2))
 		draw = ImageDraw.Draw(image)
 		if self.background:
 			draw.rectangle([0, 0, image.size[0], image.size[1]], fill=self.background)
 
-		y = 0
+		y = self.border_size
 		for row in range(len(self.rows)):
-			x = 0
+			x = self.border_size
 			for column in range(column_count):
+				if len(self.rows[row]) <= column or self.rows[row][column] is None:
+					continue
 				self.rows[row][column].render(draw, image, x, y, column_width[column], row_height[row])
 				# draw.rectangle([x, y, x + column_width[column], y + row_height[row]], outline="red")
 				x += column_width[column]

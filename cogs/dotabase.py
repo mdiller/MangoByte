@@ -801,18 +801,21 @@ class Dotabase(MangoCog):
 			text += "\n"
 			description += text
 			
-		if description != "":
-			description += "\n"
 
-		description += item.description
+		if item.description:
+			if description != "":
+				description += "\n"
+			description += item.description
+			description += "\n"
 		description = re.sub(r"(^|\n)# ([^\n]+)\n", r"\n__**\2**__\n", description)
 
 		def clean_values(values):
 			values = values.split(" ")
 			return " / ".join(values)
 
+		description += "\n"
 		if item.cost and item.cost != "0":
-			description += f"\n\n{self.get_emoji('gold')} {item.cost:,}\n"
+			description += f"{self.get_emoji('gold')} {item.cost:,}\n"
 		if item.mana_cost and item.mana_cost != "0":
 			description += f"{self.get_emoji('mana_cost')} {clean_values(item.mana_cost)}  "
 		if item.cooldown and item.cooldown != "0":
@@ -1066,6 +1069,45 @@ class Dotabase(MangoCog):
 		image = discord.File(await drawdota.draw_courage(hero_id, item_ids), "courage.png")
 		await ctx.send(file=image)
 
+
+	@commands.command(aliases=["neutrals", "neutraltier"])
+	async def neutralitems(self, ctx, *, tier = None):
+		"""Displays all of the neutral items
+
+		If a tier is specified, display the items in that tier, along with their names
+
+		`{cmdpfx}neutralitems`
+		`{cmdpfx}neutralitems tier 5`
+		`{cmdpfx}neutralitems 3`"""
+
+		# TODO: IMPLEMENT TIER
+		# https://dota2.gamepedia.com/Neutral_Items
+		if tier is not None:
+			tier = tier.lower().replace("tier", "").replace("t", "").strip()
+			if not tier.isdigit():
+				raise UserError("Please specify a tier like 'tier 5'")
+			tier = int(tier)
+			if tier < 1 or tier > 5:
+				raise UserError("Please specify a tier between 1 and 5")
+
+		embed = discord.Embed()
+
+		title = "Neutral Items"
+		if tier is not None:
+			title = f"Tier {tier} Neutral Items"
+		embed.title = title
+		embed.url = "https://dota2.gamepedia.com/Neutral_Items"
+
+		all_neutral_items = session.query(Item).filter(Item.neutral_tier != None).order_by(Item.localized_name).all()
+		image = discord.File(await drawdota.draw_neutralitems(tier, all_neutral_items), "neutralitems.png")
+		embed.set_image(url=f"attachment://{image.filename}")
+		if tier is not None:
+			tier_color = drawdota.neutral_tier_colors[str(tier)]
+			embed.color = discord.Color(int(tier_color[1:], 16))
+		
+		if tier is None:
+			embed.set_footer(text="Also try: ?neutralitems tier 4")
+		await ctx.send(embed=embed, file=image)
 
 def setup(bot):
 	bot.add_cog(Dotabase(bot))

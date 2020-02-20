@@ -678,3 +678,60 @@ async def draw_artifact_deck(deck_string, cards, hero_turns, card_counts):
 	image.save(filename, format="PNG")
 
 	return filename
+
+
+neutral_tier_colors = {
+	"1": "#BEBEBE",
+	"2": "#92E47E",
+	"3": "#7F93FC",
+	"4": "#D57BFF",
+	"5": "#FFE195",
+}
+
+# taken from https://stackoverflow.com/questions/4998427
+def grouper(values, N):
+	return [values[n:n+N] for n in range(0, len(values), N)]
+
+async def draw_neutralitems_tier(selected_tier, all_neutral_items):
+	items = list(filter(lambda i: i.neutral_tier == str(selected_tier), all_neutral_items))
+	table = Table(background=background_color)
+	for item in items:
+		table.add_row([
+			ImageCell(img=await get_item_image(item.id)),
+			TextCell(item.localized_name, font_size=30, padding=10)
+		])
+	image = table.render()
+	
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
+	
+	return fp
+	
+async def draw_neutralitems(selected_tier, all_neutral_items):
+	if selected_tier is not None:
+		return await draw_neutralitems_tier(selected_tier, all_neutral_items)
+
+	items_per_row = 6
+	table = Table(background=trim_color)
+	for tier in range(1, 6):
+		header_row = [ColorCell(color=background_color) for i in range(items_per_row)]
+		header_row[0] = TextCell(f"Tier {tier}", color=neutral_tier_colors[str(tier)], font_size=25, padding=[10, 0, 10, 10], background=background_color)
+		table.add_row(header_row)
+		items = list(filter(lambda i: i.neutral_tier == str(tier), all_neutral_items))
+		item_img_cells = []
+		for item in items:
+			item_img_cells.append(ImageCell(img=await get_item_image(item.id)))
+		new_rows = grouper(item_img_cells, items_per_row)
+		for row in new_rows:
+			table.add_row(row)
+		footer_row = [ColorCell(color=trim_color, height=20) for i in range(items_per_row)]
+		table.add_row(footer_row)
+
+	image = table.render()
+
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
+
+	return fp
