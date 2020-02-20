@@ -270,7 +270,8 @@ class Dotabase(MangoCog):
 				"attr": hero.attr_primary,
 				"portrait": self.vpkurl + hero.portrait,
 				"image": self.vpkurl + hero.image,
-				"emoji": str(self.get_emoji(f"dota_hero_{hero.name}"))
+				"emoji": str(self.get_emoji(f"dota_hero_{hero.name}")),
+				"roles": dict(zip(hero.roles.split("|"), map(int, hero.role_levels.split("|"))))
 			}
 		result[0] = {
 			"name": "Unknown",
@@ -279,7 +280,8 @@ class Dotabase(MangoCog):
 			"attr": "strength",
 			"portrait": self.vpkurl + "/resource/flash3/images/heroes/selection/npc_dota_ancient_granite_golum.png",
 			"image": self.vpkurl + "/resource/flash3/images/heroes/default.png",
-			"emoji": "unknown_hero"
+			"emoji": "unknown_hero",
+			"roles": {}
 		}
 		return result
 

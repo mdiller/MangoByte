@@ -1330,32 +1330,47 @@ class DotaStats(MangoCog):
 		if not player:
 			player = await DotaPlayer.from_author(ctx)
 
-		# playerinfo = await opendota_query(f"/players/{steam32}")
-		matches = await opendota_query(f"/players/{player.steam_id}/matches?date=90")
+		playerinfo = await opendota_query(f"/players/{player.steam_id}")
+		matches = await opendota_query(f"/players/{player.steam_id}/matches?date=30")
+
+		if len(matches) == 0:
+			raise UserError("You haven't played any matches recently")
 
 		hero_ids = []
 		for match in matches:
 			hero_ids.append(match["hero_id"])
-		# hero_ids = list(set(hero_ids))
 		roles = [ "Escape", "Nuker", "Support", "Pusher", "Disabler", "Jungler", "Carry", "Durable", "Initiator" ]
-		role_scores = {}
-		for role in roles:
-			role_scores[role] = 0
+		role_scores = dict.fromkeys(roles, 0)
 
 		dotabase = self.bot.get_cog("Dotabase")
 		for heroid in hero_ids:
-			hero = dotabase.lookup_hero(heroid)
-			hero_roles = hero.roles.split("|")
-			hero_role_levels = hero.role_levels.split("|")
-			for i in range(len(hero_roles)):
-				role_scores[hero_roles[i]] += int(hero_role_levels[i])
+			hero_info = self.hero_info[heroid]
+			for role, value in hero_info["roles"].items():
+				role_scores[role] += value
 
 		role_scores = [role_scores[role] for role in roles]
+
+		# weight it against the biases in the system
+		role_totals = dict.fromkeys(roles, 0)
+		for hero_info in self.hero_info.values():
+			for role, value in hero_info["roles"].items():
+				role_totals[role] += value
+		role_totals = role_totals.values()
+		role_totals_avg = sum(role_totals) / len(role_totals)
+		role_totals_modifiers = list(map(lambda x: role_totals_avg / x, role_totals))
+		for i in range(len(roles)):
+			role_scores[i] *= role_totals_modifiers[i]
+
+		# normalize so its a percentage based on the highest one
 		divisor = max(role_scores)
 		role_scores = list(map(lambda x: x / divisor, role_scores))
 
 		embed = discord.Embed()
-		embed.title = "roles graph"
+		embed.set_author(
+			name=playerinfo["profile"]["personaname"] or "Anonymous", 
+			icon_url=playerinfo["profile"]["avatar"] or default_steam_icon, 
+			url=playerinfo["profile"]["profileurl"] or f"https://www.opendota.com/players/{steam32}")
+
 		image = discord.File(drawdota.draw_polygraph(role_scores, roles), "rolesgraph.png")
 		embed.set_image(url=f"attachment://{image.filename}")
 		await ctx.send(embed=embed, file=image)
