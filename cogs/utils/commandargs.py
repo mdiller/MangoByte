@@ -62,6 +62,14 @@ class InputParser():
 		return match.group(0)
 
 
+opendota_html_errors = {
+	404: "Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com",
+	521: "[http error 521] Looks like the OpenDota API is down or somethin, so ya gotta wait a sec",
+	502: "[http error 502] Looks like there was an issue with the OpenDota API. Try again in a bit",
+	"default": "OpenDota said we did things wrong 😢. http status code: {}"
+}
+
+
 class DotaPlayer():
 	def __init__(self, steam_id, mention=None, is_author=False):
 		self.steam_id = steam_id
@@ -87,7 +95,7 @@ class DotaPlayer():
 			if player > 76561197960265728:
 				player -= 76561197960265728
 			# Don't have to rate limit here because this will be first query ran
-			player_info = await httpgetter.get(f"https://api.opendota.com/api/players/{player}", cache=False)
+			player_info = await httpgetter.get(f"https://api.opendota.com/api/players/{player}", cache=False, errors=opendota_html_errors)
 
 			if player_info.get("profile") is None:
 				raise CustomBadArgument(NoMatchHistoryError(player))

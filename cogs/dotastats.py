@@ -37,9 +37,9 @@ class InvalidMatchIdError(UserError):
 
 opendota_html_errors = {
 	404: "Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com",
-	521: "Looks like the OpenDota API is down or somethin, so ya gotta wait a sec",
-	502: "Looks like there was an issue with the OpenDota API. Try again in a bit",
-	"default": "OpenDota said we did things wrong 😢. status code: {}"
+	521: "[http error 521] Looks like the OpenDota API is down or somethin, so ya gotta wait a sec",
+	502: "[http error 502] Looks like there was an issue with the OpenDota API. Try again in a bit",
+	"default": "OpenDota said we did things wrong 😢. http status code: {}"
 }
 
 default_steam_icon = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/fe/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg"
@@ -558,6 +558,8 @@ class DotaStats(MangoCog):
 				raise UserError(f"Looks like this player hasn't played any matches as {hero.localized_name}")
 			else:
 				raise NoMatchHistoryError(steam32)
+
+		matches = sorted(matches, key=lambda m: m.get("start_time"), reverse=True)
 
 
 		embed = discord.Embed()

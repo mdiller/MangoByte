@@ -173,6 +173,8 @@ class Owner(MangoCog):
 			embed.set_author(name=guild.name)
 			if guild.icon_url != "":
 				embed.set_thumbnail(url=guild.icon_url)
+			embed.add_field(name="Region", value=guild.region)
+			embed.add_field(name="Member Count", value=guild.member_count)
 			if invite:
 				embed.add_field(name="Invite", value=invite.url)
 			await ctx.send(embed=embed)
