@@ -273,6 +273,10 @@ class Dotabase(MangoCog):
 				"emoji": str(self.get_emoji(f"dota_hero_{hero.name}")),
 				"roles": dict(zip(hero.roles.split("|"), map(int, hero.role_levels.split("|"))))
 			}
+			# role_values = list(map(int, hero.role_levels.split("|")))
+			# rv_sum = sum(role_values)
+			# role_values = list(map(lambda x: x / rv_sum, role_values))
+			# result[hero.id]["roles"] = dict(zip(hero.roles.split("|"), role_values))
 		result[0] = {
 			"name": "Unknown",
 			"full_name": "unknown_hero",

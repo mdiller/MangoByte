@@ -1325,13 +1325,13 @@ class DotaStats(MangoCog):
 	async def rolesgraph(self, ctx, player : DotaPlayer = None):
 		"""Gets a graph displaying the player's hero roles
 
-		The graph is based on the last 3 months of the player's activity
+		The graph is based on the player's last 30 games
 		"""
 		if not player:
 			player = await DotaPlayer.from_author(ctx)
 
 		playerinfo = await opendota_query(f"/players/{player.steam_id}")
-		matches = await opendota_query(f"/players/{player.steam_id}/matches?date=30")
+		matches = await opendota_query(f"/players/{player.steam_id}/matches?limit=30")
 
 		if len(matches) == 0:
 			raise UserError("You haven't played any matches recently")
