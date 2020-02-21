@@ -32,6 +32,7 @@ class ColorCell(Cell):
 
 	def render(self, draw, image, x, y, width, height):
 		draw.rectangle([x, y, x + width - 1, y + height - 1], fill=self.color)
+		return image, draw
 
 class DoubleCell(Cell):
 	def __init__(self, cell1, cell2, **kwargs):
@@ -48,6 +49,7 @@ class DoubleCell(Cell):
 	def render(self, draw, image, x, y, width, height):
 		self.cell1.render(draw, image, x, y, width, height * self.cell1_percent)
 		self.cell2.render(draw, image, x, y + (height * self.cell1_percent), width, height * self.cell2_percent)
+		return image, draw
 
 class TextCell(Cell):
 	def __init__(self, text, **kwargs):
@@ -113,6 +115,7 @@ class TextCell(Cell):
 
 
 			draw.text((x_loc, y_loc), lines[i], font=self.font, fill=self.color)
+		return image, draw
 
 
 
@@ -138,12 +141,16 @@ class ImageCell(Cell):
 
 	def render(self, draw, image, x, y, width, height):
 		if not self.image:
-			return # no image, so this is basically an empty cell
+			return image, draw # no image, so this is basically an empty cell
 		actual_image = self.image.resize((self.width, self.height), Image.ANTIALIAS)
 		if self.background:
 			rect = Image.new("RGBA", (self.width, self.height), self.background)
 			actual_image = paste_image(rect, actual_image, 0, 0)
-		image.paste(actual_image, (x, y))
+		# image.paste(actual_image, (x, y))
+		image = paste_image(image, actual_image, x, y)
+		draw = ImageDraw.Draw(image)
+		return image, draw
+		
 
 
 class Table:
@@ -188,7 +195,7 @@ class Table:
 			for column in range(column_count):
 				if len(self.rows[row]) <= column or self.rows[row][column] is None:
 					continue
-				self.rows[row][column].render(draw, image, x, y, column_width[column], row_height[row])
+				image, draw = self.rows[row][column].render(draw, image, x, y, column_width[column], row_height[row])
 				# draw.rectangle([x, y, x + column_width[column], y + row_height[row]], outline="red")
 				x += column_width[column]
 			y += row_height[row]

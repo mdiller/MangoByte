@@ -59,22 +59,63 @@ async def get_item_image(item_id):
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
+async def get_neutral_image(item):
+	background = Image.new("RGBA", (64, 64))
+	size = background.size
+	circle_diameter = 48
+	circle_thickness = 4
+	img_scale = circle_diameter / 64
+
+	inner_radius = circle_diameter / 2
+	inner_circle = ((size[0] / 2) - inner_radius, (size[1] / 2) - inner_radius, 
+					(size[0] / 2) + inner_radius, (size[1] / 2) + inner_radius)
+	outer_radius = inner_radius + circle_thickness
+	outer_circle = ((size[0] / 2) - outer_radius, (size[1] / 2) - outer_radius, 
+					(size[0] / 2) + outer_radius, (size[1] / 2) + outer_radius)
+	if item:
+		draw = ImageDraw.Draw(background)
+		draw.ellipse(outer_circle, fill="#393939")
+		
+		item_img = await get_item_image(item)
+		item_img = item_img.resize((int(item_img.size[0] * img_scale), int(item_img.size[1] * img_scale)))
+		item_img = item_img.crop((
+			math.floor((item_img.size[0] - background.size[0]) / 2),
+			math.floor((item_img.size[1] - background.size[1]) / 2),
+			item_img.size[0] - math.ceil((item_img.size[0] - background.size[0]) / 2),
+			item_img.size[1] - math.ceil((item_img.size[1] - background.size[1]) / 2))
+		)
+		mask_circle = Image.new("RGBA", background.size)
+		mask_draw = ImageDraw.Draw(mask_circle)
+		mask_draw.ellipse(inner_circle, fill="#ffffff")
+		temp_image = Image.new("RGBA", (64, 64))
+		temp_image.paste(item_img, (0, 0), mask=mask_circle)
+		
+		return Image.alpha_composite(background, temp_image)
+	else:
+		return background
+
+
 async def get_item_images(player):
 	images = []
+	item_size = (88, 64)
 	for i in range(0, 6):
 		item = player.get(f"item_{i}")
 		if item:
 			images.append(await get_item_image(item))
-	if len(images) == 0:
-		return None
+		else:
+			images.append(Image.new("RGBA", item_size))
+	item = player.get("item_neutral")
+	if item:
+		images.append(await get_neutral_image(item))
 
-	widths, heights = zip(*(i.size for i in images))
+
+	widths, heights = zip(*(i.size if i else item_size for i in images))
 	result = Image.new("RGBA", (sum(widths), max(heights)))
 
 	x = 0
 	for i in range(len(images)):
 		result.paste(images[i], (x, 0))
-		x += widths[i]
+		x += item_size[0]
 	return result
 
 
