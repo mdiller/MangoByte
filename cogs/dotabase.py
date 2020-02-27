@@ -104,6 +104,8 @@ class Dotabase(MangoCog):
 		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos())
 
 	def build_helpers(self):
+		def clean_input(t):
+			return re.sub(r'[^a-z1-9\s]', r'', str(t).lower())
 		for hero in session.query(Hero):
 			aliases = hero.aliases.split("|")
 			for alias in aliases:
@@ -112,6 +114,7 @@ class Dotabase(MangoCog):
 
 		for item in session.query(Item):
 			aliases = item.aliases.split("|")
+			aliases.append(clean_input(item.localized_name))
 			for alias in aliases:
 				if alias not in self.item_aliases:
 					self.item_aliases[alias] = item.id
@@ -202,7 +205,13 @@ class Dotabase(MangoCog):
 		if full_check:
 			for ability in ability_query:
 				if clean_input(ability.localized_name).startswith(text):
-					return ability
+					return ability			
+			for ability in ability_query:
+				name = clean_input(ability.localized_name)
+				if " " in name:
+					for part in name.split(" "):
+						if part.startswith(text):
+							return ability
 			for key in text.split(" "):
 				if key in ABILITY_KEY_MAP:
 					text = re.sub(f'\\b{key}\\b', '', text)
@@ -609,10 +618,10 @@ class Dotabase(MangoCog):
 		if not hero.is_melee:
 			attack_stats += f"{self.get_emoji('hero_projectile_speed')} {hero.attack_projectile_speed:,}\n"
 		embed.add_field(name="Attack", value=attack_stats)
-
-
+		
+		base_armor = hero.base_armor + round(hero.attr_agility_base * 0.16, 1)
 		embed.add_field(name="Defence", value=(
-			f"{self.get_emoji('hero_armor')} {hero.base_armor + round(hero.attr_agility_base / 7, 1):0.1f}\n"
+			f"{self.get_emoji('hero_armor')} {base_armor:0.1f}\n"
 			f"{self.get_emoji('hero_magic_resist')} {hero.magic_resistance}%\n"))
 
 		embed.add_field(name="Mobility", value=(
