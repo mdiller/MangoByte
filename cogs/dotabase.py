@@ -96,8 +96,10 @@ class Dotabase(MangoCog):
 		self.session = session
 		self.criteria_aliases = read_json(settings.resource("json/criteria_aliases.json"))
 		self.item_colors = read_json(settings.resource("json/dota_item_colors.json"))
+		self.hero_stat_categories = read_json(settings.resource("json/hero_stats.json"))
 		self.hero_aliases = {}
 		self.item_aliases = {}
+		self.leveled_hero_stats = [] # by level (0 is null, and 1-30 are filled in)
 		self.hero_regex = ""
 		self.build_helpers()
 		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
@@ -146,6 +148,27 @@ class Dotabase(MangoCog):
 				patterns.append(prefix)
 		self.hero_regex = f"(?:{'|'.join(patterns)})"
 
+
+		for category in self.hero_stat_categories:
+			for stat in category["stats"]:
+				if "lambda" in stat:
+					stat["lambda"] = eval(stat["lambda"])
+		all_heroes = session.query(Hero).all()
+		self.leveled_hero_stats.append(0)
+		for level in range(1, 31):
+			all_hero_stats = []
+			for hero in all_heroes:
+				hero_stats = {} #vars(hero)
+				hero_stats["id"] = hero.id
+				hero_stats["level"] = level
+				for category in self.hero_stat_categories:
+					for stat in category["stats"]:
+						if "lambda" in stat:
+							value = stat["lambda"](hero, hero_stats)
+							hero_stats[stat["stat"]] = value
+				all_hero_stats.append(hero_stats)
+			self.leveled_hero_stats.append(all_hero_stats)
+		
 	def get_wiki_url(self, obj):
 		if isinstance(obj, Hero):
 			wikiurl = obj.localized_name
@@ -1047,7 +1070,7 @@ class Dotabase(MangoCog):
 
 
 	@commands.command()
-	async def courage(self, ctx, hero = None):
+	async def courage(self, ctx, *, hero = None):
 		"""Generates a challenge build
 
 		Creates a challenge build with a random (or given) hero and a random set of items
@@ -1095,8 +1118,6 @@ class Dotabase(MangoCog):
 		`{cmdpfx}neutralitems tier 5`
 		`{cmdpfx}neutralitems 3`"""
 
-		# TODO: IMPLEMENT TIER
-		# https://dota2.gamepedia.com/Neutral_Items
 		if tier is not None:
 			tier = tier.lower().replace("tier", "").replace("t", "").strip()
 			if not tier.isdigit():
@@ -1123,6 +1144,62 @@ class Dotabase(MangoCog):
 		if tier is None:
 			embed.set_footer(text="Also try: ?neutralitems tier 4")
 		await ctx.send(embed=embed, file=image)
+
+	@commands.command(aliases=["startingstats", "tradingstats", "lvlstats", "lvledstats"])
+	async def leveledstats(self, ctx, *, hero : str):
+		"""Gets the stats for the given hero at the specified level
+		
+		If no level is specified, get the stats for the hero at level 1
+
+		`{cmdpfx}leveledstats tinker`
+		`{cmdpfx}leveledstats shaker lvl 2`
+		`{cmdpfx}leveledstats level 28 shaman`"""
+		lvl_regex = r"(?:(max) (?:lvl|level)|(?:lvl|level)? ?(\d+))"
+		match = re.search(lvl_regex, hero, re.IGNORECASE)
+		level = 1
+		if match:
+			if match.group(1):
+				level = 30
+			else:
+				level = int(match.group(2))
+			if level < 1 or level > 30:
+				raise UserError("Please enter a level between 1 and 30")
+			hero = re.sub(lvl_regex, "", hero)
+
+		hero = self.lookup_hero(hero)
+		if not hero:
+			raise UserError("That doesn't look like a hero")
+
+		stat_category = next((c for c in self.hero_stat_categories if c["section"] == "Combat Stats"), None)["stats"]
+
+		description = ""
+		hero_stats = next((h for h in self.leveled_hero_stats[level] if h["id"] == hero.id), None)
+
+		for stat in stat_category:
+			name = stat["name"]
+			value = hero_stats[stat["stat"]]
+			if stat.get("display") == "resistance_percentage":
+				value = 100 * (1 - value)
+			if stat.get("display") == "int":
+				value = round(value)
+			value = f"{value:.2f}"
+			value = re.sub("\.0+$", "", value)
+			if stat.get("display") == "resistance_percentage":
+				value += "%"
+			description += f"\n{name}: **{value}**"
+
+		embed = discord.Embed(description=description)
+
+		title = f"Level {level} {hero.localized_name}"
+		embed.set_author(name=title, icon_url=f"{self.vpkurl}{hero.icon}")
+		embed.set_thumbnail(url=f"{self.vpkurl}{hero.portrait}")
+		if hero.color:
+			embed.color = discord.Color(int(hero.color[1:], 16))
+		
+		
+		await ctx.send(embed=embed)
+
+
 
 def setup(bot):
 	bot.add_cog(Dotabase(bot))

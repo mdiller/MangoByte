@@ -1,0 +1,121 @@
+[
+	{
+		"section": "Attributes",
+		"stats": [
+			{
+				"stat": "agility",
+				"name": "Agility",
+				"lambda": "lambda hero, h: hero.attr_agility_base + (hero.attr_agility_gain * (h['level'] - 1))"
+			},
+			{
+				"stat": "attr_agility_gain",
+				"name": "Agility Gain"
+			},
+			{
+				"stat": "strength",
+				"name": "Strength",
+				"lambda": "lambda hero, h: hero.attr_strength_base + (hero.attr_strength_gain * (h['level'] - 1))"
+			},
+			{
+				"stat": "attr_strength_gain",
+				"name": "Strength Gain"
+			},
+			{
+				"stat": "intelligence",
+				"name": "Intelligence",
+				"lambda": "lambda hero, h: hero.attr_intelligence_base + (hero.attr_intelligence_gain * (h['level'] - 1))"
+			},
+			{
+				"stat": "attr_intelligence_gain",
+				"name": "Intelligence Gain"
+			}
+		]
+	},
+	{
+		"section": "Combat Stats",
+		"stats": [
+			{
+				"stat": "attacks_per_second",
+				"name": "Attacks Per Second",
+				"lambda": "lambda hero, h: ((hero.base_attack_speed + h['agility']) * 0.01) / hero.attack_rate"
+			},
+			{
+				"stat": "damage",
+				"name": "Damage Per Hit (Avg)",
+				"display": "int",
+				"lambda": "lambda hero, h: h[hero.attr_primary] + hero.attack_damage_min + ((hero.attack_damage_max - hero.attack_damage_min) / 2)"
+			},
+			{
+				"stat": "dps",
+				"name": "Damage Per Second",
+				"lambda": "lambda hero, h: h['attacks_per_second'] * h['damage']"
+			},
+			{
+				"stat": "health",
+				"name": "Health",
+				"lambda": "lambda hero, h: 200 + (20 * h['strength'])"
+			},
+			{
+				"stat": "health_regen",
+				"name": "Health Regen",
+				"lambda": "lambda hero, h: int(hero.base_health_regen or 0) + (0.1 * h['strength'])"
+			},
+			{
+				"stat": "armor",
+				"name": "Armor",
+				"lambda": "lambda hero, h: hero.base_armor + (h['agility'] * 0.16)"
+			},
+			{
+				"stat": "physical_dmg_multiplier",
+				"name": "Physical Damage Resistance",
+				"display": "resistance_percentage",
+				"lambda": "lambda hero, h: 1 - ((0.052 * h['armor']) / (0.9 + 0.048 * abs(h['armor'])))"
+			},
+			{
+				"stat": "physical_effective_health",
+				"name": "Effective Health (Physical)",
+				"display": "int",
+				"lambda": "lambda hero, h: h['health'] / h['physical_dmg_multiplier']"
+			},
+			{
+				"stat": "magic_dmg_multiplier",
+				"name": "Magic Damage Resistance",
+				"display": "resistance_percentage",
+				"lambda": "lambda hero, h: (1 - (hero.magic_resistance / 100)) * (1 - (h['strength'] * 0.0008))"
+			},
+			{
+				"stat": "magic_effective_health",
+				"name": "Effective Health (Magic)",
+				"display": "int",
+				"lambda": "lambda hero, h: h['health'] / h['magic_dmg_multiplier']"
+			}
+		]
+	},
+	{
+		"section": "Movement / Vision",
+		"stats": [
+			{
+				"stat": "movement_speed",
+				"name": "Movement Speed",
+				"lambda": "lambda hero, h: hero.base_movement * (1 + (h['agility'] * 0.0005))"
+			},
+			{
+				"stat": "movement_speed_boots",
+				"name": "Movement Speed w/ Boots",
+				"lambda": "lambda hero, h: hero.base_movement * (1 + (h['agility'] * 0.0005) + 0.15)"
+			},
+			{
+				"stat": "turn_rate",
+				"name": "Turn Rate"
+			},
+			{
+				"stat": "vision_day",
+				"name": "Vision (Daytime)"
+			},
+			{
+				"stat": "vision_night",
+				"name": "Vision (Nighttime)"
+			}
+		]
+	}
+]
