@@ -208,23 +208,23 @@ class LoggingDb():
 			return command
 
 	async def command_finished(self, ctx, status, error):
-		#async with Database(self.database_url) as database:
-		await asyncio.sleep(1)
-		start_time = datetime.datetime.now()
-		if ctx.command is None:
-			return
-
-		cmd = self.session.query(Command).filter_by(message_id=ctx.message.id).order_by(sqlalchemy.desc(Command.id)).first()
-		if not cmd:
-			print("couldnt find cmd to finish")
-			return
-
-		cmd.status = status
-		cmd.finish_time = datetime.datetime.utcnow()
-		self.session.commit()
-
-		total_time = (datetime.datetime.now() - start_time).total_seconds()
-		print_debug(f"command_finished(): {total_time * 1000:.2f}ms")
+		async with Database(self.database_url) as database:
+			await asyncio.sleep(1)
+			start_time = datetime.datetime.now()
+			if ctx.command is None:
+				return
+	
+			cmd = self.session.query(Command).filter_by(message_id=ctx.message.id).order_by(sqlalchemy.desc(Command.id)).first()
+			if not cmd:
+				print("couldnt find cmd to finish")
+				return
+	
+			cmd.status = status
+			cmd.finish_time = datetime.datetime.utcnow()
+			self.session.commit()
+	
+			total_time = (datetime.datetime.now() - start_time).total_seconds()
+			print_debug(f"command_finished(): {total_time * 1000:.2f}ms")
 
 		# async with Database(self.database_url) as database:
 			# if ctx.command is None:
