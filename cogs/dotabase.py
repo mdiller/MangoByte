@@ -114,7 +114,7 @@ class Dotabase(MangoCog):
 				self.hero_aliases[alias] = hero.id
 				self.hero_aliases[alias.replace(" ", "")] = hero.id
 
-		for item in session.query(Item):
+		for item in session.query(Item).filter(~Item.localized_name.contains("Recipe")):
 			aliases = item.aliases.split("|")
 			aliases.append(clean_input(item.localized_name))
 			for alias in aliases:
@@ -269,7 +269,8 @@ class Dotabase(MangoCog):
 	def lookup_item_id(self, text, full_check=True):
 		item_query = session.query(Item)
 		if "recipe" not in text.lower():
-			item_query = item_query.filter(~Item.name.contains("recipe"))
+			item_query = item_query.filter(~Item.localized_name.contains("recipe"))
+			item_query = item_query.filter(~Item.localized_name.contains("Recipe"))
 		if isinstance(text, int) or text.isdigit():
 			return int(text)
 		def clean_input(t):
