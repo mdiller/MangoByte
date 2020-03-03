@@ -862,26 +862,35 @@ async def draw_herostatstable(table_args, hero_stat_categories, leveled_hero_sta
 	# sort / get data 
 	hero_data = leveled_hero_stats[table_args.hero_level]
 	hero_data = sorted(hero_data, key=lambda hero: hero.get(table_args.stat), reverse=not table_args.reverse)
-	hero_data = hero_data[0:table_args.hero_limit]
+	hero_data = hero_data[0:table_args.hero_count]
 
-	table = Table(background=background_color, border_size=2)
+	table = Table(border_size=10)
 
-	table_background = trim_color
+	stat_highlight_color = trim_color
+	table_background = background_color
 	table_border_color = "#222222"
 
 	header_row = [ TextCell("") ]
 	for stat in stats:
 		header_row.append(SlantedTextCell(
-			"test", #stat["name"],
-			background="green",
+			stat["name"],
+			font_size=20,
+			background=stat_highlight_color if stat["stat"] == table_args.stat else table_background,
 			border_color=table_border_color,
-			border_size=2,
+			border_size=4,
 			rotation=45))
+	
+	header_height = max(cell.height for cell in header_row)
+	padding_right = int(header_height / math.tan(header_row[-1].rotation_rad))
+	table.border_size[1] = padding_right
 
 	table.add_row(header_row)
 
+	i = 0
 	for hero in hero_data:
-		new_row = [ ImageCell(img=await get_hero_icon(hero.get("id"))) ]
+		cell_background = table_background
+		#cell_background = stat_highlight_color if i % 2 else table_background
+		new_row = [ ImageCell(img=await get_hero_icon(hero.get("id")), padding=3, background=table_background) ]
 		for stat in stats:
 			value = hero.get(stat["stat"])
 			if stat.get("display") == "resistance_percentage":
@@ -892,8 +901,13 @@ async def draw_herostatstable(table_args, hero_stat_categories, leveled_hero_sta
 			value = re.sub("\.0+$", "", value)
 			if stat.get("display") == "resistance_percentage":
 				value += "%"
-			new_row.append(TextCell(value, font_size=14, padding=10))
+			new_row.append(TextCell(
+				value, 
+				font_size=16, 
+				padding=10,
+				background=stat_highlight_color if stat["stat"] == table_args.stat else cell_background))
 		table.add_row(new_row)
+		i += 1
 
 	image = table.render()
 

@@ -167,6 +167,8 @@ class Dotabase(MangoCog):
 						if "lambda" in stat:
 							value = stat["lambda"](hero, hero_stats)
 							hero_stats[stat["stat"]] = value
+						else:
+							hero_stats[stat["stat"]] = vars(hero)[stat["stat"]]
 				all_hero_stats.append(hero_stats)
 			self.leveled_hero_stats.append(all_hero_stats)
 		
@@ -1217,8 +1219,8 @@ class Dotabase(MangoCog):
 			raise UserError(f"Please select a stat to sort by. For a list of stats, see `{self.cmdpfx()}leveledstats`")
 		if table_args.hero_level < 1 or table_args.hero_level > 30:
 			raise UserError("Please select a hero level between 1 and 30")
-		if table_args.hero_limit < 2 or table_args.hero_limit > 140:
-			raise UserError("Please select a hero level between 2 and 140")
+		if table_args.hero_count < 2 or table_args.hero_count > 140:
+			raise UserError("Please select a hero count between 2 and 140")
 
 		embed = discord.Embed()
 

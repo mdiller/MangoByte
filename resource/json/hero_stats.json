@@ -5,6 +5,7 @@
 			{
 				"stat": "agility",
 				"name": "Agility",
+				"display": "int",
 				"regex": "agi(lity)?",
 				"lambda": "lambda hero, h: hero.attr_agility_base + (hero.attr_agility_gain * (h['level'] - 1))"
 			},
@@ -16,6 +17,7 @@
 			{
 				"stat": "strength",
 				"name": "Strength",
+				"display": "int",
 				"regex": "str(ength)?",
 				"lambda": "lambda hero, h: hero.attr_strength_base + (hero.attr_strength_gain * (h['level'] - 1))"
 			},
@@ -27,6 +29,7 @@
 			{
 				"stat": "intelligence",
 				"name": "Intelligence",
+				"display": "int",
 				"regex": "int(elligence)?",
 				"lambda": "lambda hero, h: hero.attr_intelligence_base + (hero.attr_intelligence_gain * (h['level'] - 1))"
 			},
@@ -126,12 +129,14 @@
 				"stat": "movement_speed",
 				"name": "Movement Speed",
 				"regex": "move(ment)?( speed)?",
+				"display": "int",
 				"lambda": "lambda hero, h: hero.base_movement * (1 + (h['agility'] * 0.0005))"
 			},
 			{
 				"stat": "movement_speed_boots",
 				"name": "Movement Speed w/ Boots",
 				"regex": "move(ment)?( speed)? w(/|ith) boots",
+				"display": "int",
 				"lambda": "lambda hero, h: hero.base_movement * (1 + (h['agility'] * 0.0005) + 0.15)"
 			},
 			{

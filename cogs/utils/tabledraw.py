@@ -8,9 +8,12 @@ table_font = settings.resource("images/arial_unicode_bold.ttf")
 # if specified, padding should be a 4 element list, or an int
 # 4 element list is left, top, right, bottom
 def get_padding(kwargs, default=0):
-	padding = kwargs.get("padding", default)
+	if isinstance(kwargs, dict):
+		padding = kwargs.get("padding", default)
+	else:
+		padding = kwargs
 	if isinstance(padding, int):
-		padding = [ padding, padding, padding, padding ]
+		return [ padding, padding, padding, padding ]
 	if 'padding_top' in kwargs:
 		padding[0] = kwargs['padding_top']
 	if 'padding_right' in kwargs:
@@ -146,24 +149,13 @@ class SlantedTextCell(Cell):
 
 	def render(self, draw, image, x, y, width, height):
 		pos = (x, y + height)
-		xshift = 10
+		xshift = 0
 
 		font_image_size = (self.text_size[0] + self.text_size[1], self.text_size[0] + self.text_size[1])
 		font_pos = (int(self.text_size[1] / 2), self.text_size[0])
 		font_center_pos = (font_pos[0], font_pos[1] + int(self.text_size[1] / 2))
 
-		text_image = Image.new('RGBA', font_image_size)
-		text_draw = ImageDraw.Draw(text_image)
-
-		# text_draw.rectangle((font_pos[0], font_pos[1], font_pos[0] + self.text_size[0], font_pos[1] + self.text_size[1]), fill="#22222222")
-		text_draw.text(font_pos, self.text, font=self.font, fill=self.color)
-		text_image = text_image.rotate(self.rotation, resample=Image.BILINEAR, center=font_center_pos)
-
-		font_destination = tuplediff(pos, font_pos)
-		font_destination = (font_destination[0] + int(width / 2) + xshift, font_destination[1] - int(self.text_size[1] / 2) - self.padding[2])
-		image = paste_image(image, text_image, int(font_destination[0]), int(font_destination[1]))
-		draw = ImageDraw.Draw(image)
-		
+		# background & border setup
 		linestart = (pos[0] + width, pos[1])
 		lineend = (linestart[0] + int(height / math.tan(self.rotation_rad)), linestart[1] - height)
 		box_top = (tuplediff(lineend, (width, 0)), lineend)
@@ -174,8 +166,20 @@ class SlantedTextCell(Cell):
 		# border
 		draw.line((linestart, lineend), fill=self.border_color, width=self.border_size)
 		draw.line(box_top, fill=self.border_color, width=self.border_size)
+		draw.line(box_bottom, fill=self.border_color, width=self.border_size)
 		if self.first:
 			draw.line((box_bottom[0], box_top[0]), fill=self.border_color, width=self.border_size)
+
+		# text
+		text_image = Image.new('RGBA', font_image_size)
+		text_draw = ImageDraw.Draw(text_image)
+		text_draw.text(font_pos, self.text, font=self.font, fill=self.color)
+		text_image = text_image.rotate(self.rotation, resample=Image.BILINEAR, center=font_center_pos)
+
+		font_destination = tuplediff(pos, font_pos)
+		font_destination = (font_destination[0] + int(width / 2) + xshift, font_destination[1] - int(self.text_size[1] / 2) - self.padding[2])
+		image = paste_image(image, text_image, int(font_destination[0]), int(font_destination[1]))
+		draw = ImageDraw.Draw(image)
 
 
 		return image, draw
@@ -192,6 +196,7 @@ class ImageCell(Cell):
 			self.image = Image.open(self.image)
 			
 		self.background = kwargs.get('background')
+		self.padding = get_padding(kwargs, 0)
 
 		if (not self.width) and (not self.height):
 			self.width = self.image.width
@@ -200,17 +205,19 @@ class ImageCell(Cell):
 			self.width = int(self.image.width * (self.height / self.image.height))
 		elif not self.height:
 			self.height = int(self.image.height * (self.width / self.image.width))
+		self.width += self.padding[1] + self.padding[3]
+		self.height += self.padding[0] + self.padding[2]
 		# else both were set
 
 	def render(self, draw, image, x, y, width, height):
 		if not self.image:
 			return image, draw # no image, so this is basically an empty cell
-		actual_image = self.image.resize((self.width, self.height), Image.ANTIALIAS)
+		actual_image = self.image.resize((self.width - (self.padding[1] + self.padding[3]), self.height - (self.padding[0] + self.padding[2])), Image.ANTIALIAS)
 		if self.background:
-			rect = Image.new("RGBA", (self.width, self.height), self.background)
-			actual_image = paste_image(rect, actual_image, 0, 0)
-		# image.paste(actual_image, (x, y))
-		image = paste_image(image, actual_image, x, y)
+			rect = Image.new("RGBA", (width, height), self.background)
+			image = paste_image(image, rect, x, y)
+		
+		image = paste_image(image, actual_image, x + self.padding[3], y + self.padding[0])
 		draw = ImageDraw.Draw(image)
 		return image, draw
 		
@@ -220,7 +227,7 @@ class Table:
 	def __init__(self, background=None, border_size=0):
 		self.rows = []
 		self.background = background
-		self.border_size = border_size
+		self.border_size = get_padding(border_size)
 
 	def add_row(self, row):
 		self.rows.append(row)
@@ -247,14 +254,14 @@ class Table:
 							width = row[col].width
 			column_width.append(width)
 
-		image = Image.new('RGBA', (int(sum(column_width) + (self.border_size * 2)), int(sum(row_height) + self.border_size * 2)))
+		image = Image.new('RGBA', (int(sum(column_width) + (self.border_size[1] + self.border_size[3])), int(sum(row_height) + self.border_size[0] + self.border_size[2])))
 		draw = ImageDraw.Draw(image)
 		if self.background:
 			draw.rectangle([0, 0, image.size[0], image.size[1]], fill=self.background)
 
-		y = self.border_size
+		y = self.border_size[0]
 		for row in range(len(self.rows)):
-			x = self.border_size
+			x = self.border_size[3]
 			for column in range(column_count):
 				if len(self.rows[row]) <= column or self.rows[row][column] is None:
 					continue

@@ -378,18 +378,18 @@ class HeroStatsTableArgs():
 	def __init__(self, kwargs):
 		self.stat = kwargs.get("stat")
 		self.hero_level = kwargs.get("hero_level", 1)
-		self.hero_limit = kwargs.get("hero_limit", 20)
+		self.hero_count = kwargs.get("hero_count", 20)
 		self.reverse = kwargs.get("reverse", False)
 
 	@classmethod
 	async def convert(cls, ctx, argument):
 		parser = InputParser(argument)
 		args = [
+			QueryArg("hero_count", {
+				r"(?:hero ?)?(?:limit|count|show) (\d+)": lambda m: int(m.group(1))
+			}),
 			QueryArg("hero_level", {
 				r"(?:lvl|level)? ?(\d\d?)": lambda m: int(m.group(1))
-			}),
-			QueryArg("hero_count", {
-				r"(?:limit|count|show) (\d+)": lambda m: int(m.group(1))
 			}),
 			QueryArg("reverse", {
 				r"rev(erse)?|desc(ending)?|least-?(most)?": True
