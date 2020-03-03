@@ -88,7 +88,18 @@
 				"name": "Effective Health (Magic)",
 				"display": "int",
 				"lambda": "lambda hero, h: h['health'] / h['magic_dmg_multiplier']"
+			},
+			{
+				"stat": "mana",
+				"name": "Mana",
+				"lambda": "lambda hero, h: 75 + (12 * h['intelligence'])"
+			},
+			{
+				"stat": "mana_regen",
+				"name": "Mana Regen",
+				"lambda": "lambda hero, h: int(hero.base_mana_regen or 0) + (0.05 * h['intelligence'])"
 			}
+			
 		]
 	},
 	{

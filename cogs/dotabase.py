@@ -1195,7 +1195,7 @@ class Dotabase(MangoCog):
 		embed.set_thumbnail(url=f"{self.vpkurl}{hero.portrait}")
 		if hero.color:
 			embed.color = discord.Color(int(hero.color[1:], 16))
-		
+		embed.set_footer(text="The stats shown above to not account for talents, passives, or items")		
 		
 		await ctx.send(embed=embed)
 
