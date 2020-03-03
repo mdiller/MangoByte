@@ -5,6 +5,7 @@ from sqlalchemy import and_, or_
 from __main__ import settings
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
+from cogs.utils.commandargs import *
 from cogs.utils import drawdota
 import random
 import os
@@ -1151,6 +1152,7 @@ class Dotabase(MangoCog):
 		
 		If no level is specified, get the stats for the hero at level 1
 
+		**Examples:**
 		`{cmdpfx}leveledstats tinker`
 		`{cmdpfx}leveledstats shaker lvl 2`
 		`{cmdpfx}leveledstats level 28 shaman`"""
@@ -1199,7 +1201,26 @@ class Dotabase(MangoCog):
 		
 		await ctx.send(embed=embed)
 
+	@commands.command(aliases=["statstable", "stattable", "heroestable", "leveledstatstable", "besthero", "bestheroes"])
+	async def herotable(self, ctx, *, table_args : HeroStatsTableArgs):
+		"""Displays a table of the best heroes for the specified stat
+		
+		Displays a table with computed hero stats showing which heroes have the highest values for the specified stat. To see the list of possible stats, try the `{cmdpfx}leveledstats` command
 
+		**Examples:**
+		`{cmdpfx}herotable dps`
+		`{cmdpfx}herotable health lvl 30`
+		`{cmdpfx}herotable attack speed level 21 descending`
+		"""
+		description = ""
+		description += "\nstat: " + (table_args.stat or "<no stat specified>")
+		description += "\nhero_level: " + str(table_args.hero_level)
+		description += "\nhero_limit: " + str(table_args.hero_limit)
+		description += "\nreverse: " + str(table_args.reverse)
+		embed = discord.Embed(description=description)
+
+		await ctx.send(embed=embed)
+	
 
 def setup(bot):
 	bot.add_cog(Dotabase(bot))

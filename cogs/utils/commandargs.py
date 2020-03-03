@@ -3,6 +3,7 @@ import re
 import discord
 from discord.ext import commands
 from .helpers import *
+from collections import OrderedDict
 
 
 hero_pattern_cache = {}
@@ -15,6 +16,27 @@ def get_cache_hero_pattern(dotabase, prefix):
 		pattern = re.compile(pattern, re.IGNORECASE)
 		hero_pattern_cache[prefix] = pattern
 		return pattern
+
+hero_stats_patterns = OrderedDict()
+def get_cache_hero_stats_patterns(dotabase):
+	global hero_stats_patterns
+	if not hero_stats_patterns:
+		patterns = OrderedDict()
+		for category in dotabase.hero_stat_categories:
+			for stat in category["stats"]:
+				pattern = stat["name"]
+				if "regex" in stat:
+					pattern = stat["regex"]
+				patterns[stat["stat"]] = pattern
+		patterns = OrderedDict(reversed(list(patterns.items())))
+		all_pattern = list(map(lambda p: f"(?:{p})", patterns.values()))
+		all_pattern = f"(?:{'|'.join(all_pattern)})"
+		patterns["all"] = all_pattern
+		for stat in patterns:
+			patterns[stat] = re.compile(patterns[stat], re.IGNORECASE)
+		hero_stats_patterns = patterns
+	return hero_stats_patterns
+
 
 def clean_input(t):
 	return re.sub(r'[^a-z1-9\s]', r'', str(t).lower())
@@ -335,3 +357,54 @@ class MatchFilter():
 		args = self.to_query_args()
 		return f"/players/{self.player.steam_id}/matches?{args}"
 
+
+class HeroStatArg(QueryArg):
+	def __init__(self, ctx, name):
+		super().__init__(name)
+		dotabase = ctx.bot.get_cog("Dotabase")
+		self.patterns = get_cache_hero_stats_patterns(dotabase)
+
+	def regex(self):
+		print(self.patterns["all"])
+		return self.patterns["all"]
+
+	async def parse(self, text):
+		for stat, pattern in self.patterns.items():
+			if stat != "all" and re.match(pattern, text):
+				self.value = stat
+				return self.value
+
+
+class HeroStatsTableArgs():
+	def __init__(self, kwargs):
+		self.stat = kwargs.get("stat")
+		self.hero_level = kwargs.get("hero_level", 30)
+		self.hero_limit = kwargs.get("hero_limit", 20)
+		self.reverse = kwargs.get("reverse", False)
+
+	@classmethod
+	async def convert(cls, ctx, argument):
+		parser = InputParser(argument)
+		args = [
+			QueryArg("hero_level", {
+				r"(?:lvl|level)? ?(\d\d?)": lambda m: int(m.group(1))
+			}),
+			QueryArg("hero_count", {
+				r"(?:limit|count|show) (\d+)": lambda m: int(m.group(1))
+			}),
+			QueryArg("reverse", {
+				r"rev(erse)?|desc(ending)?|least-?(most)?": True
+			}),
+			HeroStatArg(ctx, "stat")
+		]
+		kwargs = {}
+		for arg in args:
+			value = parser.take_regex(arg.regex())
+			if value:
+				print("found:", value)
+				print("at:", arg.name)
+				await arg.parse(value)
+				kwargs[arg.name] = arg.value
+		if parser.text:
+			raise CustomBadArgument(UserError(f"I'm not sure what you mean by '{parser.text}'"))
+		return cls(kwargs)
