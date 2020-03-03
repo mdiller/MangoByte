@@ -1213,14 +1213,19 @@ class Dotabase(MangoCog):
 		`{cmdpfx}herotable health lvl 30`
 		`{cmdpfx}herotable attack speed level 21 descending`
 		"""
-		description = ""
-		description += "\nstat: " + (table_args.stat or "<no stat specified>")
-		description += "\nhero_level: " + str(table_args.hero_level)
-		description += "\nhero_limit: " + str(table_args.hero_limit)
-		description += "\nreverse: " + str(table_args.reverse)
-		embed = discord.Embed(description=description)
+		if table_args.stat is None:
+			raise UserError(f"Please select a stat to sort by. For a list of stats, see `{self.cmdpfx()}leveledstats`")
+		if table_args.hero_level < 1 or table_args.hero_level > 30:
+			raise UserError("Please select a hero level between 1 and 30")
+		if table_args.hero_limit < 2 or table_args.hero_limit > 140:
+			raise UserError("Please select a hero level between 2 and 140")
 
-		await ctx.send(embed=embed)
+		embed = discord.Embed()
+
+		image = discord.File(await drawdota.draw_herostatstable(table_args, self.hero_stat_categories, self.leveled_hero_stats), "herotable.png")
+		embed.set_image(url=f"attachment://{image.filename}")
+
+		await ctx.send(embed=embed, file=image)
 	
 
 def setup(bot):

@@ -365,7 +365,6 @@ class HeroStatArg(QueryArg):
 		self.patterns = get_cache_hero_stats_patterns(dotabase)
 
 	def regex(self):
-		print(self.patterns["all"])
 		return self.patterns["all"]
 
 	async def parse(self, text):
@@ -378,7 +377,7 @@ class HeroStatArg(QueryArg):
 class HeroStatsTableArgs():
 	def __init__(self, kwargs):
 		self.stat = kwargs.get("stat")
-		self.hero_level = kwargs.get("hero_level", 30)
+		self.hero_level = kwargs.get("hero_level", 1)
 		self.hero_limit = kwargs.get("hero_limit", 20)
 		self.reverse = kwargs.get("reverse", False)
 
@@ -401,8 +400,6 @@ class HeroStatsTableArgs():
 		for arg in args:
 			value = parser.take_regex(arg.regex())
 			if value:
-				print("found:", value)
-				print("at:", arg.name)
 				await arg.parse(value)
 				kwargs[arg.name] = arg.value
 		if parser.text:

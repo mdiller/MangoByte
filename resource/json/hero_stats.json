@@ -87,7 +87,7 @@
 				"stat": "physical_effective_health",
 				"name": "Effective Health (Physical)",
 				"display": "int",
-				"regex": "eff(ective)?( phys(ical)?)? health( \\(?physical\\)?)?",
+				"regex": "eff(ective)?( phys(ical)?)? (health|hp)( \\(?physical\\)?)?",
 				"lambda": "lambda hero, h: h['health'] / h['physical_dmg_multiplier']"
 			},
 			{
@@ -101,7 +101,7 @@
 				"stat": "magic_effective_health",
 				"name": "Effective Health (Magic)",
 				"display": "int",
-				"regex": "eff(ective)?( health)? \\(?magic\\)?( health)?",
+				"regex": "eff(ective)?( health| hp)? \\(?magic\\)?( health| hp)?",
 				"lambda": "lambda hero, h: h['health'] / h['magic_dmg_multiplier']"
 			},
 			{

@@ -1,6 +1,7 @@
 from __main__ import settings, botdata
 from PIL import Image, ImageDraw, ImageFont
 from .imagetools import *
+import math
 
 table_font = settings.resource("images/arial_unicode_bold.ttf")
 
@@ -19,6 +20,9 @@ def get_padding(kwargs, default=0):
 	if 'padding_left' in kwargs:
 		padding[3] = kwargs['padding_left']
 	return padding
+
+def tuplediff(tuple1, tuple2):
+	return tuple(map(lambda i, j: i - j, tuple1, tuple2))
 
 class Cell:
 	def __init__(self, **kwargs):
@@ -118,6 +122,65 @@ class TextCell(Cell):
 		return image, draw
 
 
+class SlantedTextCell(Cell):
+	def __init__(self, text, **kwargs):
+		Cell.__init__(self, **kwargs)
+		if text is None:
+			text = ""
+		self.text = str(text)
+		self.color = kwargs.get('color', '#ffffff')
+		self.background = kwargs.get('background')
+		self.font = ImageFont.truetype(table_font, kwargs.get("font_size", 28))
+		self.border_color = kwargs.get('border_color', self.color)
+		self.border_size = kwargs.get('border_size', 2)
+		self.rotation = kwargs.get('rotation', 45)
+		self.rotation_rad = math.radians(self.rotation)
+		self.first = kwargs.get('first', False)
+
+		self.padding = get_padding(kwargs, [ 10, 10, 10, 10 ])
+		self.text_size = self.font.getsize(self.text)
+		if not self.width:
+			self.width = self.padding[1] + self.text_size[1] + self.padding[3]
+		if not self.height:
+			self.height = self.padding[0] + int(math.sin(self.rotation_rad) * self.text_size[0]) + self.text_size[1] + self.padding[2]
+
+	def render(self, draw, image, x, y, width, height):
+		pos = (x, y + height)
+		xshift = 10
+
+		font_image_size = (self.text_size[0] + self.text_size[1], self.text_size[0] + self.text_size[1])
+		font_pos = (int(self.text_size[1] / 2), self.text_size[0])
+		font_center_pos = (font_pos[0], font_pos[1] + int(self.text_size[1] / 2))
+
+		text_image = Image.new('RGBA', font_image_size)
+		text_draw = ImageDraw.Draw(text_image)
+
+		# text_draw.rectangle((font_pos[0], font_pos[1], font_pos[0] + self.text_size[0], font_pos[1] + self.text_size[1]), fill="#22222222")
+		text_draw.text(font_pos, self.text, font=self.font, fill=self.color)
+		text_image = text_image.rotate(self.rotation, resample=Image.BILINEAR, center=font_center_pos)
+
+		font_destination = tuplediff(pos, font_pos)
+		font_destination = (font_destination[0] + int(width / 2) + xshift, font_destination[1] - int(self.text_size[1] / 2) - self.padding[2])
+		image = paste_image(image, text_image, int(font_destination[0]), int(font_destination[1]))
+		draw = ImageDraw.Draw(image)
+		
+		linestart = (pos[0] + width, pos[1])
+		lineend = (linestart[0] + int(height / math.tan(self.rotation_rad)), linestart[1] - height)
+		box_top = (tuplediff(lineend, (width, 0)), lineend)
+		box_bottom = (tuplediff(linestart, (width, 0)), linestart)
+		if self.background:
+			draw.polygon([box_top[0], box_top[1], box_bottom[1], box_bottom[0]], fill=self.background)
+
+		# border
+		draw.line((linestart, lineend), fill=self.border_color, width=self.border_size)
+		draw.line(box_top, fill=self.border_color, width=self.border_size)
+		if self.first:
+			draw.line((box_bottom[0], box_top[0]), fill=self.border_color, width=self.border_size)
+
+
+		return image, draw
+
+
 
 class ImageCell(Cell):
 	def __init__(self, **kwargs):
@@ -184,7 +247,7 @@ class Table:
 							width = row[col].width
 			column_width.append(width)
 
-		image = Image.new('RGBA', (sum(column_width) + (self.border_size * 2), sum(row_height) + self.border_size * 2))
+		image = Image.new('RGBA', (int(sum(column_width) + (self.border_size * 2)), int(sum(row_height) + self.border_size * 2)))
 		draw = ImageDraw.Draw(image)
 		if self.background:
 			draw.rectangle([0, 0, image.size[0], image.size[1]], fill=self.background)

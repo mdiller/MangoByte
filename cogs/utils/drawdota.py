@@ -9,7 +9,7 @@ import numpy
 import math
 from datetime import datetime, timedelta
 from PIL import Image, ImageDraw, ImageFont
-from .tabledraw import Table, ImageCell, TextCell, ColorCell, DoubleCell
+from .tabledraw import Table, ImageCell, TextCell, ColorCell, DoubleCell, SlantedTextCell
 from io import BytesIO
 from .helpers import run_command, get_pretty_time, read_json, UserError, format_duration_simple
 from .imagetools import *
@@ -840,6 +840,62 @@ def draw_polygraph(values, labels):
 		dot_rad = 2
 		draw2.ellipse([(p[0] - dot_rad, p[1] - dot_rad), (p[0] + dot_rad, p[1] + dot_rad)], fill="#FFDF00")
 	image = paste_image(image, image2, 0, 0)
+
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
+
+	return fp
+
+async def draw_herostatstable(table_args, hero_stat_categories, leveled_hero_stats):
+
+	category = None
+	for cat in hero_stat_categories:
+		if any(stat["stat"] == table_args.stat for stat in cat["stats"]):
+			category = cat
+			break
+	if category is None:
+		raise UserError("Couldn't find referenced stat")
+
+	stats = category["stats"]
+
+	# sort / get data 
+	hero_data = leveled_hero_stats[table_args.hero_level]
+	hero_data = sorted(hero_data, key=lambda hero: hero.get(table_args.stat), reverse=not table_args.reverse)
+	hero_data = hero_data[0:table_args.hero_limit]
+
+	table = Table(background=background_color, border_size=2)
+
+	table_background = trim_color
+	table_border_color = "#222222"
+
+	header_row = [ TextCell("") ]
+	for stat in stats:
+		header_row.append(SlantedTextCell(
+			"test", #stat["name"],
+			background="green",
+			border_color=table_border_color,
+			border_size=2,
+			rotation=45))
+
+	table.add_row(header_row)
+
+	for hero in hero_data:
+		new_row = [ ImageCell(img=await get_hero_icon(hero.get("id"))) ]
+		for stat in stats:
+			value = hero.get(stat["stat"])
+			if stat.get("display") == "resistance_percentage":
+				value = 100 * (1 - value)
+			if stat.get("display") == "int":
+				value = round(value)
+			value = f"{value:.2f}"
+			value = re.sub("\.0+$", "", value)
+			if stat.get("display") == "resistance_percentage":
+				value += "%"
+			new_row.append(TextCell(value, font_size=14, padding=10))
+		table.add_row(new_row)
+
+	image = table.render()
 
 	fp = BytesIO()
 	image.save(fp, format="PNG")
