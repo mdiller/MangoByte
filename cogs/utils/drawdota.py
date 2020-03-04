@@ -18,8 +18,9 @@ from concurrent.futures import ThreadPoolExecutor
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
 
-trim_color = "#2C2F33"
-background_color = "#23272A"
+discord_color1 = "#2C2F33"
+discord_color2 = "#23272A"
+discord_color3 = "#202225"
 
 hero_infos = {}
 item_infos = {}
@@ -151,7 +152,7 @@ async def add_player_row(table, player, is_parsed):
 
 async def draw_match_table(match):
 	is_parsed = match.get("version")
-	table = Table(background=background_color)
+	table = Table(background=discord_color2)
 	# Header
 	headers = [
 		TextCell("", padding=0),
@@ -171,13 +172,13 @@ async def draw_match_table(match):
 		]
 	table.add_row(headers)
 	for cell in table.rows[0]:
-		cell.background = trim_color
+		cell.background = discord_color1
 
 	# Do players
 	for player in match["players"]:
 		if player['isRadiant']:
 			await add_player_row(table, player, is_parsed)
-	table.add_row([ColorCell(color=trim_color, height=5) for i in range(len(headers))])
+	table.add_row([ColorCell(color=discord_color1, height=5) for i in range(len(headers))])
 	for player in match["players"]:
 		if not player['isRadiant']:
 			await add_player_row(table, player, is_parsed)
@@ -189,8 +190,8 @@ async def create_match_image(match):
 
 	image = Image.new('RGBA', (table_image.size[0] + (table_border * 2), table_image.size[1] + table_border + 64))
 	draw = ImageDraw.Draw(image)
-	draw.rectangle([0, 0, image.size[0], image.size[1]], fill=background_color)
-	draw.rectangle([0, 64, image.size[0], image.size[1]], fill=trim_color)
+	draw.rectangle([0, 0, image.size[0], image.size[1]], fill=discord_color2)
+	draw.rectangle([0, 64, image.size[0], image.size[1]], fill=discord_color1)
 	image.paste(table_image, (table_border, 64))
 
 	title = TextCell(f"{'Radiant' if match['radiant_win'] else 'Dire'} Victory", font_size=48, color=("green" if match['radiant_win'] else "red"))
@@ -514,7 +515,7 @@ async def draw_matches_table(matches, game_strings):
 
 	border_size = 10
 	grey_color = "#BBBBBB"
-	table = Table(background=background_color)
+	table = Table(background=discord_color2)
 	# Header
 	headers = [
 		TextCell("Hero", padding=0),
@@ -529,9 +530,9 @@ async def draw_matches_table(matches, game_strings):
 	]
 	table.add_row(headers)
 	for cell in table.rows[0]:
-		cell.background = trim_color
+		cell.background = discord_color1
 
-	table.add_row([ColorCell(color=trim_color, height=6) for i in range(len(headers))])
+	table.add_row([ColorCell(color=discord_color1, height=6) for i in range(len(headers))])
 	first = True
 	for match in matches:
 		won_match = bool(match["radiant_win"]) == bool(match["player_slot"] < 128)
@@ -540,7 +541,7 @@ async def draw_matches_table(matches, game_strings):
 		if first:
 			first = False
 		else:
-			table.add_row([ColorCell(color=background_color, height=12) for i in range(len(headers))])
+			table.add_row([ColorCell(color=discord_color2, height=12) for i in range(len(headers))])
 		table.add_row([
 			ImageCell(img=await get_hero_image(match["hero_id"]), height=48),
 			DoubleCell(
@@ -560,7 +561,7 @@ async def draw_matches_table(matches, game_strings):
 		])
 	image = table.render()
 
-	border_image = Image.new('RGBA', (image.size[0] + (border_size * 2), image.size[1] + border_size), color=trim_color)
+	border_image = Image.new('RGBA', (image.size[0] + (border_size * 2), image.size[1] + border_size), color=discord_color1)
 	image = paste_image(border_image, image, border_size, 0)
 
 	fp = BytesIO()
@@ -682,9 +683,9 @@ async def draw_artifact_deck(deck_string, cards, hero_turns, card_counts):
 	column_count = 5
 	border_size = 10
 	grey_color = "#BBBBBB"
-	table = Table(background=background_color)
+	table = Table(background=discord_color2)
 
-	table.add_row([ColorCell(color=trim_color, height=border_size) for i in range(column_count)])
+	table.add_row([ColorCell(color=discord_color1, height=border_size) for i in range(column_count)])
 	first = True
 	for card in ordered_cards:
 		cost = ""
@@ -701,7 +702,7 @@ async def draw_artifact_deck(deck_string, cards, hero_turns, card_counts):
 		if first:
 			first = False
 		else:
-			table.add_row([ColorCell(color=background_color, height=2) for i in range(column_count)])
+			table.add_row([ColorCell(color=discord_color2, height=2) for i in range(column_count)])
 		table.add_row([
 			ImageCell(img=await get_url_image(card.mini_image), height=48),
 			ImageCell(img=await get_url_image(card.type_image), height=48),
@@ -709,12 +710,12 @@ async def draw_artifact_deck(deck_string, cards, hero_turns, card_counts):
 			TextCell(card.name),
 			TextCell(last_cell, horizontal_align="right")
 		])
-		card_color = card.color.blend(Color(background_color), 0.5)
+		card_color = card.color.blend(Color(discord_color2), 0.5)
 		for cell in table.rows[len(table.rows) - 1]:
 			cell.background = card_color.hex
 	image = table.render()
 
-	border_image = Image.new('RGBA', (image.size[0] + (border_size * 2), image.size[1] + border_size), color=trim_color)
+	border_image = Image.new('RGBA', (image.size[0] + (border_size * 2), image.size[1] + border_size), color=discord_color1)
 	image = paste_image(border_image, image, border_size, 0)
 
 	image.save(filename, format="PNG")
@@ -745,7 +746,7 @@ def grouper(values, N):
 
 async def draw_neutralitems_tier(selected_tier, all_neutral_items):
 	items = list(filter(lambda i: i.neutral_tier == str(selected_tier), all_neutral_items))
-	table = Table(background=background_color)
+	table = Table(background=discord_color2)
 	for item in items:
 		table.add_row([
 			ImageCell(img=await get_item_image(item.id)),
@@ -764,10 +765,10 @@ async def draw_neutralitems(selected_tier, all_neutral_items):
 		return await draw_neutralitems_tier(selected_tier, all_neutral_items)
 
 	items_per_row = 6
-	table = Table(background=trim_color)
+	table = Table(background=discord_color1)
 	for tier in range(1, 6):
-		header_row = [ColorCell(color=background_color) for i in range(items_per_row)]
-		header_row[0] = TextCell(f"Tier {tier}", color=neutral_tier_text_colors[str(tier)], font_size=25, padding=[10, 0, 10, 10], background=background_color)
+		header_row = [ColorCell(color=discord_color2) for i in range(items_per_row)]
+		header_row[0] = TextCell(f"Tier {tier}", color=neutral_tier_text_colors[str(tier)], font_size=25, padding=[10, 0, 10, 10], background=discord_color2)
 		table.add_row(header_row)
 		items = list(filter(lambda i: i.neutral_tier == str(tier), all_neutral_items))
 		item_img_cells = []
@@ -776,7 +777,7 @@ async def draw_neutralitems(selected_tier, all_neutral_items):
 		new_rows = grouper(item_img_cells, items_per_row)
 		for row in new_rows:
 			table.add_row(row)
-		footer_row = [ColorCell(color=trim_color, height=20) for i in range(items_per_row)]
+		footer_row = [ColorCell(color=discord_color1, height=20) for i in range(items_per_row)]
 		table.add_row(footer_row)
 
 	image = table.render()
@@ -866,9 +867,9 @@ async def draw_herostatstable(table_args, hero_stat_categories, leveled_hero_sta
 
 	table = Table(border_size=10)
 
-	stat_highlight_color = trim_color
-	table_background = background_color
-	table_border_color = "#222222"
+	stat_highlight_color = discord_color1
+	table_background = discord_color2
+	table_border_color = discord_color1
 
 	header_row = [ TextCell("") ]
 	for stat in stats:
@@ -877,7 +878,7 @@ async def draw_herostatstable(table_args, hero_stat_categories, leveled_hero_sta
 			font_size=20,
 			background=stat_highlight_color if stat["stat"] == table_args.stat else table_background,
 			border_color=table_border_color,
-			border_size=4,
+			border_size=2,
 			rotation=45))
 	
 	header_height = max(cell.height for cell in header_row)
@@ -890,7 +891,13 @@ async def draw_herostatstable(table_args, hero_stat_categories, leveled_hero_sta
 	for hero in hero_data:
 		cell_background = table_background
 		#cell_background = stat_highlight_color if i % 2 else table_background
-		new_row = [ ImageCell(img=await get_hero_icon(hero.get("id")), padding=3, background=table_background) ]
+		new_row = [ ImageCell(
+			img=await get_hero_icon(hero.get("id")), 
+			padding=3, 
+			border_color=table_border_color,
+			border_size=2,
+			background=table_background)
+		]
 		for stat in stats:
 			value = hero.get(stat["stat"])
 			if stat.get("display") == "resistance_percentage":
@@ -905,6 +912,8 @@ async def draw_herostatstable(table_args, hero_stat_categories, leveled_hero_sta
 				value, 
 				font_size=16, 
 				padding=10,
+				border_color=table_border_color,
+				border_size=2,
 				background=stat_highlight_color if stat["stat"] == table_args.stat else cell_background))
 		table.add_row(new_row)
 		i += 1
