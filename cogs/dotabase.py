@@ -1200,7 +1200,7 @@ class Dotabase(MangoCog):
 		embed.set_thumbnail(url=f"{self.vpkurl}{hero.portrait}")
 		if hero.color:
 			embed.color = discord.Color(int(hero.color[1:], 16))
-		embed.set_footer(text="The stats shown above to not account for talents, passives, or items")		
+		embed.set_footer(text="The stats shown above do not account for talents, passives, or items")		
 		
 		await ctx.send(embed=embed)
 
@@ -1226,7 +1226,7 @@ class Dotabase(MangoCog):
 
 		image = discord.File(await drawdota.draw_herostatstable(table_args, self.hero_stat_categories, self.leveled_hero_stats), "herotable.png")
 		embed.set_image(url=f"attachment://{image.filename}")
-		embed.set_footer(text="The stats shown above to not account for talents, passives, or items")
+		embed.set_footer(text="The stats shown above do not account for talents, passives, or items")
 
 		await ctx.send(embed=embed, file=image)
 	
