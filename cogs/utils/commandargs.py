@@ -344,7 +344,7 @@ class MatchFilter():
 		self.projections.extend(projections)
 
 	def to_query_args(self):
-		args = filter(lambda a: a.has_value() and not a.name.startswith("_"), self.args)
+		args = filter(lambda a: a.has_value() and a.name and not a.name.startswith("_"), self.args)
 		args = list(map(lambda a: a.to_query_arg(), args))
 		if len(self.projections) > 0:
 			args.extend(map(lambda p: f"project={p}", self.projections))
