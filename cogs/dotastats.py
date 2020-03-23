@@ -1163,7 +1163,7 @@ class DotaStats(MangoCog):
 	async def laning(self, ctx, match_id : int = None):
 		"""Creates a short description and a gif of the laning stage
 
-		If no match id is given and the user has a steam account connected, use the most recent game"""
+		If no match id is given and the user has a steam account connected, uses the player's most recent game"""
 		await ctx.channel.trigger_typing()
 		try:
 			player = await DotaPlayer.from_author(ctx)
@@ -1207,7 +1207,7 @@ class DotaStats(MangoCog):
 				await thinker.stop_thinking(ctx.message)
 
 
-	@commands.command()
+	@commands.command(aliases=["analyze", "studymatch"])
 	async def parse(self, ctx, match_id : int):
 		"""Requests that OpenDota parses a match
 
