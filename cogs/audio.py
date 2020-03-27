@@ -537,78 +537,84 @@ class Audio(MangoCog):
 	#function called when this event occurs
 	@commands.Cog.listener()
 	async def on_voice_state_update(self, member, before, after):
-		if member.bot and member.id != self.bot.user.id:
-			return # ignore bots except for mahself
-		if before and after and before.channel == after.channel:
-			return # if the member didnt change channels, dont worry about it
-		if before and before.channel and botdata.guildinfo(before.channel.guild).outros:
-			beforeplayer = await self.audioplayer(before.channel, error_on_none=False)
-			if beforeplayer is not None and beforeplayer.voice is not None and beforeplayer.voice.channel.id == before.channel.id:
-				ctx = before.channel.guild
-				guildinfo = botdata.guildinfo(before.channel.guild)
-				userinfo = botdata.userinfo(member.id)
+		channel_id = "not sure yet"
+		try:
+			if member.bot and member.id != self.bot.user.id:
+				return # ignore bots except for mahself
+			if before and after and before.channel == after.channel:
+				return # if the member didnt change channels, dont worry about it
+			if before and before.channel and botdata.guildinfo(before.channel.guild).outros:
+				beforeplayer = await self.audioplayer(before.channel, error_on_none=False)
+				if beforeplayer is not None and beforeplayer.voice is not None and beforeplayer.voice.channel.id == before.channel.id:
+					ctx = before.channel.guild
+					guildinfo = botdata.guildinfo(before.channel.guild)
+					userinfo = botdata.userinfo(member.id)
+					channel_id = before.channel.id
 
-				try:
-					outroclip = userinfo.outro
-					if outroclip:
-						outroclip = await self.get_clip(userinfo.outro, ctx)
-						if outroclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
-							userinfo.set_default(ctx, "outro")
-							outroclip = userinfo.outro
-				except:
-					userinfo.set_default(ctx, "outro")
-					outroclip = userinfo.outro
+					try:
+						outroclip = userinfo.outro
+						if outroclip:
+							outroclip = await self.get_clip(userinfo.outro, ctx)
+							if outroclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
+								userinfo.set_default(ctx, "outro")
+								outroclip = userinfo.outro
+					except:
+						userinfo.set_default(ctx, "outro")
+						outroclip = userinfo.outro
 
-				outrotts = userinfo.outrotts
-				name = member.name
-				if guildinfo.usenickname and member.nick:
-					name = member.nick
+					outrotts = userinfo.outrotts
+					name = member.name
+					if guildinfo.usenickname and member.nick:
+						name = member.nick
 
 
-				text = (await self.fix_name(name)) + " " + outrotts
-				print(text)
+					text = (await self.fix_name(name)) + " " + outrotts
+					print(text)
 
-				await asyncio.sleep(0.5)
-				if not outroclip is None:				
-					await self.play_clip(outroclip, before.channel)
-				await self.play_clip("tts:" + text, before.channel)
-		if after and after.channel and botdata.guildinfo(after.channel.guild).intros:
-			afterplayer = await self.audioplayer(after.channel, error_on_none=False)
-			if afterplayer is not None and afterplayer.voice is not None and afterplayer.voice.channel.id == after.channel.id:
-				ctx = after.channel.guild
-				guildinfo = botdata.guildinfo(after.channel.guild)
-				if member.id == self.bot.user.id:
-					guildinfo.voicechannel = after.channel.id
+					await asyncio.sleep(0.5)
+					if not outroclip is None:				
+						await self.play_clip(outroclip, before.channel)
+					await self.play_clip("tts:" + text, before.channel)
+			if after and after.channel and botdata.guildinfo(after.channel.guild).intros:
+				afterplayer = await self.audioplayer(after.channel, error_on_none=False)
+				if afterplayer is not None and afterplayer.voice is not None and afterplayer.voice.channel.id == after.channel.id:
+					ctx = after.channel.guild
+					guildinfo = botdata.guildinfo(after.channel.guild)
+					channel_id = after.channel.id
+					if member.id == self.bot.user.id:
+						guildinfo.voicechannel = after.channel.id
 
-				userinfo = botdata.userinfo(member.id)
+					userinfo = botdata.userinfo(member.id)
 
-				try:
-					introclip = userinfo.intro
-					if introclip:
-						introclip = await self.get_clip(userinfo.intro, ctx)
-						if introclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
-							userinfo.set_default(ctx, "intro")
-							introclip = userinfo.intro
-				except:
-					userinfo.set_default(ctx, "intro")
-					introclip = userinfo.intro
+					try:
+						introclip = userinfo.intro
+						if introclip:
+							introclip = await self.get_clip(userinfo.intro, ctx)
+							if introclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
+								userinfo.set_default(ctx, "intro")
+								introclip = userinfo.intro
+					except:
+						userinfo.set_default(ctx, "intro")
+						introclip = userinfo.intro
 
-				introtts = userinfo.introtts
-				name = member.name
-				if guildinfo.usenickname and member.nick:
-					name = member.nick
+					introtts = userinfo.introtts
+					name = member.name
+					if guildinfo.usenickname and member.nick:
+						name = member.nick
 
-				# Special case for default
-				if userinfo.intro == "local:helloits" and introtts == "it's":
-					introtts = ""
+					# Special case for default
+					if userinfo.intro == "local:helloits" and introtts == "it's":
+						introtts = ""
 
-				text = introtts + " " + await self.fix_name(name)
-				print(text + " joined the channel")
+					text = introtts + " " + await self.fix_name(name)
+					print(text + " joined the channel")
 
-				await asyncio.sleep(3)
-				if not introclip is None:
-					await self.play_clip(introclip, after.channel)
-				await self.play_clip("tts:" + text, after.channel)
+					await asyncio.sleep(3)
+					if not introclip is None:
+						await self.play_clip(introclip, after.channel)
+					await self.play_clip("tts:" + text, after.channel)
+		except UserError as e:
+			print(f"Bad voice channel connection to ({channel_id}) from on_voice_state_update: {e.message}")
 
 
 def setup(bot):
