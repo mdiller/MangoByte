@@ -60,9 +60,13 @@ class AudioPlayer:
 			channel = self.bot.get_channel(channel)
 
 		if self.voice is None:
+			print(f"attempting connect to: {channel.id}")
 			await channel.connect()
+			print(f"finished connect to: {channel.id}")
 		else:
+			print(f"attempting move to: {channel.id}")
 			await self.voice.move_to(channel)
+			print(f"finished move to: {channel.id}")
 
 	def done_talking(self, error):
 		if error:

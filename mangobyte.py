@@ -144,8 +144,8 @@ async def initial_channel_connect(audio_cog, guildinfo):
 			print(f"weird usererror in on_ready for '{guildinfo.voicechannel}': {e.message}")
 			return 3
 	except asyncio.TimeoutError:
+		print(f"timeout error when connecting to channel {guildinfo.voicechannel}")
 		guildinfo.voicechannel = None
-		print("timeout error when connecting to channel")
 		return 2
 	except Exception as e:
 		print(f"unknown exception encountered on connection to channel ({guildinfo.voicechannel}): {e}")
