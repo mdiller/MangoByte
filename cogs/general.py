@@ -218,16 +218,16 @@ class General(MangoCog):
 		])
 
 
-		embed.add_field(name="Commands", value=f"{query_results[0][0][0]:,}")
+		# embed.add_field(name="Commands", value=f"{query_results[0][0][0]:,}")
 		embed.add_field(name="Commands (This Week)", value=f"{query_results[1][0][0]:,}")
 
 		cmdpfx = self.cmdpfx(ctx)
 		top_commands = query_results[2]
-		if len(top_commands) >= 3:
-			embed.add_field(name="Top Commands", value=(
-				f"`{cmdpfx}{top_commands[0][0]}`\n"
-				f"`{cmdpfx}{top_commands[1][0]}`\n"
-				f"`{cmdpfx}{top_commands[2][0]}`\n"))
+		# if len(top_commands) >= 3:
+		# 	embed.add_field(name="Top Commands", value=(
+		# 		f"`{cmdpfx}{top_commands[0][0]}`\n"
+		# 		f"`{cmdpfx}{top_commands[1][0]}`\n"
+		# 		f"`{cmdpfx}{top_commands[2][0]}`\n"))
 
 		top_commands_weekly = query_results[3]
 		if len(top_commands_weekly) >= 3:

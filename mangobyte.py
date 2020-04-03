@@ -55,20 +55,22 @@ on_ready_has_run = False
 @bot.event
 async def on_ready():
 	global on_ready_has_run
+	is_first_time = True
 	if on_ready_has_run:
-		appinfo = await bot.application_info()
-		await appinfo.owner.send("bot tried to run on_ready again")
-		return
+		is_first_time = False
+		print("on_ready called again!")
 	on_ready_has_run = True
-	print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
-	print('Connecting to voice channels if specified in botdata.json ...')
+
 	start_time = datetime.datetime.now()
 
-	game = discord.Activity(
-		name="DOTA 3 [?help]", 
-		type=discord.ActivityType.playing,
-		start=datetime.datetime.utcnow())
-	await bot.change_presence(status=discord.Status.online, activity=game)
+	if is_first_time:
+		print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
+		print('Connecting to voice channels if specified in botdata.json ...')
+		game = discord.Activity(
+			name="DOTA 3 [?help]", 
+			type=discord.ActivityType.playing,
+			start=datetime.datetime.utcnow())
+		await bot.change_presence(status=discord.Status.online, activity=game)
 	audio_cog = bot.get_cog("Audio")
 	artifact_cog = bot.get_cog("Artifact")
 	await artifact_cog.load_card_sets()
@@ -96,12 +98,18 @@ async def on_ready():
 		if code == 3:
 			error_count += 1
 
-	print("\nupdating guilds")
-	await loggingdb.update_guilds(bot.guilds)
+	if is_first_time:
+		print("\nupdating guilds")
+		await loggingdb.update_guilds(bot.guilds)
 	
-	print("\ninitialization finished\n")
+	finished_text = "\ninitialization finished\n"
+	if not is_first_time:
+		finished_text = "\nre-initialization finished\n"
+	print(finished_text)
 
 	message = "__**Initialization complete:**__"
+	if not is_first_time:
+		message = "__**Re-Initialization complete (shard prolly got poked):**__"
 	if connected_count > 0:
 		message += f"\n{connected_count} voice channels connected"
 	if not_found_count > 0:

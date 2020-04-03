@@ -63,6 +63,11 @@ class AudioPlayer:
 			print(f"attempting connect to: {channel.id}")
 			await channel.connect()
 			print(f"finished connect to: {channel.id}")
+		elif self.voice.channel and self.voice.channel.id == channel.id:
+			print(f"doin a disconnect and reconnect for: {channel.id}")
+			await self.voice.disconnect()
+			await channel.connect()
+			print(f"finished reconnect for: {channel.id}")
 		else:
 			print(f"attempting move to: {channel.id}")
 			await self.voice.move_to(channel)
