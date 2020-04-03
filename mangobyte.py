@@ -137,8 +137,8 @@ async def initial_channel_connect(audio_cog, guildinfo):
 		return 0
 	except UserError as e:
 		if e.message == "channel not found":
+			print(f"channel not found! ({guildinfo.voicechannel}, in server {guildinfo.id})")
 			guildinfo.voicechannel = None
-			print("channel not found!")
 			return 1
 		else:
 			print(f"weird usererror in on_ready for '{guildinfo.voicechannel}': {e.message}")
