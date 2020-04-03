@@ -133,7 +133,7 @@ async def initial_channel_connect(audio_cog, guildinfo):
 	try:
 		print(f"connecting voice to: {guildinfo.voicechannel}")
 		connect_task = audio_cog.connect_voice(guildinfo.voicechannel)
-		await asyncio.wait_for(connect_task, timeout=5)
+		await asyncio.wait_for(connect_task, timeout=200)
 		print(f"connected: {guildinfo.voicechannel}")
 		return 0
 	except UserError as e:
