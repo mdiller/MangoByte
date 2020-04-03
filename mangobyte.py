@@ -132,7 +132,8 @@ async def invalid_command_reporting(ctx):
 async def initial_channel_connect(audio_cog, guildinfo):
 	try:
 		print(f"connecting voice to: {guildinfo.voicechannel}")
-		await audio_cog.connect_voice(guildinfo.voicechannel)
+		connect_task = audio_cog.connect_voice(guildinfo.voicechannel)
+		await asyncio.wait_for(connect_task, timeout=5)
 		print(f"connected: {guildinfo.voicechannel}")
 		return 0
 	except UserError as e:
@@ -148,7 +149,7 @@ async def initial_channel_connect(audio_cog, guildinfo):
 		guildinfo.voicechannel = None
 		return 2
 	except Exception as e:
-		print(f"unknown exception encountered on connection to channel ({guildinfo.voicechannel}): {e}")
+		print(f"unknown exception encountered on connection to channel ({guildinfo.voicechannel}): {e.message}")
 		guildinfo.voicechannel = None
 		return 3
 
