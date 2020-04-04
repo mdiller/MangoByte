@@ -52,6 +52,7 @@ deprecated_commands = {
 on_ready_has_run = False
 
 
+
 @bot.event
 async def on_ready():
 	global on_ready_has_run
@@ -77,10 +78,7 @@ async def on_ready():
 	bot.help_command.cog = bot.get_cog("General")
 
 	# stuff to help track/log the connection of voice channels
-	connected_count = 0
-	not_found_count = 0
-	timeout_count = 0
-	error_count = 0
+	connection_status = {}
 
 	channel_tasks = []
 	for guildinfo in botdata.guildinfo_list():
@@ -88,38 +86,29 @@ async def on_ready():
 			channel_tasks.append(initial_channel_connect(audio_cog, guildinfo))
 
 	connection_results = await asyncio.gather(*channel_tasks)
-	for code in connection_results:
-		if code == 0:
-			connected_count += 1
-		if code == 1:
-			not_found_count += 1
-		if code == 2:
-			timeout_count += 1
-		if code == 3:
-			error_count += 1
+	for status in connection_results:
+		if status not in connection_status:
+			connection_status[status] = 0
+		connection_status[status] += 1
 
 	if is_first_time:
 		print("\nupdating guilds")
 		await loggingdb.update_guilds(bot.guilds)
 	
-	finished_text = "\ninitialization finished\n"
+	finished_text = "initialization finished"
 	if not is_first_time:
-		finished_text = "\nre-initialization finished\n"
-	print(finished_text)
+		finished_text = "re-" + finished_text
+	print(f"\n{finished_text}\n")
 
 	message = "__**Initialization complete:**__"
 	if not is_first_time:
 		message = "__**Re-Initialization complete (shard prolly got poked):**__"
-	if connected_count > 0:
-		message += f"\n{connected_count} voice channels connected"
-	if not_found_count > 0:
-		message += f"\n{not_found_count} voice channels not found"
-	if timeout_count > 0:
-		message += f"\n{timeout_count} voice channels timed out"
-	if error_count > 0:
-		message += f"\n{error_count} voice channels encountered some weird exceptions!"
+
+	for status in connection_status:
+		message +=  f"\n{connection_status[status]} voice channels {status}"
+
 	total_time = (datetime.datetime.now() - start_time).total_seconds()
-	message += f"\n\ntook {total_time:.2f} seconds"
+	message += f"\n\ntook {int(total_time)} seconds"
 	appinfo = await bot.application_info()
 	if not settings.debug:
 		await appinfo.owner.send(message)
@@ -135,31 +124,40 @@ async def invalid_command_reporting(ctx):
 	else:
 		return botdata.guildinfo(ctx.message.guild.id).invalidcommands
 
+async def initial_channel_connect_wrapper(audio_cog, guildinfo):
+	channel_id = guildinfo.voicechannel
+	server_id = guildinfo.id
+	print(f"connecting voice to: {channel_id}")
+	status = await initial_channel_connect(audio_cog, guildinfo)
+	if status == "connected":
+		print(f"connected: {channel_id}")
+	else:
+		print(f"initial channel connect to {channel_id} failed with status '{status}' (serverid={server_id})")
+	return status
+
 
 # returns 0 on successful connect, 1 on not found, and 2 on timeout, 3 on error
 async def initial_channel_connect(audio_cog, guildinfo):
+	channel_id = guildinfo.voicechannel
+	status = "connected"
 	try:
-		print(f"connecting voice to: {guildinfo.voicechannel}")
 		connect_task = audio_cog.connect_voice(guildinfo.voicechannel)
 		await asyncio.wait_for(connect_task, timeout=200)
-		print(f"connected: {guildinfo.voicechannel}")
-		return 0
+		return "connected"
 	except UserError as e:
 		if e.message == "channel not found":
-			print(f"channel not found! ({guildinfo.voicechannel}, in server {guildinfo.id})")
 			guildinfo.voicechannel = None
-			return 1
+			return "not found"
 		else:
-			print(f"weird usererror in on_ready for '{guildinfo.voicechannel}': {e.message}")
-			return 3
+			print(f"weird usererror on connection to channel '{channel_id}': {e.message}")
+			return "found_weird_usererror"
 	except asyncio.TimeoutError:
-		print(f"timeout error when connecting to channel {guildinfo.voicechannel}")
 		guildinfo.voicechannel = None
-		return 2
+		return "timed out"
 	except Exception as e:
-		print(f"unknown exception encountered on connection to channel ({guildinfo.voicechannel}): {e.message}")
+		print(f"exception thrown on connection to channel ({channel_id}): {str(e)}")
 		guildinfo.voicechannel = None
-		return 3
+		return "found_exception"
 
 
 @bot.event
@@ -237,7 +235,7 @@ async def print_missing_perms(ctx, error):
 	perms_strings = read_json(settings.resource("json/permissions.json"))
 	perms = []
 	for i in range(0, 32):
-		if ((permissions >> i) & 1) and not my_perms._bit(i):
+		if ((permissions >> i) & 1) and not ((permissions >> i) & 1):
 			words = perms_strings["0x{:08x}".format(1 << i)].split("_")
 			for i in range(0, len(words)):
 				words[i] = f"**{words[i][0] + words[i][1:].lower()}**"
@@ -279,6 +277,7 @@ from cogs.admin import Admin
 from cogs.owner import Owner
 
 if __name__ == '__main__':
+	print(f"Starting mango at {datetime.datetime.today().strftime('%d-%b-%Y %I:%M %p')}")
 	bot.add_cog(General(bot))
 	bot.add_cog(Audio(bot))
 	bot.add_cog(Dotabase(bot))

@@ -66,6 +66,7 @@ class AudioPlayer:
 		elif self.voice.channel and self.voice.channel.id == channel.id:
 			print(f"doin a disconnect and reconnect for: {channel.id}")
 			await self.voice.disconnect()
+			await asyncio.sleep(1)
 			await channel.connect()
 			print(f"finished reconnect for: {channel.id}")
 		else:
@@ -514,9 +515,17 @@ class Audio(MangoCog):
 						await self.do_tts(f"{name} says", message.guild)
 					await self.do_smarttts(message.clean_content, message.guild)
 				except UserError as e:
-					await message.channel.send(e.message)
+					try:
+						await message.channel.send(e.message)
+					except discord.errors.Forbidden as e:
+						print("on_message usererror blocked because permissions")
+						pass
 				except Exception as e:
-					await message.channel.send("Uh-oh, sumthin dun gone wrong 😱")
+					try:
+						await message.channel.send("Uh-oh, sumthin dun gone wrong 😱")
+					except discord.errors.Forbidden as e:
+						print("on_message usererror blocked because permissions")
+						pass
 					await report_error(message, TtsChannelError(e))
 
 
