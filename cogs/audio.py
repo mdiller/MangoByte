@@ -55,7 +55,7 @@ class AudioPlayer:
 		else:
 			return self.voice.channel
 
-	async def update_guild():
+	async def update_guild(self):
 		self.guild = await bot.fetch_guild(self.guild.id)
 
 	# connects to a voice channel
