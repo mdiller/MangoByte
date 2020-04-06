@@ -38,6 +38,7 @@ class AudioPlayer:
 	"""The guild-specific objects used for mangobyte's audio output"""
 	def __init__(self, bot, guild):
 		self.bot = bot
+		self.guild_id = guild.id
 		self.guild = guild
 		self.player = None
 		self.clipqueue = queue.Queue()
@@ -45,7 +46,7 @@ class AudioPlayer:
 
 	@property
 	def voice(self):
-		return next((voice for voice in self.bot.voice_clients if voice.guild == self.guild), None)
+		return self.guild.voice_client
 
 	@property
 	def voice_channel(self):
@@ -54,24 +55,30 @@ class AudioPlayer:
 		else:
 			return self.voice.channel
 
+	async def update_guild():
+		self.guild = await bot.fetch_guild(self.guild.id)
+
 	# connects to a voice channel
 	async def connect(self, channel):
 		if not isinstance(channel, discord.VoiceChannel):
 			channel = self.bot.get_channel(channel)
 
-		if self.voice is None:
+		voice = self.voice
+
+		if voice is None:
 			print(f"attempting connect to: {channel.id}")
 			await channel.connect()
 			print(f"finished connect to: {channel.id}")
-		elif self.voice.channel and self.voice.channel.id == channel.id:
-			print(f"doin a disconnect and reconnect for: {channel.id}")
-			await self.voice.disconnect()
-			await asyncio.sleep(1)
-			await channel.connect()
-			print(f"finished reconnect for: {channel.id}")
+		elif voice.channel and voice.channel.id == channel.id:
+			# print(f"doin a disconnect and reconnect for: {channel.id}")
+			# await voice.disconnect()
+			# await asyncio.sleep(1)
+			# await channel.connect()
+			# print(f"finished reconnect for: {channel.id}")
+			print(f"leaving this because we're supposedly already connected? ({channel.id})")
 		else:
 			print(f"attempting move to: {channel.id}")
-			await self.voice.move_to(channel)
+			await voice.move_to(channel)
 			print(f"finished move to: {channel.id}")
 
 	def done_talking(self, error):
@@ -215,6 +222,7 @@ class Audio(MangoCog):
 
 		audioplayer = await self.audioplayer(channel, error_on_none=False)
 		if audioplayer is not None:
+			await audioplayer.update_guild()
 			await audioplayer.connect(channel)
 		else:
 			audioplayer = AudioPlayer(self.bot, channel.guild)

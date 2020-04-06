@@ -59,7 +59,8 @@ async def on_ready():
 	is_first_time = True
 	if on_ready_has_run:
 		is_first_time = False
-		print("on_ready called again!")
+		print("on_ready called again, waiting 10 seconds before processing")
+		await asyncio.sleep(10)
 	on_ready_has_run = True
 
 	start_time = datetime.datetime.now()
@@ -83,7 +84,7 @@ async def on_ready():
 	channel_tasks = []
 	for guildinfo in botdata.guildinfo_list():
 		if guildinfo.voicechannel is not None:
-			channel_tasks.append(initial_channel_connect(audio_cog, guildinfo))
+			channel_tasks.append(initial_channel_connect_wrapper(audio_cog, guildinfo))
 
 	connection_results = await asyncio.gather(*channel_tasks)
 	for status in connection_results:
