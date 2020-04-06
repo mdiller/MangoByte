@@ -70,12 +70,12 @@ class AudioPlayer:
 			await channel.connect()
 			print(f"finished connect to: {channel.id}")
 		elif voice.channel and voice.channel.id == channel.id:
-			# print(f"doin a disconnect and reconnect for: {channel.id}")
-			# await voice.disconnect()
-			# await asyncio.sleep(1)
-			# await channel.connect()
-			# print(f"finished reconnect for: {channel.id}")
-			print(f"leaving this because we're supposedly already connected? ({channel.id})")
+			print(f"doin a disconnect and reconnect for: {channel.id}")
+			await voice.disconnect(force=True)
+			await asyncio.sleep(1)
+			await channel.connect()
+			print(f"finished reconnect for: {channel.id}")
+			# print(f"leaving this because we're supposedly already connected? ({channel.id})")
 		else:
 			print(f"attempting move to: {channel.id}")
 			await voice.move_to(channel)
