@@ -573,6 +573,9 @@ class Audio(MangoCog):
 					userinfo = botdata.userinfo(member.id)
 					channel_id = before.channel.id
 
+					if member.id == self.bot.user.id:
+						return # dont play outros for self, thatd be a bug
+
 					try:
 						outroclip = userinfo.outro
 						if outroclip:
@@ -605,6 +608,7 @@ class Audio(MangoCog):
 					channel_id = after.channel.id
 					if member.id == self.bot.user.id:
 						guildinfo.voicechannel = after.channel.id
+						return # dont play intros for self.
 
 					userinfo = botdata.userinfo(member.id)
 
