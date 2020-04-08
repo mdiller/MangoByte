@@ -36,7 +36,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 			return cog.qualified_name + ':' if cog is not None else no_category
 
 		if self.show_all:
-			embed = self.embed_description(self.bot.description + "\n\nTo get more information about a specific command, try `{cmdpfx}help <command>`", self.bot)
+			embed = self.embed_description(self.bot.description + "\n\nTo get more information about a specific category, try `{cmdpfx}help <category>`\nTo get more information about a specific command, try `{cmdpfx}help <command>`", self.bot)
 			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url, url="https://github.com/mdiller/MangoByte")
 
 			filtered = await self.filter_commands(self.bot.commands, sort=True, key=get_category)
@@ -47,7 +47,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 					continue
 				commands = list(commands)
 				if len(commands) > 0:
-					embed.add_field(name=category, value=self.list_commands(commands), inline=False)
+					embed.add_field(name=category, value=self.list_commands(commands, only_name=True), inline=False)
 		else:
 			embed = self.embed_description(self.bot.description + "\n\nTo get more information about a specific category, try `{cmdpfx}help <category>`\nTo show all commands, try `{cmdpfx}help all`", self.bot)
 			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url, url="https://github.com/mdiller/MangoByte")
@@ -65,9 +65,11 @@ class MangoHelpCommand(DefaultHelpCommand):
 		await self.send_embed(embed)
 
 	async def send_cog_help(self, cog):
-		embed = self.embed_description(inspect.getdoc(cog), cog)
+		description = inspect.getdoc(cog)
+		description += "\n\n**Commands:**\n" + self.list_commands(await self.filter_commands(cog.get_commands()))
+		embed = self.embed_description(description, cog)
 		embed.set_author(name=cog.__class__.__name__)
-		embed.add_field(name="Commands", value=self.list_commands(await self.filter_commands(cog.get_commands())))
+		# embed.add_field(name="Commands", value=self.list_commands(await self.filter_commands(cog.get_commands())))
 		await self.send_embed(embed)
 
 	async def send_embed(self, embed):
@@ -93,14 +95,18 @@ class MangoHelpCommand(DefaultHelpCommand):
 
 		await super().command_callback(ctx, command=command)
 
-	def list_commands(self, commands):
+	def list_commands(self, commands, only_name=False):
 		results = []
+		commands = sorted(commands, key=lambda c: c.name) 
 		for command in commands:
 			if command.name in command.aliases:
 				# skip aliases
 				continue
-			entry = '`{0:{2}<{width}} | {1}`'.format(command.name, command.short_doc, u"\u00A0", width=self.get_max_size(commands))
-			results.append(self.shorten_text(entry))
+			if only_name:
+				results.append("`{{cmdpfx}}{0:{1}<30}`".format(command.name, u"\u00A0"))
+			else:
+				entry = '`{{cmdpfx}}{0:{2}<{width}} | {1}`'.format(command.name, command.short_doc, u"\u00A0", width=self.get_max_size(commands))
+				results.append(self.shorten_text(entry))
 		if results:
 			return self.fill_template("\n".join(results))
 		else:

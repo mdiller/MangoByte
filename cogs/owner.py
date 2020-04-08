@@ -193,7 +193,7 @@ class Owner(MangoCog):
 
 	@commands.command()
 	async def getcache(self, ctx, uri):
-		"""Gets the file in the cache that is pointed to by the uri"""
+		"""Gets a file in the cache"""
 		filename = httpgetter.cache.get_filename(uri)
 
 		if filename is None:
@@ -225,7 +225,7 @@ class Owner(MangoCog):
 
 	@commands.command()
 	async def remoteresummon(self, ctx, guild_id : int):
-		"""Removes and then re-summons the bot to the voice channel of the guild
+		"""Re-summons the bot for the given guild
 
 		This command is useful if you are having issues with mangobyte not being responsive"""
 		audio = self.bot.get_cog("Audio")

@@ -466,7 +466,9 @@ class DotaStats(MangoCog):
 
 	@commands.command()
 	async def matchstory(self, ctx, match_id : int, perspective=None):
-		"""Tells the story of the match from the given perspective"""
+		"""Tells the story of the match
+
+		The story is based on the given perspective, or the player's perspective if they were in the match."""
 		await ctx.channel.trigger_typing()
 
 		steamid = None
@@ -716,7 +718,7 @@ class DotaStats(MangoCog):
 
 	@commands.command(aliases=["twenty"])
 	async def playerstats(self, ctx, *, matchfilter : MatchFilter = None):
-		"""Gets stats from the given player's last 20 parsed games
+		"""Gets stats from the player's last 20 parsed games
 
 		Note that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available
 
@@ -1161,7 +1163,7 @@ class DotaStats(MangoCog):
 
 	@commands.command(aliases=["lanes"])
 	async def laning(self, ctx, match_id : int = None):
-		"""Creates a short description and a gif of the laning stage
+		"""Creates gif of the laning stage with a caption
 
 		If no match id is given and the user has a steam account connected, uses the player's most recently played match"""
 		await ctx.channel.trigger_typing()

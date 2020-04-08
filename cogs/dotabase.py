@@ -1151,7 +1151,7 @@ class Dotabase(MangoCog):
 
 	@commands.command(aliases=["startingstats", "tradingstats", "lvlstats", "lvledstats"])
 	async def leveledstats(self, ctx, *, hero : str):
-		"""Gets the stats for the given hero at the specified level
+		"""Gets the stats for a hero at the specified level
 		
 		If no level is specified, get the stats for the hero at level 1
 
@@ -1206,7 +1206,7 @@ class Dotabase(MangoCog):
 
 	@commands.command(aliases=["statstable", "stattable", "heroestable", "leveledstatstable", "besthero", "bestheroes"])
 	async def herotable(self, ctx, *, table_args : HeroStatsTableArgs):
-		"""Displays a table of the best heroes for the specified stat
+		"""Displays a sorted table of heroes and their stats
 		
 		Displays a table with computed hero stats showing which heroes have the highest values for the specified stat. To see the list of possible stats, try the `{cmdpfx}leveledstats` command
 

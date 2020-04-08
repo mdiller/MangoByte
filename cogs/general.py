@@ -297,7 +297,7 @@ class General(MangoCog):
 
 	@commands.command()
 	async def reddit(self, ctx, url_or_id):
-		"""Gets a reddit submission and returns a nice embed of it"""
+		"""Displays a formatted reddit post"""
 		if settings.reddit is None:
 			raise UserError("This MangoByte has not been configured to get reddit submissions. Gotta add your info to `settings.json`")
 

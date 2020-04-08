@@ -126,7 +126,7 @@ class Admin(MangoCog):
 
 	@commands.command()
 	async def summon(self, ctx, channel : str = None):
-		"""Summons the bot to the voice channel you are currently in
+		"""Summons the bot to the voice channel
 
 		You can specify the specific voice channel that you would like to connect to. If no channel is specified, it will connect to whatever channel you are currently in.
 		**Examples:**
@@ -169,7 +169,7 @@ class Admin(MangoCog):
 
 	@commands.command()
 	async def unsummon(self, ctx):
-		"""Removes the bot from the voice channel it is currently in"""
+		"""Removes the bot from the voice channel"""
 		audio = self.bot.get_cog("Audio")
 		if not audio:
 			raise UserError("You must have the Audio cog enabled to do this")
@@ -182,7 +182,7 @@ class Admin(MangoCog):
 
 	@commands.command()
 	async def resummon(self, ctx):
-		"""Removes and then re-summons the bot to the voice channel
+		"""Re-summons the bot to the voice channel
 
 		This command is useful if you are having issues with mangobyte not being responsive"""
 		audio = self.bot.get_cog("Audio")
