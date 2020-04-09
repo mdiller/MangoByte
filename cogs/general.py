@@ -170,18 +170,18 @@ class General(MangoCog):
 			"Developed as an open source project, hosted on [GitHub]({}). "
 			"Implemented using {} and a python discord api wrapper [discord.py]({})".format(github, python_version, discordpy)))
 
-		cmdpfx = self.cmdpfx(ctx)
-		embed.add_field(name="Features", value=(
-			f"• Answers questions (`{cmdpfx}ask`)\n"
-			f"• Plays audio clips (`{cmdpfx}play`, `{cmdpfx}dota`)\n"
-			f"• Greets users joining a voice channel\n"
-			f"• For a list of command categories, try `{cmdpfx}help`"))
-
 		help_guild_link = "https://discord.gg/d6WWHxx"
 
 		embed.add_field(name="Help", value=(
 			f"If you want to invite mangobyte to your server/guild, click this [invite link]({invite_link}). "
 			f"If you have a question, suggestion, or just want to try out mah features, check out the [Help Server/Guild]({help_guild_link})."))
+
+		cmdpfx = self.cmdpfx(ctx)
+		embed.add_field(name="Features", value=(
+			f"• Answers questions (`{cmdpfx}ask`)\n"
+			f"• Plays audio clips (`{cmdpfx}play`, `{cmdpfx}dota`)\n"
+			f"• Greets users joining a voice channel\n"
+			f"• For a list of command categories, try `{cmdpfx}help`"), inline=False)
 
 		embed.add_field(name="Donate", value=(
 			f"If you want to donate money to support MangoByte's server costs, click [here]({self.donation_link})"))

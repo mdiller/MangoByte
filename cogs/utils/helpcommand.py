@@ -20,6 +20,11 @@ def get_config_help(variables, command):
 		f"**Examples**\n"
 		f"{examples}")
 
+
+text_help_server = "Feel free to visit the [Mangobyte Help Server/Guild](https://discord.gg/d6WWHxx) if you have any questions!"
+text_category_help = "To get more information about a specific category, try `{cmdpfx}help <category>`"
+text_command_help = "To get more information about a specific command, try `{cmdpfx}help <command>`"
+
 class MangoHelpCommand(DefaultHelpCommand):
 	def __init__(self, **options):
 		options["verify_checks"] = False
@@ -36,7 +41,8 @@ class MangoHelpCommand(DefaultHelpCommand):
 			return cog.qualified_name + ':' if cog is not None else no_category
 
 		if self.show_all:
-			embed = self.embed_description(self.bot.description + "\n\nTo get more information about a specific category, try `{cmdpfx}help <category>`\nTo get more information about a specific command, try `{cmdpfx}help <command>`", self.bot)
+			# ?help all
+			embed = self.embed_description(f"{self.bot.description}\n\n{text_help_server}\n\n{text_category_help}\n{text_command_help}", self.bot)
 			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url, url="https://github.com/mdiller/MangoByte")
 
 			filtered = await self.filter_commands(self.bot.commands, sort=True, key=get_category)
@@ -49,7 +55,8 @@ class MangoHelpCommand(DefaultHelpCommand):
 				if len(commands) > 0:
 					embed.add_field(name=category, value=self.list_commands(commands, only_name=True), inline=False)
 		else:
-			embed = self.embed_description(self.bot.description + "\n\nTo get more information about a specific category, try `{cmdpfx}help <category>`\nTo show all commands, try `{cmdpfx}help all`", self.bot)
+			# ?help
+			embed = self.embed_description(f"{self.bot.description}\n\n{text_help_server}\n\n{text_category_help}\nTo show all commands, try `{{cmdpfx}}help all`", self.bot)
 			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url, url="https://github.com/mdiller/MangoByte")
 			for cog in self.bot.cogs:
 				if cog == "Owner":
@@ -58,6 +65,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 		await self.send_embed(embed)
 
 	async def send_command_help(self, command):
+		# ?help <command>
 		embed = self.embed_description(command.help, command)
 		embed.set_author(name=self.get_command_signature(command))
 		if command.aliases:
@@ -65,7 +73,9 @@ class MangoHelpCommand(DefaultHelpCommand):
 		await self.send_embed(embed)
 
 	async def send_cog_help(self, cog):
+		# ? help <cog>
 		description = inspect.getdoc(cog)
+		description += f"\n\n{text_command_help}"
 		description += "\n\n**Commands:**\n" + self.list_commands(await self.filter_commands(cog.get_commands()))
 		embed = self.embed_description(description, cog)
 		embed.set_author(name=cog.__class__.__name__)
@@ -80,6 +90,9 @@ class MangoHelpCommand(DefaultHelpCommand):
 	async def command_callback(self, ctx, *, command=None):
 		if command:
 			command = command.lower()
+			trimming_pattern = f"(^<|>$|^{re.escape(botdata.command_prefix(ctx))})"
+			while re.match(trimming_pattern, command):
+				command = re.sub(trimming_pattern, "", command)
 			if command == "all":
 				command = None
 				self.show_all = True
