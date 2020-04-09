@@ -185,7 +185,7 @@ def format_teamfight(teamfight):
 
 
 class DotaStats(MangoCog):
-	"""Dota player and match stats
+	"""Commands for displaying information about Dota 2 players and matches
 
 	Most of the data for this is collected through the [OpenDota API](https://docs.opendota.com/)"""
 

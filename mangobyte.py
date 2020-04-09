@@ -23,6 +23,9 @@ import datetime
 from cogs.utils.helpcommand import MangoHelpCommand
 from cogs.utils.clip import *
 from cogs.utils.commandargs import *
+import json
+import sys
+import inspect
 
 logging.basicConfig(level=logging.INFO)
 
@@ -268,6 +271,62 @@ async def report_error(message, error, skip_lines=2):
 	print(f"\nError on: {message.clean_content}\n{trace_string}\n")
 	return trace_string
 
+def update_commandinfo():
+	commands_file = "resource/json/commands.json"
+	data = {
+		"cogs": [],
+		"commands": []
+	}
+	commands = sorted(bot.commands, key=lambda c: c.name) 
+	for cmd in commands:
+		if cmd.cog and cmd.cog.name == "Owner":
+			continue
+		data["commands"].append({
+			"name": cmd.name,
+			"signature": bot.help_command.get_command_signature(cmd),
+			"short_help": cmd.short_doc,
+			"help": bot.help_command.fill_template(cmd.help),
+			"aliases": cmd.aliases,
+			"cog": cmd.cog.name if cmd.cog else "General"
+		})
+	for cog in bot.cogs:
+		if cog == "Owner":
+			continue
+		data["cogs"].append({
+			"name": cog,
+			"short_help": bot.help_command.cog_short_doc(bot.cogs[cog]),
+			"help":  inspect.getdoc(bot.cogs[cog])
+		})
+
+	with open(commands_file, "w+") as f:
+		f.write(json.dumps(data, indent="\t"))
+
+	max_command_len = max(map(lambda c: len(c["name"]), data["commands"]))
+	max_short_help_len = max(map(lambda c: len(c["short_help"]), data["commands"]))
+
+	docs = ""
+	docs += f"Mangobyte currently has {len(data['commands'])} commands, separated into {len(data['cogs'])} categories\n"
+	for cog in data["cogs"]:
+		docs += f"\n#### {cog['name']}\n"
+		docs += f"{cog['short_help']}\n"
+		docs += "\n```\n"
+		for cmd in data["commands"]:
+			if cmd["cog"] == cog["name"]:
+				docs += f"?{cmd['name']: <{max_command_len + 1}} | {cmd['short_help']: <{max_short_help_len + 1}}\n"
+		docs += "```\n"
+
+	readme_file = "README.md"
+	readme_replacement_start = "<!-- COMMANDS_START -->\n"
+	readme_replacement_end = "\n<!-- COMMANDS_END -->"
+	with open(readme_file, "r") as f:
+		text = f.read()
+	text = re.sub(f"({readme_replacement_start}).*({readme_replacement_end})", f"\\1{docs}\\2", text, flags=re.S)
+	with open(readme_file, "w+") as f:
+		f.write(text)
+
+	print("done!")
+
+
 from cogs.general import General
 from cogs.audio import Audio
 from cogs.dotabase import Dotabase
@@ -278,7 +337,6 @@ from cogs.admin import Admin
 from cogs.owner import Owner
 
 if __name__ == '__main__':
-	print(f"Starting mango at {datetime.datetime.today().strftime('%d-%b-%Y %I:%M %p')}")
 	bot.add_cog(General(bot))
 	bot.add_cog(Audio(bot))
 	bot.add_cog(Dotabase(bot))
@@ -287,6 +345,11 @@ if __name__ == '__main__':
 	bot.add_cog(Artifact(bot))
 	bot.add_cog(Admin(bot))
 	bot.add_cog(Owner(bot))
-	bot.run(settings.token)
+
+	if len(sys.argv) > 1 and sys.argv[1] == "commands":
+		update_commandinfo()
+	else:
+		print(f"Starting mango at {datetime.datetime.today().strftime('%d-%b-%Y %I:%M %p')}")
+		bot.run(settings.token)
 
 

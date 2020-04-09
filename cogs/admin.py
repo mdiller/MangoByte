@@ -11,7 +11,7 @@ from cogs.utils import botdatatypes
 from .mangocog import *
 
 class Admin(MangoCog):
-	"""Administrative commands
+	"""Commands to help manage mangobyte on your server/guild
 	
 	Primarily used to stop people from ruining stuff, and to configure mangobyte to do different things.
 

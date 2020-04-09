@@ -59,7 +59,7 @@ def load_md_as_dict(filename):
 	return result
 
 class General(MangoCog):
-	"""Basic and admin commands
+	"""Commands that don't really fit into the other categories
 
 	Random and/or fun commands with a variety of uses"""
 	def __init__(self, bot):

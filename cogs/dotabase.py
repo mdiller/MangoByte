@@ -89,7 +89,7 @@ def extract_var(words, variables):
 
 
 class Dotabase(MangoCog):
-	"""Dota hero responses and info
+	"""For information about Dota 2, and playing hero responses
 
 	Interfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see a website that interfaces with dotabase."""
 	def __init__(self, bot):
