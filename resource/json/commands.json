@@ -2,8 +2,8 @@
 	"cogs": [
 		{
 			"name": "General",
-			"short_help": "Basic and admin commands",
-			"help": "Basic and admin commands\n\nRandom and/or fun commands with a variety of uses"
+			"short_help": "Commands that don't really fit into the other categories",
+			"help": "Commands that don't really fit into the other categories\n\nRandom and/or fun commands with a variety of uses"
 		},
 		{
 			"name": "Audio",
@@ -12,13 +12,13 @@
 		},
 		{
 			"name": "Dotabase",
-			"short_help": "Dota hero responses and info",
-			"help": "Dota hero responses and info\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see a website that interfaces with dotabase."
+			"short_help": "For information about Dota 2, and playing hero responses",
+			"help": "For information about Dota 2, and playing hero responses\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see a website that interfaces with dotabase."
 		},
 		{
 			"name": "DotaStats",
-			"short_help": "Dota player and match stats",
-			"help": "Dota player and match stats\n\nMost of the data for this is collected through the [OpenDota API](https://docs.opendota.com/)"
+			"short_help": "Commands for displaying information about Dota 2 players and matches",
+			"help": "Commands for displaying information about Dota 2 players and matches\n\nMost of the data for this is collected through the [OpenDota API](https://docs.opendota.com/)"
 		},
 		{
 			"name": "Pokemon",
@@ -34,11 +34,6 @@
 			"name": "Admin",
 			"short_help": "Commands to help manage mangobyte on your server/guild",
 			"help": "Commands to help manage mangobyte on your server/guild\n\nPrimarily used to stop people from ruining stuff, and to configure mangobyte to do different things.\n\nOnly admins or people with the correct role can use these commands. To set a role as the 'Bot Admin' role, try `{cmdpfx}config botadmin`"
-		},
-		{
-			"name": "Owner",
-			"short_help": "Owner commands",
-			"help": "Owner commands\n\nOnly used by the bot owner, for managing the bot"
 		}
 	],
 	"commands": [

@@ -11,10 +11,10 @@ A discord bot that provides the ability to play audio clips, play dota responses
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 79 commands, separated into 8 categories
+Mangobyte currently has 79 commands, separated into 7 categories
 
 #### General
-Basic and admin commands
+Commands that don't really fit into the other categories
 
 ```
 ?ask             | Answers any question you might have                        
@@ -56,7 +56,7 @@ For playing audio in a voice channel
 ```
 
 #### Dotabase
-Dota hero responses and info
+For information about Dota 2, and playing hero responses
 
 ```
 ?ability         | Gets information about a specific hero ability             
@@ -82,7 +82,7 @@ Dota hero responses and info
 ```
 
 #### DotaStats
-Dota player and match stats
+Commands for displaying information about Dota 2 players and matches
 
 ```
 ?dotagif         | Creates a gif of a specific part of a dota match           
@@ -132,12 +132,6 @@ Commands to help manage mangobyte on your server/guild
 ?resummon        | Re-summons the bot to the voice channel                    
 ?summon          | Summons the bot to the voice channel                       
 ?unsummon        | Removes the bot from the voice channel                     
-```
-
-#### Owner
-Owner commands
-
-```
 ```
 
 <!-- COMMANDS_END -->
