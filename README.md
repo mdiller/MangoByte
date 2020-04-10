@@ -6,7 +6,7 @@
 - [Add the bot to your server](https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968)
 - [Join the MangoByte help server](https://discord.gg/d6WWHxx)
 
-A discord bot that provides the ability to play audio clips, play dota responses, answer questions, randomly react to messages, and a large number of other actions. I'm using the [discord.py](https://github.com/Rapptz/discord.py) python wrapper for the [Discord API](https://discordapp.com/developers). I'm also making use of [dotabase](https://github.com/mdiller/dotabase), which is an open source repository (created by yours truly) containing data about the game [Dota 2](http://www.dota2.com).
+Mangobyte is a discord bot primarily focused on providing information about the game Dota 2, and doing text-to-speech in a voice channel. The text-to-speech has many different forms, including playing clips, playing voice lines from dota, and doing tts from user input. The Dota 2 information is both information about the players and their recent matches, as well as information extracted from the game itself about the stats of various heroes. It can also play an intro for users when they join the voice channel it is in. It is highly configurable, allowing server/guild owners to configure various options for their servers, as well as users to configure various options for themselves. I'm using the [discord.py](https://github.com/Rapptz/discord.py) python wrapper for the [Discord API](https://discordapp.com/developers). I'm also making use of [dotabase](https://github.com/mdiller/dotabase), which is an open source repository (created by yours truly) containing data about the game [Dota 2](http://www.dota2.com).
 
 ## Commands
 
@@ -138,17 +138,53 @@ Commands to help manage mangobyte on your server/guild
 
 ## Examples
 
-Example of a gif you can create with `?laning` or `?dotagif`:
+`?hero brew`
 
-![DotaGif Command](/resource/images/readme/dotagif.gif)
+![hero_brew](/resource/images/readme/hero_brew.png)
 
-Example of `?lastgame` command:
+`?ability black hole`
 
-![Lastgame Command](/resource/images/readme/lastgame.gif)
+![ability_black_hole](/resource/images/readme/ability_black_hole.png)
 
-This is the long list of all of the commands. You can get this from `?help all`
+`?item silver edge`
 
-![Commands List](/resource/images/readme/help_all.png)
+![item_silver_edge](/resource/images/readme/item_silver_edge.png)
+
+`?herotable lvl 20 effective hp`
+
+![herotable_lvl20_effhp](/resource/images/readme/herotable_lvl20_effhp.png)
+
+`?lastmatch`
+
+![lastmatch](/resource/images/readme/lastmatch.png)
+
+`?playerstats`
+
+![playerstats](/resource/images/readme/playerstats.png)
+
+`?laning`
+
+![laning](/resource/images/readme/laning.png)
+
+`?recent`
+
+![recent](/resource/images/readme/recent.png)
+
+`?recent tinker wins` (See the options you can use for this [here](resource/docs.md))
+![recent_tinker_wins](/resource/images/readme/recent_tinker_wins.png)
+
+`?rolesgraph`
+
+![rolesgraph](/resource/images/readme/rolesgraph.png)
+
+`?help config`
+
+![help_config](/resource/images/readme/help_config.png)
+
+`?help userconfig`
+
+![help_userconfig](/resource/images/readme/help_userconfig.png)
+
 
 ## Installation
 
