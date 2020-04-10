@@ -551,6 +551,16 @@ class General(MangoCog):
 		await ctx.send(file=discord.File(imagepath))
 
 
+	@commands.command(aliases=[ "dogs", "doggos", "doggo", "comet", "fizzgig" ])
+	async def dog(self, ctx):
+		"""Gets a picture of one of my dogs
+
+		These are pictures of my (the developer of mangobyte) dogs. Thier names are Fizzgig and Comet. One is floof. Other is big doggo. Floof older. Both good boys. """
+		cat_dir = settings.resource("images/dog")
+		imagepath = os.path.join(cat_dir, random.choice(os.listdir(cat_dir)))
+		await ctx.send(file=discord.File(imagepath))
+
+
 
 
 def setup(bot):

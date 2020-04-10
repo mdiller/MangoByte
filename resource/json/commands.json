@@ -100,6 +100,20 @@
 			"cog": "Artifact"
 		},
 		{
+			"name": "cat",
+			"signature": "?cat ",
+			"short_help": "Gets a picture of my cat",
+			"help": "Gets a picture of my cat\n\nThese are pictures of my (the developer of mangobyte) cat. Shes a bit over a year old now. Her name is Minnie. Short for Minerva. Also known as \"Kitten\", \"Sneakerdoodle\", or \"Noodle.\" Shes a good kitten. ",
+			"aliases": [
+				"kitten",
+				"cats",
+				"kittens",
+				"minnie",
+				"minerva"
+			],
+			"cog": "General"
+		},
+		{
 			"name": "changelog",
 			"signature": "?changelog ",
 			"short_help": "Gets a rough changelog for mangobyte",
@@ -182,6 +196,20 @@
 			"help": "Shows the documentation for the given topic\n\nIf no parameters are given, then this shows the available documentation\n\n**Example:**\n\u200b`?docs`\n\u200b`?docs Match Filter`\n\u200b`?docs matchfilter`",
 			"aliases": [
 				"documentation"
+			],
+			"cog": "General"
+		},
+		{
+			"name": "dog",
+			"signature": "?dog ",
+			"short_help": "Gets a picture of one of my dogs",
+			"help": "Gets a picture of one of my dogs\n\nThese are pictures of my (the developer of mangobyte) dogs. Thier names are Fizzgig and Comet. One is floof. Other is big doggo. Floof older. Both good boys. ",
+			"aliases": [
+				"dogs",
+				"doggos",
+				"doggo",
+				"comet",
+				"fizzgig"
 			],
 			"cog": "General"
 		},

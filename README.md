@@ -11,7 +11,7 @@ Mangobyte is a discord bot primarily focused on providing information about the 
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 79 commands, separated into 7 categories
+Mangobyte currently has 81 commands, separated into 7 categories
 
 #### General
 Commands that don't really fit into the other categories
@@ -19,9 +19,11 @@ Commands that don't really fit into the other categories
 ```
 ?ask             | Answers any question you might have                        
 ?botstats        | Displays some bot statistics                               
+?cat             | Gets a picture of my cat                                   
 ?changelog       | Gets a rough changelog for mangobyte                       
 ?choose          | Randomly chooses one of the given options                  
 ?docs            | Shows the documentation for the given topic                
+?dog             | Gets a picture of one of my dogs                           
 ?donate          | Posts the donation information                             
 ?echo            | Echo...                                                    
 ?help            | Shows this message                                         
