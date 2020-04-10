@@ -541,5 +541,17 @@ class General(MangoCog):
 		await ctx.send(embed=embed)
 
 
+	@commands.command(aliases=[ "kitten", "cats", "kittens", "minnie", "minerva" ])
+	async def cat(self, ctx):
+		"""Gets a picture of my cat
+
+		These are pictures of my (the developer of mangobyte) cat. Shes a bit over a year old now. Her name is Minnie. Short for Minerva. Also known as "Kitten", "Sneakerdoodle", or "Noodle." Shes a good kitten. """
+		cat_dir = settings.resource("images/cat")
+		imagepath = os.path.join(cat_dir, random.choice(os.listdir(cat_dir)))
+		await ctx.send(file=discord.File(imagepath))
+
+
+
+
 def setup(bot):
 	bot.add_cog(General(bot))
