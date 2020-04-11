@@ -166,7 +166,7 @@ Commands to help manage mangobyte on your server/guild
 
 `?laning`
 
-![laning](/resource/images/readme/laning.png)
+![laning](/resource/images/readme/laning.gif)
 
 `?recent`
 
