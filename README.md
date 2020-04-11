@@ -154,7 +154,7 @@ Commands to help manage mangobyte on your server/guild
 
 `?herotable lvl 20 effective hp`
 
-![herotable_lvl20_effhp](/resource/images/readme/herotable_lvl20_effhp.png)
+<img width="600px" src="/resource/images/readme/herotable_lvl20_effhp.png"/>
 
 `?lastmatch`
 
@@ -170,10 +170,11 @@ Commands to help manage mangobyte on your server/guild
 
 `?recent`
 
-![recent](/resource/images/readme/recent.png)
+<img width="600px" src="/resource/images/readme/recent.png"/>
 
 `?recent tinker wins` (See the options you can use for this [here](resource/docs.md))
-![recent_tinker_wins](/resource/images/readme/recent_tinker_wins.png)
+
+<img width="600px" src="/resource/images/readme/recent_tinker_wins.png"/>
 
 `?rolesgraph`
 
