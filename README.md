@@ -1,9 +1,9 @@
 # MangoByte<img align="right" src="/resource/images/readme/mangobyte.png"/>
 
-[![Servers](https://img.shields.io/badge/dynamic/json.svg?label=servers&url=http%3A%2F%2Fdillerm.io%2Fshieldstats%2Fmangobyte.json&query=%24.servers&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968)
-[![Registered Users](https://img.shields.io/badge/dynamic/json.svg?label=registered%20users&url=http%3A%2F%2Fdillerm.io%2Fshieldstats%2Fmangobyte.json&query=%24.registered_users&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968)
+[![Servers](https://img.shields.io/badge/dynamic/json.svg?label=servers&url=http%3A%2F%2Fdillerm.io%2Fshieldstats%2Fmangobyte.json&query=%24.servers&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
+[![Registered Users](https://img.shields.io/badge/dynamic/json.svg?label=registered%20users&url=http%3A%2F%2Fdillerm.io%2Fshieldstats%2Fmangobyte.json&query=%24.registered_users&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
 
-- [Add the bot to your server](https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968)
+- [Add the bot to your server](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
 - [Join the MangoByte help server](https://discord.gg/d6WWHxx)
 
 Mangobyte is a discord bot primarily focused on providing information about the game Dota 2, and doing text-to-speech in a voice channel. The text-to-speech has many different forms, including playing clips, playing voice lines from dota, and doing tts from user input. The Dota 2 information is both information about the players and their recent matches, as well as information extracted from the game itself about the stats of various heroes. It can also play an intro for users when they join the voice channel it is in. It is highly configurable, allowing server/guild owners to configure various options for their servers, as well as users to configure various options for themselves. I'm using the [discord.py](https://github.com/Rapptz/discord.py) python wrapper for the [Discord API](https://discordapp.com/developers). I'm also making use of [dotabase](https://github.com/mdiller/dotabase), which is an open source repository (created by yours truly) containing data about the game [Dota 2](http://www.dota2.com).
@@ -191,7 +191,7 @@ Commands to help manage mangobyte on your server/guild
 
 ## Installation
 
-I would recommend simply inviting mangobyte to your server via the [Invite Link](https://discordapp.com/oauth2/authorize?permissions=60480&scope=bot&client_id=213476188037971968), but if you want to contribute to mangobyte or just like running things, the following is how you can install and run your own instance of mangobyte.
+I would recommend simply inviting mangobyte to your server via the [Invite Link](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968), but if you want to contribute to mangobyte or just like running things, the following is how you can install and run your own instance of mangobyte.
 
 Before installing and running your own instance of mangobyte, you will first need to install the following:
 
