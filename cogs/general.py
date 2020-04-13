@@ -272,6 +272,8 @@ class General(MangoCog):
 		Uses my own implementation of the [Wikipedia API](https://www.mediawiki.org/wiki/API:Tutorial)
 
 		You can also try `{cmdpfx} wiki random` to get a random wiki page
+		
+		Note that I've had to remove the images from these (unless you're in a NSFW channel) because I have no way of checking if it is an NSFW image, and posting an NSFW image in non-NSFW channels would be against discord's ToS. Sorry about that!
 
 		**Example:**
 		`{cmdpfx}wiki potato`
@@ -284,20 +286,23 @@ class General(MangoCog):
 		embed.title = f"**{page.title}**"
 		embed.url = page.url
 
+		footer_text = "Retrieved from Wikipedia"
+
 		if page.image:
-			embed.set_image(url=page.image)
+			if (not isinstance(ctx.channel, discord.DMChannel)) and ctx.channel.is_nsfw():
+				embed.set_image(url=page.image)
+			else:
+				footer_text += ". (Image omitted because I can't check if it is NSFW) D:"
 
-		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
-
-		# if page.image and re.search(r"\.svg$", page.image, re.IGNORECASE):
-		# 	await ctx.send(embed=embed, file=svg_png_image)
-		# 	return
+		embed.set_footer(text=footer_text, icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 		
 		await ctx.send(embed=embed)
 
 	@commands.command()
 	async def reddit(self, ctx, url_or_id):
-		"""Displays a formatted reddit post"""
+		"""Displays a formatted reddit post
+
+		Note that this will only get nsfw posts if you call this in an nsfw channel"""
 		if settings.reddit is None:
 			raise UserError("This MangoByte has not been configured to get reddit submissions. Gotta add your info to `settings.json`")
 
@@ -317,6 +322,12 @@ class General(MangoCog):
 			description = submission.selftext
 		except:
 			raise UserError("Couldn't properly find that reddit submission")
+
+		
+		if submission.over_18:
+			if (isinstance(ctx.channel, discord.DMChannel)) or (not ctx.channel.is_nsfw()):
+				raise UserError("That is an NSFW post, so I can't link it in this non-nsfw channel.")
+
 
 		character_limit = 600
 		# convert between markdown types
