@@ -1,7 +1,7 @@
 # MangoByte<img align="right" src="/resource/images/readme/mangobyte.png"/>
 
-[![Servers](https://img.shields.io/badge/dynamic/json.svg?label=servers&url=http%3A%2F%2Fdillerm.io%2Fshieldstats%2Fmangobyte.json&query=%24.servers&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
-[![Registered Users](https://img.shields.io/badge/dynamic/json.svg?label=registered%20users&url=http%3A%2F%2Fdillerm.io%2Fshieldstats%2Fmangobyte.json&query=%24.registered_users&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
+[![Servers](https://img.shields.io/badge/dynamic/json.svg?label=servers&url=http%3A%2F%2Fdillerm.io%2Fdata%2Fmangobyte%2Fshieldstats.json&query=%24.servers&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
+[![Registered Users](https://img.shields.io/badge/dynamic/json.svg?label=registered%20users&url=http%3A%2F%2Fdillerm.io%2Fdata%2Fmangobyte%2Fshieldstats.json&query=%24.registered_users&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
 
 - [Add the bot to your server](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
 - [Join the MangoByte help server](https://discord.gg/d6WWHxx)
