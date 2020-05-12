@@ -483,10 +483,11 @@ class General(MangoCog):
 			embed.description = "\n".join(map(lambda name: f"• {name}", list(self.docs_data.keys())))
 			await ctx.send(embed=embed)
 			return
+		clean_topic = topic.lower().replace(" ", "")
 		found_topic = None
 		for name in self.docs_data:
 			simple_name = name.lower().replace(" ", "")
-			if topic in simple_name:
+			if clean_topic in simple_name:
 				found_topic = name
 				break
 		if found_topic is None:
