@@ -77,14 +77,14 @@
 			{
 				"stat": "armor",
 				"name": "Armor",
-				"lambda": "lambda hero, h: hero.base_armor + (h['agility'] * 0.16)"
+				"lambda": "lambda hero, h: hero.base_armor + (h['agility'] / 6.0)"
 			},
 			{
 				"stat": "physical_dmg_multiplier",
 				"name": "Physical Damage Resistance",
 				"display": "resistance_percentage",
 				"regex": "(phys(ical)?|armor)( damage| dmg)? (resist(ance)?|reduction)",
-				"lambda": "lambda hero, h: 1 - ((0.052 * h['armor']) / (0.9 + 0.048 * abs(h['armor'])))"
+				"lambda": "lambda hero, h: 1 - ((0.06 * h['armor']) / (1 + 0.06 * abs(h['armor'])))"
 			},
 			{
 				"stat": "physical_effective_health",
