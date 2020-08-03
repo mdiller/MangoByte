@@ -513,7 +513,6 @@ class Audio(MangoCog):
 			if ttschannel == message.channel.id:
 				if message.content.startswith("//") or message.content.startswith("#"):
 					return # commented out stuff should be ignored
-				await loggingdb.insert_message(message, "smarttts")
 				try:
 					if guildinfo.announcetts:
 						name = message.author.name
@@ -521,7 +520,12 @@ class Audio(MangoCog):
 							name = message.author.nick
 						name = await self.fix_name(name)
 						await self.do_tts(f"{name} says", message.guild)
-					await self.do_smarttts(message.clean_content, message.guild)
+					if guildinfo.simpletts:
+						await loggingdb.insert_message(message, "tts")
+						await self.do_tts(message.clean_content, message.guild)
+					else:
+						await loggingdb.insert_message(message, "smarttts")
+						await self.do_smarttts(message.clean_content, message.guild)
 				except UserError as e:
 					try:
 						await message.channel.send(e.message)

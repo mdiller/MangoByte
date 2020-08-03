@@ -192,6 +192,13 @@ class GuildInfo(BotDataItem):
 			"example": "enable"
 		},
 		{
+			"key": "simpletts",
+			"default": False,
+			"type": types.Boolean,
+			"description": "If enabled, the configured ttschannel will use the `?tts` command, instead of the `?smarttts` command.",
+			"example": "enable"
+		},
+		{
 			"key": "announcetts",
 			"default": False,
 			"type": types.Boolean,
