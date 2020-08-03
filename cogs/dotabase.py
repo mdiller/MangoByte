@@ -316,10 +316,10 @@ class Dotabase(MangoCog):
 		result[0] = {
 			"name": "Unknown",
 			"full_name": "unknown_hero",
-			"icon": self.vpkurl + "/resource/flash3/images/miniheroes/bm_fire.png",
+			"icon": self.vpkurl + "/panorama/images/heroes/icons/npc_dota_hero_antimage_png.png",
 			"attr": "strength",
-			"portrait": self.vpkurl + "/resource/flash3/images/heroes/selection/npc_dota_ancient_granite_golum.png",
-			"image": self.vpkurl + "/resource/flash3/images/heroes/default.png",
+			"portrait": self.vpkurl + "/panorama/images/heroes/selection/npc_dota_hero_default_png.png",
+			"image": self.vpkurl + "/panorama/images/heroes/npc_dota_hero_default_png.png",
 			"emoji": "unknown_hero",
 			"roles": {}
 		}
