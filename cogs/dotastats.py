@@ -73,11 +73,12 @@ async def get_match(match_id):
 			await httpgetter.cache.remove(url)
 
 	try:
-		data = await opendota_query(f"/matches/{match_id}", cache=True)
+		data = await httpgetter.get(url, cache=True, errors=opendota_html_errors)
 		check_valid_match(data)
 		return data
 	except HttpError as e:
 		if e.code == 404:
+			await httpgetter.cache.remove(url)
 			raise InvalidMatchIdError(match_id)
 		else:
 			raise
