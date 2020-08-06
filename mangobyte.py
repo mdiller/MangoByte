@@ -27,7 +27,14 @@ import json
 import sys
 import inspect
 
-logging.basicConfig(level=logging.INFO)
+print("setting up logger!")
+timestamp = datetime.datetime.now().strftime("%Y-%m-%d__%I.%M%p")
+logger = logging.getLogger("discord")
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler(filename=f"logs/discord_{timestamp}.log", encoding="utf-8", mode="w")
+handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s", "%Y-%m-%d %I:%M:%S%p"))
+logger.addHandler(handler)
+
 
 
 description = """The juiciest unsigned 8 bit integer you is eva gonna see.
@@ -95,9 +102,10 @@ async def on_ready():
 			connection_status[status] = 0
 		connection_status[status] += 1
 
-	if is_first_time:
-		print("\nupdating guilds")
-		await loggingdb.update_guilds(bot.guilds)
+	print("\nguild updating disabled for now")
+	# if is_first_time:
+	# 	print("\nupdating guilds")
+	# 	await loggingdb.update_guilds(bot.guilds)
 	
 	finished_text = "initialization finished"
 	if not is_first_time:
