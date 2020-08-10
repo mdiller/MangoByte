@@ -230,15 +230,18 @@ class Audio(MangoCog):
 			self.audioplayers.append(audioplayer)
 
 	async def disconnect(self, guild):
-		audioplayer = await self.audioplayer(guild, False)
-		if audioplayer is not None:
-			if audioplayer.voice is not None:
-				await audioplayer.voice.disconnect(force=True)
-			self.audioplayers.remove(audioplayer)
-		elif guild.me and guild.me.voice:
+		if guild.me and guild.me.voice:
 			voice = next((voice for voice in self.bot.voice_clients if voice.guild == guild), None)
 			if voice:
+				print("calling disconnect!")
 				await voice.disconnect(force=True)
+			else:
+				print("can't find voice to disconnect!\nvoices available:")
+				for v in self.bot.voice_clients:
+					print(v.vcid)
+		audioplayer = await self.audioplayer(guild, False)
+		if audioplayer is not None:
+			self.audioplayers.remove(audioplayer)
 
 
 	@commands.command()
