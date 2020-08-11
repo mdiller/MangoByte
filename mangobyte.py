@@ -71,7 +71,6 @@ async def on_ready():
 		is_first_time = False
 		print("on_ready called again, waiting 10 seconds before processing")
 		await asyncio.sleep(10)
-	on_ready_has_run = True
 
 	start_time = datetime.datetime.now()
 
@@ -84,7 +83,7 @@ async def on_ready():
 		type=discord.ActivityType.playing,
 		start=datetime.datetime.utcnow())
 	await bot.change_presence(status=discord.Status.online, activity=game)
-		
+
 	audio_cog = bot.get_cog("Audio")
 	artifact_cog = bot.get_cog("Artifact")
 	await artifact_cog.load_card_sets()
@@ -123,6 +122,9 @@ async def on_ready():
 	total_time = (datetime.datetime.now() - start_time).total_seconds()
 	message += f"\n\ntook {int(total_time)} seconds"
 	appinfo = await bot.application_info()
+
+	on_ready_has_run = True
+
 	if not settings.debug:
 		await appinfo.owner.send(message)
 
@@ -151,6 +153,7 @@ async def initial_channel_connect_wrapper(audio_cog, guildinfo):
 
 # returns 0 on successful connect, 1 on not found, and 2 on timeout, 3 on error
 async def initial_channel_connect(audio_cog, guildinfo):
+	global on_ready_has_run
 	channel_id = guildinfo.voicechannel
 	status = "connected"
 	try:
@@ -165,7 +168,8 @@ async def initial_channel_connect(audio_cog, guildinfo):
 			print(f"weird usererror on connection to channel '{channel_id}': {e.message}")
 			return "found_weird_usererror"
 	except asyncio.TimeoutError:
-		guildinfo.voicechannel = None
+		if not on_ready_has_run: # don't remove this if it got timed out from a re-initialization
+			guildinfo.voicechannel = None
 		return "timed out"
 	except Exception as e:
 		print(f"exception thrown on connection to channel ({channel_id}): {str(e)}")
