@@ -78,11 +78,13 @@ async def on_ready():
 	if is_first_time:
 		print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
 		print('Connecting to voice channels if specified in botdata.json ...')
-		game = discord.Activity(
-			name="DOTA 3 [?help]", 
-			type=discord.ActivityType.playing,
-			start=datetime.datetime.utcnow())
-		await bot.change_presence(status=discord.Status.online, activity=game)
+
+	game = discord.Activity(
+		name="DOTA 3 [?help]", 
+		type=discord.ActivityType.playing,
+		start=datetime.datetime.utcnow())
+	await bot.change_presence(status=discord.Status.online, activity=game)
+		
 	audio_cog = bot.get_cog("Audio")
 	artifact_cog = bot.get_cog("Artifact")
 	await artifact_cog.load_card_sets()
@@ -102,10 +104,9 @@ async def on_ready():
 			connection_status[status] = 0
 		connection_status[status] += 1
 
-	print("\nguild updating disabled for now")
-	# if is_first_time:
-	# 	print("\nupdating guilds")
-	# 	await loggingdb.update_guilds(bot.guilds)
+	if is_first_time:
+		print("\nupdating guilds")
+		await loggingdb.update_guilds(bot.guilds)
 	
 	finished_text = "initialization finished"
 	if not is_first_time:

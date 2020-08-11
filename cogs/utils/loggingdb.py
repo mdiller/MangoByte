@@ -273,6 +273,7 @@ class LoggingDb():
 			return request
 
 	async def update_guilds(self, guilds):
+		return # disable this for now as it is causing issues
 		for guild in guilds:
 			guild_log = self.session.query(Guild).filter_by(id=guild.id).first()
 			if guild_log is None:
