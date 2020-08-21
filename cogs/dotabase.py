@@ -751,16 +751,52 @@ class Dotabase(MangoCog):
 
 		description += ability.description
 
-		found_damage = False
 		ability_special = json.loads(ability.ability_special, object_pairs_hook=OrderedDict)
+		attribute_additions = [
+			{
+				"key": "damage",
+				"header": "Damage:",
+				"value": ability.damage,
+				"first": True
+			},
+			{
+				"key": "channel_time",
+				"header": "Channel Time:",
+				"value": ability.channel_time
+			},
+			{
+				"key": "cast_range",
+				"header": "Cast Range:",
+				"value": ability.cast_range if ability.cast_range != 0 else None
+			},
+			{
+				"key": "cast_point",
+				"header": "Cast Point:",
+				"value": ability.cast_point
+			}
+		]
+		for attr in attribute_additions:
+			attribute = next((x for x in ability_special if (x.get("header") and format_pascal_case(x.get("header"))) == attr["header"]), None)
+			if attribute:
+				attribute["first"] = attr.get("first")
+				if attribute.get("value", "") == "" and attr["value"] is not None:
+					attribute["value"] = attr["value"]
+			else:
+				if attr["value"] is not None:
+					ability_special.append(attr)
+		first_attr = next((x for x in ability_special if x.get("first")), None)
+		if first_attr:
+			ability_special.remove(first_attr)
+			ability_special.insert(0, first_attr)
+
 		formatted_attributes = []
+		aghs_attributes = []
 		for attribute in ability_special:
 			header = attribute.get("header")
 			if not header:
 				continue
-			if attribute.get("key") == "damage":
-				found_damage = True
 			header = format_pascal_case(header)
+
 			value = attribute["value"]
 			footer = attribute.get("footer")
 			text = f"**{header}** {format_values(value)}"
@@ -768,22 +804,20 @@ class Dotabase(MangoCog):
 				text += f" {footer}"
 			if "talent_value" in attribute:
 				text += f" ({self.get_emoji('talent_tree')} {format_values(attribute['talent_value'])})"
-			formatted_attributes.append(text)
 
-		if (not found_damage) and ability.damage:
-			formatted_attributes.append(f"**Damage:** {format_values(ability.damage)}")
+			if attribute.get("aghs_upgrade"):
+				aghs_attributes.append(text)
+			else:
+				formatted_attributes.append(text)
 
 		if formatted_attributes:
 			description += "\n\n" + "\n".join(formatted_attributes)
 
-		description = re.sub(r"(Upgradable by Aghanim's Scepter).?", f"**{self.get_emoji('aghanim')} \\1**", description)
-		if ability.aghanim and "Upgradable by Aghanim's Scepter" in description:
-			index = description.index("Upgradable by Aghanim's Scepter")
-			index = description.find("\n", index)
-			index += 1
-
-			description = f"{description[:index]}*{ability.aghanim}*\n{description[index:]}"
-
+		if ability.aghanim:
+			description += f"\n\n{self.get_emoji('aghanim')} __**Upgradable by Aghanim's Scepter:**__\n"
+			description += f"*{ability.aghanim}*\n"
+			for attribute in aghs_attributes:
+				description += f"\n{attribute}"
 
 		embed = discord.Embed(description=description)
 
@@ -1008,6 +1042,51 @@ class Dotabase(MangoCog):
 			embed.set_thumbnail(url=f"{self.vpkurl}{lore_info['icon']}")
 
 		await ctx.send(embed=embed)
+
+	@commands.command(aliases=["aghs", "ags", "aghanims", "scepter"])
+	async def aghanim(self, ctx, *, name=None):
+		"""Gets the aghs upgrade for the given hero or ability"""
+		abilities = []
+		ability = self.lookup_ability(name, False)
+		if ability:
+			if not ability.aghanim:
+				raise UserError(f"Looks like {ability.localized_name} doesn't have an aghs upgrade")
+			abilities = [ ability ]
+		else:
+			hero = self.lookup_hero(name)
+			if not hero:
+				raise UserError("Couldn't find a hero or ability by that name")
+			for ability in hero.abilities:
+				if ability.aghanim:
+					abilities.append(ability)
+			if len(abilities) == 0:
+				raise UserError(f"Couldn't find an aghs upgrade for {hero.localized_name}. Either they don't have one or I just can't find it.")
+
+		item_aghs = self.lookup_item("aghanim's scepter")
+		for ability in abilities:
+			description = f"*{ability.aghanim}*\n"
+			ability_special = json.loads(ability.ability_special, object_pairs_hook=OrderedDict)
+			formatted_attributes = []
+			for attribute in ability_special:
+
+				header = attribute.get("header")
+				if not (header and attribute.get("aghs_upgrade")):
+					continue
+				header = format_pascal_case(header)
+				value = attribute["value"]
+				footer = attribute.get("footer")
+				value = " / ".join(value.split(" "))
+				text = f"**{header}** {value}"
+				if footer:
+					text += f" {footer}"
+				description += f"\n{text}"
+
+			embed = discord.Embed(description=description)
+			title = f"{item_aghs.localized_name} ({ability.localized_name})"
+			embed.set_author(name=title, icon_url=f"{self.vpkurl}{item_aghs.icon}")
+			embed.set_thumbnail(url=f"{self.vpkurl}{ability.icon}")
+			await ctx.send(embed=embed)
+
 
 	@commands.command(aliases=["fuse", "fuze", "fuzeheroes"])
 	async def fuseheroes(self, ctx, *, heroes=None):
