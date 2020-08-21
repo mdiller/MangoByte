@@ -1054,20 +1054,21 @@ class Dotabase(MangoCog):
 	async def aghanim(self, ctx, *, name=None):
 		"""Gets the aghs upgrade for the given hero or ability"""
 		abilities = []
-		ability = self.lookup_ability(name, False)
-		if ability:
-			if not ability.aghanim:
-				raise UserError(f"Looks like {ability.localized_name} doesn't have an aghs upgrade")
-			abilities = [ ability ]
-		else:
-			hero = self.lookup_hero(name)
-			if not hero:
-				raise UserError("Couldn't find a hero or ability by that name")
+		hero = self.lookup_hero(name)
+		if hero:
 			for ability in hero.abilities:
 				if ability.aghanim:
 					abilities.append(ability)
 			if len(abilities) == 0:
 				raise UserError(f"Couldn't find an aghs upgrade for {hero.localized_name}. Either they don't have one or I just can't find it.")
+		else:
+			ability = self.lookup_ability(name, True)
+			if not ability:
+				raise UserError("Couldn't find a hero or ability by that name")
+			if not ability.aghanim:
+				raise UserError(f"Looks like {ability.localized_name} doesn't have an aghs upgrade")
+			abilities = [ ability ]
+
 
 		item_aghs = self.lookup_item("aghanim's scepter")
 		for ability in abilities:
