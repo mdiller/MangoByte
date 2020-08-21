@@ -246,7 +246,7 @@ class Dotabase(MangoCog):
 						return None
 					ability_position = ABILITY_KEY_MAP[key]
 					# use this instead of directly using ability_slot because there are some filler generic_ability things
-					abilities = session.query(Ability).filter_by(hero_id=hero.id).order_by(Ability.ability_slot).all()
+					abilities = session.query(Ability).filter_by(hero_id=hero.id).filter(Ability.ability_slot != None).order_by(Ability.ability_slot).all()
 					if ability_position > len(abilities):
 						raise UserError(f"{hero.localized_name} doesn't have that many abilities")
 					if key == "r": # if is ultimate and not invoker, get last ability in list
@@ -802,8 +802,6 @@ class Dotabase(MangoCog):
 			text = f"**{header}** {format_values(value)}"
 			if footer:
 				text += f" {footer}"
-			if "talent_value" in attribute:
-				text += f" ({self.get_emoji('talent_tree')} {format_values(attribute['talent_value'])})"
 
 			if attribute.get("aghs_upgrade"):
 				aghs_attributes.append(text)
@@ -813,6 +811,15 @@ class Dotabase(MangoCog):
 		if formatted_attributes:
 			description += "\n\n" + "\n".join(formatted_attributes)
 
+		# talents
+		talents = session.query(Ability).filter(Ability.linked_abilities.like(f"%{ability.name}%")).filter(Ability.talent_slot != None).order_by(Ability.talent_slot).all()
+		if len(talents) > 0:
+			description += f"\n\n{self.get_emoji('talent_tree')} **Talents:**"
+			for talent in talents:
+				level = ((talent.talent_slot // 2) * 5) + 10
+				description += f"\n[Level {level}] {talent.localized_name}"
+
+		# aghs
 		if ability.aghanim:
 			description += f"\n\n{self.get_emoji('aghanim')} __**Upgradable by Aghanim's Scepter:**__\n"
 			description += f"*{ability.aghanim}*\n"
