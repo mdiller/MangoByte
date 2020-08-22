@@ -22,8 +22,48 @@ discord_color1 = "#2C2F33"
 discord_color2 = "#23272A"
 discord_color3 = "#202225"
 
+# mostly from https://www.dota2.com/public/css/heropedia.css
+item_quality_colors = {
+	"rare": "#1A87F9",
+	"artifact": "#E29B01",
+	"secret_shop": "#31d0d0", # this one wasn't updated, so grabbed from in-game screenshot
+	"consumable": "#1D80E7",
+	"common": "#2BAB01",
+	"epic": "#B812F9",
+	"component": "#FEFEFE"
+}
+
+
+# from vpk/panorama/styles/dotastyles.css
+neutral_tier_text_colors = {
+	"1": "#BEBEBE",
+	"2": "#92E47E",
+	"3": "#7F93FC",
+	"4": "#D57BFF",
+	"5": "#FFE195",
+}
+
+# from in-game screenshot
+neutral_tier_colors = {
+	"1": "#958a97",
+	"2": "#0ea243",
+	"3": "#4c6ee8",
+	"4": "#9b2bf6",
+	"5": "#e47b17",
+}
+
 hero_infos = {}
 item_infos = {}
+
+def get_item_color(item, default=None):
+	if item is None:
+		return default
+	if item.quality in item_quality_colors:
+		return item_quality_colors[item.quality]
+	elif item.neutral_tier is not None:
+		return neutral_tier_colors[item.neutral_tier]
+	else:
+		return default
 
 def init_dota_info(hero_info, item_info):
 	global hero_infos, item_infos
@@ -722,23 +762,6 @@ async def draw_artifact_deck(deck_string, cards, hero_turns, card_counts):
 
 	return filename
 
-# from vpk/panorama/styles/dotastyles.css
-neutral_tier_text_colors = {
-	"1": "#BEBEBE",
-	"2": "#92E47E",
-	"3": "#7F93FC",
-	"4": "#D57BFF",
-	"5": "#FFE195",
-}
-
-# from in-game screenshot
-neutral_tier_colors = {
-	"1": "#958a97",
-	"2": "#0ea243",
-	"3": "#4c6ee8",
-	"4": "#9b2bf6",
-	"5": "#e47b17",
-}
 
 # taken from https://stackoverflow.com/questions/4998427
 def grouper(values, N):
@@ -849,7 +872,6 @@ def draw_polygraph(values, labels):
 	return fp
 
 async def draw_herostatstable(table_args, hero_stat_categories, leveled_hero_stats):
-
 	category = None
 	for cat in hero_stat_categories:
 		if any(stat["stat"] == table_args.stat for stat in cat["stats"]):
@@ -925,3 +947,98 @@ async def draw_herostatstable(table_args, hero_stat_categories, leveled_hero_sta
 	fp.seek(0)
 
 	return fp
+
+# draws the recipe image for the given item
+async def draw_itemrecipe(main_item, components, products):
+	item_ids = [ main_item.id ]
+	item_ids.extend(map(lambda i: i.id, components))
+	item_ids.extend(map(lambda i: i.id, products))
+	item_ids = "_".join(map(str, item_ids))
+	uri = f"dota_recipe:{item_ids}"
+	filename = httpgetter.cache.get_filename(uri)
+	if filename and not settings.debug:
+		return filename
+
+	filename = await httpgetter.cache.new(uri, "png")
+
+	line_ducking = 5 # how many pixels into the main item to hide the line
+	inner_padding = 60 # y padding between item rows
+	outer_padding = 10 # padding around the whole thing
+	item_size = (88, 64) # the size of an item
+	max_spacing = 175 # the max spacing in between item centers
+	max_items_per_row = 5 # helps determine default image width
+
+	max_items_per_row = max(max_items_per_row, len(components), len(products))
+
+	rows = 1
+	if components:
+		rows += 1
+	if products:
+		rows += 1
+
+	base_size = (max_items_per_row * item_size[0] + outer_padding * 2, (rows * (inner_padding + item_size[1])) - inner_padding + (2 * outer_padding))
+	base_image = Image.new('RGBA', base_size, (0, 0, 0, 0))
+
+	rows = []
+	if products:
+		rows.append(products)
+	rows.append([main_item])
+	if components:
+		rows.append(components)
+	row_points = []
+
+	# generate points
+	for i in range(len(rows)):
+		row = rows[i]
+
+		if len(row) == 1:
+			spacing = 0
+			start_x = int((base_size[0] / 2) - (item_size[0] / 2))
+		else:
+			spacing = int((base_size[0] - outer_padding * 2 - item_size[0]) / (len(row) - 1))
+			start_x = int(outer_padding)
+		if spacing > max_spacing:
+			start_x += int(((spacing - max_spacing)* (len(row) - 1)) / 2)
+			spacing = max_spacing
+		start_y = int(outer_padding + (i * (inner_padding + item_size[1])))
+
+		points = []
+		for j in range(len(row)):
+			x = start_x + (j * spacing)
+			y = start_y
+			points.append((x, y))
+		row_points.append(points)
+
+	# draw lines
+	draw = ImageDraw.Draw(base_image)
+	for i in range(len(rows) - 1):
+		for j in range(len(rows[i])):
+			is_main_first = len(rows[i]) < len(rows[i + 1])
+			for k in range(len(rows[i + 1])):
+				p1 = row_points[i][j]
+				p2 = row_points[i + 1][k]
+				p1 = (p1[0] + item_size[0] // 2, p1[1] + item_size[1])
+				p2 = (p2[0] + item_size[0] // 2, p2[1])
+				# p1 = (p1[0] + item_size[0] // 2, p1[1] + item_size[1] // 2)
+				# p2 = (p2[0] + item_size[0] // 2, p2[1] + item_size[1] // 2)
+				if is_main_first:
+					p1 = (p1[0], p1[1] - line_ducking)
+					color_item = rows[i + 1][k]
+				else:
+					p2 = (p2[0], p2[1] + line_ducking)
+					color_item = rows[i][j]
+				color = get_item_color(color_item, "#111111")
+				draw.line((p1[0], p1[1], p2[0], p2[1]), fill=color, width=3)
+
+	# paste images
+	for i in range(len(rows)):
+		row = rows[i]
+		for j in range(len(row)):
+			image = await get_item_image(row[j].id)
+			base_image.paste(image, row_points[i][j])
+
+	base_image = base_image.resize((base_size[0] // 2, base_size[1] // 2), Image.ANTIALIAS)
+
+	base_image.save(filename, format="PNG")
+
+	return filename

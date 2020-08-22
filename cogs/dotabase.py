@@ -87,6 +87,10 @@ def extract_var(words, variables):
 				return True
 	return False
 
+# Filters a query for rows containing a column that contains the value in a | separated list
+def query_filter_list(query, column, value, separator="|"):
+	return query.filter(or_(column.like(f"%|{value}"), column.like(f"{value}|%"), column.like(f"%|{value}|%"), column.like(value)))
+
 
 class Dotabase(MangoCog):
 	"""For information about Dota 2, and playing hero responses
@@ -96,7 +100,6 @@ class Dotabase(MangoCog):
 		MangoCog.__init__(self, bot)
 		self.session = session
 		self.criteria_aliases = read_json(settings.resource("json/criteria_aliases.json"))
-		self.item_colors = read_json(settings.resource("json/dota_item_colors.json"))
 		self.hero_stat_categories = read_json(settings.resource("json/hero_stats.json"))
 		self.hero_aliases = {}
 		self.item_aliases = {}
@@ -812,7 +815,9 @@ class Dotabase(MangoCog):
 			description += "\n\n" + "\n".join(formatted_attributes)
 
 		# talents
-		talents = session.query(Ability).filter(Ability.linked_abilities.like(f"%{ability.name}%")).filter(Ability.talent_slot != None).order_by(Ability.talent_slot).all()
+		talent_query = session.query(Ability).filter(Ability.talent_slot != None)
+		talent_query = query_filter_list(talent_query, Ability.linked_abilities, ability.name)
+		talents = talent_query.order_by(Ability.talent_slot).all()
 		if len(talents) > 0:
 			description += f"\n\n{self.get_emoji('talent_tree')} **Talents:**"
 			for talent in talents:
@@ -906,8 +911,9 @@ class Dotabase(MangoCog):
 
 		embed = discord.Embed(description=description)
 
-		if item.quality:
-			embed.color = discord.Color(int(self.item_colors[item.quality][1:], 16))
+		color = drawdota.get_item_color(item)
+		if color is not None:
+			embed.color = discord.Color(int(color[1:], 16))
 
 
 		embed.title = item.localized_name
@@ -1094,6 +1100,51 @@ class Dotabase(MangoCog):
 			embed.set_author(name=title, icon_url=f"{self.vpkurl}{item_aghs.icon}")
 			embed.set_thumbnail(url=f"{self.vpkurl}{ability.icon}")
 			await ctx.send(embed=embed)
+
+	@commands.command(aliases=["recipes", "craft", "crafting"])
+	async def recipe(self, ctx, *, item):
+		"""Shows the recipes involving this item"""
+		item = self.lookup_item(item, True)
+		if not item:
+			raise UserError("Can't find an item by that name")
+
+		products = query_filter_list(session.query(Item), Item.recipe, item.name).all()
+		components = []
+		if item.recipe:
+			components = item.recipe.split("|")
+			components = session.query(Item).filter(Item.name.in_(components)).all()
+
+		embed = discord.Embed()
+
+		if components:
+			value = ""
+			for i in components:
+				value += f"{i.localized_name}\n"
+			embed.add_field(name="Created from", value=value)
+		if products:
+			value = ""
+			for i in products:
+				value += f"{i.localized_name}\n"
+			embed.add_field(name="Can be made into", value=value)
+
+		title = item.localized_name
+		if len(products) > 1 or (components and products):
+			title += " (Recipes)"
+		else:
+			title += " (Recipe)"
+
+		embed.title = title
+		embed.url = self.get_wiki_url(item)
+
+		color = drawdota.get_item_color(item)
+		if color is not None:
+			embed.color = discord.Color(int(color[1:], 16))
+
+		image = discord.File(await drawdota.draw_itemrecipe(item, components, products), "recipe.png")
+		embed.set_image(url=f"attachment://{image.filename}")
+
+		await ctx.send(embed=embed, file=image)
+
 
 
 	@commands.command(aliases=["fuse", "fuze", "fuzeheroes"])
