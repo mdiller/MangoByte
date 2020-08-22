@@ -18,6 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
 
+discord_color0 = "#6f7377" # much lighter, mostly unused color
 discord_color1 = "#2C2F33"
 discord_color2 = "#23272A"
 discord_color3 = "#202225"
@@ -32,7 +33,6 @@ item_quality_colors = {
 	"epic": "#B812F9",
 	"component": "#FEFEFE"
 }
-
 
 # from vpk/panorama/styles/dotastyles.css
 neutral_tier_text_colors = {
@@ -50,6 +50,15 @@ neutral_tier_colors = {
 	"3": "#4c6ee8",
 	"4": "#9b2bf6",
 	"5": "#e47b17",
+}
+
+# from in-game times
+neutral_timings = {
+	"1": "7:00+",
+	"2": "17:00+",
+	"3": "27:00+",
+	"4": "37:00+",
+	"5": "60:00+",
 }
 
 hero_infos = {}
@@ -792,6 +801,7 @@ async def draw_neutralitems(selected_tier, all_neutral_items):
 	for tier in range(1, 6):
 		header_row = [ColorCell(color=discord_color2) for i in range(items_per_row)]
 		header_row[0] = TextCell(f"Tier {tier}", color=neutral_tier_text_colors[str(tier)], font_size=25, padding=[10, 0, 10, 10], background=discord_color2)
+		header_row[items_per_row - 1] = TextCell(neutral_timings[str(tier)], color=discord_color0, font_size=25, padding=[10, 10, 10, 0], horizontal_align="right", background=discord_color2)
 		table.add_row(header_row)
 		items = list(filter(lambda i: i.neutral_tier == str(tier), all_neutral_items))
 		item_img_cells = []

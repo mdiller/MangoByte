@@ -865,6 +865,9 @@ class Dotabase(MangoCog):
 
 		description = ""
 
+		if item.neutral_tier is not None:
+			description += f"**Tier {item.neutral_tier}** Neutral Item\n\n"
+
 
 		def format_values(values, join_string="/", base_level=None):
 			if values is None:
@@ -1276,7 +1279,7 @@ class Dotabase(MangoCog):
 		embed.title = title
 		embed.url = "https://dota2.gamepedia.com/Neutral_Items"
 
-		all_neutral_items = session.query(Item).filter(Item.neutral_tier != None).order_by(Item.localized_name).all()
+		all_neutral_items = session.query(Item).filter(Item.neutral_tier != None).filter(Item.recipe == None).order_by(Item.localized_name).all()
 		image = discord.File(await drawdota.draw_neutralitems(tier, all_neutral_items), "neutralitems.png")
 		embed.set_image(url=f"attachment://{image.filename}")
 		if tier is not None:
