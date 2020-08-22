@@ -1060,7 +1060,7 @@ class Dotabase(MangoCog):
 		await ctx.send(embed=embed)
 
 	@commands.command(aliases=["aghs", "ags", "aghanims", "scepter"])
-	async def aghanim(self, ctx, *, name=None):
+	async def aghanim(self, ctx, *, name):
 		"""Gets the aghs upgrade for the given hero or ability"""
 		abilities = []
 		hero = self.lookup_hero(name)
