@@ -27,6 +27,8 @@ import json
 import sys
 import inspect
 
+startupTimer = SimpleTimer()
+
 print("setting up logger!")
 timestamp = datetime.datetime.now().strftime("%Y-%m-%d__%I.%M%p")
 logger = logging.getLogger("discord")
@@ -72,7 +74,7 @@ async def on_ready():
 		print("on_ready called again, waiting 10 seconds before processing")
 		await asyncio.sleep(10)
 
-	start_time = datetime.datetime.now()
+	onReadyTimer = SimpleTimer()
 
 	if is_first_time:
 		print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
@@ -119,8 +121,9 @@ async def on_ready():
 	for status in connection_status:
 		message +=  f"\n{connection_status[status]} voice channels {status}"
 
-	total_time = (datetime.datetime.now() - start_time).total_seconds()
-	message += f"\n\ntook {int(total_time)} seconds"
+	message += f"\n\non_ready took {onReadyTimer}"
+	if is_first_time:
+		message += f"\nFull startup took {startupTimer}"
 	appinfo = await bot.application_info()
 
 	on_ready_has_run = True

@@ -4,6 +4,7 @@ import sys
 import json
 import subprocess
 import asyncio
+import datetime
 from collections import OrderedDict
 
 MENTION_TRANSFORMS = {
@@ -139,6 +140,30 @@ class Thinker():
 				self.messages[message] += 1
 			await asyncio.sleep(1)
 
+class SimpleTimer():
+	def __init__(self):
+		self.start = datetime.datetime.now()
+		self.end = None
+
+	def stop(self):
+		self.end = datetime.datetime.now()
+
+	@property
+	def seconds(self):
+		if self.end is None:
+			self.stop()
+		return int((self.end - self.start).total_seconds())
+
+	def __str__(self):
+		s = self.seconds % 60
+		m = self.seconds // 60
+		text = f"{s} second{'s' if s != 1 else ''}"
+		if m > 0:
+			text = f"{m} minute{'s' if m != 1 else ''}" + text
+		return text
+
+	def __repr__(self):
+		return self.__str__()
 
 class HttpError(UserError):
 	"""An http error with an error code"""
