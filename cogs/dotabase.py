@@ -233,7 +233,11 @@ class Dotabase(MangoCog):
 				return ability
 		if full_check:
 			for ability in ability_query:
-				if clean_input(ability.localized_name).startswith(text):
+				cleaned_name = clean_input(ability.localized_name)
+				if cleaned_name.startswith(text):
+					return ability
+				cleaned_name = cleaned_name.replace(" ", "")
+				if cleaned_name == text.replace(" ", ""):
 					return ability			
 			for ability in ability_query:
 				name = clean_input(ability.localized_name)
