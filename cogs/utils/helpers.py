@@ -159,7 +159,7 @@ class SimpleTimer():
 		m = self.seconds // 60
 		text = f"{s} second{'s' if s != 1 else ''}"
 		if m > 0:
-			text = f"{m} minute{'s' if m != 1 else ''}" + text
+			text = f"{m} minute{'s' if m != 1 else ''} " + text
 		return text
 
 	def __repr__(self):
