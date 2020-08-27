@@ -6,7 +6,7 @@ from __main__ import settings
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
 from cogs.utils.commandargs import *
-from cogs.utils import drawdota
+from cogs.utils import drawdota, imagetools
 import random
 import os
 import asyncio
@@ -1211,6 +1211,11 @@ class Dotabase(MangoCog):
 		emoji2 = self.get_emoji(f"dota_hero_{hero2.name}")
 
 		embed.description = f"{emoji1} + {emoji2}"
+
+		color1 = imagetools.Color(hero1.color)
+		color2 = imagetools.Color(hero2.color)
+		color = color1.blend(color2)
+		embed.color = discord.Color(color.integer)
 
 		image = discord.File(await drawdota.fuse_hero_images(hero1, hero2), "hero.png")
 		embed.set_thumbnail(url=f"attachment://{image.filename}")
