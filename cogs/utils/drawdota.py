@@ -61,6 +61,7 @@ neutral_timings = {
 	"5": "60:00+",
 }
 
+vpkurl = None
 hero_infos = {}
 item_infos = {}
 
@@ -74,10 +75,11 @@ def get_item_color(item, default=None):
 	else:
 		return default
 
-def init_dota_info(hero_info, item_info):
-	global hero_infos, item_infos
+def init_dota_info(hero_info, item_info, the_vpkurl):
+	global hero_infos, item_infos, vpkurl
 	hero_infos = hero_info
 	item_infos = item_info
+	vpkurl = the_vpkurl
 
 def get_hero_name(hero_id):
 	return hero_infos[hero_id]["name"]
@@ -104,6 +106,12 @@ async def get_hero_portrait(hero_id):
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
 async def get_item_image(item_id):
+	try:
+		return await get_url_image(item_infos[item_id]["icon"])
+	except KeyError:
+		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
+
+async def get_ability_image(item_id):
 	try:
 		return await get_url_image(item_infos[item_id]["icon"])
 	except KeyError:
@@ -1052,3 +1060,28 @@ async def draw_itemrecipe(main_item, components, products):
 	base_image.save(filename, format="PNG")
 
 	return filename
+
+async def draw_heroabilities(abilities):
+	abilities = sorted(abilities, key=lambda a: a.ability_slot)
+	table = Table(background=discord_color2)
+	for ability in abilities:
+		icon = await get_url_image(f"{vpkurl}{ability.icon}")
+		icon = icon.resize((icon.size[0] // 2, icon.size[1] // 2), Image.ANTIALIAS)
+		row = [
+			ImageCell(img=icon),
+			TextCell(ability.localized_name, font_size=30, padding=10),
+			TextCell("")
+		]
+		if ability.aghanim_grants:
+			aghs_icon = f"{vpkurl}/panorama/images/spellicons/aghsicon_psd.png"
+			aghs_icon = await get_url_image(aghs_icon)
+			aghs_icon = aghs_icon.resize(icon.size, Image.ANTIALIAS)
+			row[2] = ImageCell(img=aghs_icon)
+		table.add_row(row)
+	image = table.render()
+	
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
+	
+	return fp

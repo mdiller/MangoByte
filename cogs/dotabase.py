@@ -107,7 +107,7 @@ class Dotabase(MangoCog):
 		self.hero_regex = ""
 		self.build_helpers()
 		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
-		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos())
+		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos(), self.vpkurl)
 
 	def build_helpers(self):
 		def clean_input(t):
@@ -810,7 +810,7 @@ class Dotabase(MangoCog):
 			if footer:
 				text += f" {footer}"
 
-			if attribute.get("aghs_upgrade"):
+			if attribute.get("aghs_upgrade") and not ability.aghanim_grants:
 				aghs_attributes.append(text)
 			else:
 				formatted_attributes.append(text)
@@ -830,10 +830,13 @@ class Dotabase(MangoCog):
 
 		# aghs
 		if ability.aghanim:
-			description += f"\n\n{self.get_emoji('aghanim')} __**Upgradable by Aghanim's Scepter:**__\n"
-			description += f"*{ability.aghanim}*\n"
-			for attribute in aghs_attributes:
-				description += f"\n{attribute}"
+			if ability.aghanim_grants:
+				description += f"\n\n{self.get_emoji('aghanim')} **Granted by Aghanim's Scepter**"
+			else:
+				description += f"\n\n{self.get_emoji('aghanim')} __**Upgradable by Aghanim's Scepter**__\n"
+				description += f"*{ability.aghanim}*\n"
+				for attribute in aghs_attributes:
+					description += f"\n{attribute}"
 
 		embed = discord.Embed(description=description)
 
@@ -844,7 +847,10 @@ class Dotabase(MangoCog):
 
 
 		if ability.cooldown and ability.cooldown != "0":
-			embed.add_field(name="\u200b", value=f"{self.get_emoji('cooldown')} {format_values(ability.cooldown)}\n")
+			value = format_values(ability.cooldown)
+			if ability.charges:
+				value += f" ({ability.charges} Charges)"
+			embed.add_field(name="\u200b", value=f"{self.get_emoji('cooldown')} {value}\n")
 
 		if ability.mana_cost and ability.mana_cost != "0":
 			embed.add_field(name="\u200b", value=f"{self.get_emoji('mana_cost')} {format_values(ability.mana_cost)}\n")
@@ -1088,23 +1094,23 @@ class Dotabase(MangoCog):
 			description = f"*{ability.aghanim}*\n"
 			ability_special = json.loads(ability.ability_special, object_pairs_hook=OrderedDict)
 			formatted_attributes = []
-			for attribute in ability_special:
-
-				header = attribute.get("header")
-				if not (header and attribute.get("aghs_upgrade")):
-					continue
-				header = format_pascal_case(header)
-				value = attribute["value"]
-				footer = attribute.get("footer")
-				value = " / ".join(value.split(" "))
-				text = f"**{header}** {value}"
-				if footer:
-					text += f" {footer}"
-				description += f"\n{text}"
+			if not ability.aghanim_grants:
+				for attribute in ability_special:
+					header = attribute.get("header")
+					if not (header and attribute.get("aghs_upgrade")):
+						continue
+					header = format_pascal_case(header)
+					value = attribute["value"]
+					footer = attribute.get("footer")
+					value = " / ".join(value.split(" "))
+					text = f"**{header}** {value}"
+					if footer:
+						text += f" {footer}"
+					description += f"\n{text}"
 
 			embed = discord.Embed(description=description)
 			title = f"{item_aghs.localized_name} ({ability.localized_name})"
-			embed.set_author(name=title, icon_url=f"{self.vpkurl}{item_aghs.icon}")
+			embed.set_author(name=title, icon_url=f"{self.vpkurl}/panorama/images/spellicons/aghsicon_psd.png")
 			embed.set_thumbnail(url=f"{self.vpkurl}{ability.icon}")
 			await ctx.send(embed=embed)
 
@@ -1379,6 +1385,28 @@ class Dotabase(MangoCog):
 		embed.set_footer(text="The stats shown above do not account for talents, passives, or items")
 
 		await ctx.send(embed=embed, file=image)
+
+	@commands.command(aliases=["spells"])
+	async def abilities(self, ctx, *, hero):
+		"""Shows all of the abilities/spells for that hero"""
+		hero = self.lookup_hero(hero)
+		if not hero:
+			raise UserError("That doesn't look like a hero")
+
+		abilities = list(filter(lambda a: a.ability_slot is not None, hero.abilities))
+
+		embed = discord.Embed()
+
+		embed.title = hero.localized_name
+		embed.url = self.get_wiki_url(hero)
+
+		image = discord.File(await drawdota.draw_heroabilities(abilities), "abilities.png")
+		embed.set_image(url=f"attachment://{image.filename}")
+		
+		embed.color = discord.Color(int(hero.color[1:], 16))
+		
+		await ctx.send(embed=embed, file=image)
+
 	
 
 def setup(bot):
