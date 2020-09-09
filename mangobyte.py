@@ -29,6 +29,8 @@ import inspect
 
 startupTimer = SimpleTimer()
 
+if not os.path.exists("logs"):
+    os.makedirs("logs")
 print("setting up logger!")
 timestamp = datetime.datetime.now().strftime("%Y-%m-%d__%I.%M%p")
 logger = logging.getLogger("discord")
