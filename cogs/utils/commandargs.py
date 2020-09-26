@@ -198,7 +198,7 @@ class TimeSpanArg(QueryArg):
 		return count * self.count
 
 	def regex(self):
-		return r"(?:in|over)? ?(?:the )?(this|last|past)? ?(\d+)? ((?:to)?day|week|month|year)s?"
+		return r"(?:in|over)? ?(?:the )?(this|last|past)? ?(\d+)? ?((?:to)?day|week|month|year)s?"
 
 class HeroArg(QueryArg):
 	def __init__(self, ctx, name, prefix):
