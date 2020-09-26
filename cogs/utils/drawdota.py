@@ -22,6 +22,7 @@ discord_color0 = "#6f7377" # much lighter, mostly unused color
 discord_color1 = "#2C2F33"
 discord_color2 = "#23272A"
 discord_color3 = "#202225"
+discord_color4 = "#131416" # darker, mostly unused color
 
 # mostly from https://www.dota2.com/public/css/heropedia.css
 item_quality_colors = {
@@ -121,7 +122,8 @@ async def get_neutral_image(item):
 	background = Image.new("RGBA", (64, 64))
 	size = background.size
 	circle_diameter = 48
-	circle_thickness = 4
+	circle_thickness = 3
+	circle_color = discord_color4
 	img_scale = circle_diameter / 64
 
 	inner_radius = circle_diameter / 2
@@ -132,7 +134,7 @@ async def get_neutral_image(item):
 					(size[0] / 2) + outer_radius, (size[1] / 2) + outer_radius)
 	if item:
 		draw = ImageDraw.Draw(background)
-		draw.ellipse(outer_circle, fill="#393939")
+		draw.ellipse(outer_circle, fill=circle_color)
 		
 		item_img = await get_item_image(item)
 		item_img = item_img.resize((int(item_img.size[0] * img_scale), int(item_img.size[1] * img_scale)))
