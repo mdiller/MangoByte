@@ -123,7 +123,7 @@ class DotaPlayer():
 				raise CustomBadArgument(NoMatchHistoryError(player))
 			return cls(player, f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{player})", is_author)
 
-		if not isinstance(player, discord.User):
+		if not isinstance(player, discord.abc.User):
 			try:
 				player = await commands.MemberConverter().convert(ctx, str(player))
 			except commands.BadArgument:

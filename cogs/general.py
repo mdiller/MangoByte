@@ -271,7 +271,7 @@ class General(MangoCog):
 		
 		Uses my own implementation of the [Wikipedia API](https://www.mediawiki.org/wiki/API:Tutorial)
 
-		You can also try `{cmdpfx} wiki random` to get a random wiki page
+		You can also try `{cmdpfx}wiki random` to get a random wiki page
 		
 		Note that I've had to remove the images from these (unless you're in a NSFW channel) because I have no way of checking if it is an NSFW image, and posting an NSFW image in non-NSFW channels would be against discord's ToS. Sorry about that!
 

@@ -184,7 +184,7 @@ async def initial_channel_connect(audio_cog, guildinfo):
 
 @bot.event
 async def on_command_error(ctx, error):
-	if ctx.message in thinker.messages:
+	if ctx.message.id in thinker.messages:
 		await thinker.stop_thinking(ctx.message)
 
 	cmdpfx = botdata.command_prefix(ctx)

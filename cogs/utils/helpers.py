@@ -120,24 +120,27 @@ class UserError(Exception):
 class Thinker():
 	def __init__(self, bot):
 		self.bot = bot
-		self.messages = {} # Dictionary of message, time
+		self.messages = {} # Dictionary of message_id, { time: time, message: message }
 		self.bot.loop.create_task(self.thinking_task())
 		# May be used in future
 		self.clocks = [ "🕛", "🕐", "🕑", "🕒", "🕓", "🕔", "🕕", "🕖", "🕗", "🕘", "🕙", "🕚" ]
 
 	async def think(self, message):
-		self.messages[message] = 0
+		self.messages[message.id] = {
+			"message": message,
+			"time": 0
+		}
 		await message.add_reaction("🤔")
 
 	async def stop_thinking(self, message):
-		last_time = self.messages.pop(message)
+		last_time = self.messages.pop(message.id)
 		await message.remove_reaction("🤔", self.bot.user)
 
 	async def thinking_task(self):
 		await self.bot.wait_until_ready()
 		while not self.bot.is_closed:
-			for message in self.messages:
-				self.messages[message] += 1
+			for message_id in self.messages:
+				self.messages[message_id]["time"] += 1
 			await asyncio.sleep(1)
 
 class SimpleTimer():
