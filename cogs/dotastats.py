@@ -19,6 +19,7 @@ import statistics
 import random
 import aiohttp
 import typing
+import math
 from types import *
 from .mangocog import *
 
@@ -192,6 +193,45 @@ def format_teamfight(teamfight):
 	return format_str.format(**teamfight)
 
 
+def _match_avg(player_matches, key, round_place=0):
+	x = 0
+	total_count = 0
+	for player in player_matches:
+		if isinstance(key, LambdaType):
+			val = key(player)
+		else:
+			if player.get(key) is None:
+				continue
+			val = player.get(key, 0)
+		x += val
+		total_count += 1
+	if total_count == 0:
+		return None
+	x = round(x / total_count, round_place)
+	return int(x) if round_place == 0 else x
+
+def _match_percent(player_matches, key, round_place=0, needs_key=None):
+	count = 0
+	total_count = 0
+	for player in player_matches:
+		if needs_key and player.get(needs_key) is None:
+			continue
+		if isinstance(key, LambdaType):
+			success = key(player)
+		else:
+			success = player.get(key, 0)
+		if success:
+			count += 1
+		total_count += 1
+	if total_count == 0:
+		return None
+	if round_place == "floor":
+		count = math.floor((count * 100) / total_count)
+		round_place = 0
+	else:
+		count = round((count * 100) / total_count, round_place)
+	value = int(count) if round_place == 0 else count
+	return f"{value}%"
 
 
 class DotaStats(MangoCog):
@@ -788,421 +828,277 @@ class DotaStats(MangoCog):
 
 		await ctx.send(embed=embed, file=rank_icon)
 
-	@commands.command(aliases=["pstats"])
-	async def playerstats(self, ctx, *, matchfilter : MatchFilter = None):
+	@commands.command(aliases=["chatstats"])
+	async def twenty(self, ctx, *, matchfilter : MatchFilter = None):
 		"""Gets stats from the player's last 20 parsed games
 
 		Note that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available
 
 		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`"""
+		matchfilter = await MatchFilter.init(matchfilter, ctx)
+		matchfilter.set_arg("limit", 20, True)
+		matchfilter.set_arg("_parsed", True)
 
+		await self.do_playerstats(ctx, matchfilter, do_downloaded=True)
+
+	@commands.command(aliases=["pstats", "herostats"])
+	async def playerstats(self, ctx, *, matchfilter : MatchFilter = None):
+		"""Gets player match statistics
+
+		By default this will target all the matches a player has played.
+
+		**Note:** If you're wondering why some data is now missing, check out `{cmdpfx}twenty`. I've revamped this command to work for all matches, and `{cmdpfx}twenty` is the old version of what this command used to be.
+		
+		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`"""
 		matchfilter = await MatchFilter.init(matchfilter, ctx)
 
-		matchfilter.set_arg("limit", None)
-		matchfilter.set_arg("_parsed", True)
-		matchfilter.add_projections([ "party_size", "version" ])
+		await self.do_playerstats(ctx, matchfilter)
 
+	# the main internal logic for the playerstats and twenty commands
+	async def do_playerstats(self, ctx, matchfilter, do_downloaded=False):
+		matchfilter.add_projections([ "kills", "deaths", "assists", "party_size", "version", "hero_id", "lane_role", "is_roaming", "lobby_type" ])
 		steam32 = matchfilter.player.steam_id
 
+		# 
+		# STEP 1: download all match data
+		# 
 		with ctx.channel.typing():
 			await thinker.think(ctx.message)
-
 			playerinfo = await opendota_query(f"/players/{steam32}")
 			matches_info = await opendota_query_filter(matchfilter)
 			player_matches = []
-			matches = []
-			i = 0
-			while i < len(matches_info) and len(player_matches) < 20:
-				if matches_info[i].get('version', None) is not None:
-					match = await get_match(matches_info[i]['match_id'])
-					player_match = next((p for p in match['players'] if p['account_id'] == steam32), None)
-					if player_match is not None:
-						player_matches.append(player_match)
-						matches.append(match)
-						
-						# player_matches[-1]['party_size'] = 0
-						# for player in match['players']:
-						# 	if player['party_id'] == player_matches[-1]['party_id']:
-						# 		player_matches[-1]['party_size'] = player_matches[-1].get('party_size', 0) + 1
-				i += 1
+
+			if do_downloaded:
+				matches = []
+				i = 0
+				while i < len(matches_info) and len(matches) < 20:
+					if matches_info[i].get('version', None) is not None:
+						match = await get_match(matches_info[i]['match_id'])
+						player_match = next((p for p in match['players'] if p['account_id'] == steam32), None)
+						if player_match is not None:
+							player_matches.append(player_match)
+							matches.append(match)
+					i += 1
+			else:
+				player_matches = matches_info
 
 		await thinker.stop_thinking(ctx.message)
-		if len(matches) < 2:
-			await ctx.send("Not enough parsed matches!")
+		if len(player_matches) == 0:
+			if do_downloaded:
+				await ctx.send("Not enough parsed matches!")
+			else:
+				await ctx.send("Not enough matches found!")
 			return
 
-		embed = discord.Embed(description=f"*The following are averages and percentages based on the last {len(matches)} parsed matches*", color=self.embed_color)
+		# 
+		# STEP 2: initialize discord embed, depending on what we filtered for
+		# 
+		embed = discord.Embed(color=self.embed_color)
+		embed_attachment = None
+
+		if do_downloaded:
+			embed.description = f"*The following are averages and percentages based on the last {len(player_matches)} parsed matches*"
+		else:
+			embed.description = f"To see the filtering options for this command, try `{self.cmdpfx(ctx)}docs matchfilter`"
+			embed.set_footer(text=f"if you miss the old {self.cmdpfx(ctx)}playerstats command, try {self.cmdpfx(ctx)}twenty")
+
+		matches_url = f"https://www.opendota.com/players/{steam32}/matches?{matchfilter.to_query_args(for_web_url=True)}"
+		author_name = playerinfo["profile"]["personaname"] or "Anonymous"
+		author_icon_url = playerinfo["profile"]["avatar"] or default_steam_icon
+
+		if matchfilter.has_value("hero_id"):
+			hero = self.lookup_hero(matchfilter.get_arg("hero_id"))
+			author_icon_url = self.hero_info[hero.id]["icon"]
+			embed.set_thumbnail(url=self.hero_info[hero.id]['portrait'])
+			embed.color = discord.Color(int(hero.color[1:], 16))
+
+		if matchfilter.has_value("included_account_id"):
+			avatar1 = playerinfo['profile']['avatarfull'] or default_steam_icon
+			player2_id = matchfilter.get_arg("included_account_id")
+			player2_info = await opendota_query(f"/players/{player2_id}")
+			avatar2 = player2_info['profile']['avatarfull'] or default_steam_icon
+			image = discord.File(await drawdota.combine_image_halves(avatar1, avatar2), "profile.png")
+			embed.set_thumbnail(url=f"attachment://{image.filename}")
+			embed_attachment = image
+			author_name += f" + {player2_info['profile']['personaname'] or 'Anonymous'}"
 
 		embed.set_author(
-			name=playerinfo["profile"]["personaname"] or "Anonymous", 
-			icon_url=playerinfo["profile"]["avatar"] or default_steam_icon, 
-			url=f"https://www.opendota.com/players/{steam32}")
+			name=author_name, 
+			icon_url=author_icon_url, 
+			url=matches_url)
 
-		def avg(key, round_place=0):
-			x = 0
-			total_count = 0
-			for player in player_matches:
-				if isinstance(key, LambdaType):
-					val = key(player)
-				else:
-					if player.get(key) is None:
-						continue
-					val = player.get(key, 0)
-				x += val
-				total_count += 1
-			if total_count == 0:
-				return None
-			x = round(x / total_count, round_place)
-			return int(x) if round_place == 0 else x
+		# 
+		# STEP 3: define all stats together
+		# 
+		def avg(*args, **kwargs):
+			return _match_avg(player_matches, *args, **kwargs)
+		def percent(*args, **kwargs):
+			return _match_percent(player_matches, *args, **kwargs)
 
-		def percent(key, round_place=0, needs_key=None):
-			count = 0
-			total_count = 0
-			for player in player_matches:
-				if isinstance(key, LambdaType):
-					success = key(player)
-				else:
-					success = player.get(key, 0)
-				if success:
-					count += 1
-				if needs_key is None or player.get(needs_key) is not None:
-					total_count += 1
-			if total_count == 0:
-				return None
-			count = round((count * 100) / total_count, round_place)
-			value = int(count) if round_place == 0 else count
-			return f"{value}%"
+		# compute favorites
+		heroes = {}
+		for match in player_matches:
+			heroes[match['hero_id']] = heroes.get(match['hero_id'], 0) + 1
+		heroes = sorted(heroes.items(), key=lambda x: x[1], reverse=True)
+		favorite_heroes = "".join(map(lambda h: self.hero_info[h[0]]['emoji'], heroes[0:3]))
+		zeropercent = "0%"
 
-		chat_wheel_counts = {}
-		chat_wheel_total = 0
-		longest_message_heading = "Longest Chat Message"
-		message_count = 0
-		longest_message = None
-		longest_message_match_id = None
-		for match in matches:
-			player = next((p for p in match['players'] if p['account_id'] == steam32), None)
-			match_chat = match.get('chat', None)
-			if match_chat:
-				for message in match_chat:
-					if message.get('player_slot', -1) == player['player_slot']:
-						if message["type"] == "chat":
-							message_count += 1
-							if longest_message is None or len(longest_message) <= len(message['key']):
-								longest_message = message['key']
-								longest_message_match_id = match['match_id']
-						elif message["type"] == "chatwheel":
-							msg_id = int(message['key'])
-							if msg_id >= 1000:
-								continue # skip hero chat wheels
-							chat_wheel_counts[msg_id] = chat_wheel_counts.get(msg_id, 0) + 1
-							chat_wheel_total += 1
+		# laning postfix if needed
+		laning_postfix = ""
+		parsed_count = len(list(filter(lambda m: m.get("version") is not None, player_matches)))
+		if parsed_count != len(player_matches) and not do_downloaded:
+			laning_postfix = f" ({parsed_count} parsed matches)"
 
-		message_count = int(round(message_count / len(matches)))
-		if longest_message is not None:
-			longest_message = f"\"{longest_message}\""
-			longest_message_heading = f"[{longest_message_heading}](https://www.opendota.com/matches/{longest_message_match_id}/chat)"
+		class CoolStat():
+			def __init__(self, caption, value, filter_key=None, ignore_value=None, separator=": ", bold=True):
+				self.caption = caption
+				self.value = value
+				self.filter_key = filter_key
+				self.ignore_value = ignore_value
+				self.separator = separator
+				self.bold = bold
 
-		chat_wheel_text = "*No chat wheel usage found*"
-		if chat_wheel_counts != {}:
-			lines = []
-			chat_wheel_counts = sorted(chat_wheel_counts.items(), key=lambda m: m[1], reverse=True)
-			for i in range(0, min(3, len(chat_wheel_counts))):
-				msg_id, count = chat_wheel_counts[i]
-				message = self.chat_wheel_info.get(msg_id, { "message": "Unknown" })
-				icon = self.get_emoji("chat_wheel_sound" if message.get('is_sound') else "chat_wheel_text")
-				lines.append(f"{icon} {message['message']}")
-			chat_wheel_text = "\n".join(lines)
+			def should_show(self):
+				return not(self.value == self.ignore_value or matchfilter.has_value(self.filter_key))
 
-		embed.add_field(name="General", value=(
-			f"Winrate: {percent(lambda p: p.get('radiant_win') == (p.get('player_slot') < 128))}\n"
-			f"KDA: **{avg('kills')}**/**{avg('deaths')}**/**{avg('assists')}**\n"
-			f"Game duration: {format_duration_simple(avg('duration'))}\n"
-			f"In a Party: {percent(lambda p: p.get('party_size') > 1, needs_key='party_size')}\n"
-			f"Ranked: {percent(lambda p: p['lobby_type'] == 7)}"))
+			def render(self):
+				if not self.caption:
+					return str(self.value)
+				value = self.value
+				if self.bold:
+					value = f"**{value}**"
+				return f"{self.caption}{self.separator}{value}"
 
-		embed.add_field(name="Heroes", value=(
-			f"{self.get_emoji('attr_strength')} {percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'strength')}\n"
-			f"{self.get_emoji('attr_agility')} {percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'agility')}\n"
-			f"{self.get_emoji('attr_intelligence')} {percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'intelligence')}\n"
-			f"Randomed: {percent('randomed')}"))
-
-		embed.add_field(name="Laning", value=(
-			f"Safe Lane: {percent(lambda p: p.get('lane_role') == 1 and not p.get('is_roaming'))}\n"
-			f"Mid Lane: {percent(lambda p: p.get('lane_role') == 2 and not p.get('is_roaming'))}\n"
-			f"Off Lane: {percent(lambda p: p.get('lane_role') == 3 and not p.get('is_roaming'))}\n"
-			f"Jungle: {percent(lambda p: p.get('lane_role') == 4 and not p.get('is_roaming'))}\n"
-			f"Roaming: {percent(lambda p: p.get('is_roaming'))}\n"))
-
-		embed.add_field(name="Economy", value=(
-			f"GPM: {avg('gold_per_min')}\n"
-			f"XPM: {avg('xp_per_min')}\n"
-			f"Last Hits/min: {avg(lambda p: p['last_hits'] / (1 + (p['duration'] / 60)), 2)}\n"
-			f"Farm from jungle: {avg(lambda p: 100 * p.get('neutral_kills', 0) / (1 + p['last_hits']))}"))
-
-		def wards_placed(p):
-			obs = 0 if p.get('obs_placed') is None else p.get('obs_placed')
-			sents = 0 if p.get('sen_placed') is None else p.get('sen_placed')
-			return obs + sents
-
-		embed.add_field(name="Wards placed", value=(
-			f"None: {percent(lambda p: wards_placed(p) == 0)}\n"
-			f"<5: {percent(lambda p: wards_placed(p) < 5 and wards_placed(p) != 0)}\n"
-			f"<20: {percent(lambda p: wards_placed(p) < 20 and wards_placed(p) >= 5)}\n"
-			f">=20: {percent(lambda p: wards_placed(p) >= 20)}"))
-
-		embed.add_field(name="Chat Wheel", value=chat_wheel_text)
-
-		embed.add_field(name="All Chat", value=(
-			f"Messages per Game: {message_count}\n"
-			f"{longest_message_heading}: {longest_message}"))
-
-		# in a group
-
-		await ctx.send(embed=embed)
-
-	@commands.command()
-	async def herostats(self, ctx, *, hero):
-		"""Gets your stats for a hero
-
-		Clicking on the title of the returned embed will bring you to an opendota page with all of your games with that hero.
-
-		You can also give a lane, and then the command will return stats for games you played in that lane
-
-		If you @mention someone in the command, it will get their hero stats instead
-
-		Lanes can only be calculated for matches that have been parsed
-
-		Example:
-		`{cmdpfx}herostats tinker`
-		`{cmdpfx}herostats tinker mid`
-		`{cmdpfx}herostats riki @PlayerPerson`
-		"""
-		player = None
-
-		words = hero.lower().replace("lane", "").split(" ")
-
-		if len(ctx.message.mentions) > 0:
-			if len(ctx.message.mentions) > 1:
-				raise UserError("Only mention one person. Can't do stats on multiple people here.")
-				return
-			i = 0
-			while i < len(words):
-				if re.match(r'<@!?([0-9]+)>$', words[i]):
-					words.pop(i)
-				else:
-					i += 1
-			player = ctx.message.mentions[0]
-
-		player = await DotaPlayer.convert(ctx, player)
-		steam32 = player.steam_id
-
-
-		lane_args = [
+		stat_sections = [
 			{
-				"name": "safe lane",
-				"keywords": [ "safe" ] ,
-				"url_query": "&lane_role=1",
-				"filter": lambda p: p.get('lane_role') == 1 and not p.get('is_roaming')
+				"caption": "General",
+				"stats": [
+					CoolStat(f"[Matches]({matches_url})", len(player_matches)),
+					CoolStat("Winrate", percent(lambda p: p.get('radiant_win') == (p.get('player_slot') < 128)), filter_key="win"),
+					CoolStat("KDA", f"{avg('kills')}/{avg('deaths')}/{avg('assists')}"),
+					CoolStat("Duration", format_duration_simple(avg('duration'))),
+					CoolStat("In a Party", percent(lambda p: p.get('party_size') > 1, needs_key='party_size', round_place="floor")),
+					CoolStat("Ranked", percent(lambda p: p['lobby_type'] == 7), filter_key="lobby_type")
+				]
 			},
 			{
-				"name": "mid lane",
-				"keywords": [ "mid", "middle" ],
-				"url_query": "&lane_role=2",
-				"filter": lambda p: p.get('lane_role') == 2 and not p.get('is_roaming')
+				"caption": "Heroes",
+				"filter_key": "hero_id",
+				"stats": [
+					CoolStat(self.get_emoji('attr_strength'), percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'strength'), separator=" "),
+					CoolStat(self.get_emoji('attr_agility'), percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'agility'), separator=" "),
+					CoolStat(self.get_emoji('attr_intelligence'), percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'intelligence'), separator=" "),
+					CoolStat("Randomed", percent('randomed'), ignore_value=zeropercent),
+					CoolStat("__Favorites__", f"\n{favorite_heroes}")
+				]
 			},
 			{
-				"name": "offlane",
-				"keywords": [ "off", "hard" ],
-				"url_query": "&lane_role=3",
-				"filter": lambda p: p.get('lane_role') == 3 and not p.get('is_roaming')
-			},
-			{
-				"name": "jungle",
-				"keywords": [ "jungle", "jungling" ],
-				"url_query": "&lane_role=4",
-				"filter": lambda p: p.get('lane_role') == 4 and not p.get('is_roaming')
-			},
-			{
-				"name": "roaming",
-				"keywords": [ "roaming", "roam", "gank", "ganking" ],
-				"filter": lambda p: p.get('is_roaming')
+				"caption": f"Laning{laning_postfix}",
+				"filter_key": "lane_role",
+				"stats": [
+					CoolStat("Safe Lane", percent(lambda p: p.get('lane_role') == 1 and not p.get('is_roaming'), needs_key="lane_role"), ignore_value=zeropercent),
+					CoolStat("Mid Lane", percent(lambda p: p.get('lane_role') == 2 and not p.get('is_roaming'), needs_key="lane_role"), ignore_value=zeropercent),
+					CoolStat("Off Lane", percent(lambda p: p.get('lane_role') == 3 and not p.get('is_roaming'), needs_key="lane_role"), ignore_value=zeropercent),
+					CoolStat("Jungle", percent(lambda p: p.get('lane_role') == 4 and not p.get('is_roaming'), needs_key="lane_role"), ignore_value=zeropercent),
+					CoolStat("Roaming", percent(lambda p: p.get('is_roaming'), needs_key="is_roaming"), ignore_value=zeropercent),
+				]
 			}
 		]
 
-		def find_lane():
-			for i in range(len(words)):
-				for lane in lane_args:
-					if words[i] in lane["keywords"]:
-						words.pop(i)
-						return lane
-
-		chosen_lane = find_lane()
-
-		hero_text = " ".join(words)
-
-		if hero_text == "":
-			await ctx.send(f"You have to give me a hero")
-			return
-
-		hero = self.lookup_hero(hero_text)
-		if not hero:
-			await ctx.send(f"I'm not sure what hero \"*{hero_text}*\" is.")
-			return
-
-		projections = [ "kills", "deaths", "assists", "hero_id", "version", "lane_role", "is_roaming" ]
-		projections = map(lambda p: f"project={p}", projections)
-		projections = "&".join(projections)
-
-		queryargs = f"?hero_id={hero.id}&{projections}"
-
-		await ctx.channel.trigger_typing()
-		await thinker.think(ctx.message)
-		playerinfo = await opendota_query(f"/players/{steam32}")
-		matches = await opendota_query(f"/players/{steam32}/matches{queryargs}")
-		await thinker.stop_thinking(ctx.message)
-
-		if chosen_lane:
-			matches = list(filter(chosen_lane["filter"], matches))
-
-		if len(matches) == 0:
-			if not chosen_lane:
-				await ctx.send(f"Looks like you haven't played {hero.localized_name}")
-			else:
-				await ctx.send(f"Looks like you haven't played any parsed matches as {hero.localized_name} in {chosen_lane['name']}")
-			return
-
-		lane_parsed_count = len(list(filter(lambda p: p['lane_role'] is not None, matches)))
-
-		def avg(key, parsed=False, round_place=0):
-			x = 0
+		if do_downloaded:# if we've downloaded all of these matches, compute all the chat history stuff, and add the downloaded stats
+			chat_wheel_counts = {}
+			chat_wheel_total = 0
+			longest_message_heading = "Longest Chat Message"
+			message_count = 0
+			longest_message = None
+			longest_message_match_id = None
 			for match in matches:
-				if parsed and not match['version']:
-					continue
-				if isinstance(key, LambdaType):
-					val = key(match)
-				else:
-					val = match.get(key, 0)
-				x += val
-			x = round(x / (len(matches) if not parsed else lane_parsed_count), round_place)
-			return int(x) if round_place == 0 else x
+				player = next((p for p in match['players'] if p['account_id'] == steam32), None)
+				match_chat = match.get('chat', None)
+				if match_chat:
+					for message in match_chat:
+						if message.get('player_slot', -1) == player['player_slot']:
+							if message["type"] == "chat":
+								message_count += 1
+								if longest_message is None or len(longest_message) <= len(message['key']):
+									longest_message = message['key']
+									longest_message_match_id = match['match_id']
+							elif message["type"] == "chatwheel":
+								msg_id = int(message['key'])
+								if msg_id >= 1000:
+									continue # skip hero chat wheels
+								chat_wheel_counts[msg_id] = chat_wheel_counts.get(msg_id, 0) + 1
+								chat_wheel_total += 1
 
-		def percent(key, parsed=False, round_place=0):
-			count = 0
-			for match in matches:
-				if parsed and not match['version']:
-					continue
-				if isinstance(key, LambdaType):
-					success = key(match)
-				else:
-					success = match.get(key, 0)
-				if success:
-					count += 1
-			count = round((count * 100) / (len(matches) if not parsed else lane_parsed_count), round_place)
-			return int(count) if round_place == 0 else count
+			message_count = int(round(message_count / len(matches)))
+			if longest_message is not None:
+				longest_message = f"\"{longest_message}\""
+				longest_message_heading = f"[{longest_message_heading}](https://www.opendota.com/matches/{longest_message_match_id}/chat)"
 
+			chat_wheel_text = "*No chat wheel usage found*"
+			if chat_wheel_counts != {}:
+				lines = []
+				chat_wheel_counts = sorted(chat_wheel_counts.items(), key=lambda m: m[1], reverse=True)
+				for i in range(0, min(3, len(chat_wheel_counts))):
+					msg_id, count = chat_wheel_counts[i]
+					message = self.chat_wheel_info.get(msg_id, { "message": "Unknown" })
+					icon = self.get_emoji("chat_wheel_sound" if message.get('is_sound') else "chat_wheel_text")
+					lines.append(f"{icon} {message['message']}")
+				chat_wheel_text = "\n".join(lines)
+			def wards_placed(p):
+				obs = 0 if p.get('obs_placed') is None else p.get('obs_placed')
+				sents = 0 if p.get('sen_placed') is None else p.get('sen_placed')
+				return obs + sents
 
-		url = f"https://www.opendota.com/players/{steam32}/matches?hero_id={hero.id}"
-		if chosen_lane:
-			url += chosen_lane.get("url_query", "")
+			# these are the downloaded_only sections
+			stat_sections.extend([{
+				"caption": "Economy",
+				"stats": [
+					CoolStat("GPM", avg('gold_per_min')),
+					CoolStat("XPM", avg('xp_per_min')),
+					CoolStat("Last Hits/min", avg(lambda p: p['last_hits'] / (1 + (p['duration'] / 60)), 2)),
+					CoolStat("Neutral Creeps", avg(lambda p: 100 * p.get('neutral_kills', 0) / (1 + p['last_hits'])))
+				]
+			},
+			{
+				"caption": "Wards placed",
+				"stats": [
+					CoolStat("None", percent(lambda p: wards_placed(p) == 0), ignore_value=zeropercent),
+					CoolStat("<5", percent(lambda p: wards_placed(p) < 5 and wards_placed(p) != 0), ignore_value=zeropercent),
+					CoolStat("<20", percent(lambda p: wards_placed(p) < 20 and wards_placed(p) >= 5), ignore_value=zeropercent),
+					CoolStat(">=20", percent(lambda p: wards_placed(p) >= 20), ignore_value=zeropercent)
+				]
+			},
+			{
+				"caption": "Chat Wheel",
+				"stats": [ 
+					CoolStat(None, chat_wheel_text)
+				]
+			},
+			{
+				"caption": "All Chat",
+				"inline": False,
+				"stats": [
+					CoolStat("Messages per Game", message_count),
+					CoolStat(longest_message_heading, longest_message, bold=False)
+				]
+			}])
 
-		winrate = percent(lambda p: p['radiant_win'] == (p['player_slot'] < 128), round_place=2)
-		winrate = f"{winrate:.2f}"
-		winrate = re.sub("\.0+$", "", winrate)
-		embed = discord.Embed(description=(
-			f"[Games Played]({url}): **{len(matches)}**\n"
-			f"Winrate: **{winrate}%**\n"
-			f"Avg KDA: **{avg('kills')}**/**{avg('deaths')}**/**{avg('assists')}**\n"), color=self.embed_color)
+		# 
+		# STEP 4: transform these all into embed fields
+		# 
+		for category in stat_sections:
+			if category.get("filter_key") and matchfilter.has_value(category.get("filter_key")):
+				continue # skip this category if its already filtered out by the matchfilter
+			value = "\n".join(map(lambda s: s.render(), filter(lambda s: s.should_show(), category.get("stats"))))
+			if value == "":
+				continue # skip if theres no values to show
+			embed.add_field(name=category.get("caption"), value=value, inline=category.get("inline", True))
 
-		embed.color = discord.Color(int(hero.color[1:], 16))
-
-		embed.set_author(
-			name=f"{playerinfo['profile']['personaname']} ({hero.localized_name})", 
-			icon_url=self.hero_info[hero.id]["icon"],
-			url=url)
-
-		embed.set_thumbnail(url=self.hero_info[hero.id]['portrait'])
-
-		if (not chosen_lane) and lane_parsed_count > 0:
-			lanes = {
-				"Safe Lane": percent(lambda p: p.get('lane_role') == 1 and not p.get('is_roaming'), parsed=True),
-				"Mid Lane": percent(lambda p: p.get('lane_role') == 2 and not p.get('is_roaming'), parsed=True),
-				"Off Lane": percent(lambda p: p.get('lane_role') == 3 and not p.get('is_roaming'), parsed=True),
-				"Jungle": percent(lambda p: p.get('lane_role') == 4 and not p.get('is_roaming'), parsed=True),
-				"Roaming": percent(lambda p: p.get('is_roaming'), parsed=True)
-			}
-			values = []
-			for lane in lanes:
-				if lanes[lane] > 0:
-					values.append(f"{lane}: **{lanes[lane]}%**")
-			embed.add_field(name=f"Laning ({lane_parsed_count} parsed match{'es' if lane_parsed_count > 1 else ''})", value="\n".join(values))
-
-		await ctx.send(embed=embed)
-
-	@commands.command()
-	async def friendstats(self, ctx, friend : DotaPlayer):
-		"""Statistics of games played with a friend"""
-		await ctx.channel.trigger_typing()
-		author_id = botdata.userinfo(ctx.message.author.id).steam
-		if not author_id:
-			raise SteamNotLinkedError()
-
-		friend_id = friend.steam_id
-		friend_mention = friend.mention
-		author_mention = ctx.message.author.mention
-
-		if author_id == friend_id:
-			raise UserError("🙄 ...Try giving me someone other than yourself...")
-
-		author_info = await opendota_query(f"/players/{author_id}")
-		friend_info = await opendota_query(f"/players/{friend_id}")
-
-		def on_same_team(match):
-			heroes = match["heroes"]
-			player1 = heroes[next((x for x in heroes if heroes[x].get("account_id") == author_id), None)]
-			player2 = heroes[next((x for x in heroes if heroes[x].get("account_id") == friend_id), None)]
-			return (player1["player_slot"] < 128) == (player2["player_slot"] < 128)
-		def won_match(match):
-			heroes = match["heroes"]
-			player = heroes[next((x for x in heroes if heroes[x].get("account_id") == author_id), None)]
-			return (player["player_slot"] < 128) == match["radiant_win"]
-
-		url = f"/players/{author_id}/matches?included_account_id={friend_id}"
-		matches = await opendota_query(url)
-		matches = list(filter(on_same_team, matches))
-		if len(matches) == 0:
-			raise UserError("You haven't played any matches with them!")
-
-		winrate = len(list(filter(won_match, matches))) / len(matches)
-
-		def format_match(match):
-			heroes = match["heroes"]
-			author = heroes[next((x for x in heroes if heroes[x].get("account_id") == author_id), None)]
-			friend = heroes[next((x for x in heroes if heroes[x].get("account_id") == friend_id), None)]
-			timediff = time.time() - match['start_time']
-			timediff -= timediff % 60
-			if timediff > (60 * 60 * 24 * 30):
-				timediff -= timediff % (60 * 60)
-			return (
-				f"{get_pretty_time(timediff)} ago, "
-				f"you [{'won' if won_match(match) else 'lost'} a match](https://www.opendota.com/matches/{match['match_id']}) where "
-				f"{author_mention} played **{self.hero_info[author['hero_id']]['name']}**, and "
-				f"{friend_mention} played **{self.hero_info[friend['hero_id']]['name']}**")
-
-		embed = discord.Embed(description=(
-			f"[Games Played](https://www.opendota.com{url}): {len(matches)}\n"
-			f"Winrate: {winrate:.2%}\n"), color=self.embed_color)
-
-		embed.add_field(name="First Match", value=format_match(matches[-1]))
-		embed.add_field(name="Most Recent Match", value=format_match(matches[0]))
-
-		embed.set_author(
-			name=f"{author_info['profile']['personaname']} + {friend_info['profile']['personaname']}", 
-			url=f"https://www.opendota.com{url}")
-
-		image = discord.File(await drawdota.combine_image_halves(author_info['profile']['avatarfull'] or default_steam_icon, friend_info['profile']['avatarfull'] or default_steam_icon), "profile.png")
-		embed.set_thumbnail(url=f"attachment://{image.filename}")
-
-		await ctx.send(embed=embed, file=image)
+		if embed_attachment:
+			await ctx.send(embed=embed, file=image)
+		else:
+			await ctx.send(embed=embed)
 
 	@commands.command(aliases=["dota_gif"])
 	async def dotagif(self, ctx, match_id : int, start, end, ms_per_second : int = 100):

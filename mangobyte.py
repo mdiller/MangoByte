@@ -60,7 +60,8 @@ deprecated_commands = {
 	"setintro": "userconfig intro",
 	"setoutro": "userconfig outro",
 	"setsteam": "userconfig steam",
-	"register": "userconfig steam"
+	"register": "userconfig steam",
+	"friendstats": "playerstats with @Player"
 }
 
 on_ready_has_run = False

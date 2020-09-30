@@ -202,8 +202,8 @@ class TimeSpanArg(QueryArg):
 		return r"(?:in|over)? ?(?:the )?(this|last|past)? ?(\d+)? ?((?:to)?day|week|month|year)s?"
 
 class HeroArg(QueryArg):
-	def __init__(self, ctx, name, prefix):
-		super().__init__(name)
+	def __init__(self, ctx, name, prefix, **kwargs):
+		super().__init__(name, **kwargs)
 		self.prefix = prefix
 		self.dotabase = ctx.bot.get_cog("Dotabase")
 		self.hero = None
@@ -217,8 +217,8 @@ class HeroArg(QueryArg):
 		self.value = self.hero.id
 
 class PlayerArg(QueryArg):
-	def __init__(self, ctx, name, prefix):
-		super().__init__(name)
+	def __init__(self, ctx, name, prefix, **kwargs):
+		super().__init__(name, **kwargs)
 		self.ctx = ctx
 		self.prefix = prefix
 		self.player = None
@@ -353,16 +353,18 @@ class MatchFilter():
 	def add_projections(self, projections):
 		self.projections.extend(projections)
 
-	def to_query_args(self):
+	def to_query_args(self, for_web_url=False):
 		args = filter(lambda a: a.has_value() and a.name and not a.name.startswith("_"), self.args)
 		args = list(map(lambda a: a.to_query_arg(), args))
-		for arg in self.args:
-			if arg.has_value() and arg.post_filter:
-				self.projections.append(arg.post_filter.key)
-		if len(self.projections) > 0:
-			args.extend(map(lambda p: f"project={p}", self.projections))
-		if self.has_value("limit") and self.is_post_filter_required(): # if we need post_filter, limit afterwards
-			args.remove(MatchFilter._get_arg(self.args, "limit").to_query_arg())
+		if not for_web_url:
+			projections = self.projections
+			for arg in self.args:
+				if arg.has_value() and arg.post_filter:
+					projections.append(arg.post_filter.key)
+			if len(projections) > 0:
+				args.extend(map(lambda p: f"project={p}", projections))
+			if self.has_value("limit") and self.is_post_filter_required(): # if we need post_filter, limit afterwards
+				args.remove(MatchFilter._get_arg(self.args, "limit").to_query_arg())
 		return "&".join(args)
 
 	# whether or not this query will only return parsed games

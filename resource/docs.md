@@ -5,7 +5,9 @@ I've recently added a feature to mangobyte to allow users to be very specific wh
 
 __So far this works on the following commands:__
 `?matches`
+`?matchids`
 `?lastmatch`
+`?firstmatch`
 `?playerstats`
 
 I'll probably add it to more commands once I get the implementation a little more fleshed out.
