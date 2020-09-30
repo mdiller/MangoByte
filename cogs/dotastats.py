@@ -56,6 +56,11 @@ async def opendota_query(querystring, cache=False):
 	url = opendota_query_get_url(querystring)
 	return await httpgetter.get(url, cache=cache, errors=opendota_html_errors)
 
+async def opendota_query_filter(matchfilter):
+	matches = await opendota_query(matchfilter.to_query_url())
+	matches = matchfilter.post_filter(matches)
+	return matches
+
 # rate_limit = false if this is the only query we're sending
 async def get_match(match_id):
 	url = opendota_query_get_url(f"/matches/{match_id}")
@@ -104,13 +109,17 @@ async def get_stratz_match(match_id):
 		print("ClientConnectorError on stratz api result")
 		raise StratzMatchNotParsedError(match_id)
 
-async def get_lastmatch_id(matchfilter):
+async def get_lastmatch_id(matchfilter, reverse=False):
 	no_filter = matchfilter.to_query_args() == ""
 	matchfilter.set_arg("significant", 0, False)
-	matchfilter.set_arg("limit", 1)
-	matches = await opendota_query(matchfilter.to_query_url())
+	if not reverse:
+		matchfilter.set_arg("limit", 1)
+	matches = await opendota_query_filter(matchfilter)
 	if matches:
-		return matches[0]["match_id"]
+		if reverse:
+			return matches[-1]["match_id"]
+		else:
+			return matches[0]["match_id"]
 	else:
 		if no_filter:
 			raise NoMatchHistoryError(matchfilter.player.steam_id)
@@ -431,6 +440,19 @@ class DotaStats(MangoCog):
 		match_id = await get_lastmatch_id(matchfilter)
 		await self.player_match_stats(player.steam_id, match_id, ctx)
 
+	@commands.command(aliases=["firstgame", "fm"])
+	async def firstmatch(self, ctx, *, matchfilter : MatchFilter = None):
+		"""Gets info about the player's first dota game
+
+		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`"""
+		await ctx.channel.trigger_typing()
+		
+		matchfilter = await MatchFilter.init(matchfilter, ctx)
+		player = matchfilter.player
+
+		match_id = await get_lastmatch_id(matchfilter, reverse=True)
+		await self.player_match_stats(player.steam_id, match_id, ctx)
+
 	async def print_match_stats(self, ctx, match_id):
 		match = await get_match(match_id)
 		duration = get_pretty_duration(match['duration'], postfix=False)
@@ -532,6 +554,8 @@ class DotaStats(MangoCog):
 
 		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`
 
+		Note that you can have this show up to 100 matches, but will by default only show 10, unless a timespan is given
+
 		**Example:**
 		`{cmdpfx}matches @PlayerPerson mid witch doctor ranked`
 		`{cmdpfx}matches natures prophet`
@@ -545,8 +569,9 @@ class DotaStats(MangoCog):
 		matchfilter.set_arg("limit", 10, False)
 		matchfilter.set_arg("significant", 0, False)
 
-		if matchfilter.get_arg("limit") > 20:
-			matchfilter.set_arg("limit", 20, True)
+		limit_max = 100
+		if matchfilter.get_arg("limit") > limit_max or matchfilter.has_value("date"):
+			matchfilter.set_arg("limit", limit_max, True)
 
 		if matchfilter.get_arg("limit") < 1:
 			raise UserError("Limit of matches can't be less than 1")
@@ -555,12 +580,9 @@ class DotaStats(MangoCog):
 
 		matchfilter.add_projections([ "kills", "deaths", "assists", "hero_id", "version", "game_mode", "lobby_type", "region", "duration", "start_time" ])
 
-		matches = await opendota_query(matchfilter.to_query_url())
+		matches = await opendota_query_filter(matchfilter)
 		if not matches:
-			if hero:
-				raise UserError(f"Looks like this player hasn't played any matches as {hero.localized_name}")
-			else:
-				raise NoMatchHistoryError(steam32)
+			raise UserError("I can't find any matches that match that filter")
 
 		matches = sorted(matches, key=lambda m: m.get("start_time"), reverse=True)
 
@@ -578,8 +600,57 @@ class DotaStats(MangoCog):
 		matches_image = await drawdota.draw_matches_table(matches, self.dota_game_strings)
 		matches_image = discord.File(matches_image, "matches.png")
 		embed.set_image(url=f"attachment://{matches_image.filename}")
+		embed.set_footer(text=f"Try {self.cmdpfx(ctx)}matchids to get copy-pastable match ids")
 
 		await ctx.send(embed=embed, file=matches_image)
+
+	@commands.command()
+	async def matchids(self, ctx, *, matchfilter : MatchFilter = None):
+		"""Gets a list of matchids that match the given filter
+
+		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`
+
+		**Example:**
+		`{cmdpfx}matchids @PlayerPerson mid witch doctor ranked`
+		`{cmdpfx}matchids natures prophet`
+		`{cmdpfx}matchids @PlayerPerson riki`"""
+		await ctx.channel.trigger_typing()
+
+		matchfilter = await MatchFilter.init(matchfilter, ctx)
+
+		steam32 = matchfilter.player.steam_id
+
+		matchfilter.set_arg("limit", 10, False)
+		matchfilter.set_arg("significant", 0, False)
+
+		limit_max = 100
+		if matchfilter.get_arg("limit") > limit_max or matchfilter.has_value("date"):
+			matchfilter.set_arg("limit", limit_max, True)
+
+		if matchfilter.get_arg("limit") < 1:
+			raise UserError("Limit of matches can't be less than 1")
+
+		matchfilter.add_projections([ "kills", "deaths", "assists", "hero_id", "version", "game_mode", "lobby_type", "region", "duration", "start_time" ])
+
+		matches = await opendota_query_filter(matchfilter)
+		if not matches:
+			raise UserError("I can't find any matches that match that filter")
+
+		matches = sorted(matches, key=lambda m: m.get("start_time"), reverse=True)
+
+
+		embed = discord.Embed()
+
+		embed.title = "Recent Matches"
+		embed.url = f"https://www.opendota.com/players/{steam32}/matches"
+
+		embed.description = "```\n"
+		embed.description += "\n".join(list(map(lambda m: str(m["match_id"]), matches)))
+		embed.description += "\n```"
+
+		embed.set_footer(text=f"Try {self.cmdpfx(ctx)}matches to get more details about these matches")
+
+		await ctx.send(embed=embed)
 
 	@commands.command(aliases=["whois"])
 	async def profile(self, ctx, player : DotaPlayer = None):
@@ -717,7 +788,7 @@ class DotaStats(MangoCog):
 
 		await ctx.send(embed=embed, file=rank_icon)
 
-	@commands.command(aliases=["twenty"])
+	@commands.command(aliases=["pstats"])
 	async def playerstats(self, ctx, *, matchfilter : MatchFilter = None):
 		"""Gets stats from the player's last 20 parsed games
 
@@ -728,6 +799,8 @@ class DotaStats(MangoCog):
 		matchfilter = await MatchFilter.init(matchfilter, ctx)
 
 		matchfilter.set_arg("limit", None)
+		matchfilter.set_arg("_parsed", True)
+		matchfilter.add_projections([ "party_size", "version" ])
 
 		steam32 = matchfilter.player.steam_id
 
@@ -735,7 +808,7 @@ class DotaStats(MangoCog):
 			await thinker.think(ctx.message)
 
 			playerinfo = await opendota_query(f"/players/{steam32}")
-			matches_info = await opendota_query(matchfilter.to_query_url())
+			matches_info = await opendota_query_filter(matchfilter)
 			player_matches = []
 			matches = []
 			i = 0
@@ -747,10 +820,10 @@ class DotaStats(MangoCog):
 						player_matches.append(player_match)
 						matches.append(match)
 						
-						player_matches[-1]['party_size'] = 0
-						for player in match['players']:
-							if player['party_id'] == player_matches[-1]['party_id']:
-								player_matches[-1]['party_size'] = player_matches[-1].get('party_size', 0) + 1
+						# player_matches[-1]['party_size'] = 0
+						# for player in match['players']:
+						# 	if player['party_id'] == player_matches[-1]['party_id']:
+						# 		player_matches[-1]['party_size'] = player_matches[-1].get('party_size', 0) + 1
 				i += 1
 
 		await thinker.stop_thinking(ctx.message)
@@ -767,17 +840,24 @@ class DotaStats(MangoCog):
 
 		def avg(key, round_place=0):
 			x = 0
+			total_count = 0
 			for player in player_matches:
 				if isinstance(key, LambdaType):
 					val = key(player)
 				else:
+					if player.get(key) is None:
+						continue
 					val = player.get(key, 0)
 				x += val
-			x = round(x / len(player_matches), round_place)
+				total_count += 1
+			if total_count == 0:
+				return None
+			x = round(x / total_count, round_place)
 			return int(x) if round_place == 0 else x
 
-		def percent(key, round_place=0):
+		def percent(key, round_place=0, needs_key=None):
 			count = 0
+			total_count = 0
 			for player in player_matches:
 				if isinstance(key, LambdaType):
 					success = key(player)
@@ -785,8 +865,13 @@ class DotaStats(MangoCog):
 					success = player.get(key, 0)
 				if success:
 					count += 1
-			count = round((count * 100) / len(player_matches), round_place)
-			return int(count) if round_place == 0 else count
+				if needs_key is None or player.get(needs_key) is not None:
+					total_count += 1
+			if total_count == 0:
+				return None
+			count = round((count * 100) / total_count, round_place)
+			value = int(count) if round_place == 0 else count
+			return f"{value}%"
 
 		chat_wheel_counts = {}
 		chat_wheel_total = 0
@@ -829,16 +914,30 @@ class DotaStats(MangoCog):
 			chat_wheel_text = "\n".join(lines)
 
 		embed.add_field(name="General", value=(
-			f"Winrate: {percent('win')}%\n"
+			f"Winrate: {percent(lambda p: p.get('radiant_win') == (p.get('player_slot') < 128))}\n"
 			f"KDA: **{avg('kills')}**/**{avg('deaths')}**/**{avg('assists')}**\n"
 			f"Game duration: {format_duration_simple(avg('duration'))}\n"
-			f"In a Party: {percent(lambda p: p['party_size'] > 1)}%\n"
-			f"Ranked: {percent(lambda p: p['lobby_type'] == 7)}%"))
+			f"In a Party: {percent(lambda p: p.get('party_size') > 1, needs_key='party_size')}\n"
+			f"Ranked: {percent(lambda p: p['lobby_type'] == 7)}"))
+
+		embed.add_field(name="Heroes", value=(
+			f"{self.get_emoji('attr_strength')} {percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'strength')}\n"
+			f"{self.get_emoji('attr_agility')} {percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'agility')}\n"
+			f"{self.get_emoji('attr_intelligence')} {percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'intelligence')}\n"
+			f"Randomed: {percent('randomed')}"))
+
+		embed.add_field(name="Laning", value=(
+			f"Safe Lane: {percent(lambda p: p.get('lane_role') == 1 and not p.get('is_roaming'))}\n"
+			f"Mid Lane: {percent(lambda p: p.get('lane_role') == 2 and not p.get('is_roaming'))}\n"
+			f"Off Lane: {percent(lambda p: p.get('lane_role') == 3 and not p.get('is_roaming'))}\n"
+			f"Jungle: {percent(lambda p: p.get('lane_role') == 4 and not p.get('is_roaming'))}\n"
+			f"Roaming: {percent(lambda p: p.get('is_roaming'))}\n"))
 
 		embed.add_field(name="Economy", value=(
 			f"GPM: {avg('gold_per_min')}\n"
+			f"XPM: {avg('xp_per_min')}\n"
 			f"Last Hits/min: {avg(lambda p: p['last_hits'] / (1 + (p['duration'] / 60)), 2)}\n"
-			f"Farm from jungle: {avg(lambda p: 100 * p.get('neutral_kills', 0) / (1 + p['last_hits']))}%"))
+			f"Farm from jungle: {avg(lambda p: 100 * p.get('neutral_kills', 0) / (1 + p['last_hits']))}"))
 
 		def wards_placed(p):
 			obs = 0 if p.get('obs_placed') is None else p.get('obs_placed')
@@ -846,23 +945,10 @@ class DotaStats(MangoCog):
 			return obs + sents
 
 		embed.add_field(name="Wards placed", value=(
-			f"None: {percent(lambda p: wards_placed(p) == 0)}%\n"
-			f"<5: {percent(lambda p: wards_placed(p) < 5 and wards_placed(p) != 0)}%\n"
-			f"<20: {percent(lambda p: wards_placed(p) < 20 and wards_placed(p) >= 5)}%\n"
-			f">=20: {percent(lambda p: wards_placed(p) >= 20)}%"))
-
-		embed.add_field(name="Heroes", value=(
-			f"{self.get_emoji('attr_strength')} {percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'strength')}%\n"
-			f"{self.get_emoji('attr_agility')} {percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'agility')}%\n"
-			f"{self.get_emoji('attr_intelligence')} {percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'intelligence')}%\n"
-			f"Randomed: {percent('randomed')}%"))
-
-		embed.add_field(name="Laning", value=(
-			f"Safe Lane: {percent(lambda p: p.get('lane_role') == 1 and not p.get('is_roaming'))}%\n"
-			f"Mid Lane: {percent(lambda p: p.get('lane_role') == 2 and not p.get('is_roaming'))}%\n"
-			f"Off Lane: {percent(lambda p: p.get('lane_role') == 3 and not p.get('is_roaming'))}%\n"
-			f"Jungle: {percent(lambda p: p.get('lane_role') == 4 and not p.get('is_roaming'))}%\n"
-			f"Roaming: {percent(lambda p: p.get('is_roaming'))}%\n"))
+			f"None: {percent(lambda p: wards_placed(p) == 0)}\n"
+			f"<5: {percent(lambda p: wards_placed(p) < 5 and wards_placed(p) != 0)}\n"
+			f"<20: {percent(lambda p: wards_placed(p) < 20 and wards_placed(p) >= 5)}\n"
+			f">=20: {percent(lambda p: wards_placed(p) >= 20)}"))
 
 		embed.add_field(name="Chat Wheel", value=chat_wheel_text)
 

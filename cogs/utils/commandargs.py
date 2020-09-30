@@ -141,8 +141,8 @@ class QueryArg():
 	def __init__(self, name, args_dict=None, post_filter=None):
 		self.name = name
 		self.args_dict = args_dict or {}
+		self.post_filter = post_filter
 		self.value = None
-		self.post_filter = None
 
 	async def parse(self, text):
 		for key in self.args_dict:
@@ -163,9 +163,10 @@ class QueryArg():
 		return f"{self.name}={self.value}"
 
 	def check_post_filter(self, p):
-		if (not self.has_value()) or (self.post_filter is None):
-			return True
-		return self.post_filter(p)
+		if self.has_value():
+			if self.post_filter is not None:
+				return self.post_filter.func(p)
+		return True
 
 # added manually
 class SimpleQueryArg(QueryArg):
@@ -223,7 +224,7 @@ class PlayerArg(QueryArg):
 		self.player = None
 
 	def regex(self):
-		pattern = "(<@[!&]?[0-9]+>|\d+)"
+		pattern = "(<@[!&]?[0-9]+>|\d{5,19})"
 		if self.prefix == "":
 			return re.compile(pattern)
 		return f"{self.prefix}{pattern}"
@@ -235,6 +236,12 @@ class PlayerArg(QueryArg):
 	async def parse(self, text):
 		text = re.sub(self.prefix, "", text, flags=re.IGNORECASE)
 		self.set_player(await DotaPlayer.convert(self.ctx, text))
+
+# a filter to be applied to the match after retrieval
+class PostFilter():
+	def __init__(self, key, func):
+		self.key = key
+		self.func = func
 
 class MatchFilter():
 	def __init__(self, args=None):
@@ -253,7 +260,7 @@ class MatchFilter():
 		args = [
 			QueryArg("win", {
 				r"wins?|won|victory": 1,
-				r"loss|lost|losses|defeat": 0
+				r"loss|lose|lost|losses|defeat": 0
 			}),
 			QueryArg("is_radiant", {
 				r"(as|on)? ?radiant": 1,
@@ -268,17 +275,20 @@ class MatchFilter():
 				r"(not|non)(-| )?(significant|standard)": 0
 			}),
 			QueryArg("limit", {
-				r"(?:limit|count|show) (\d+)": lambda m: int(m.group(1))
+				r"(?:limit|count|show)? ?(\d{1,3})": lambda m: int(m.group(1))
 			}),
 			QueryArg("lane_role", {
 				r"safe( ?lane)?": 1,
 				r"mid(dle)?( ?lane)?": 2,
 				r"(off|hard)( ?lane)?": 3,
 				r"jungl(e|ing)": 4
-			}, lambda p: not p.get("is_roaming")),
-			QueryArg(None, {
+			}, PostFilter("is_roaming", lambda p: p.get("is_roaming") == False)),
+			QueryArg("_roaming", {
 				r"roam(ing)?|gank(ing)?": True
-			}, lambda p: p.get("is_roaming")),
+			}, PostFilter("is_roaming", lambda p: p.get("is_roaming") == True)),
+			QueryArg("_parsed", {
+				r"(is)?( |_)?parsed": True
+			}, PostFilter("version", lambda p: p.get("version") is not None)),
 			TimeSpanArg(),
 			PlayerArg(ctx, "included_account_id", "with "),
 			PlayerArg(ctx, "excluded_account_id", "without "),
@@ -346,12 +356,32 @@ class MatchFilter():
 	def to_query_args(self):
 		args = filter(lambda a: a.has_value() and a.name and not a.name.startswith("_"), self.args)
 		args = list(map(lambda a: a.to_query_arg(), args))
+		for arg in self.args:
+			if arg.has_value() and arg.post_filter:
+				self.projections.append(arg.post_filter.key)
 		if len(self.projections) > 0:
 			args.extend(map(lambda p: f"project={p}", self.projections))
+		if self.has_value("limit") and self.is_post_filter_required(): # if we need post_filter, limit afterwards
+			args.remove(MatchFilter._get_arg(self.args, "limit").to_query_arg())
 		return "&".join(args)
 
-	def post_filter(self, p):
-		return all(a.post_filter_check() for a in self.args)
+	# whether or not this query will only return parsed games
+	def is_only_parsed(self):
+		parsed_args_list = [ "lane", "lane_role", "_roaming", "_version" ]
+		return any(self.has_value(key) for key in parsed_args_list)
+
+	def post_filter(self, matches):
+		if self.is_post_filter_required():
+			matches = list(filter(lambda m: all(a.check_post_filter(m) for a in self.args), matches))
+			if self.has_value("limit") and len(matches) > self.get_arg("limit"):
+				matches = matches[0:self.get_arg("limit")]
+		return matches
+
+	def is_post_filter_required(self):
+		for arg in self.args:
+			if arg.has_value() and arg.post_filter is not None:
+				return True
+		return False
 
 	def to_query_url(self):
 		args = self.to_query_args()

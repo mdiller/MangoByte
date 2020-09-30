@@ -5,6 +5,14 @@ import math
 
 table_font = settings.resource("images/arial_unicode_bold.ttf")
 
+# cache of table_font based on size
+table_font_cache = {}
+
+def get_table_font(size):
+	if size not in table_font_cache:
+		table_font_cache[size] = ImageFont.truetype(table_font, size)
+	return table_font_cache[size]
+
 # if specified, padding should be a 4 element list, or an int
 # 4 element list is left, top, right, bottom
 def get_padding(kwargs, default=0):
@@ -90,7 +98,7 @@ class TextCell(Cell):
 		if isinstance(text, int) and 'horizontal_align' not in kwargs:
 			kwargs['horizontal_align'] = 'center'
 		self.color = kwargs.get('color', '#ffffff')
-		self.font = ImageFont.truetype(table_font, kwargs.get("font_size", 28))
+		self.font = get_table_font(kwargs.get("font_size", 28))
 		self.wrap = kwargs.get('wrap', False)
 
 		self.horizontal_align = kwargs.get('horizontal_align', 'left') # left center right
@@ -151,7 +159,7 @@ class SlantedTextCell(Cell):
 			text = ""
 		self.text = str(text)
 		self.color = kwargs.get('color', '#ffffff')
-		self.font = ImageFont.truetype(table_font, kwargs.get("font_size", 28))
+		self.font = get_table_font(kwargs.get("font_size", 28))
 		self.border_color = kwargs.get('border_color', self.color)
 		self.border_size = kwargs.get('border_size', 2)
 		self.rotation = kwargs.get('rotation', 45)
