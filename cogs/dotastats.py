@@ -952,7 +952,7 @@ class DotaStats(MangoCog):
 			timediff -= timediff % 60 # only show up to minutes level of detail
 			if timediff > (29 * 60 * 60 * 24): # if was over a month ago
 				timediff -= (timediff % (60 * 60 * 24)) # only show up to days level of detail
-			if timediff > (60 * 60 * 24): # if was over a day ago
+			if timediff > (3 * 60 * 60 * 24): # if was over a couple day ago
 				timediff -= (timediff % (60 * 60)) # only show up to hours level of detail
 			return get_pretty_time(timediff)
 		embed.description += f"\n[First Match](https://www.opendota.com/matches/{first_match['match_id']}): {get_time_diff(first_match)} ago"
@@ -1287,29 +1287,34 @@ class DotaStats(MangoCog):
 		if ctx.message.guild is None:
 			raise UserError("You have to use that command in a server")
 
+		voice_channel = None
 		if ctx.author.voice and ctx.author.voice.channel:
 			voice_channel = ctx.author.voice.channel
 		else:
 			audio = self.bot.get_cog("Audio")
 			audioplayer = await audio.audioplayer(ctx, False)
 			if audioplayer is None or audioplayer.voice_channel is None:
-				raise UserError("One of us needs to be in a voice channel for that to work")
-			voice_channel = audioplayer.voice_channel
+				if len(ctx.message.mentions) == 0:
+					raise UserError("One of us needs to be in a voice channel for that to work")
+			else:
+				voice_channel = audioplayer.voice_channel
 
 		show_ranks = "rank" in (mentions_or_rank if mentions_or_rank else "")
 
-		members = voice_channel.members
+		members = []
+		if voice_channel:
+			members.extend(voice_channel.members)
 		if ctx.message.mentions:
 			members.extend(ctx.message.mentions)
 
 		mentions = []
 		links = []
 		ranks = []
-		my_id = voice_channel.guild.me.id
 
 		for member in members:
-			if member.id == my_id:
-				continue
+			if voice_channel:
+				if member.id == voice_channel.guild.me.id:
+					continue
 			mentions.append(member.mention)
 			userinfo = botdata.userinfo(member.id)
 			if userinfo.steam is None:
@@ -1322,8 +1327,8 @@ class DotaStats(MangoCog):
 
 
 		if len(mentions) == 0:
-			raise UserError("This command is broken right now but my developer is working on fixing it! For now you can mention people manually in the command and it should work.")
-			# raise UserError("There isn't anyone in my voice channel 😢")
+			raise UserError("There isn't anyone in my voice channel 😢")
+		#raise UserError("This command is broken right now but my developer is working on fixing it! For now you can mention people manually in the command and it should work.")
 
 		embed = discord.Embed()
 		embed.add_field(name="Discord", value="\n".join(mentions))
