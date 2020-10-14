@@ -259,6 +259,35 @@ class DotaStats(MangoCog):
 			return f"{emoji}**{name}**"
 		return f"**{name}**"
 
+	def get_player_rank(self, playerinfo):
+		# gets the players rank information as a string with a rank emoticaon
+		rank_strings = [ "Unranked", "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine", "Immortal" ]
+
+		base_rank_tier = playerinfo.get("rank_tier")
+		if base_rank_tier is None:
+			base_rank_tier = 0
+		rank_tier = base_rank_tier // 10
+		leaderboard_rank = playerinfo.get("leaderboard_rank")
+		rank_string = f"**{rank_strings[rank_tier]}**"
+		stars = min(base_rank_tier % 10, 7)
+		if stars > 0:
+			rank_string += f" [{stars}]"
+		on_leaderboard = rank_tier >= 7 and leaderboard_rank
+		if on_leaderboard:
+			rank_string = f"**Immortal** [Rank {leaderboard_rank}]"
+			rank_tier = 8
+
+		emoji_id = f"rank_{rank_tier}"
+		if on_leaderboard:
+			if leaderboard_rank <= 10:
+				emoji_id += "c"
+			elif leaderboard_rank <= 100:
+				emoji_id += "b"
+
+		rank_string = self.get_emoji(emoji_id) + " " + rank_string
+
+		return rank_string
+
 	async def get_player_mention(self, steamid, ctx):
 		# expects that steamid is a valid int
 		player = await DotaPlayer.convert(ctx, steamid)
@@ -707,20 +736,7 @@ class DotaStats(MangoCog):
 		matches = await opendota_query(f"/players/{steam32}/matches")
 		matches = list(filter(lambda m: m.get('player_slot') is not None, matches))
 
-		rank_strings = [ "Unranked", "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine", "Immortal" ]
-
-		base_rank_tier = playerinfo.get("rank_tier")
-		if base_rank_tier is None:
-			base_rank_tier = 0
-		rank_tier = base_rank_tier // 10
-		leaderboard_rank = playerinfo.get("leaderboard_rank")
-		rank_string = f"**{rank_strings[rank_tier]}**"
-		stars = min(base_rank_tier % 10, 7)
-		if stars > 0:
-			rank_string += f" [{stars}]"
-
-		if rank_tier == 7 and leaderboard_rank:
-			rank_string = f"Rank **{leaderboard_rank}** on the leaderboards"
+		rank_string = self.get_player_rank(playerinfo)
 
 		gamesplayed = len(matches)
 		if gamesplayed > 0:
@@ -794,7 +810,8 @@ class DotaStats(MangoCog):
 			url=playerinfo["profile"]["profileurl"] or f"https://www.opendota.com/players/{steam32}")
 
 		embed.add_field(name="General", value=(
-			f"Winrate of **{winrate}** over **{gamesplayed}** games\n"
+			f"Winrate: **{winrate}**\n"
+			f"Gamed Played: **{gamesplayed}**\n"
 			f"Total Hours In Game: **{overall_time_played // 3600:,}**\n"
 			f"{rank_string}"
 			f"{plus_text}"))
@@ -1259,12 +1276,14 @@ class DotaStats(MangoCog):
 
 
 	@commands.command(aliases=["profiles"])
-	async def whoishere(self, ctx, *, show_ranks = None):
+	async def whoishere(self, ctx, *, mentions_or_rank = None):
 		"""Shows what discord users are which steam users
 
-		This command will take the users that are currently in the channel mangobyte is in, and create an embed that shows who they are in steam.
+		This command will take the users that are currently in the channel mangobyte is in, and create an embed that shows who they are in steam. If you are in a voice channel, it will use the channel that you are in
 
-		If you are in a voice channel, it will use the channel that you are in"""
+		You can also mention the users you want to show and it will show those ones too
+
+		If you use the word `rank` somewhere in the command, it will also show the ranks of the players"""
 		if ctx.message.guild is None:
 			raise UserError("You have to use that command in a server")
 
@@ -1277,28 +1296,40 @@ class DotaStats(MangoCog):
 				raise UserError("One of us needs to be in a voice channel for that to work")
 			voice_channel = audioplayer.voice_channel
 
+		show_ranks = "rank" in (mentions_or_rank if mentions_or_rank else "")
+
+		members = voice_channel.members
+		if ctx.message.mentions:
+			members.extend(ctx.message.mentions)
 
 		mentions = []
 		links = []
+		ranks = []
 		my_id = voice_channel.guild.me.id
 
-		for member in voice_channel.members:
+		for member in members:
 			if member.id == my_id:
 				continue
 			mentions.append(member.mention)
 			userinfo = botdata.userinfo(member.id)
 			if userinfo.steam is None:
 				links.append("Unknown")
+				ranks.append("Unknown")
 			else:
 				player_info = await opendota_query(f"/players/{userinfo.steam}")
 				links.append(f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{userinfo.steam})")
+				ranks.append(self.get_player_rank(player_info))
+
 
 		if len(mentions) == 0:
-			raise UserError("There isn't anyone in my voice channel 😢")
+			raise UserError("This command is broken right now but my developer is working on fixing it! For now you can mention people manually in the command and it should work.")
+			# raise UserError("There isn't anyone in my voice channel 😢")
 
 		embed = discord.Embed()
 		embed.add_field(name="Discord", value="\n".join(mentions))
 		embed.add_field(name="Steam", value="\n".join(links))
+		if show_ranks:
+			embed.add_field(name="Rank", value="\n".join(ranks))
 
 		await ctx.send(embed=embed)
 
