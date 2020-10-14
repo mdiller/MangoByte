@@ -856,7 +856,7 @@ class DotaStats(MangoCog):
 
 	# the main internal logic for the playerstats and twenty commands
 	async def do_playerstats(self, ctx, matchfilter, do_downloaded=False):
-		matchfilter.add_projections([ "kills", "deaths", "assists", "party_size", "version", "hero_id", "lane_role", "is_roaming", "lobby_type" ])
+		matchfilter.add_projections([ "kills", "deaths", "assists", "party_size", "version", "hero_id", "lane_role", "is_roaming", "lobby_type", "start_time" ])
 		steam32 = matchfilter.player.steam_id
 
 		# 
@@ -866,6 +866,7 @@ class DotaStats(MangoCog):
 			await thinker.think(ctx.message)
 			playerinfo = await opendota_query(f"/players/{steam32}")
 			matches_info = await opendota_query_filter(matchfilter)
+			matches_info = sorted(matches_info, key=lambda m: m["start_time"])
 			player_matches = []
 
 			if do_downloaded:
@@ -881,6 +882,7 @@ class DotaStats(MangoCog):
 					i += 1
 			else:
 				player_matches = matches_info
+
 
 		await thinker.stop_thinking(ctx.message)
 		if len(player_matches) == 0:
@@ -899,20 +901,23 @@ class DotaStats(MangoCog):
 		if do_downloaded:
 			embed.description = f"*The following are averages and percentages based on the last {len(player_matches)} parsed matches*"
 		else:
-			embed.description = f"To see the filtering options for this command, try `{self.cmdpfx(ctx)}docs matchfilter`"
-			embed.set_footer(text=f"if you miss the old {self.cmdpfx(ctx)}playerstats command, try {self.cmdpfx(ctx)}twenty")
+			embed.description = ""
+		embed.set_footer(text=f"To see the filtering options for this command, try \"{self.cmdpfx(ctx)}docs matchfilter\"")
 
 		matches_url = f"https://www.opendota.com/players/{steam32}/matches?{matchfilter.to_query_args(for_web_url=True)}"
 		author_name = playerinfo["profile"]["personaname"] or "Anonymous"
 		author_icon_url = playerinfo["profile"]["avatar"] or default_steam_icon
 
+		# if this is stats for playing as a specific hero
 		if matchfilter.has_value("hero_id"):
 			hero = self.lookup_hero(matchfilter.get_arg("hero_id"))
 			author_icon_url = self.hero_info[hero.id]["icon"]
 			embed.set_thumbnail(url=self.hero_info[hero.id]['portrait'])
 			embed.color = discord.Color(int(hero.color[1:], 16))
 
+		# if this is stats for playing with someone
 		if matchfilter.has_value("included_account_id"):
+			# make friends image
 			avatar1 = playerinfo['profile']['avatarfull'] or default_steam_icon
 			player2_id = matchfilter.get_arg("included_account_id")
 			player2_info = await opendota_query(f"/players/{player2_id}")
@@ -921,6 +926,20 @@ class DotaStats(MangoCog):
 			embed.set_thumbnail(url=f"attachment://{image.filename}")
 			embed_attachment = image
 			author_name += f" + {player2_info['profile']['personaname'] or 'Anonymous'}"
+
+		# also add the dates of first and last match to description
+		first_match = player_matches[0]
+		last_match = player_matches[-1]
+		def get_time_diff(match):
+			timediff = time.time() - match["start_time"]
+			timediff -= timediff % 60 # only show up to minutes level of detail
+			if timediff > (29 * 60 * 60 * 24): # if was over a month ago
+				timediff -= (timediff % (60 * 60 * 24)) # only show up to days level of detail
+			if timediff > (60 * 60 * 24): # if was over a day ago
+				timediff -= (timediff % (60 * 60)) # only show up to hours level of detail
+			return get_pretty_time(timediff)
+		embed.description += f"\n[First Match](https://www.opendota.com/matches/{first_match['match_id']}): {get_time_diff(first_match)} ago"
+		embed.description += f"\n[Last Match](https://www.opendota.com/matches/{last_match['match_id']}): {get_time_diff(last_match)} ago"
 
 		embed.set_author(
 			name=author_name, 
@@ -1240,7 +1259,7 @@ class DotaStats(MangoCog):
 
 
 	@commands.command(aliases=["profiles"])
-	async def whoishere(self, ctx):
+	async def whoishere(self, ctx, *, show_ranks = None):
 		"""Shows what discord users are which steam users
 
 		This command will take the users that are currently in the channel mangobyte is in, and create an embed that shows who they are in steam.
