@@ -811,7 +811,7 @@ class DotaStats(MangoCog):
 
 		embed.add_field(name="General", value=(
 			f"Winrate: **{winrate}**\n"
-			f"Gamed Played: **{gamesplayed}**\n"
+			f"Games Played: **{gamesplayed}**\n"
 			f"Total Hours In Game: **{overall_time_played // 3600:,}**\n"
 			f"{rank_string}"
 			f"{plus_text}"))
