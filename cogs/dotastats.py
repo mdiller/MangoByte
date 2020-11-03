@@ -1415,9 +1415,24 @@ class DotaStats(MangoCog):
 		embed.set_image(url=f"attachment://{image.filename}")
 		await ctx.send(embed=embed, file=image)
 
+	@commands.command(aliases=["abilitybuild", "skillbuilds", "matchbuilds"])
+	async def skillbuild(self, ctx, match_id : int):
+		"""Gets the ability upgrades for a match
 
+		Shows all the ability upgrade orders for all heroes in the match"""
+		match = await get_match(match_id)
 
+		match = await get_match(match_id)
 
+		embed = discord.Embed()
+
+		embed.title = f"Match {match_id}"
+		embed.url = f"https://opendota.com/matches/{match_id}/playback"
+
+		async with ctx.channel.typing():
+			image = discord.File(await drawdota.draw_match_ability_upgrades(match), "upgrades.png")
+			embed.set_image(url=f"attachment://{image.filename}")
+			await ctx.send(embed=embed, file=image)
 
 
 

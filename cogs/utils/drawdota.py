@@ -181,7 +181,6 @@ async def get_item_images(player):
 	return result
 
 async def get_spell_images(spells):
-	print(spells)
 	images = []
 	spell_size = (128, 128)
 	for spell in spells:
@@ -232,7 +231,7 @@ async def add_player_row(table, player, is_parsed, is_ability_draft):
 	if is_ability_draft:
 		abilities = filter(lambda a: not (ability_infos[a]["is_talent"] or "ad_special_bonus_" in ability_infos[a]["data_name"]), player.get("ability_upgrades_arr", []))
 		abilities = list(set(abilities))
-		abilities = sorted(abilities, key=lambda a: ability_infos[a]["slot"])
+		abilities = sorted(abilities, key=lambda a: ability_infos[a]["slot"] if ability_infos[a]["slot"] else 0)
 		row[3:3] = [
 			ImageCell(img=await get_spell_images(abilities), height=48)
 		]
@@ -242,7 +241,7 @@ async def add_player_row(table, player, is_parsed, is_ability_draft):
 async def draw_match_table(match):
 	is_parsed = match.get("version")
 	table = Table(background=discord_color2)
-	is_ability_draft = is_parsed and match["game_mode"] == 18
+	is_ability_draft = match["game_mode"] == 18
 	# Header
 	headers = [
 		TextCell("", padding=0),
@@ -1124,4 +1123,63 @@ async def draw_heroabilities(abilities):
 	image.save(fp, format="PNG")
 	fp.seek(0)
 	
+	return fp
+
+
+async def add_player_ability_upgrades_row(table, player):
+	abilities = player.get("ability_upgrades_arr", [])
+	row = [
+		ColorCell(width=5, color=("green" if player["isRadiant"] else "red")),
+		ImageCell(img=await get_hero_image(player["hero_id"]), height=48),
+		TextCell(player.get("personaname", "Anonymous"))
+	]
+	empty_levels = [ 17, 19, 21, 22, 23, 24 ] # levels at which there are no upgrades
+	for i in range(1, 26):
+		if len(abilities) == 0:
+			continue
+		if i in empty_levels:
+			row.append(TextCell(""))
+			continue
+		ability = abilities.pop(0)
+		row.append(ImageCell(img=await get_ability_image(ability), height=48))
+
+	table.add_row(row)
+
+# draws a table of the ability upgrades for each hero in the match.
+async def draw_match_ability_upgrades(match):
+	is_parsed = match.get("version")
+	table = Table(background=discord_color2)
+	# Header
+	headers = [
+		TextCell("", padding=0),
+		TextCell(""),
+		TextCell("")
+	]
+	for i in range(1, 26):
+		headers.append(TextCell(f"{i}", width=48, horizontal_align="center"))
+	table.add_row(headers)
+	for cell in table.rows[0]:
+		cell.background = discord_color1
+
+	# Do players
+	for player in match["players"]:
+		if player['isRadiant']:
+			await add_player_ability_upgrades_row(table, player)
+	table.add_row([ColorCell(color=discord_color1, height=5) for i in range(len(headers))])
+	for player in match["players"]:
+		if not player['isRadiant']:
+			await add_player_ability_upgrades_row(table, player)
+	table_image = table.render()
+
+	table_border = 10
+
+	image = Image.new('RGBA', (table_image.size[0] + (table_border * 2), table_image.size[1] + (table_border * 2)))
+	draw = ImageDraw.Draw(image)
+	draw.rectangle([0, 0, image.size[0], image.size[1]], fill=discord_color1)
+	image.paste(table_image, (table_border, table_border))
+
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
+
 	return fp
