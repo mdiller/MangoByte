@@ -11,7 +11,7 @@ Mangobyte is a discord bot primarily focused on providing information about the 
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 81 commands, separated into 7 categories
+Mangobyte currently has 85 commands, separated into 7 categories
 
 #### General
 Commands that don't really fit into the other categories
@@ -61,8 +61,10 @@ For playing audio in a voice channel
 For information about Dota 2, and playing hero responses
 
 ```
+?abilities       | Shows all of the abilities/spells for that hero            
 ?ability         | Gets information about a specific hero ability             
 ?addemoticon     | Adds a dota emoticon as an animated emoji                  
+?aghanim         | Gets the aghs upgrade for the given hero or ability        
 ?chatwheel       | Plays the given chat wheel sound                           
 ?courage         | Generates a challenge build                                
 ?dota            | Plays a dota response                                      
@@ -78,6 +80,7 @@ For information about Dota 2, and playing hero responses
 ?lore            | Gets the lore of a hero, ability, or item                  
 ?neutralitems    | Displays all of the neutral items                          
 ?no              | Nopes.                                                     
+?recipe          | Shows the recipes involving this item                      
 ?talents         | Gets the talents of a specific hero                        
 ?thanks          | Gives thanks                                               
 ?yes             | Oooooh ya.                                                 
@@ -88,19 +91,20 @@ Commands for displaying information about Dota 2 players and matches
 
 ```
 ?dotagif         | Creates a gif of a specific part of a dota match           
-?friendstats     | Statistics of games played with a friend                   
-?herostats       | Gets your stats for a hero                                 
+?firstmatch      | Gets info about the player's first dota game               
 ?laning          | Creates gif of the laning stage with a caption             
 ?lastmatch       | Gets info about the player's last dota game                
 ?lastmatchstory  | Tells the story of the player's last match                 
 ?match           | Gets a summary of the dota match with the given id         
 ?matches         | Gets a list of your matches                                
+?matchids        | Gets a list of matchids that match the given filter        
 ?matchstory      | Tells the story of the match                               
 ?opendota        | Queries the opendota api                                   
 ?parse           | Requests that OpenDota parses a match                      
-?playerstats     | Gets stats from the player's last 20 parsed games          
+?playerstats     | Gets player match statistics                               
 ?profile         | Displays information about the player's dota profile       
 ?rolesgraph      | Gets a graph displaying the player's hero roles            
+?twenty          | Gets stats from the player's last 20 parsed games          
 ?whoishere       | Shows what discord users are which steam users             
 ```
 

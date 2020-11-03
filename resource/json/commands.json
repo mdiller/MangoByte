@@ -38,6 +38,16 @@
 	],
 	"commands": [
 		{
+			"name": "abilities",
+			"signature": "?abilities <hero>",
+			"short_help": "Shows all of the abilities/spells for that hero",
+			"help": "Shows all of the abilities/spells for that hero",
+			"aliases": [
+				"spells"
+			],
+			"cog": "Dotabase"
+		},
+		{
 			"name": "ability",
 			"signature": "?ability <ability>",
 			"short_help": "Gets information about a specific hero ability",
@@ -54,6 +64,19 @@
 			"help": "Adds a dota emoticon as an animated emoji\n\nThis command will add the dota emoticon as an animated emoji to the server. Because it is an animated emoji, only discord nitro users will be able to use it.\n\nObviously, this command needs the 'Manage Emoji' permission to be able to work.\n\n<a:pup:406270527766790145> <a:stunned:406274986769252353> <a:cocky:406274999951949835>\n\n**Examples:**\n\u200b`?addemoticon pup`\n\u200b`?addemoticon stunned`\n\u200b`?addemoticon naga_song`",
 			"aliases": [
 				"addemoji"
+			],
+			"cog": "Dotabase"
+		},
+		{
+			"name": "aghanim",
+			"signature": "?aghanim <name>",
+			"short_help": "Gets the aghs upgrade for the given hero or ability",
+			"help": "Gets the aghs upgrade for the given hero or ability",
+			"aliases": [
+				"aghs",
+				"ags",
+				"aghanims",
+				"scepter"
 			],
 			"cog": "Dotabase"
 		},
@@ -161,7 +184,7 @@
 			"name": "config",
 			"signature": "?config <name> [value]",
 			"short_help": "Configures the bot's settings for this server",
-			"help": "Configures the bot's settings for this server\n\nBelow are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `?config <settingname>`, and you can configure a setting by typing `?config <settingname> <value>`\n\n**Settings:**\n\u200b`prefix`\n\u200b`reactions`\n\u200b`ttschannel`\n\u200b`botadmin`\n\u200b`intros`\n\u200b`outros`\n\u200b`ttslang`\n\u200b`usenickname`\n\u200b`announcetts`\n\n**Examples**\n\u200b`?config prefix !`\n\u200b`?config reactions enable`\n\u200b`?config ttschannel #tts`\n\u200b`?config botadmin @BotAdmin`\n\u200b`?config intros disable`\n\u200b`?config outros disable`\n\u200b`?config ttslang Russian`\n\u200b`?config usenickname enable`\n\u200b`?config announcetts enable`",
+			"help": "Configures the bot's settings for this server\n\nBelow are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `?config <settingname>`, and you can configure a setting by typing `?config <settingname> <value>`\n\n**Settings:**\n\u200b`prefix`\n\u200b`reactions`\n\u200b`ttschannel`\n\u200b`botadmin`\n\u200b`intros`\n\u200b`outros`\n\u200b`ttslang`\n\u200b`usenickname`\n\u200b`simpletts`\n\u200b`announcetts`\n\n**Examples**\n\u200b`?config prefix !`\n\u200b`?config reactions enable`\n\u200b`?config ttschannel #tts`\n\u200b`?config botadmin @BotAdmin`\n\u200b`?config intros disable`\n\u200b`?config outros disable`\n\u200b`?config ttslang Russian`\n\u200b`?config usenickname enable`\n\u200b`?config simpletts enable`\n\u200b`?config announcetts enable`",
 			"aliases": [],
 			"cog": "Admin"
 		},
@@ -271,11 +294,14 @@
 			"cog": "Admin"
 		},
 		{
-			"name": "friendstats",
-			"signature": "?friendstats <friend>",
-			"short_help": "Statistics of games played with a friend",
-			"help": "Statistics of games played with a friend",
-			"aliases": [],
+			"name": "firstmatch",
+			"signature": "?firstmatch [matchfilter]",
+			"short_help": "Gets info about the player's first dota game",
+			"help": "Gets info about the player's first dota game\n\nTo see how to filter for specific matches, try `?docs matchfilter`",
+			"aliases": [
+				"firstgame",
+				"fm"
+			],
 			"cog": "DotaStats"
 		},
 		{
@@ -315,14 +341,6 @@
 			"help": "Gets information about a specific hero\n\nYou can give this command almost any variant of the hero's name, or the hero's id\n\n**Examples:**\n\u200b`?hero sf`\n\u200b`?hero inker`\n\u200b`?hero furi`",
 			"aliases": [],
 			"cog": "Dotabase"
-		},
-		{
-			"name": "herostats",
-			"signature": "?herostats <hero>",
-			"short_help": "Gets your stats for a hero",
-			"help": "Gets your stats for a hero\n\nClicking on the title of the returned embed will bring you to an opendota page with all of your games with that hero.\n\nYou can also give a lane, and then the command will return stats for games you played in that lane\n\nIf you @mention someone in the command, it will get their hero stats instead\n\nLanes can only be calculated for matches that have been parsed\n\nExample:\n\u200b`?herostats tinker`\n\u200b`?herostats tinker mid`\n\u200b`?herostats riki @PlayerPerson`",
-			"aliases": [],
-			"cog": "DotaStats"
 		},
 		{
 			"name": "herotable",
@@ -473,11 +491,19 @@
 			"name": "matches",
 			"signature": "?matches [matchfilter]",
 			"short_help": "Gets a list of your matches",
-			"help": "Gets a list of your matches\n\nThe date/time is localized based off of the server that the game was played on, which means it may not match your timezone.\n\nTo see how to filter for specific matches, try `?docs matchfilter`\n\n**Example:**\n\u200b`?matches @PlayerPerson mid witch doctor ranked`\n\u200b`?matches natures prophet`\n\u200b`?matches @PlayerPerson riki`",
+			"help": "Gets a list of your matches\n\nThe date/time is localized based off of the server that the game was played on, which means it may not match your timezone.\n\nTo see how to filter for specific matches, try `?docs matchfilter`\n\nNote that you can have this show up to 100 matches, but will by default only show 10, unless a timespan is given\n\n**Example:**\n\u200b`?matches @PlayerPerson mid witch doctor ranked`\n\u200b`?matches natures prophet`\n\u200b`?matches @PlayerPerson riki`",
 			"aliases": [
 				"recentmatches",
 				"recent"
 			],
+			"cog": "DotaStats"
+		},
+		{
+			"name": "matchids",
+			"signature": "?matchids [matchfilter]",
+			"short_help": "Gets a list of matchids that match the given filter",
+			"help": "Gets a list of matchids that match the given filter\n\nTo see how to filter for specific matches, try `?docs matchfilter`\n\n**Example:**\n\u200b`?matchids @PlayerPerson mid witch doctor ranked`\n\u200b`?matchids natures prophet`\n\u200b`?matchids @PlayerPerson riki`",
+			"aliases": [],
 			"cog": "DotaStats"
 		},
 		{
@@ -547,10 +573,11 @@
 		{
 			"name": "playerstats",
 			"signature": "?playerstats [matchfilter]",
-			"short_help": "Gets stats from the player's last 20 parsed games",
-			"help": "Gets stats from the player's last 20 parsed games\n\nNote that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available\n\nTo see how to filter for specific matches, try `?docs matchfilter`",
+			"short_help": "Gets player match statistics",
+			"help": "Gets player match statistics\n\nBy default this will target all the matches a player has played.\n\n**Note:** If you're wondering why some data is now missing, check out `?twenty`. I've revamped this command to work for all matches, and `?twenty` is the old version of what this command used to be.\n\nTo see how to filter for specific matches, try `?docs matchfilter`",
 			"aliases": [
-				"twenty"
+				"pstats",
+				"herostats"
 			],
 			"cog": "DotaStats"
 		},
@@ -603,10 +630,22 @@
 			"cog": "General"
 		},
 		{
+			"name": "recipe",
+			"signature": "?recipe <item>",
+			"short_help": "Shows the recipes involving this item",
+			"help": "Shows the recipes involving this item",
+			"aliases": [
+				"recipes",
+				"craft",
+				"crafting"
+			],
+			"cog": "Dotabase"
+		},
+		{
 			"name": "reddit",
 			"signature": "?reddit <url_or_id>",
 			"short_help": "Displays a formatted reddit post",
-			"help": "Displays a formatted reddit post",
+			"help": "Displays a formatted reddit post\n\nNote that this will only get nsfw posts if you call this in an nsfw channel",
 			"aliases": [],
 			"cog": "General"
 		},
@@ -733,6 +772,16 @@
 			"cog": "Audio"
 		},
 		{
+			"name": "twenty",
+			"signature": "?twenty [matchfilter]",
+			"short_help": "Gets stats from the player's last 20 parsed games",
+			"help": "Gets stats from the player's last 20 parsed games\n\nNote that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available\n\nTo see how to filter for specific matches, try `?docs matchfilter`",
+			"aliases": [
+				"chatstats"
+			],
+			"cog": "DotaStats"
+		},
+		{
 			"name": "unsummon",
 			"signature": "?unsummon ",
 			"short_help": "Removes the bot from the voice channel",
@@ -758,9 +807,9 @@
 		},
 		{
 			"name": "whoishere",
-			"signature": "?whoishere ",
+			"signature": "?whoishere [mentions_or_rank]",
 			"short_help": "Shows what discord users are which steam users",
-			"help": "Shows what discord users are which steam users\n\nThis command will take the users that are currently in the channel mangobyte is in, and create an embed that shows who they are in steam.\n\nIf you are in a voice channel, it will use the channel that you are in",
+			"help": "Shows what discord users are which steam users\n\nThis command will take the users that are currently in the channel mangobyte is in, and create an embed that shows who they are in steam. If you are in a voice channel, it will use the channel that you are in\n\nYou can also mention the users you want to show and it will show those ones too\n\nIf you use the word `rank` somewhere in the command, it will also show the ranks of the players",
 			"aliases": [
 				"profiles"
 			],
@@ -770,7 +819,7 @@
 			"name": "wiki",
 			"signature": "?wiki <thing>",
 			"short_help": "Looks up a thing on wikipedia",
-			"help": "Looks up a thing on wikipedia\n\nUses my own implementation of the [Wikipedia API](https://www.mediawiki.org/wiki/API:Tutorial)\n\nYou can also try `? wiki random` to get a random wiki page\n\n**Example:**\n\u200b`?wiki potato`",
+			"help": "Looks up a thing on wikipedia\n\nUses my own implementation of the [Wikipedia API](https://www.mediawiki.org/wiki/API:Tutorial)\n\nYou can also try `?wiki random` to get a random wiki page\n\nNote that I've had to remove the images from these (unless you're in a NSFW channel) because I have no way of checking if it is an NSFW image, and posting an NSFW image in non-NSFW channels would be against discord's ToS. Sorry about that!\n\n**Example:**\n\u200b`?wiki potato`",
 			"aliases": [
 				"define",
 				"lookup",
