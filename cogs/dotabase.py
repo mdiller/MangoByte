@@ -107,7 +107,7 @@ class Dotabase(MangoCog):
 		self.hero_regex = ""
 		self.build_helpers()
 		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
-		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos(), self.vpkurl)
+		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos(), self.get_ability_infos(), self.vpkurl)
 
 	def build_helpers(self):
 		def clean_input(t):
@@ -340,6 +340,20 @@ class Dotabase(MangoCog):
 			result[item.id] = {
 				"name": item.localized_name,
 				"icon": self.vpkurl + item.icon,
+			}
+		return result
+
+	def get_ability_infos(self):
+		result = {}
+		for ability in session.query(Ability):
+			if ability.icon is None:
+				continue
+			result[ability.id] = {
+				"name": ability.localized_name,
+				"icon": self.vpkurl + ability.icon,
+				"is_talent": ability.talent_slot is not None,
+				"data_name": ability.name,
+				"slot": ability.ability_slot
 			}
 		return result
 

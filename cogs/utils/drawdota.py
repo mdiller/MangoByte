@@ -65,6 +65,7 @@ neutral_timings = {
 vpkurl = None
 hero_infos = {}
 item_infos = {}
+ability_infos = {}
 
 def get_item_color(item, default=None):
 	if item is None:
@@ -76,10 +77,11 @@ def get_item_color(item, default=None):
 	else:
 		return default
 
-def init_dota_info(hero_info, item_info, the_vpkurl):
-	global hero_infos, item_infos, vpkurl
+def init_dota_info(hero_info, item_info, ability_info, the_vpkurl):
+	global hero_infos, item_infos, ability_infos, vpkurl
 	hero_infos = hero_info
 	item_infos = item_info
+	ability_infos = ability_info
 	vpkurl = the_vpkurl
 
 def get_hero_name(hero_id):
@@ -112,9 +114,9 @@ async def get_item_image(item_id):
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
-async def get_ability_image(item_id):
+async def get_ability_image(ability_id):
 	try:
-		return await get_url_image(item_infos[item_id]["icon"])
+		return await get_url_image(ability_infos[ability_id]["icon"])
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
@@ -178,6 +180,26 @@ async def get_item_images(player):
 		x += item_size[0]
 	return result
 
+async def get_spell_images(spells):
+	print(spells)
+	images = []
+	spell_size = (128, 128)
+	for spell in spells:
+		if spell:
+			images.append(await get_ability_image(spell))
+		else:
+			images.append(Image.new("RGBA", spell_size))
+
+	widths, heights = zip(*(i.size if i else spell_size for i in images))
+	result = Image.new("RGBA", (sum(widths), max(heights)))
+
+	x = 0
+	for i in range(len(images)):
+		result.paste(images[i], (x, 0))
+		x += spell_size[0]
+	return result
+
+
 
 def get_lane(player):
 	lane_dict = { 1: "Bot", 3: "Top", None: "" }
@@ -190,7 +212,7 @@ def get_lane(player):
 		return lane_role_dict[player.get('lane_role')]
 
 
-async def add_player_row(table, player, is_parsed):
+async def add_player_row(table, player, is_parsed, is_ability_draft):
 	row = [
 		ColorCell(width=5, color=("green" if player["isRadiant"] else "red")),
 		ImageCell(img=await get_hero_image(player["hero_id"]), height=48),
@@ -207,11 +229,20 @@ async def add_player_row(table, player, is_parsed):
 			TextCell(get_lane(player)),
 			TextCell(player.get("pings", "-"), horizontal_align="center")
 		]
+	if is_ability_draft:
+		abilities = filter(lambda a: not (ability_infos[a]["is_talent"] or "ad_special_bonus_" in ability_infos[a]["data_name"]), player.get("ability_upgrades_arr", []))
+		abilities = list(set(abilities))
+		abilities = sorted(abilities, key=lambda a: ability_infos[a]["slot"])
+		row[3:3] = [
+			ImageCell(img=await get_spell_images(abilities), height=48)
+		]
+
 	table.add_row(row)
 
 async def draw_match_table(match):
 	is_parsed = match.get("version")
 	table = Table(background=discord_color2)
+	is_ability_draft = is_parsed and match["game_mode"] == 18
 	# Header
 	headers = [
 		TextCell("", padding=0),
@@ -229,6 +260,10 @@ async def draw_match_table(match):
 			TextCell("Lane"),
 			TextCell("Pings")
 		]
+	if is_ability_draft:
+		headers[3:3] = [
+			TextCell("Abilities")
+		]
 	table.add_row(headers)
 	for cell in table.rows[0]:
 		cell.background = discord_color1
@@ -236,11 +271,11 @@ async def draw_match_table(match):
 	# Do players
 	for player in match["players"]:
 		if player['isRadiant']:
-			await add_player_row(table, player, is_parsed)
+			await add_player_row(table, player, is_parsed, is_ability_draft)
 	table.add_row([ColorCell(color=discord_color1, height=5) for i in range(len(headers))])
 	for player in match["players"]:
 		if not player['isRadiant']:
-			await add_player_row(table, player, is_parsed)
+			await add_player_row(table, player, is_parsed, is_ability_draft)
 	return table.render()
 
 async def create_match_image(match):
