@@ -526,6 +526,9 @@ async def dota_rank_icon(rank_tier, leaderboard_rank):
 	stars_num = min(rank_tier % 10, 7)
 	modifier = ""
 
+	if leaderboard_rank and badge_num == 7:
+		badge_num = 8 # this is to make consistant with what opendota shows
+
 	if badge_num == 8 and leaderboard_rank:
 		stars_num = 0
 		if leaderboard_rank <= 10:
