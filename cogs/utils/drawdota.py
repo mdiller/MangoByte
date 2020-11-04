@@ -116,9 +116,32 @@ async def get_item_image(item_id):
 
 async def get_ability_image(ability_id):
 	try:
+		if ability_infos[ability_id]["talent_slot"] is not None:
+			return await get_talents_image(ability_id)
 		return await get_url_image(ability_infos[ability_id]["icon"])
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
+
+async def get_talents_image(abilities):
+	if isinstance(abilities, int):
+		abilities = [ abilities ]
+	talent_slots = map(lambda a: ability_infos[a]["talent_slot"], abilities)
+	talent_slots = list(filter(lambda a: a is not None, talent_slots))
+	talent_slots = sorted(talent_slots, reverse=True)
+	uri = f"talents_icon:{'_'.join(map(str, talent_slots))}"
+	print(uri)
+	filename = httpgetter.cache.get_filename(uri)
+	if filename and not settings.debug:
+		return Image.open(filename)
+	filename = await httpgetter.cache.new(uri, "png")
+
+	image = Image.open(settings.resource("images/talents/talent_background.png"))
+	for slot in talent_slots:
+		slot_image = Image.open(settings.resource(f"images/talents/talent_{slot}.png"))
+		image = paste_image(image, slot_image)
+
+	image.save(filename, format="PNG")
+	return image
 
 async def get_neutral_image(item):
 	background = Image.new("RGBA", (64, 64))
@@ -220,6 +243,7 @@ async def add_player_row(table, player, is_parsed, is_ability_draft):
 		TextCell(player.get("deaths")),
 		TextCell(player.get("assists")),
 		TextCell(player.get("gold_per_min"), color="yellow"),
+		ImageCell(img=await get_talents_image(player.get("ability_upgrades_arr", [])), height=48),
 		ImageCell(img=await get_item_images(player), height=48)
 	]
 	if is_parsed:
@@ -229,9 +253,9 @@ async def add_player_row(table, player, is_parsed, is_ability_draft):
 			TextCell(player.get("pings", "-"), horizontal_align="center")
 		]
 	if is_ability_draft:
-		abilities = filter(lambda a: not (ability_infos[a]["is_talent"] or "ad_special_bonus_" in ability_infos[a]["data_name"]), player.get("ability_upgrades_arr", []))
+		abilities = filter(lambda a: ability_infos[a]["talent_slot"] is None, player.get("ability_upgrades_arr", []))
 		abilities = list(set(abilities))
-		abilities = sorted(abilities, key=lambda a: ability_infos[a]["slot"] if ability_infos[a]["slot"] else 0)
+		abilities = sorted(abilities, key=lambda a: ability_infos[a]["ability_slot"] if ability_infos[a]["ability_slot"] else 0)
 		row[3:3] = [
 			ImageCell(img=await get_spell_images(abilities), height=48)
 		]
@@ -251,6 +275,7 @@ async def draw_match_table(match):
 		TextCell("D", horizontal_align="center"),
 		TextCell("A", horizontal_align="center"),
 		TextCell("GPM", color="yellow"),
+		TextCell("T", horizontal_align="center"),
 		TextCell("Items")
 	]
 	if is_parsed:
@@ -1183,3 +1208,4 @@ async def draw_match_ability_upgrades(match):
 	fp.seek(0)
 
 	return fp
+

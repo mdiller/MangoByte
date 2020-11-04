@@ -351,9 +351,8 @@ class Dotabase(MangoCog):
 			result[ability.id] = {
 				"name": ability.localized_name,
 				"icon": self.vpkurl + ability.icon,
-				"is_talent": ability.talent_slot is not None,
-				"data_name": ability.name,
-				"slot": ability.ability_slot
+				"talent_slot": ability.talent_slot,
+				"ability_slot": ability.ability_slot
 			}
 		return result
 
