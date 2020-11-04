@@ -253,7 +253,7 @@ class Dotabase(MangoCog):
 						return None
 					ability_position = ABILITY_KEY_MAP[key]
 					# use this instead of directly using ability_slot because there are some filler generic_ability things
-					abilities = session.query(Ability).filter_by(hero_id=hero.id).filter(Ability.ability_slot != None).order_by(Ability.ability_slot).all()
+					abilities = hero.abilities
 					if ability_position > len(abilities):
 						raise UserError(f"{hero.localized_name} doesn't have that many abilities")
 					if key == "r": # if is ultimate and not invoker, get last ability in list
@@ -351,8 +351,8 @@ class Dotabase(MangoCog):
 			result[ability.id] = {
 				"name": ability.localized_name,
 				"icon": self.vpkurl + ability.icon,
-				"talent_slot": ability.talent_slot,
-				"ability_slot": ability.ability_slot
+				"slot": ability.slot,
+				"entity": ability
 			}
 		return result
 
@@ -832,14 +832,12 @@ class Dotabase(MangoCog):
 			description += "\n\n" + "\n".join(formatted_attributes)
 
 		# talents
-		talent_query = session.query(Ability).filter(Ability.talent_slot != None)
-		talent_query = query_filter_list(talent_query, Ability.linked_abilities, ability.name)
-		talents = talent_query.order_by(Ability.talent_slot).all()
+		talent_query = query_filter_list(session.query(Talent), Talent.linked_abilities, ability.name)
+		talents = talent_query.order_by(Talent.slot).all()
 		if len(talents) > 0:
 			description += f"\n\n{self.get_emoji('talent_tree')} **Talents:**"
 			for talent in talents:
-				level = ((talent.talent_slot // 2) * 5) + 10
-				description += f"\n[Level {level}] {talent.localized_name}"
+				description += f"\n[Level {talent.level}] {talent.localized_name}"
 
 		# aghs
 		if ability.aghanim:
@@ -1406,7 +1404,7 @@ class Dotabase(MangoCog):
 		if not hero:
 			raise UserError("That doesn't look like a hero")
 
-		abilities = list(filter(lambda a: a.ability_slot is not None, hero.abilities))
+		abilities = list(filter(lambda a: a.slot is not None, hero.abilities))
 
 		embed = discord.Embed()
 

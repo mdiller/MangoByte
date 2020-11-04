@@ -114,19 +114,26 @@ async def get_item_image(item_id):
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
-async def get_ability_image(ability_id):
+async def get_ability_image(ability_id, hero_id=None):
 	try:
-		if ability_infos[ability_id]["talent_slot"] is not None:
-			return await get_talents_image(ability_id)
+		ability = ability_infos[ability_id]["entity"]
+		if ability.is_talent:
+			return await get_talents_image(ability_id, hero_id)
 		return await get_url_image(ability_infos[ability_id]["icon"])
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
-async def get_talents_image(abilities):
+async def get_talents_image(abilities, hero_id):
 	if isinstance(abilities, int):
 		abilities = [ abilities ]
-	talent_slots = map(lambda a: ability_infos[a]["talent_slot"], abilities)
-	talent_slots = list(filter(lambda a: a is not None, talent_slots))
+	talent_slots = []
+	for ability_id in abilities:
+		ability = ability_infos[ability_id]["entity"]
+		if not ability.is_talent:
+			continue
+		for talent in ability.talent_links:
+			if talent.hero_id is None or talent.hero_id == hero_id:
+				talent_slots.append(talent.slot)
 	talent_slots = sorted(talent_slots, reverse=True)
 	uri = f"talents_icon:{'_'.join(map(str, talent_slots))}"
 	print(uri)
@@ -243,19 +250,19 @@ async def add_player_row(table, player, is_parsed, is_ability_draft):
 		TextCell(player.get("deaths")),
 		TextCell(player.get("assists")),
 		TextCell(player.get("gold_per_min"), color="yellow"),
-		ImageCell(img=await get_talents_image(player.get("ability_upgrades_arr", [])), height=48),
+		ImageCell(img=await get_talents_image(player.get("ability_upgrades_arr", []), player["hero_id"]), height=48),
 		ImageCell(img=await get_item_images(player), height=48)
 	]
 	if is_parsed:
-		row[-1:-1] = [
+		row[-2:-2] = [
 			TextCell(player.get("actions_per_min")),
 			TextCell(get_lane(player)),
 			TextCell(player.get("pings", "-"), horizontal_align="center")
 		]
 	if is_ability_draft:
-		abilities = filter(lambda a: ability_infos[a]["talent_slot"] is None, player.get("ability_upgrades_arr", []))
+		abilities = filter(lambda a: not ability_infos[a]["entity"].is_talent, player.get("ability_upgrades_arr", []))
 		abilities = list(set(abilities))
-		abilities = sorted(abilities, key=lambda a: ability_infos[a]["ability_slot"] if ability_infos[a]["ability_slot"] else 0)
+		abilities = sorted(abilities, key=lambda a: ability_infos[a]["slot"] if ability_infos[a]["slot"] else 0)
 		row[3:3] = [
 			ImageCell(img=await get_spell_images(abilities), height=48)
 		]
@@ -279,7 +286,7 @@ async def draw_match_table(match):
 		TextCell("Items")
 	]
 	if is_parsed:
-		headers[-1:-1] = [
+		headers[-2:-2] = [
 			TextCell("APM"),
 			TextCell("Lane"),
 			TextCell("Pings")
@@ -694,7 +701,7 @@ async def draw_matches_table(matches, game_strings):
 
 # given talents as they are stored in dotabase
 async def draw_hero_talents(hero):
-	talents = hero.talents.split("|")
+	talents = list(map(lambda t: t.localized_name, hero.talents))
 	talent_rows = [
 		[ talents[7], talents[6] ],
 		[ talents[5], talents[4] ],
@@ -1126,7 +1133,7 @@ async def draw_itemrecipe(main_item, components, products):
 	return filename
 
 async def draw_heroabilities(abilities):
-	abilities = sorted(abilities, key=lambda a: a.ability_slot)
+	abilities = sorted(abilities, key=lambda a: a.slot)
 	table = Table(background=discord_color2)
 	for ability in abilities:
 		icon = await get_url_image(f"{vpkurl}{ability.icon}")
@@ -1166,7 +1173,7 @@ async def add_player_ability_upgrades_row(table, player):
 			row.append(TextCell(""))
 			continue
 		ability = abilities.pop(0)
-		row.append(ImageCell(img=await get_ability_image(ability), height=48))
+		row.append(ImageCell(img=await get_ability_image(ability, player["hero_id"]), height=48))
 
 	table.add_row(row)
 
