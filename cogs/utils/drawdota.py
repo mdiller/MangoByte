@@ -126,6 +126,8 @@ async def get_ability_image(ability_id, hero_id=None):
 async def get_talents_image(abilities, hero_id):
 	if isinstance(abilities, int):
 		abilities = [ abilities ]
+	if abilities is None:
+		abilities = []
 	talent_slots = []
 	for ability_id in abilities:
 		ability = ability_infos[ability_id]["entity"]
@@ -136,7 +138,6 @@ async def get_talents_image(abilities, hero_id):
 				talent_slots.append(talent.slot)
 	talent_slots = sorted(talent_slots, reverse=True)
 	uri = f"talents_icon:{'_'.join(map(str, talent_slots))}"
-	print(uri)
 	filename = httpgetter.cache.get_filename(uri)
 	if filename and not settings.debug:
 		return Image.open(filename)
@@ -241,7 +242,7 @@ def get_lane(player):
 		return lane_role_dict[player.get('lane_role')]
 
 
-async def add_player_row(table, player, is_parsed, is_ability_draft):
+async def add_player_row(table, player, is_parsed, is_ability_draft, has_talents):
 	row = [
 		ColorCell(width=5, color=("green" if player["isRadiant"] else "red")),
 		ImageCell(img=await get_hero_image(player["hero_id"]), height=48),
@@ -249,18 +250,19 @@ async def add_player_row(table, player, is_parsed, is_ability_draft):
 		TextCell(player.get("kills")),
 		TextCell(player.get("deaths")),
 		TextCell(player.get("assists")),
-		TextCell(player.get("gold_per_min"), color="yellow"),
-		ImageCell(img=await get_talents_image(player.get("ability_upgrades_arr", []), player["hero_id"]), height=48),
-		ImageCell(img=await get_item_images(player), height=48)
+		TextCell(player.get("gold_per_min"), color="yellow")
 	]
 	if is_parsed:
-		row[-2:-2] = [
+		row.extend([
 			TextCell(player.get("actions_per_min")),
 			TextCell(get_lane(player)),
 			TextCell(player.get("pings", "-"), horizontal_align="center")
-		]
+		])
+	if has_talents:
+		row.append(ImageCell(img=await get_talents_image(player.get("ability_upgrades_arr"), player["hero_id"]), height=48))
+	row.append(ImageCell(img=await get_item_images(player), height=48))
 	if is_ability_draft:
-		abilities = filter(lambda a: not ability_infos[a]["entity"].is_talent, player.get("ability_upgrades_arr", []))
+		abilities = filter(lambda a: not ability_infos[a]["entity"].is_talent, player.get("ability_upgrades_arr"))
 		abilities = list(set(abilities))
 		abilities = sorted(abilities, key=lambda a: ability_infos[a]["slot"] if ability_infos[a]["slot"] else 0)
 		row[3:3] = [
@@ -272,7 +274,9 @@ async def add_player_row(table, player, is_parsed, is_ability_draft):
 async def draw_match_table(match):
 	is_parsed = match.get("version")
 	table = Table(background=discord_color2)
-	is_ability_draft = match["game_mode"] == 18
+	has_ability_upgrades = match["players"][0].get("ability_upgrades_arr") is not None
+	is_ability_draft = match["game_mode"] == 18 and has_ability_upgrades
+	has_talents = has_ability_upgrades and match["start_time"] > 1481500800
 	# Header
 	headers = [
 		TextCell("", padding=0),
@@ -281,16 +285,17 @@ async def draw_match_table(match):
 		TextCell("K", horizontal_align="center"),
 		TextCell("D", horizontal_align="center"),
 		TextCell("A", horizontal_align="center"),
-		TextCell("GPM", color="yellow"),
-		TextCell("T", horizontal_align="center"),
-		TextCell("Items")
+		TextCell("GPM", color="yellow")
 	]
 	if is_parsed:
-		headers[-2:-2] = [
+		headers.extend([
 			TextCell("APM"),
 			TextCell("Lane"),
 			TextCell("Pings")
-		]
+		])
+	if has_talents:
+		headers.append(TextCell("T", horizontal_align="center"))
+	headers.append(TextCell("Items"))
 	if is_ability_draft:
 		headers[3:3] = [
 			TextCell("Abilities")
@@ -302,11 +307,11 @@ async def draw_match_table(match):
 	# Do players
 	for player in match["players"]:
 		if player['isRadiant']:
-			await add_player_row(table, player, is_parsed, is_ability_draft)
+			await add_player_row(table, player, is_parsed, is_ability_draft, has_talents)
 	table.add_row([ColorCell(color=discord_color1, height=5) for i in range(len(headers))])
 	for player in match["players"]:
 		if not player['isRadiant']:
-			await add_player_row(table, player, is_parsed, is_ability_draft)
+			await add_player_row(table, player, is_parsed, is_ability_draft, has_talents)
 	return table.render()
 
 async def create_match_image(match):
@@ -1159,7 +1164,9 @@ async def draw_heroabilities(abilities):
 
 
 async def add_player_ability_upgrades_row(table, player):
-	abilities = player.get("ability_upgrades_arr", [])
+	abilities = player.get("ability_upgrades_arr")
+	if abilities is None:
+		abilities = []
 	row = [
 		ColorCell(width=5, color=("green" if player["isRadiant"] else "red")),
 		ImageCell(img=await get_hero_image(player["hero_id"]), height=48),
@@ -1179,6 +1186,8 @@ async def add_player_ability_upgrades_row(table, player):
 
 # draws a table of the ability upgrades for each hero in the match.
 async def draw_match_ability_upgrades(match):
+	if match["players"][0].get("ability_upgrades_arr") is None:
+		raise UserError("That match is too old, it doesn't have ability data")
 	is_parsed = match.get("version")
 	table = Table(background=discord_color2)
 	# Header

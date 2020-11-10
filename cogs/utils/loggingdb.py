@@ -273,30 +273,41 @@ class LoggingDb():
 			return request
 
 	async def update_guilds(self, guilds):
-		return # disable this for now as it is causing issues
+		guild_dict = {}
 		for guild in guilds:
-			guild_log = self.session.query(Guild).filter_by(id=guild.id).first()
-			if guild_log is None:
-				guild_log = Guild()
-				guild_log.id = guild.id
-				guild_log.name = guild.name
-				guild_log.join_time = guild.me.joined_at
+			guild_dict[guild.id] = guild
+
+		# update existing guilds
+		new_guild_ids = list(guild_dict.keys())
+		for guild_log in self.session.query(Guild):
+			if guild_log.id in new_guild_ids:
+				new_guild_ids.remove(guild_log.id)
+
+			if guild_log.leave_time is not None:
 				guild_log.leave_time = None
-				self.session.add(guild_log)
-			else:
-				if guild_log.leave_time is not None:
-					guild_log.leave_time = None
-				if guild_log.name == "<Unknown>":
-					guild_log.name = guild.name
-		for guild_log in self.session.query(Guild).filter_by(leave_time=None):
-			found = False
-			for guild in guilds:
-				if str(guild.id) == str(guild_log.id):
-					found = True
-					break
-			if not found:
-				guild_log.leave_time = datetime.datetime.utcnow()
+			if guild_log.name == "<Unknown>":
+				guild_log.name = guild.name
+
+		# add new guilds
+		for guild_id in new_guild_ids:
+			guild = guild_dict[guild_id]
+			guild_log = Guild()
+			guild_log.id = guild.id
+			guild_log.name = guild.name
+			guild_log.join_time = guild.me.joined_at
+			guild_log.leave_time = None
+			self.session.add(guild_log)
+
+		async with Database(self.database_url) as database:
+			current_ids = ", ".join(list(map(lambda g: str(g), guild_dict.keys())))
+
+			# fix all existing guilds that say they've left
+			await database.execute(query=f"UPDATE guilds SET leave_time = NULL WHERE id in ({current_ids}) and leave_time is not NULL")
+
+			# run query to remove guilds that have left
+			await database.execute(query=f"UPDATE guilds SET leave_time = datetime('now','localtime') WHERE id not in ({current_ids}) and leave_time is NULL")
 		self.session.commit()
+
 
 	# only called manually
 	def update_commands_column(self, bot):
