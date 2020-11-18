@@ -712,6 +712,18 @@
 			"cog": "General"
 		},
 		{
+			"name": "skillbuild",
+			"signature": "?skillbuild <match_id>",
+			"short_help": "Gets the ability upgrades for a match",
+			"help": "Gets the ability upgrades for a match\n\nShows all the ability upgrade orders for all heroes in the match",
+			"aliases": [
+				"abilitybuild",
+				"skillbuilds",
+				"matchbuilds"
+			],
+			"cog": "DotaStats"
+		},
+		{
 			"name": "smarttts",
 			"signature": "?smarttts <message>",
 			"short_help": "Automatically find the best fit for the tts given",

@@ -1,17 +1,20 @@
 # MangoByte<img align="right" src="/resource/images/readme/mangobyte.png"/>
 
-[![Servers](https://img.shields.io/badge/dynamic/json.svg?label=servers&url=http%3A%2F%2Fdillerm.io%2Fdata%2Fmangobyte%2Fshieldstats.json&query=%24.servers&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
-[![Registered Users](https://img.shields.io/badge/dynamic/json.svg?label=registered%20users&url=http%3A%2F%2Fdillerm.io%2Fdata%2Fmangobyte%2Fshieldstats.json&query=%24.registered_users&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
+[![Servers](https://img.shields.io/badge/dynamic/json.svg?style=flat-square&label=servers&url=http%3A%2F%2Fdillerm.io%2Fdata%2Fmangobyte%2Fshieldstats.json&query=%24.servers&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
+[![Registered Users](https://img.shields.io/badge/dynamic/json.svg?style=flat-square&label=registered%20users&url=http%3A%2F%2Fdillerm.io%2Fdata%2Fmangobyte%2Fshieldstats.json&query=%24.registered_users&colorB=#4c1)](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
 
-- [Add the bot to your server](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
-- [Join the MangoByte help server](https://discord.gg/d6WWHxx)
+[![Discord Help Server](https://discordapp.com/api/guilds/296486417197170688/embed.png?style=banner2)](https://discord.gg/d6WWHxx)
 
 Mangobyte is a discord bot primarily focused on providing information about the game Dota 2, and doing text-to-speech in a voice channel. The text-to-speech has many different forms, including playing clips, playing voice lines from dota, and doing tts from user input. The Dota 2 information is both information about the players and their recent matches, as well as information extracted from the game itself about the stats of various heroes. It can also play an intro for users when they join the voice channel it is in. It is highly configurable, allowing server/guild owners to configure various options for their servers, as well as users to configure various options for themselves. I'm using the [discord.py](https://github.com/Rapptz/discord.py) python wrapper for the [Discord API](https://discordapp.com/developers). I'm also making use of [dotabase](https://github.com/mdiller/dotabase), which is an open source repository (created by yours truly) containing data about the game [Dota 2](http://www.dota2.com).
+
+## Inviting Mangobyte
+
+Want to try out mangobyte on your server? [Click Here](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
 
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 85 commands, separated into 7 categories
+Mangobyte currently has 86 commands, separated into 7 categories
 
 #### General
 Commands that don't really fit into the other categories
@@ -104,6 +107,7 @@ Commands for displaying information about Dota 2 players and matches
 ?playerstats     | Gets player match statistics                               
 ?profile         | Displays information about the player's dota profile       
 ?rolesgraph      | Gets a graph displaying the player's hero roles            
+?skillbuild      | Gets the ability upgrades for a match                      
 ?twenty          | Gets stats from the player's last 20 parsed games          
 ?whoishere       | Shows what discord users are which steam users             
 ```
