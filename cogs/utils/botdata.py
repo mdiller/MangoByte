@@ -160,7 +160,7 @@ class GuildInfo(BotDataItem):
 			"key": "botadmin",
 			"default": None,
 			"type": types.Role,
-			"description": "Users who have the specified role will be able to use commands from the admin section. To set this role, do `?config botadmin <role>` where <role> is an @mention of a role in the server",
+			"description": "Users who have the specified role will be able to use commands from the admin section. To set this role, do `?config botadmin <role>` where <role> is an @mention of a role in the server. You can also use @everyone to give everyone permissions to use admin commands.",
 			"example": "@BotAdmin"
 		},
 		{
