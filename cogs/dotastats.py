@@ -591,7 +591,7 @@ class DotaStats(MangoCog):
 
 		await self.tell_match_story(match, is_radiant, ctx, perspective)
 
-	@commands.command(aliases=["lastgamestory"])
+	@commands.command(aliases=["lastgamestory", "lmstory"])
 	async def lastmatchstory(self, ctx, player : DotaPlayer = None):
 		"""Tells the story of the player's last match
 
@@ -1433,6 +1433,33 @@ class DotaStats(MangoCog):
 			image = discord.File(await drawdota.draw_match_ability_upgrades(match), "upgrades.png")
 			embed.set_image(url=f"attachment://{image.filename}")
 			await ctx.send(embed=embed, file=image)
+
+
+	# @commands.command(aliases=["wrapped"])
+	async def dotawrapped(self, ctx, player : DotaPlayer = None):
+		"""Gets the "dota wrapped" summary for the player
+
+		This is from the site https://gameishard.gg/dotawrapped/
+
+		Yes, I got permission from the guy who made this to include this in mangobyte"""
+		if not player:
+			player = await DotaPlayer.from_author(ctx)
+
+		wrapped_url = f"https://gameishard.gg/dotawrapped/?id={player.steam_id}"
+		wrapped_image_url = f"https://gameishard.gg/dotawrapped/assets/images/players/{player.steam_id}.png"
+
+		await thinker.think(ctx.message)
+		await httpgetter.get(wrapped_url, return_type="text")
+		await thinker.stop_thinking(ctx.message)
+
+		embed = discord.Embed()
+
+		embed.title = f"Dota 2 Wrapped"
+		embed.url = wrapped_url
+		embed.set_image(url=wrapped_image_url)
+
+		await ctx.send(embed=embed)
+
 
 
 
