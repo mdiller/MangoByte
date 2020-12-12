@@ -132,8 +132,8 @@ class HttpGetter:
 			else:
 				raise_error(url, r.status, errors)
 
-	async def post(self, url, return_type="json", errors={}):
-		async with self.session.post(url) as r:
+	async def post(self, url, return_type="json", errors={}, body={}, headers={}):
+		async with self.session.post(url, json=body, headers=headers) as r:
 			await loggingdb.insert_http_request(url, r.status, False)
 			if r.status == 200:
 				if return_type == "json":

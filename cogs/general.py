@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from __main__ import settings, botdata, invite_link, httpgetter, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.botdata import UserInfo
@@ -498,6 +498,31 @@ class General(MangoCog):
 		embed.description = self.docs_data[found_topic]
 		await ctx.send(embed=embed)
 
+	@tasks.loop(hours=12)
+	async def update_topgg(self):
+		if settings.debug or (settings.topgg is None):
+			return # nothing to do here
+
+		bot_id = self.bot.user.id
+		topgg_token = settings.topgg
+		guilds_count = len(self.bot.guilds)
+
+		try:
+			url = f"https://top.gg/api/bots/{bot_id}/stats"
+			body = {
+				"server_count": guilds_count
+			}
+			headers = {
+				"Authorization": topgg_token
+			}
+			response = await httpgetter.post(url, body=body, headers=headers)
+		except HttpError as e:
+			appinfo = await self.bot.application_info()
+			await appinfo.owner.send(f"Updating top.gg failed with {e.code} error")
+
+		# for future, only send message to me if we fail (check for bad return code excpetion)
+		appinfo = await self.bot.application_info()
+		await appinfo.owner.send(f"Updated top.gg! ({guilds_count} servers)")
 
 	@commands.Cog.listener()
 	async def on_message(self, message):

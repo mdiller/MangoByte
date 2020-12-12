@@ -65,7 +65,10 @@ deprecated_commands = {
 
 on_ready_has_run = False
 
-
+@bot.event
+async def on_shard_ready(shard_id):
+	appinfo = await bot.application_info()
+	await appinfo.owner.send(f"shard {shard_id} called its on_shard_ready")
 
 @bot.event
 async def on_ready():
@@ -88,10 +91,15 @@ async def on_ready():
 		start=datetime.datetime.utcnow())
 	await bot.change_presence(status=discord.Status.online, activity=game)
 
+	general_cog = bot.get_cog("General")
 	audio_cog = bot.get_cog("Audio")
 	artifact_cog = bot.get_cog("Artifact")
 	await artifact_cog.load_card_sets()
 	bot.help_command.cog = bot.get_cog("General")
+
+	# start topgg update service thing
+	general_cog.update_topgg.cancel()
+	general_cog.update_topgg.start()
 
 	# stuff to help track/log the connection of voice channels
 	connection_status = {}
