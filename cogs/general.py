@@ -503,8 +503,7 @@ class General(MangoCog):
 		if settings.debug or (settings.topgg is None):
 			return # nothing to do here
 
-
-		appinfo = await bot.application_info()
+		appinfo = await self.bot.application_info()
 		await appinfo.owner.send(f"{len(self.bot.guilds)} guilds in bot.guilds at at beginning of update_topgg")
 
 		bot_id = self.bot.user.id
