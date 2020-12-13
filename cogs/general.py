@@ -498,10 +498,14 @@ class General(MangoCog):
 		embed.description = self.docs_data[found_topic]
 		await ctx.send(embed=embed)
 
-	@tasks.loop(hours=12)
+	@tasks.loop(hours=1)
 	async def update_topgg(self):
 		if settings.debug or (settings.topgg is None):
 			return # nothing to do here
+
+
+		appinfo = await bot.application_info()
+		await appinfo.owner.send(f"{len(self.bot.guilds)} guilds in bot.guilds at at beginning of update_topgg")
 
 		bot_id = self.bot.user.id
 		topgg_token = settings.topgg

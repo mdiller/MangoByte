@@ -68,10 +68,13 @@ on_ready_has_run = False
 @bot.event
 async def on_shard_ready(shard_id):
 	appinfo = await bot.application_info()
-	await appinfo.owner.send(f"shard {shard_id} called its on_shard_ready")
+	await appinfo.owner.send(f"shard {shard_id} ({len(bot.shards)} total) called its on_shard_ready")
 
 @bot.event
 async def on_ready():
+	appinfo = await bot.application_info()
+	await appinfo.owner.send(f"{len(bot.guilds)} guilds in bot.guilds at the beginning of on_ready()")
+
 	global on_ready_has_run
 	is_first_time = True
 	if on_ready_has_run:
@@ -140,6 +143,10 @@ async def on_ready():
 
 	if not settings.debug:
 		await appinfo.owner.send(message)
+
+	appinfo = await bot.application_info()
+	await appinfo.owner.send(f"{len(bot.guilds)} guilds in bot.guilds at the end of on_ready()")
+
 
 async def get_cmd_signature(ctx):
 	bot.help_command.context = ctx
