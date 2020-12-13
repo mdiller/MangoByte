@@ -44,7 +44,7 @@ description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 				For more information about me, try `{cmdpfx}info`"""
 permissions = 314432
 
-bot = commands.AutoShardedBot(command_prefix=botdata.command_prefix_botmessage, help_command=MangoHelpCommand(), description=description)
+bot = commands.AutoShardedBot(command_prefix=botdata.command_prefix_botmessage, help_command=MangoHelpCommand(), description=description, shard_count=(2 if settings.debug else 10))
 
 thinker = Thinker(bot)
 invite_link = f"https://discordapp.com/oauth2/authorize?permissions={permissions}&scope=bot&client_id=213476188037971968"
@@ -68,7 +68,7 @@ on_ready_has_run = False
 @bot.event
 async def on_shard_ready(shard_id):
 	appinfo = await bot.application_info()
-	await appinfo.owner.send(f"shard {shard_id} ({len(bot.shards)} total) called its on_shard_ready")
+	await appinfo.owner.send(f"shard {shard_id} ({len(bot.shards)} total) called its on_shard_ready ({len(bot.guilds)} guilds)")
 
 @bot.event
 async def on_ready():
