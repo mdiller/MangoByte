@@ -498,7 +498,7 @@ class General(MangoCog):
 		embed.description = self.docs_data[found_topic]
 		await ctx.send(embed=embed)
 
-	@tasks.loop(hours=1)
+	@tasks.loop(hours=12)
 	async def update_topgg(self):
 		if settings.debug or (settings.topgg is None):
 			return # nothing to do here
