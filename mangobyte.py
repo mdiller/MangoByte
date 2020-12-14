@@ -81,6 +81,7 @@ async def on_ready():
 		is_first_time = False
 		print("on_ready called again, waiting 10 seconds before processing")
 		await asyncio.sleep(10)
+	on_ready_has_run = True
 
 	onReadyTimer = SimpleTimer()
 
@@ -101,8 +102,8 @@ async def on_ready():
 	bot.help_command.cog = bot.get_cog("General")
 
 	# start topgg update service thing
-	general_cog.update_topgg.cancel()
-	general_cog.update_topgg.start()
+	if (not general_cog.update_topgg.is_running()):
+		general_cog.update_topgg.start()
 
 	# stuff to help track/log the connection of voice channels
 	connection_status = {}
@@ -138,8 +139,6 @@ async def on_ready():
 	if is_first_time:
 		message += f"\nFull startup took {startupTimer}"
 	appinfo = await bot.application_info()
-
-	on_ready_has_run = True
 
 	if not settings.debug:
 		await appinfo.owner.send(message)
