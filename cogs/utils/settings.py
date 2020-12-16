@@ -55,6 +55,11 @@ class Settings:
 	def odota(self):
 		return self.json_data.get("odota", None)
 
+	# an optional api key for the topgg api. If not given, then the bot wont update the topgg api
+	@property
+	def topgg(self):
+		return self.json_data.get("topgg", None)
+
 	@property
 	def resourcedir(self):
 		return "resource/" # self.json_data["resourcedir"]

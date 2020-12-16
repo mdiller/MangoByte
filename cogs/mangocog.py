@@ -26,6 +26,10 @@ class MangoCog(discord.ext.commands.Cog):
 	def name(self):
 		return self.__class__.__name__
 
+	async def send_owner(self, *args, **kwargs):
+		appinfo = await self.bot.application_info()
+		await appinfo.owner.send(*args, **kwargs)
+
 	async def get_clip_try_types(self, clipid, trytypes, ctx):
 		trytypes = trytypes.split("|")
 		try:

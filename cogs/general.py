@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from __main__ import settings, botdata, invite_link, httpgetter, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.botdata import UserInfo
@@ -19,6 +19,13 @@ import praw
 import feedparser
 import os
 from .mangocog import *
+
+donate_links = {
+	"Patreon": "https://www.patreon.com/dillerm",
+	"BuyMeACoffee": "https://www.buymeacoffee.com/dillerm",
+	"Ko-fi": "https://ko-fi.com/dillerm",
+	"PayPal": "https://www.paypal.me/dillerm"
+}
 
 def load_words():
 	words = {}
@@ -186,8 +193,9 @@ class General(MangoCog):
 			f"• Greets users joining a voice channel\n"
 			f"• For a list of command categories, try `{cmdpfx}help`"), inline=False)
 
-		embed.add_field(name="Donate", value=(
-			f"If you want to donate money to support MangoByte's server costs, click [here]({self.donation_link})"))
+		donate_stuff = "\n".join(map(lambda key: f"• [{key}]({donate_links[key]})", donate_links))
+		embed.add_field(name="Donating", value=(
+			f"If you want to donate money to support MangoByte's server costs, click one of the links below. If you want to learn more about how much I spend on MangoByte per month try `{cmdpfx}donate`.\n{donate_stuff}"))
 
 		owner = (await self.bot.application_info()).owner
 
@@ -501,6 +509,83 @@ class General(MangoCog):
 		embed.description = self.docs_data[found_topic]
 		await ctx.send(embed=embed)
 
+	@tasks.loop(hours=12)
+	async def update_topgg(self):
+		if settings.debug or (settings.topgg is None):
+			return # nothing to do here
+
+		await self.send_owner(f"{len(self.bot.guilds)} guilds in bot.guilds at at beginning of update_topgg")
+
+		bot_id = self.bot.user.id
+		topgg_token = settings.topgg
+		guilds_count = len(self.bot.guilds)
+
+		try:
+			url = f"https://top.gg/api/bots/{bot_id}/stats"
+			body = {
+				"server_count": guilds_count
+			}
+			headers = {
+				"Authorization": topgg_token
+			}
+			response = await httpgetter.post(url, body=body, headers=headers)
+		except HttpError as e:
+			await self.send_owner(f"Updating top.gg failed with {e.code} error")
+
+		# for future, only send message to me if we fail (check for bad return code excpetion)
+		await self.send_owner(f"Updated top.gg! ({guilds_count} servers)")
+
+	@tasks.loop(minutes=5)
+	async def check_dota_patch(self):
+		url = "https://www.dota2.com/patches/"
+		text = await httpgetter.get(url, return_type="text")
+		html = BeautifulSoup(text, "html.parser")
+
+		current_patch = html.find(name="title").contents[0]
+
+		if botdata["dotapatch"] == current_patch:
+			return # thats the current patch, do nothing
+		botdata["dotapatch"] = current_patch
+		await self.send_owner("patches update triggered");
+
+		image_meta_tag = html.find(name="meta", attrs={ "property" : "og:image" })
+
+		# we can improve this embed later but for now this is what we got
+		embed = discord.Embed(timestamp=datetime.datetime.utcnow())
+		embed.title = current_patch
+		embed.url = url
+		embed.description = "Some changes were made (MangoByte isn't smart enough to summarize patches yet. I will probably maybe might kinda maybe work on this and add that, who knows)"
+		embed.set_thumbnail(url="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/blog/play/dota_logo.png")
+		if image_meta_tag:
+			embed.set_image(url=image_meta_tag["content"])
+
+		messageables = []
+		guildinfos = botdata.guildinfo_list()
+		for guildinfo in guildinfos:
+			if guildinfo.dotapatchchannel is not None:
+				channel = self.bot.get_channel(guildinfo.dotapatchchannel)
+				if channel is not None:
+					messageables.append(channel)
+				else:
+					print(f"couldn't find channel {guildinfo.dotapatchchannel} when announcing dota patches")
+
+		userinfos = botdata.userinfo_list()
+		for userinfo in userinfos:
+			if userinfo.dmdotapatch:
+				user = self.bot.get_user(userinfo.discord)
+				if user is not None:
+					messageables.append(user)
+				else:
+					print(f"couldn't find user {userinfo.discord} when announcing dota patches")
+
+		tasks = []
+		for messageable in messageables:
+			tasks.append(messageable.send(embed=embed))
+
+		bundler = AsyncBundler(tasks)
+		await bundler.wait()
+		await self.send_owner("__Dota Patch Sent!__\n" + bundler.status_as_string())
+
 
 	@commands.Cog.listener()
 	async def on_message(self, message):
@@ -549,9 +634,12 @@ class General(MangoCog):
 		"""Posts the donation information"""
 		embed = discord.Embed()
 
-		embed.description = "I host MangoByte on [DigitalOcean](https://www.digitalocean.com), which costs `$15` per month. (2nd row in the 'Flexible Droplet' table [here](https://www.digitalocean.com/pricing/)). "
-		embed.description += "I have a decently paying job, so MangoByte won't be going down anytime soon, but if you want to help with the server costs, or just support me because you feel like it, feel free to donate using the link below:"
-		embed.description += f"\n\n[Donation Link]({self.donation_link})"
+		donate_stuff = "\n".join(map(lambda key: f"• [{key}]({donate_links[key]})", donate_links))
+		embed.description = "I host MangoByte on [DigitalOcean](https://www.digitalocean.com), which costs `$15` per month. "
+		embed.description += "Mango makes 100,000+ api calls to opendota per month, which adds up to a bit over `$10` a month. (the [api calls start costing money](https://www.opendota.com/api-keys) if you do over 50,000 a month). "
+		embed.description += "I have a job, and MangoByte won't be going down anytime soon, but if you want to help with the server costs, or just support me because you feel like it, feel free to donate using any of the links below. "
+		embed.description += "I don't have any paid benefits/features at the moment for people who donate, but the support is definetly appreciated! "
+		embed.description += f"\n\n{donate_stuff}"
 
 		await ctx.send(embed=embed)
 
