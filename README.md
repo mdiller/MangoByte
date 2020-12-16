@@ -29,7 +29,8 @@ Commands that don't really fit into the other categories
 
 ```
 ?ask             | Answers any question you might have                        
-?botstats        | Displays some bot statistics                               
+?botstats        | Displays some bot statistics  
+?blog            | Pulls up the most recent Dota blog post                              
 ?cat             | Gets a picture of my cat                                   
 ?changelog       | Gets a rough changelog for mangobyte                       
 ?choose          | Randomly chooses one of the given options                  
