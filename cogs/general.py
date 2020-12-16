@@ -538,12 +538,16 @@ class General(MangoCog):
 		botdata["dotapatch"] = current_patch
 		await self.send_owner("patches update triggered");
 
+		image_meta_tag = html.find(name="meta", attrs={ "property" : "og:image" })
+
 		# we can improve this embed later but for now this is what we got
 		embed = discord.Embed(timestamp=datetime.datetime.utcnow())
 		embed.title = current_patch
 		embed.url = url
 		embed.description = "Some changes were made (MangoByte isn't smart enough to summarize patches yet. I will probably maybe might kinda maybe work on this and add that, who knows)"
 		embed.set_thumbnail(url="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/blog/play/dota_logo.png")
+		if image_meta_tag:
+			embed.set_image(url=image_meta_tag["content"])
 
 		messageables = []
 		guildinfos = botdata.guildinfo_list()
