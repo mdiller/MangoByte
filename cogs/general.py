@@ -533,8 +533,7 @@ class General(MangoCog):
 		current_patch = html.find(name="title").contents[0]
 
 		if botdata["dotapatch"] == current_patch:
-			await self.send_owner("thats the current patch, do nothing")
-			return
+			return # thats the current patch, do nothing
 		botdata["dotapatch"] = current_patch
 		await self.send_owner("patches update triggered");
 
