@@ -114,6 +114,13 @@ class UserInfo(BotDataItem):
 			"type": types.ShortText,
 			"description": "This is what is said after saying your name when announcing that you have left the channel. To set your tts to be nothing, try setting this to `nothing` or `none`\n\nNote that this clip can be no longer than 32 characters.",
 			"example": "dun gone left"
+		},
+		{
+			"key": "dmdotapatch",
+			"default": None,
+			"type": types.Boolean,
+			"description": "If enabled, mango will private message you when a new dota patch gets released",
+			"example": "enable"
 		}
 	]
 
@@ -204,6 +211,13 @@ class GuildInfo(BotDataItem):
 			"type": types.Boolean,
 			"description": "Sets whether mangobyte announce the user's name before playing the clip when they the user plays a clip by typing something in the tts channel",
 			"example": "enable"
+		},
+		{
+			"key": "dotapatchchannel",
+			"default": None,
+			"type": types.TextChannel,
+			"description": "The channel in which mangobyte will post to notify about new dota patches when it detects them",
+			"example": "#dota"
 		}
 	]
 
@@ -234,7 +248,11 @@ class GuildInfo(BotDataItem):
 class BotData:
 	def __init__(self):
 		self.path = "botdata.json"
-		self.defaults = OrderedDict([ ("userinfo" , []), ("guildinfo" , []) ])
+		self.defaults = OrderedDict([ 
+			("userinfo" , []), 
+			("guildinfo" , []), 
+			("dotapatch", None) 
+		])
 		if not os.path.exists(self.path):
 			self.json_data = self.defaults
 			self.save_data()
@@ -247,6 +265,17 @@ class BotData:
 						print("Adding " + str(key) + " field to botdata.json")
 				write_json(self.path, current)
 			self.json_data = read_json(self.path)
+
+	def __getitem__(self, key):
+		if key not in self.defaults:
+			return self.__dict__[key]
+		return self.json_data.get(key, self.defaults.get(key))
+
+	def __setitem__(self, key, val):
+		if key not in self.defaults:
+			self.__dict__[key] = val
+		self.json_data[key] = val
+		self.save_data()
 
 	def save_data(self):
 		write_json(self.path, self.json_data)
@@ -272,6 +301,12 @@ class BotData:
 		for data in self.json_data['guildinfo']:
 			guildinfos.append(GuildInfo(self, data['id']))
 		return guildinfos
+
+	def userinfo_list(self):
+		userinfos = []
+		for data in self.json_data['userinfo']:
+			userinfos.append(UserInfo(self, data['discord']))
+		return userinfos
 
 	def count_users_with_key(self, key):
 		count = 0

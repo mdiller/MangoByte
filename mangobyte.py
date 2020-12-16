@@ -101,23 +101,24 @@ async def on_ready():
 	await artifact_cog.load_card_sets()
 	bot.help_command.cog = bot.get_cog("General")
 
+	periodic_tasks = [
+		general_cog.update_topgg,
+		general_cog.check_dota_patch
+	]
 	# start topgg update service thing
-	if (not general_cog.update_topgg.is_running()):
-		general_cog.update_topgg.start()
-
-	# stuff to help track/log the connection of voice channels
-	connection_status = {}
+	for task in periodic_tasks:
+		if (not task.is_running()):
+			task.start()
 
 	channel_tasks = []
 	for guildinfo in botdata.guildinfo_list():
 		if guildinfo.voicechannel is not None:
 			channel_tasks.append(initial_channel_connect_wrapper(audio_cog, guildinfo))
 
-	connection_results = await asyncio.gather(*channel_tasks)
-	for status in connection_results:
-		if status not in connection_status:
-			connection_status[status] = 0
-		connection_status[status] += 1
+	channel_connector = AsyncBundler(channel_tasks)
+
+	# actually do the awaiting of the channel connections
+	await channel_connector.wait()
 
 	if is_first_time:
 		print("\nupdating guilds")
@@ -132,8 +133,7 @@ async def on_ready():
 	if not is_first_time:
 		message = "__**Re-Initialization complete (shard prolly got poked):**__"
 
-	for status in connection_status:
-		message +=  f"\n{connection_status[status]} voice channels {status}"
+	message += "\n" + channel_connector.status_as_string("voice channels connected")
 
 	message += f"\n\non_ready took {onReadyTimer}"
 	if is_first_time:
@@ -162,12 +162,8 @@ async def initial_channel_connect_wrapper(audio_cog, guildinfo):
 	channel_id = guildinfo.voicechannel
 	server_id = guildinfo.id
 	print(f"connecting voice to: {channel_id}")
-	status = await initial_channel_connect(audio_cog, guildinfo)
-	if status == "connected":
-		print(f"connected: {channel_id}")
-	else:
-		print(f"initial channel connect to {channel_id} failed with status '{status}' (serverid={server_id})")
-	return status
+	await initial_channel_connect(audio_cog, guildinfo)
+	print(f"connected: {channel_id}")
 
 
 # returns 0 on successful connect, 1 on not found, and 2 on timeout, 3 on error
@@ -182,18 +178,18 @@ async def initial_channel_connect(audio_cog, guildinfo):
 	except UserError as e:
 		if e.message == "channel not found":
 			guildinfo.voicechannel = None
-			return "not found"
+			raise
 		else:
 			print(f"weird usererror on connection to channel '{channel_id}': {e.message}")
-			return "found_weird_usererror"
+			raise
 	except asyncio.TimeoutError:
 		if not on_ready_has_run: # don't remove this if it got timed out from a re-initialization
 			guildinfo.voicechannel = None
-		return "timed out"
+		raise
 	except Exception as e:
 		print(f"exception thrown on connection to channel ({channel_id}): {str(e)}")
 		guildinfo.voicechannel = None
-		return "found_exception"
+		raise
 
 
 @bot.event

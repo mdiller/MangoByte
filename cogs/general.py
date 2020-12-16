@@ -503,8 +503,7 @@ class General(MangoCog):
 		if settings.debug or (settings.topgg is None):
 			return # nothing to do here
 
-		appinfo = await self.bot.application_info()
-		await appinfo.owner.send(f"{len(self.bot.guilds)} guilds in bot.guilds at at beginning of update_topgg")
+		await self.send_owner(f"{len(self.bot.guilds)} guilds in bot.guilds at at beginning of update_topgg")
 
 		bot_id = self.bot.user.id
 		topgg_token = settings.topgg
@@ -520,12 +519,59 @@ class General(MangoCog):
 			}
 			response = await httpgetter.post(url, body=body, headers=headers)
 		except HttpError as e:
-			appinfo = await self.bot.application_info()
-			await appinfo.owner.send(f"Updating top.gg failed with {e.code} error")
+			await self.send_owner(f"Updating top.gg failed with {e.code} error")
 
 		# for future, only send message to me if we fail (check for bad return code excpetion)
-		appinfo = await self.bot.application_info()
-		await appinfo.owner.send(f"Updated top.gg! ({guilds_count} servers)")
+		await self.send_owner(f"Updated top.gg! ({guilds_count} servers)")
+
+	@tasks.loop(minutes=5)
+	async def check_dota_patch(self):
+		url = "https://www.dota2.com/patches/"
+		text = await httpgetter.get(url, return_type="text")
+		html = BeautifulSoup(text, "html.parser")
+
+		current_patch = html.find(name="title").contents[0]
+
+		if botdata["dotapatch"] == current_patch:
+			await self.send_owner("thats the current patch, do nothing")
+			return
+		botdata["dotapatch"] = current_patch
+		await self.send_owner("patches update triggered");
+
+		# we can improve this embed later but for now this is what we got
+		embed = discord.Embed(timestamp=datetime.datetime.utcnow())
+		embed.title = current_patch
+		embed.url = url
+		embed.description = "Some changes were made (MangoByte isn't smart enough to summarize patches yet. I will probably maybe might kinda maybe work on this and add that, who knows)"
+		embed.set_thumbnail(url="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/blog/play/dota_logo.png")
+
+		messageables = []
+		guildinfos = botdata.guildinfo_list()
+		for guildinfo in guildinfos:
+			if guildinfo.dotapatchchannel is not None:
+				channel = self.bot.get_channel(guildinfo.dotapatchchannel)
+				if channel is not None:
+					messageables.append(channel)
+				else:
+					print(f"couldn't find channel {guildinfo.dotapatchchannel} when announcing dota patches")
+
+		userinfos = botdata.userinfo_list()
+		for userinfo in userinfos:
+			if userinfo.dmdotapatch:
+				user = self.bot.get_user(userinfo.discord)
+				if user is not None:
+					messageables.append(user)
+				else:
+					print(f"couldn't find user {userinfo.discord} when announcing dota patches")
+
+		tasks = []
+		for messageable in messageables:
+			tasks.append(messageable.send(embed=embed))
+
+		bundler = AsyncBundler(tasks)
+		await bundler.wait()
+		await self.send_owner("__Dota Patch Sent!__\n" + bundler.status_as_string())
+
 
 	@commands.Cog.listener()
 	async def on_message(self, message):

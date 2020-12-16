@@ -856,7 +856,6 @@ class Dotabase(MangoCog):
 
 		embed.set_thumbnail(url=f"{self.vpkurl}{ability.icon}")
 
-
 		if ability.cooldown and ability.cooldown != "0":
 			value = format_values(ability.cooldown)
 			if ability.charges:

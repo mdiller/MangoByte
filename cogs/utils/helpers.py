@@ -168,6 +168,41 @@ class SimpleTimer():
 	def __repr__(self):
 		return self.__str__()
 
+class AsyncBundler():
+	def __init__(self, tasks):
+		# self.executor = task_executor
+		self.tasks = tasks
+		self.success_count = 0
+		self.exceptions_dict = OrderedDict()
+		self.completed = False
+
+	async def exec_wrapper(self, task):
+		try:
+			result = await task
+			self.success_count += 1
+			return result
+		except Exception as e:
+			etype = str(type(e).__name__)
+			print(f"AsyncBundler found exception {etype}: {e}")
+			if etype not in self.exceptions_dict:
+				self.exceptions_dict[etype] = 0
+			self.exceptions_dict[etype] += 1
+			return None
+
+	async def wait(self):
+		tasks = list(map(lambda t: self.exec_wrapper(t), self.tasks))
+		results = await asyncio.gather(*tasks)
+		self.exceptions_dict = OrderedDict(sorted(self.exceptions_dict.items(), key=lambda t: t[0]))
+		self.completed = True
+		return results
+
+	# gets the status as a string
+	def status_as_string(self, success_str="succeeded"):
+		result = f"{self.success_count} {success_str}"
+		for e in self.exceptions_dict:
+			result += f"\n{self.exceptions_dict[e]} failed with {e}"
+		return result
+
 class HttpError(UserError):
 	"""An http error with an error code"""
 	def __init__(self, message, code):
