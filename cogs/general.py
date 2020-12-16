@@ -17,6 +17,13 @@ import praw
 import os
 from .mangocog import *
 
+donate_links = {
+	"Patreon": "https://www.patreon.com/dillerm",
+	"BuyMeACoffee": "https://www.buymeacoffee.com/dillerm",
+	"Ko-fi": "https://ko-fi.com/dillerm",
+	"PayPal": "https://www.paypal.me/dillerm"
+}
+
 def load_words():
 	words = {}
 	for root, dirs, files in os.walk(settings.resource("words/")):
@@ -183,8 +190,9 @@ class General(MangoCog):
 			f"• Greets users joining a voice channel\n"
 			f"• For a list of command categories, try `{cmdpfx}help`"), inline=False)
 
-		embed.add_field(name="Donate", value=(
-			f"If you want to donate money to support MangoByte's server costs, click [here]({self.donation_link})"))
+		donate_stuff = "\n".join(map(lambda key: f"• [{key}]({donate_links[key]})", donate_links))
+		embed.add_field(name="Donating", value=(
+			f"If you want to donate money to support MangoByte's server costs, click one of the links below. If you want to learn more about how much I spend on MangoByte per month try `{cmdpfx}donate`.\n{donate_stuff}"))
 
 		owner = (await self.bot.application_info()).owner
 
@@ -623,9 +631,12 @@ class General(MangoCog):
 		"""Posts the donation information"""
 		embed = discord.Embed()
 
-		embed.description = "I host MangoByte on [DigitalOcean](https://www.digitalocean.com), which costs `$15` per month. (2nd row in the 'Flexible Droplet' table [here](https://www.digitalocean.com/pricing/)). "
-		embed.description += "I have a decently paying job, so MangoByte won't be going down anytime soon, but if you want to help with the server costs, or just support me because you feel like it, feel free to donate using the link below:"
-		embed.description += f"\n\n[Donation Link]({self.donation_link})"
+		donate_stuff = "\n".join(map(lambda key: f"• [{key}]({donate_links[key]})", donate_links))
+		embed.description = "I host MangoByte on [DigitalOcean](https://www.digitalocean.com), which costs `$15` per month. "
+		embed.description += "Mango makes 100,000+ api calls to opendota per month, which adds up to a bit over `$10` a month. (the [api calls start costing money](https://www.opendota.com/api-keys) if you do over 50,000 a month). "
+		embed.description += "I have a job, and MangoByte won't be going down anytime soon, but if you want to help with the server costs, or just support me because you feel like it, feel free to donate using any of the links below. "
+		embed.description += "I don't have any paid benefits/features at the moment for people who donate, but the support is definetly appreciated! "
+		embed.description += f"\n\n{donate_stuff}"
 
 		await ctx.send(embed=embed)
 
