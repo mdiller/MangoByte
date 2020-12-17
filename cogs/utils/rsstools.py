@@ -4,39 +4,7 @@ import discord
 from dateutil import parser
 import regex as re
 from __main__ import botdata
-import aiohttp
-import asyncio
 from bs4 import BeautifulSoup
-
-async def get_html(url):
-    """ Takes url, returns html. No error handling"""
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            html = await response.text()
-            return html
-
-
-def has_new_dota(feed):
-    """ Takes a feedparser feed for the dota 2 blog, checks to see if newest publish date is newer
-    than what is on record. This requires looking at the botdata json field "blog_date"
-    If it cannot find the field, will automatically return false
-    returns boolean"""
-    new = ""
-    old = botdata.blog_date
-    if feed.entries:
-        new = feed.entries[0].published
-    else:
-        return False
-    if old and new != "":
-        if old != "":
-            if parser.parse(new )>parser.parse(old):
-                botdata.blog_date = new
-                return True
-            else:
-                return False
-        else:
-            botdata.blog_date = new
-            return False
 
     
 def create_embed(blog_title, entry):

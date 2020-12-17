@@ -2,11 +2,13 @@ import discord
 from discord.ext import commands
 from sqlalchemy.sql.expression import func
 from sqlalchemy import and_, or_
-from __main__ import settings
+from __main__ import settings, httpgetter
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
 from cogs.utils.commandargs import *
 from cogs.utils import drawdota, imagetools
+from cogs.utils import rsstools
+import feedparser
 import random
 import os
 import asyncio
@@ -1416,6 +1418,16 @@ class Dotabase(MangoCog):
 		embed.color = discord.Color(int(hero.color[1:], 16))
 		
 		await ctx.send(embed=embed, file=image)
+		
+
+	@commands.command(aliases = ["rss"])
+	async def blog(self,ctx):
+		""" Pulls the newest blog post for Dota 2"""
+		feed = await httpgetter.get(r'https://blog.dota2.com/feed', return_type="text")
+		blog = feedparser.parse(feed)
+		title = "Dota 2 Blog"
+		embed = rsstools.create_embed(title, blog.entries[0])
+		await ctx.send(embed = embed)
 
 	
 

@@ -3,8 +3,6 @@ from discord.ext import commands, tasks
 from __main__ import settings, botdata, invite_link, httpgetter, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.botdata import UserInfo
-from cogs.utils import rsstools
-from cogs.utils.rsstools import get_html
 from cogs.utils import checks, botdatatypes, wikipedia
 from cogs.audio import AudioPlayerNotFoundError
 from sqlalchemy import func
@@ -16,7 +14,6 @@ from bs4 import BeautifulSoup, Tag
 from io import BytesIO
 import re
 import praw
-import feedparser
 import os
 from .mangocog import *
 
@@ -662,14 +659,6 @@ class General(MangoCog):
 		imagepath = os.path.join(cat_dir, random.choice(os.listdir(cat_dir)))
 		await ctx.send(file=discord.File(imagepath))
 
-	@commands.command(aliases = ["rss"])
-	async def blog(self,ctx):
-		""" Pulls the newest blog post for Dota 2"""
-		feed = await get_html(r'https://blog.dota2.com/feed')
-		blog = feedparser.parse(feed)
-		title = "Dota 2 Blog"
-		embed = rsstools.create_embed(title, blog.entries[0])
-		await ctx.send(embed = embed)
 
 
 def setup(bot):
