@@ -1148,8 +1148,13 @@ async def draw_heroabilities(abilities):
 			TextCell(ability.localized_name, font_size=30, padding=10),
 			TextCell("")
 		]
-		if ability.aghanim_grants:
-			aghs_icon = f"{vpkurl}/panorama/images/spellicons/aghsicon_psd.png"
+		if ability.scepter_grants:
+			aghs_icon = f"{vpkurl}/panorama/images/hud/reborn/aghsstatus_scepter_on_psd.png"
+			aghs_icon = await get_url_image(aghs_icon)
+			aghs_icon = aghs_icon.resize(icon.size, Image.ANTIALIAS)
+			row[2] = ImageCell(img=aghs_icon)
+		elif ability.shard_grants:
+			aghs_icon = f"{vpkurl}/panorama/images/hud/reborn/aghsstatus_shard_on_psd.png"
 			aghs_icon = await get_url_image(aghs_icon)
 			aghs_icon = aghs_icon.resize(icon.size, Image.ANTIALIAS)
 			row[2] = ImageCell(img=aghs_icon)
