@@ -13,3 +13,4 @@ praw==6.0.0
 numpy==1.15.1
 databases==0.2.2
 aiosqlite==0.10.0
+feedparser >= 6.0.2

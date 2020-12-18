@@ -650,7 +650,6 @@ class General(MangoCog):
 		imagepath = os.path.join(cat_dir, random.choice(os.listdir(cat_dir)))
 		await ctx.send(file=discord.File(imagepath))
 
-
 	@commands.command(aliases=[ "dogs", "doggos", "doggo", "comet", "fizzgig" ])
 	async def dog(self, ctx):
 		"""Gets a picture of one of my dogs
@@ -659,7 +658,6 @@ class General(MangoCog):
 		cat_dir = settings.resource("images/dog")
 		imagepath = os.path.join(cat_dir, random.choice(os.listdir(cat_dir)))
 		await ctx.send(file=discord.File(imagepath))
-
 
 
 
