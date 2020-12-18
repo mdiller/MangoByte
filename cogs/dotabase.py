@@ -1081,7 +1081,12 @@ class Dotabase(MangoCog):
 		if lore_info["lore"] == "":
 			raise UserError("There is no in-game lore for that")
 
-		embed = discord.Embed(description=lore_info["lore"])
+
+		lore_text = lore_info["lore"]
+		maxlen = 1950
+		if len(lore_text) > maxlen:
+			lore_text = lore_text[:maxlen] + "..."
+		embed = discord.Embed(description=lore_text)
 
 		embed.title = lore_info["name"]
 		embed.url = self.get_wiki_url(lore_info["object"])
