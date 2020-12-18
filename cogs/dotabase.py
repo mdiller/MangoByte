@@ -823,7 +823,7 @@ class Dotabase(MangoCog):
 			if footer:
 				text += f" {footer}"
 
-			if attribute.get("aghs_upgrade") and not ability.aghanim_grants:
+			if attribute.get("aghs_upgrade") and not (ability.scepter_grants or ability.shard_grants):
 				aghs_attributes.append(text)
 			else:
 				formatted_attributes.append(text)
@@ -839,15 +839,25 @@ class Dotabase(MangoCog):
 			for talent in talents:
 				description += f"\n[Level {talent.level}] {talent.localized_name}"
 
-		# aghs
-		if ability.aghanim:
-			if ability.aghanim_grants:
-				description += f"\n\n{self.get_emoji('aghanim')} **Granted by Aghanim's Scepter**"
+		# aghs scepter
+		if ability.scepter_description:
+			if ability.scepter_grants:
+				description += f"\n\n{self.get_emoji('aghanims_scepter')} **Granted by Aghanim's Scepter**"
 			else:
-				description += f"\n\n{self.get_emoji('aghanim')} __**Upgradable by Aghanim's Scepter**__\n"
-				description += f"*{ability.aghanim}*\n"
+				description += f"\n\n{self.get_emoji('aghanims_scepter')} __**Upgradable by Aghanim's Scepter**__\n"
+				description += f"*{ability.scepter_description}*\n"
 				for attribute in aghs_attributes:
 					description += f"\n{attribute}"
+
+		# aghs shard
+		if ability.shard_description:
+			if ability.shard_grants:
+				description += f"\n\n{self.get_emoji('aghanims_shard')} **Granted by Aghanim's Shard**"
+			else:
+				description += f"\n\n{self.get_emoji('aghanims_shard')} __**Upgradable by Aghanim's Shard**__\n"
+				description += f"*{ability.shard_description}*\n"
+				# for attribute in aghs_attributes:
+				# 	description += f"\n{attribute}"
 
 		embed = discord.Embed(description=description)
 
@@ -1079,14 +1089,14 @@ class Dotabase(MangoCog):
 
 		await ctx.send(embed=embed)
 
-	@commands.command(aliases=["aghs", "ags", "aghanims", "scepter"])
+	@commands.command(aliases=["aghs", "ags", "aghanims", "scepter", "shard"])
 	async def aghanim(self, ctx, *, name):
 		"""Gets the aghs upgrade for the given hero or ability"""
 		abilities = []
 		hero = self.lookup_hero(name)
 		if hero:
 			for ability in hero.abilities:
-				if ability.aghanim:
+				if ability.scepter_description or ability.shard_description:
 					abilities.append(ability)
 			if len(abilities) == 0:
 				raise UserError(f"Couldn't find an aghs upgrade for {hero.localized_name}. Either they don't have one or I just can't find it.")
@@ -1098,31 +1108,41 @@ class Dotabase(MangoCog):
 				raise UserError(f"Looks like {ability.localized_name} doesn't have an aghs upgrade")
 			abilities = [ ability ]
 
+		item_shard = self.lookup_item("aghanim's shard")
+		item_scepter = self.lookup_item("aghanim's scepter")
+		for upgrade_type in [ "scepter", "shard" ]:
+			aghs_item = item_scepter
+			icon_url = f"{self.vpkurl}/panorama/images/hud/reborn/aghsstatus_scepter_on_psd.png"
+			if upgrade_type == "shard":
+				aghs_item = item_shard
+				icon_url = f"{self.vpkurl}/panorama/images/hud/reborn/aghsstatus_shard_on_psd.png"
+			for ability in abilities:
+				description = ability.scepter_description if upgrade_type == "scepter" else ability.shard_description
+				grantedby = ability.scepter_grants if upgrade_type == "scepter" else ability.shard_grants
+				if description == "":
+					continue
+				description = f"*{description}*\n"
+				ability_special = json.loads(ability.ability_special, object_pairs_hook=OrderedDict)
+				formatted_attributes = []
+				if not grantedby:
+					for attribute in ability_special:
+						header = attribute.get("header")
+						if not (header and attribute.get("aghs_upgrade")):
+							continue
+						header = format_pascal_case(header)
+						value = attribute["value"]
+						footer = attribute.get("footer")
+						value = " / ".join(value.split(" "))
+						text = f"**{header}** {value}"
+						if footer:
+							text += f" {footer}"
+						description += f"\n{text}"
 
-		item_aghs = self.lookup_item("aghanim's scepter")
-		for ability in abilities:
-			description = f"*{ability.aghanim}*\n"
-			ability_special = json.loads(ability.ability_special, object_pairs_hook=OrderedDict)
-			formatted_attributes = []
-			if not ability.aghanim_grants:
-				for attribute in ability_special:
-					header = attribute.get("header")
-					if not (header and attribute.get("aghs_upgrade")):
-						continue
-					header = format_pascal_case(header)
-					value = attribute["value"]
-					footer = attribute.get("footer")
-					value = " / ".join(value.split(" "))
-					text = f"**{header}** {value}"
-					if footer:
-						text += f" {footer}"
-					description += f"\n{text}"
-
-			embed = discord.Embed(description=description)
-			title = f"{item_aghs.localized_name} ({ability.localized_name})"
-			embed.set_author(name=title, icon_url=f"{self.vpkurl}/panorama/images/spellicons/aghsicon_psd.png")
-			embed.set_thumbnail(url=f"{self.vpkurl}{ability.icon}")
-			await ctx.send(embed=embed)
+				embed = discord.Embed(description=description)
+				title = f"{aghs_item.localized_name} ({ability.localized_name})"
+				embed.set_author(name=title, icon_url=icon_url)
+				embed.set_thumbnail(url=f"{self.vpkurl}{ability.icon}")
+				await ctx.send(embed=embed)
 
 	@commands.command(aliases=["recipes", "craft", "crafting"])
 	async def recipe(self, ctx, *, item):
