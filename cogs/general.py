@@ -547,6 +547,9 @@ class General(MangoCog):
 			return # thats the current patch, do nothing
 		if current_patch == "Gameplay Update":
 			return # thats what happens when theyre tryna switch it and theyre in the process, so give it a minute and try again later
+		print(f"\"{current_patch}\"")
+		print(current_patch == "Gameplay Update")
+		print(str(current_patch) == "Gameplay Update")
 		botdata["dotapatch"] = current_patch
 		await self.send_owner("patches update triggered");
 
