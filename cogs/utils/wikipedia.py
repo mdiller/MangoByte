@@ -58,8 +58,8 @@ async def find_disambiguations(pageid):
 	filtered_lis = [li for li in lis if not 'tocsection' in ''.join(li.get('class', []))]
 	return [li.a.get_text() for li in filtered_lis if li.a]
 
-async def retrieve_page_info(title):
-	data = await httpgetter.get(f"{base_query}&list=search&srprop&srlimit=1&srinfo=suggestion&srsearch={title}")
+async def retrieve_page_info(title_input):
+	data = await httpgetter.get(f"{base_query}&list=search&srprop&srlimit=1&srinfo=suggestion&srsearch={title_input}")
 	if len(data["query"]["search"]) == 0:
 		raise UserError("Couldn't find anything for that")
 	info = data["query"]["search"][0]
@@ -69,7 +69,7 @@ async def retrieve_page_info(title):
 	page_info = data["query"]["pages"][str(pageid)]
 	if "pageprops" in page_info and "disambiguation" in page_info["pageprops"]:
 		options = await find_disambiguations(pageid)
-		if len(options) == 0 or options[0] == title:
+		if len(options) == 0 or options[0] == title or options[0] == title_input:
 			raise UserError("Couldn't find anything for that")
 		else:
 			return await retrieve_page_info(options[0])

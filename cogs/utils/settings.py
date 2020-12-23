@@ -60,6 +60,11 @@ class Settings:
 	def topgg(self):
 		return self.json_data.get("topgg", None)
 
+	# an optional number of shards to use for the bot. by default will use as many as it thinks it needs
+	@property
+	def shard_count(self):
+		return self.json_data.get("shard_count", None)
+
 	@property
 	def resourcedir(self):
 		return "resource/" # self.json_data["resourcedir"]

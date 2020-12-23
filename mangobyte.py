@@ -44,7 +44,7 @@ description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 				For more information about me, try `{cmdpfx}info`"""
 permissions = 314432
 
-bot = commands.AutoShardedBot(command_prefix=botdata.command_prefix_botmessage, help_command=MangoHelpCommand(), description=description, shard_count=(2 if settings.debug else 10))
+bot = commands.AutoShardedBot(command_prefix=botdata.command_prefix_botmessage, help_command=MangoHelpCommand(), description=description, shard_count=settings.shard_count)
 
 thinker = Thinker(bot)
 invite_link = f"https://discordapp.com/oauth2/authorize?permissions={permissions}&scope=bot&client_id=213476188037971968"
@@ -68,12 +68,15 @@ on_ready_has_run = False
 @bot.event
 async def on_shard_ready(shard_id):
 	appinfo = await bot.application_info()
-	await appinfo.owner.send(f"shard {shard_id} ({len(bot.shards)} total) called its on_shard_ready ({len(bot.guilds)} guilds)")
+	if not settings.debug:
+		await appinfo.owner.send(f"shard {shard_id} ({len(bot.shards)} total) called its on_shard_ready ({len(bot.guilds)} guilds)")
 
 @bot.event
 async def on_ready():
 	appinfo = await bot.application_info()
-	await appinfo.owner.send(f"{len(bot.guilds)} guilds in bot.guilds at the beginning of on_ready()")
+
+	if not settings.debug:
+		await appinfo.owner.send(f"on_ready() started")
 
 	global on_ready_has_run
 	is_first_time = True
@@ -110,15 +113,14 @@ async def on_ready():
 		if (not task.is_running()):
 			task.start()
 
-	channel_tasks = []
-	for guildinfo in botdata.guildinfo_list():
-		if guildinfo.voicechannel is not None:
-			channel_tasks.append(initial_channel_connect_wrapper(audio_cog, guildinfo))
-
-	channel_connector = AsyncBundler(channel_tasks)
-
-	# actually do the awaiting of the channel connections
-	await channel_connector.wait()
+	if is_first_time: # temporarliy disabling this for re-inits
+		# the re-connecting of voice channels
+		channel_tasks = []
+		for guildinfo in botdata.guildinfo_list():
+			if guildinfo.voicechannel is not None:
+				channel_tasks.append(initial_channel_connect_wrapper(audio_cog, guildinfo))
+		channel_connector = AsyncBundler(channel_tasks)
+		await channel_connector.wait()
 
 	if is_first_time:
 		print("\nupdating guilds")
@@ -133,7 +135,8 @@ async def on_ready():
 	if not is_first_time:
 		message = "__**Re-Initialization complete (shard prolly got poked):**__"
 
-	message += "\n" + channel_connector.status_as_string("voice channels connected")
+	if is_first_time: # temporarliy disabling this for re-inits
+		message += "\n" + channel_connector.status_as_string("voice channels connected")
 
 	message += f"\n\non_ready took {onReadyTimer}"
 	if is_first_time:
@@ -142,9 +145,6 @@ async def on_ready():
 
 	if not settings.debug:
 		await appinfo.owner.send(message)
-
-	appinfo = await bot.application_info()
-	await appinfo.owner.send(f"{len(bot.guilds)} guilds in bot.guilds at the end of on_ready()")
 
 
 async def get_cmd_signature(ctx):
@@ -189,6 +189,10 @@ async def initial_channel_connect(audio_cog, guildinfo):
 	except Exception as e:
 		print(f"exception thrown on connection to channel ({channel_id}): {str(e)}")
 		guildinfo.voicechannel = None
+		trace = traceback.format_exc().replace("\"", "'").split("\n")
+		trace = [x for x in trace if x] # removes empty lines
+		trace_string = "\n".join(trace) + "\n"
+		print(trace_string)
 		raise
 
 
