@@ -1449,14 +1449,49 @@ class Dotabase(MangoCog):
 		embed = rsstools.create_embed(title, blog.entries[0])
 		await ctx.send(embed = embed)
 
-	@tasks.loop(minutes=3)
+	@tasks.loop(minutes=5)
 	async def check_dota_blog(self):
                 feed = await httpgetter.get(r'https://blog.dota2.com/feed', return_type="text")
                 blog = feedparser.parse(feed)
+                title = "Dota 2 Blog"
+                
                 updated = rsstools.is_new_blog(blog.entries[0])
-                print(updated)
+                if not updated: #if its not updated, stop here
+                        return
 
-	
+                embed = rsstools.create_embed(title, blog.entries[0]) #generate embed
+
+                ##next section copies code in check_dota_patch in general cogs
+                messageables = []
+                #find channels to post in
+                guildinfos = botdata.guildinfo_list()
+                for guildinfo in guildinfos:
+                        if guildinfo.dotablogchannel is not None:
+                                channel = self.bot.get_channel(guildinfo.dotablogchannel)
+                                if channel is not None:
+                                        messageables.append(channel)
+                                else:
+                                        print(f"couldn't find channel {guildinfo.dotablogchannel} when announcing dota blog")
+                
+                 #find users
+                userinfos = botdata.userinfo_list()
+                for userinfo in userinfos:
+                        if userinfo.dmdotablog:
+                                user = self.bot.get_user(userinfo.discord)
+                                if user is not None:
+                                        messageables.append(user)
+                                else:
+                                        print(f"couldn't find user {userinfo.discord} when announcing dota blog")
+
+                #bundle tasks and execute
+                tasks = []
+                for messageable in messageables:
+                        tasks.append(messageable.send(embed=embed))
+
+                bundler = AsyncBundler(tasks)
+                await bundler.wait()
+                
+                
 
 def setup(bot):
 	bot.add_cog(Dotabase(bot))

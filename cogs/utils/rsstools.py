@@ -23,7 +23,6 @@ def is_new_blog(entry):
             botdata.__setitem__("dotablog",entry.published)#initialize if there is no prior date 
             return False #but we don't want to post, so say it isn't new
     else:
-        print("invalid record")
         return False
 
 

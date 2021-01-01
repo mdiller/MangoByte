@@ -121,6 +121,13 @@ class UserInfo(BotDataItem):
 			"type": types.Boolean,
 			"description": "If enabled, mango will private message you when a new dota patch gets released",
 			"example": "enable"
+		},
+                {
+                        "key": "dmdotablog",
+                        "default": None,
+                        "type": types.Boolean,
+                        "description": "Enabling this will let mangobyte dm you about Dota blog updates",
+                        "example": "enable"
 		}
 	]
 
