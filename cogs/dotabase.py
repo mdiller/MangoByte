@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from sqlalchemy.sql.expression import func
 from sqlalchemy import and_, or_
 from __main__ import settings, httpgetter
@@ -1448,6 +1448,13 @@ class Dotabase(MangoCog):
 		title = "Dota 2 Blog"
 		embed = rsstools.create_embed(title, blog.entries[0])
 		await ctx.send(embed = embed)
+
+	@tasks.loop(minutes=3)
+	async def check_dota_blog(self):
+                feed = await httpgetter.get(r'https://blog.dota2.com/feed', return_type="text")
+                blog = feedparser.parse(feed)
+                updated = rsstools.is_new_blog(blog.entries[0])
+                print(updated)
 
 	
 

@@ -6,7 +6,27 @@ import regex as re
 from __main__ import botdata
 from bs4 import BeautifulSoup
 
-    
+def is_new_blog(entry):
+    """Takes the newest dota blog entry, and checks data against record
+    returns a boolean
+    updates blog entry if it is new"""
+    new = parser.parse(entry.published) #date on 'new' entry
+    old = botdata.__getitem__("dotablog")
+    if new:
+        if old:
+            if parser.parse(old)< new:#compare and replace if new is greater
+                botdata.__setitem__("dotablog",entry.published)
+                return True
+            else:
+                return False
+        else:
+            botdata.__setitem__("dotablog",entry.published)#initialize if there is no prior date 
+            return False #but we don't want to post, so say it isn't new
+    else:
+        print("invalid record")
+        return False
+
+
 def create_embed(blog_title, entry):
     """ Takes a blog title and feedparser entry, and returns a rich embed object linking to the post"""
     response = discord.Embed(type='rich')

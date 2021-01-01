@@ -218,6 +218,13 @@ class GuildInfo(BotDataItem):
 			"type": types.TextChannel,
 			"description": "The channel in which mangobyte will post to notify about new dota patches when it detects them",
 			"example": "#dota"
+		},
+                		{
+			"key": "dotablogchannel",
+			"default": None,
+			"type": types.TextChannel,
+			"description": "The channel to which mangobyte will post blog notifications",
+			"example": "#dota"
 		}
 	]
 
@@ -251,7 +258,8 @@ class BotData:
 		self.defaults = OrderedDict([ 
 			("userinfo" , []), 
 			("guildinfo" , []), 
-			("dotapatch", None) 
+			("dotapatch", None),
+                        ("dotablog",None)
 		])
 		if not os.path.exists(self.path):
 			self.json_data = self.defaults

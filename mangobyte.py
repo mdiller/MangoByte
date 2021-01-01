@@ -97,13 +97,15 @@ async def on_ready():
 
 	general_cog = bot.get_cog("General")
 	audio_cog = bot.get_cog("Audio")
+	dota_cog = bot.get_cog("Dotabase")
 	artifact_cog = bot.get_cog("Artifact")
 	await artifact_cog.load_card_sets()
 	bot.help_command.cog = bot.get_cog("General")
 
 	periodic_tasks = [
 		general_cog.update_topgg,
-		general_cog.check_dota_patch
+		general_cog.check_dota_patch,
+                dota_cog.check_dota_blog
 	]
 	# start topgg update service thing
 	for task in periodic_tasks:
