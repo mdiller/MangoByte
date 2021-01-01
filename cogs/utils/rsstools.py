@@ -2,7 +2,7 @@
 
 import discord
 from dateutil import parser
-import regex as re
+import re
 from __main__ import botdata
 from bs4 import BeautifulSoup
 

@@ -6,6 +6,7 @@ from cogs.utils.botdata import UserInfo
 from cogs.utils import checks, botdatatypes, wikipedia
 from cogs.audio import AudioPlayerNotFoundError
 from sqlalchemy import func
+from collections import OrderedDict
 import string
 import random
 import datetime
@@ -511,8 +512,6 @@ class General(MangoCog):
 		if settings.debug or (settings.topgg is None):
 			return # nothing to do here
 
-		await self.send_owner(f"{len(self.bot.guilds)} guilds in bot.guilds at at beginning of update_topgg")
-
 		bot_id = self.bot.user.id
 		topgg_token = settings.topgg
 		guilds_count = len(self.bot.guilds)
@@ -529,29 +528,60 @@ class General(MangoCog):
 		except HttpError as e:
 			await self.send_owner(f"Updating top.gg failed with {e.code} error")
 
-		# for future, only send message to me if we fail (check for bad return code excpetion)
-		await self.send_owner(f"Updated top.gg! ({guilds_count} servers)")
-
 	@tasks.loop(minutes=5)
 	async def check_dota_patch(self):
 		url = "https://www.dota2.com/patches/"
-		text = await httpgetter.get(url, return_type="text")
-		html = BeautifulSoup(text, "html.parser")
+		try:
+			text = await httpgetter.get(url, return_type="text")
+		except HttpError as e:
+			await self.send_owner(f"patches update failed the check with a http {e.code} error")
+			return # failed, so return
+		except Exception as e:
+			await self.send_owner(f"patches update failed the check w/ exception: {e}")
+			return # failed, so return
+		soup = BeautifulSoup(text, "html.parser")
 
-		current_patch = html.find(name="title").contents[0]
+		current_patch = soup.find(name="title").contents[0]
 
 		if botdata["dotapatch"] == current_patch:
 			return # thats the current patch, do nothing
+		if current_patch == "Gameplay Update":
+			return # thats what happens when theyre tryna switch it and theyre in the process, so give it a minute and try again later
+		print(f"\"{current_patch}\"")
+		print(current_patch == "Gameplay Update")
+		print(str(current_patch) == "Gameplay Update")
 		botdata["dotapatch"] = current_patch
 		await self.send_owner("patches update triggered");
 
-		image_meta_tag = html.find(name="meta", attrs={ "property" : "og:image" })
+		def count_class_in_id(element_id, classname):
+			element = soup.find(id=element_id)
+			if element is None:
+				return 0
+			return len(element.find_all(lambda tag: tag.get("class") == [ classname ]))
+
+		description = ""
+		section_counts = OrderedDict()
+		section_counts["General"] = count_class_in_id("GeneralSection", "PatchNote")
+		section_counts["Item"] = count_class_in_id("ItemsSection", "ItemName")
+		section_counts["Hero"] = count_class_in_id("HeroesSection", "HeroName")
+		for section in section_counts:
+			count = section_counts[section]
+			if count > 0:
+				description += f"\n{count} {section} changes"
+
+		image_meta_tag = soup.find(name="meta", attrs={ "property" : "og:image" })
+
+		if image_meta_tag is not None:
+			description = ""
+
+		if description == "" and image_meta_tag is None:
+			description = "*Couldn't parse the changes.*"
 
 		# we can improve this embed later but for now this is what we got
 		embed = discord.Embed(timestamp=datetime.datetime.utcnow())
 		embed.title = current_patch
 		embed.url = url
-		embed.description = "Some changes were made (MangoByte isn't smart enough to summarize patches yet. I will probably maybe might kinda maybe work on this and add that, who knows)"
+		embed.description = description
 		embed.set_thumbnail(url="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/blog/play/dota_logo.png")
 		if image_meta_tag:
 			embed.set_image(url=image_meta_tag["content"])
