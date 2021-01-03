@@ -1103,14 +1103,8 @@ class Dotabase(MangoCog):
 		hero = self.lookup_hero(name)
 		if hero:
 			for ability in hero.abilities:
-				if ability.scepter_description or ability.shard_description:
+				if ability.scepter_upgrades or ability.shard_upgrades or ability.scepter_grants or ability.shard_grants:
 					abilities.append(ability)
-				else:
-					# check if it just has some attribute changes (like necromastery)
-					ability_special = json.loads(ability.ability_special, object_pairs_hook=OrderedDict)
-					for attribute in ability_special:
-						if attribute.get("aghs_upgrade") and attribute.get("header"):
-							abilities.append(ability)
 
 			if len(abilities) == 0:
 				raise UserError(f"Couldn't find an aghs upgrade for {hero.localized_name}. Either they don't have one or I just can't find it.")
@@ -1132,16 +1126,16 @@ class Dotabase(MangoCog):
 				icon_url = f"{self.vpkurl}/panorama/images/hud/reborn/aghsstatus_shard_on_psd.png"
 			for ability in abilities:
 				description = ability.scepter_description if upgrade_type == "scepter" else ability.shard_description
-				grantedby = ability.scepter_grants if upgrade_type == "scepter" else ability.shard_grants
+				is_grantedby = ability.scepter_grants if upgrade_type == "scepter" else ability.shard_grants
 				if description != "":
-					if grantedby:
+					if is_grantedby:
 						description = f"**{description}**\n\n*{ability.description}*"
 					else:
 						description = f"*{description}*\n"
 
 				ability_special = json.loads(ability.ability_special, object_pairs_hook=OrderedDict)
 				formatted_attributes = []
-				if upgrade_type == "scepter" and not grantedby:
+				if upgrade_type == "scepter" and ability.scepter_upgrades and not ability.scepter_grants:
 					for attribute in ability_special:
 						header = attribute.get("header")
 						if not (header and attribute.get("aghs_upgrade")):
