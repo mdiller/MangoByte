@@ -1159,7 +1159,7 @@ async def draw_heroabilities(abilities):
 			aghs_icon = f"{vpkurl}/panorama/images/hud/reborn/aghsstatus_shard_on_psd.png"
 			aghs_icon = await get_url_image(aghs_icon)
 			# aghs_icon = aghs_icon.resize(icon.size, Image.ANTIALIAS)
-			row[2] = ImageCell(img=aghs_icon, padding_top=24)
+			row[2] = ImageCell(img=aghs_icon, padding_top=20)
 		table.add_row(row)
 	image = table.render()
 	
