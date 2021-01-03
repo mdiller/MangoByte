@@ -542,16 +542,16 @@ class General(MangoCog):
 		soup = BeautifulSoup(text, "html.parser")
 
 		current_patch = soup.find(name="title").contents[0]
+		old_patch = botdata["dotapatch"]
 
-		if botdata["dotapatch"] == current_patch:
+		if old_patch == current_patch:
 			return # thats the current patch, do nothing
 		if current_patch == "Gameplay Update":
 			return # thats what happens when theyre tryna switch it and theyre in the process, so give it a minute and try again later
 		print(f"\"{current_patch}\"")
 		print(current_patch == "Gameplay Update")
 		print(str(current_patch) == "Gameplay Update")
-		botdata["dotapatch"] = current_patch
-		await self.send_owner("patches update triggered");
+		await self.send_owner(f"patches update triggered: (new one is '{current_patch}', old one was '{old_patch}')")
 
 		def count_class_in_id(element_id, classname):
 			element = soup.find(id=element_id)
@@ -605,6 +605,7 @@ class General(MangoCog):
 				else:
 					print(f"couldn't find user {userinfo.discord} when announcing dota patches")
 
+		botdata["dotapatch"] = current_patch
 		tasks = []
 		for messageable in messageables:
 			tasks.append(messageable.send(embed=embed))
