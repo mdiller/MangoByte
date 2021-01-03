@@ -12,6 +12,12 @@ import re
 
 Base = declarative_base()
 
+def message_to_embed(message, cog):
+	if message:
+		return message.to_embed(cog)
+	else:
+		return discord.Embed(description="None")
+
 
 class Message(Base):
 	__tablename__ = 'messages'
@@ -61,7 +67,7 @@ class Command(Base):
 	message = relationship("Message")
 
 	def to_embed(self, cog):
-		embed = self.message.to_embed(cog)
+		embed = message_to_embed(self.message, cog)
 
 		if self.invoke_time is not None and self.finish_time is not None:
 			embed.add_field(name="Duration", value=f"{(self.finish_time - self.invoke_time).total_seconds():.2f}")
@@ -120,7 +126,7 @@ class Error(Base):
 		return chunks
 
 	def to_embed(self, cog):
-		embed = self.message.to_embed(cog)
+		embed = message_to_embed(self.message, cog)
 		embed.color = discord.Color.red()
 
 		embed.timestamp = self.timestamp
