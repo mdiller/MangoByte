@@ -1444,7 +1444,7 @@ class Dotabase(MangoCog):
 		if not hero:
 			raise UserError("That doesn't look like a hero")
 
-		abilities = list(filter(lambda a: a.slot is not None, hero.abilities))
+		abilities = list(filter(lambda a: a.slot is not None and not ("hidden" in a.behavior and not (a.shard_grants or a.scepter_grants)), hero.abilities))
 
 		embed = discord.Embed()
 
