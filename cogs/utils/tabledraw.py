@@ -21,7 +21,9 @@ def get_padding(kwargs, default=0):
 	else:
 		padding = kwargs
 	if isinstance(padding, int):
-		return [ padding, padding, padding, padding ]
+		padding = [ padding, padding, padding, padding ]
+	if isinstance(kwargs, int):
+		return padding
 	if 'padding_top' in kwargs:
 		padding[0] = kwargs['padding_top']
 	if 'padding_right' in kwargs:
@@ -237,7 +239,7 @@ class ImageCell(Cell):
 	def render(self, draw, image, x, y, width, height):
 		if not self.image:
 			return image, draw # no image, so this is basically an empty cell
-		actual_image = self.image.resize((self.width - (self.padding[1] + self.padding[3]), self.height - (self.padding[0] + self.padding[2])), Image.ANTIALIAS)		
+		actual_image = self.image.resize((self.width - (self.padding[1] + self.padding[3]), self.height - (self.padding[0] + self.padding[2])), Image.ANTIALIAS)
 		image = paste_image(image, actual_image, x + self.padding[3], y + self.padding[0])
 		draw = ImageDraw.Draw(image)
 		return image, draw

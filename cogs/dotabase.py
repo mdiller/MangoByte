@@ -1105,6 +1105,13 @@ class Dotabase(MangoCog):
 			for ability in hero.abilities:
 				if ability.scepter_description or ability.shard_description:
 					abilities.append(ability)
+				else:
+					# check if it just has some attribute changes (like necromastery)
+					ability_special = json.loads(ability.ability_special, object_pairs_hook=OrderedDict)
+					for attribute in ability_special:
+						if attribute.get("aghs_upgrade") and attribute.get("header"):
+							abilities.append(ability)
+
 			if len(abilities) == 0:
 				raise UserError(f"Couldn't find an aghs upgrade for {hero.localized_name}. Either they don't have one or I just can't find it.")
 		else:
@@ -1126,12 +1133,15 @@ class Dotabase(MangoCog):
 			for ability in abilities:
 				description = ability.scepter_description if upgrade_type == "scepter" else ability.shard_description
 				grantedby = ability.scepter_grants if upgrade_type == "scepter" else ability.shard_grants
-				if description == "":
-					continue
-				description = f"*{description}*\n"
+				if description != "":
+					if grantedby:
+						description = f"**{description}**\n\n*{ability.description}*"
+					else:
+						description = f"*{description}*\n"
+
 				ability_special = json.loads(ability.ability_special, object_pairs_hook=OrderedDict)
 				formatted_attributes = []
-				if not grantedby:
+				if upgrade_type == "scepter" and not grantedby:
 					for attribute in ability_special:
 						header = attribute.get("header")
 						if not (header and attribute.get("aghs_upgrade")):
@@ -1143,8 +1153,12 @@ class Dotabase(MangoCog):
 						text = f"**{header}** {value}"
 						if footer:
 							text += f" {footer}"
-						description += f"\n{text}"
+						if description != "":
+							description += "\n"
+						description += f"{text}"
 
+				if description == "":
+					continue
 				embed = discord.Embed(description=description)
 				title = f"{aghs_item.localized_name} ({ability.localized_name})"
 				embed.set_author(name=title, icon_url=icon_url)
