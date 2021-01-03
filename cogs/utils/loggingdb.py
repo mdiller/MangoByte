@@ -159,14 +159,16 @@ class LoggingDb():
 		Base.metadata.create_all(engine)
 		Session = sessionmaker(bind=engine)
 		self.session = Session()
+		self.loop = asyncio.get_event_loop()
+		self.lock = asyncio.Lock(loop=self.loop)
 
 	async def query_multiple(self, queries):
-		async with Database(self.database_url) as database:
+		async with self.lock, Database(self.database_url) as database:
 			queries = map(lambda q: database.fetch_all(query=q), queries)
 			return await asyncio.gather(*queries)
 
 	async def query(self, query):
-		async with Database(self.database_url) as database:
+		async with self.lock, Database(self.database_url) as database:
 			return await database.fetch_all(query=q)
 
 	async def insert_row(self, database, table, row):
@@ -174,7 +176,7 @@ class LoggingDb():
 
 	async def insert_message(self, msg, cmd):
 		start_time = datetime.datetime.now()
-		async with Database(self.database_url) as database:
+		async with self.lock, Database(self.database_url) as database:
 			message = Message()
 			message.id = msg.id
 			message.author_id = msg.author.id
@@ -195,7 +197,7 @@ class LoggingDb():
 
 	async def insert_command(self, ctx):
 		start_time = datetime.datetime.now()
-		async with Database(self.database_url) as database:
+		async with self.lock, Database(self.database_url) as database:
 			command = Command()
 			command.message_id = ctx.message.id
 			command.command = ctx.command.name
@@ -208,7 +210,7 @@ class LoggingDb():
 			return command
 
 	async def command_finished(self, ctx, status, error):
-		async with Database(self.database_url) as database:
+		async with self.lock, Database(self.database_url) as database:
 			await asyncio.sleep(1)
 			start_time = datetime.datetime.now()
 			if ctx.command is None:
@@ -243,7 +245,7 @@ class LoggingDb():
 
 	async def insert_error(self, message, the_error, trace):
 		start_time = datetime.datetime.now()
-		async with Database(self.database_url) as database:
+		async with self.lock, Database(self.database_url) as database:
 			error = Error()
 			error.message_id = message.id
 			error.timestamp = datetime.datetime.utcnow()
@@ -258,7 +260,7 @@ class LoggingDb():
 
 	async def insert_http_request(self, url, status, cached):
 		start_time = datetime.datetime.now()
-		async with Database(self.database_url) as database:
+		async with self.lock, Database(self.database_url) as database:
 			request = HttpRequest()
 
 			request.url = url
@@ -273,39 +275,40 @@ class LoggingDb():
 			return request
 
 	async def update_guilds(self, guilds):
-		guild_dict = {}
-		for guild in guilds:
-			guild_dict[guild.id] = guild
+		async with self.lock:
+			guild_dict = {}
+			for guild in guilds:
+				guild_dict[guild.id] = guild
 
-		# update existing guilds
-		new_guild_ids = list(guild_dict.keys())
-		for guild_log in self.session.query(Guild):
-			if guild_log.id in new_guild_ids:
-				new_guild_ids.remove(guild_log.id)
+			# update existing guilds
+			new_guild_ids = list(guild_dict.keys())
+			for guild_log in self.session.query(Guild):
+				if guild_log.id in new_guild_ids:
+					new_guild_ids.remove(guild_log.id)
 
-			if guild_log.leave_time is not None:
-				guild_log.leave_time = None
-			if guild_log.name == "<Unknown>":
+				if guild_log.leave_time is not None:
+					guild_log.leave_time = None
+				if guild_log.name == "<Unknown>":
+					guild_log.name = guild.name
+
+			# add new guilds
+			for guild_id in new_guild_ids:
+				guild = guild_dict[guild_id]
+				guild_log = Guild()
+				guild_log.id = guild.id
 				guild_log.name = guild.name
+				guild_log.join_time = guild.me.joined_at
+				guild_log.leave_time = None
+				self.session.add(guild_log)
 
-		# add new guilds
-		for guild_id in new_guild_ids:
-			guild = guild_dict[guild_id]
-			guild_log = Guild()
-			guild_log.id = guild.id
-			guild_log.name = guild.name
-			guild_log.join_time = guild.me.joined_at
-			guild_log.leave_time = None
-			self.session.add(guild_log)
+			async with Database(self.database_url) as database:
+				current_ids = ", ".join(list(map(lambda g: str(g), guild_dict.keys())))
 
-		async with Database(self.database_url) as database:
-			current_ids = ", ".join(list(map(lambda g: str(g), guild_dict.keys())))
+				# fix all existing guilds that say they've left
+				await database.execute(query=f"UPDATE guilds SET leave_time = NULL WHERE id in ({current_ids}) and leave_time is not NULL")
 
-			# fix all existing guilds that say they've left
-			await database.execute(query=f"UPDATE guilds SET leave_time = NULL WHERE id in ({current_ids}) and leave_time is not NULL")
-
-			# run query to remove guilds that have left
-			await database.execute(query=f"UPDATE guilds SET leave_time = datetime('now','localtime') WHERE id not in ({current_ids}) and leave_time is NULL")
+				# run query to remove guilds that have left
+				await database.execute(query=f"UPDATE guilds SET leave_time = datetime('now','localtime') WHERE id not in ({current_ids}) and leave_time is NULL")
 		self.session.commit()
 
 

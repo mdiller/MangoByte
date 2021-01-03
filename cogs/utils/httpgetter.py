@@ -58,7 +58,7 @@ class Cache:
 
 	#creates a new entry in the cache and returns the filename of the new entry
 	async def new(self, uri, extension=None):
-		with (await self.lock):
+		async with self.lock:
 			if uri in self.files:
 				return self.cache_dir + self.files[uri]
 			filename = f"{self.cache['count']:0>4}"
@@ -89,11 +89,12 @@ class Cache:
 
 
 	async def remove(self, uri):
-		with (await self.lock):
-			filename = self.cache_dir + self.files.pop(uri)
-			self.save_cache()
-			if os.path.isfile(filename):
-				os.remove(filename)
+		async with self.lock:
+			if uri in self.files:
+				filename = self.cache_dir + self.files.pop(uri)
+				self.save_cache()
+				if os.path.isfile(filename):
+					os.remove(filename)
 
 def raise_error(url, code, errors):
 	print(f"http {code} error on: {url}")
