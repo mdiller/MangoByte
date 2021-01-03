@@ -837,11 +837,11 @@ class DotaStats(MangoCog):
 		else:
 			player_mention = player.steam_id
 
-		embed.set_footer(text=f"For more info, try {self.cmdpfx(ctx)}playerstats {player_mention}")
-
 		rank_icon = await drawdota.dota_rank_icon(playerinfo.get("rank_tier"), playerinfo.get("leaderboard_rank"))
 		rank_icon = discord.File(rank_icon, "rank.png")
 		embed.set_thumbnail(url=f"attachment://{rank_icon.filename}")
+
+		embed.set_footer(text=f"Steam ID: {steam32}")
 
 		await ctx.send(embed=embed, file=rank_icon)
 
@@ -1348,16 +1348,22 @@ class DotaStats(MangoCog):
 		`{cmdpfx}opendota /players/{steamid}`
 		`{cmdpfx}opendota /matches/{match_id}`
 
+		Note that this is just a little tool showcasing how you can use the api. You can also put urls like these in your browser to get the same results, which I'd recommend if you're doing this a lot.
+
 		For more options and a better explanation, check out their [documentation](https://docs.opendota.com)"""
 		query = query.replace("/", " ")
 		query = query.strip()
 		query = "/" + "/".join(query.split(" "))
+		query = re.sub("[^/0-9a-zA-Z?=&_]", "", query)
 
 		with ctx.channel.typing():
 			data = await opendota_query(query)
 
+		tempdir = settings.resource("temp")
+		if not os.path.exists(tempdir):
+			os.makedirs(tempdir)
 		filename = re.search("/([/0-9a-zA-Z]+)", query).group(1).replace("/", "_")
-		filename = settings.resource(f"temp/{filename}.json")
+		filename = tempdir + f"/{filename}.json"
 		write_json(filename, data)
 		await ctx.send(file=discord.File(filename))
 		os.remove(filename)
