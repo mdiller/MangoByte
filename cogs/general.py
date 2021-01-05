@@ -546,7 +546,7 @@ class General(MangoCog):
 
 		if old_patch == current_patch:
 			return # thats the current patch, do nothing
-		if current_patch == "Gameplay Update":
+		if current_patch.strip() == "Gameplay Update":
 			return # thats what happens when theyre tryna switch it and theyre in the process, so give it a minute and try again later
 		print(f"\"{current_patch}\"")
 		print(current_patch == "Gameplay Update")
