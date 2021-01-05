@@ -154,7 +154,7 @@ def row2dict(row):
 # inserters
 
 def print_debug(text):
-	if settings.debug:
+	if True or settings.debug:
 		print(text)
 
 class LoggingDb():
@@ -216,8 +216,8 @@ class LoggingDb():
 			return command
 
 	async def command_finished(self, ctx, status, error):
+		await asyncio.sleep(1)
 		async with self.lock, Database(self.database_url) as database:
-			await asyncio.sleep(1)
 			start_time = datetime.datetime.now()
 			if ctx.command is None:
 				return

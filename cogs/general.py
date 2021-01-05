@@ -611,7 +611,9 @@ class General(MangoCog):
 			tasks.append(messageable.send(embed=embed))
 
 		bundler = AsyncBundler(tasks)
+		print("waiting for dota patch bundle to complete")
 		await bundler.wait()
+		print("dota patch bundle completed")
 		await self.send_owner("__Dota Patch Sent!__\n" + bundler.status_as_string())
 
 
