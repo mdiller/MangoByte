@@ -122,12 +122,12 @@ class UserInfo(BotDataItem):
 			"description": "If enabled, mango will private message you when a new dota patch gets released",
 			"example": "enable"
 		},
-                {
-                        "key": "dmdotablog",
-                        "default": None,
-                        "type": types.Boolean,
-                        "description": "Enabling this will let mangobyte dm you about Dota blog updates",
-                        "example": "enable"
+		{
+			"key": "dmdotablog",
+			"default": None,
+			"type": types.Boolean,
+			"description": "Enabling this will let mangobyte dm you about Dota blog updates",
+			"example": "enable"
 		}
 	]
 
@@ -135,10 +135,10 @@ class UserInfo(BotDataItem):
 		var = next((v for v in self.variables if v["key"] == key), None)
 		if var:
 			self[key] = var["default"]
-	
+
 class GuildInfo(BotDataItem):
 	def __init__(self, botdata, guildid):
-		defaults = OrderedDict([ 
+		defaults = OrderedDict([
 			("voicechannel", None),
 			("invalidcommands", False),
 			("banned_users", []),
@@ -226,7 +226,7 @@ class GuildInfo(BotDataItem):
 			"description": "The channel in which mangobyte will post to notify about new dota patches when it detects them",
 			"example": "#dota"
 		},
-                		{
+		{
 			"key": "dotablogchannel",
 			"default": None,
 			"type": types.TextChannel,
@@ -262,11 +262,11 @@ class GuildInfo(BotDataItem):
 class BotData:
 	def __init__(self):
 		self.path = "botdata.json"
-		self.defaults = OrderedDict([ 
-			("userinfo" , []), 
-			("guildinfo" , []), 
+		self.defaults = OrderedDict([
+			("userinfo" , []),
+			("guildinfo" , []),
 			("dotapatch", None),
-                        ("dotablog",None)
+			("dotablog",None)
 		])
 		if not os.path.exists(self.path):
 			self.json_data = self.defaults
@@ -344,4 +344,4 @@ class BotData:
 		else:
 			return "?"
 
-		
+

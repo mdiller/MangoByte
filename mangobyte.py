@@ -93,7 +93,7 @@ async def on_ready():
 		print('Connecting to voice channels if specified in botdata.json ...')
 
 	game = discord.Activity(
-		name="DOTA 3 [?help]", 
+		name="DOTA 3 [?help]",
 		type=discord.ActivityType.playing,
 		start=datetime.datetime.utcnow())
 	await bot.change_presence(status=discord.Status.online, activity=game)
@@ -108,7 +108,7 @@ async def on_ready():
 	periodic_tasks = [
 		general_cog.update_topgg,
 		general_cog.check_dota_patch,
-                dota_cog.check_dota_blog
+		dota_cog.check_dota_blog
 	]
 	# start topgg update service thing
 	for task in periodic_tasks:
@@ -127,7 +127,7 @@ async def on_ready():
 	if is_first_time:
 		print("\nupdating guilds")
 		await loggingdb.update_guilds(bot.guilds)
-	
+
 	finished_text = "initialization finished"
 	if not is_first_time:
 		finished_text = "re-" + finished_text
@@ -222,7 +222,7 @@ async def on_command_error(ctx, error):
 				new_message.content = cmdpfx + cmd.lower() + ctx.message.content[len(cmd) + 1:]
 				await bot.process_commands(new_message)
 			elif await invalid_command_reporting(ctx):
-				await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `{cmdpfx}help` fer a list of things that ARE commands.") 
+				await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `{cmdpfx}help` fer a list of things that ARE commands.")
 		elif isinstance(error, commands.CheckFailure):
 			emoji_dict = read_json(settings.resource("json/emoji.json"))
 			if botdata.guildinfo(ctx).is_disabled(ctx.command):
@@ -251,7 +251,7 @@ async def on_command_error(ctx, error):
 			await loggingdb.command_finished(ctx, "user_errored", error.original.message)
 		elif isinstance(error, commands.ConversionError) and isinstance(error.original, UserError):
 			await error.original.send_self(ctx, botdata)
-			await loggingdb.command_finished(ctx, "user_errored", error.original.message)					
+			await loggingdb.command_finished(ctx, "user_errored", error.original.message)
 		else:
 			await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
 			trace_string = await report_error(ctx.message, error, skip_lines=4)
@@ -297,7 +297,7 @@ async def report_error(message, error, skip_lines=2):
 		if skip_lines > 0 and len(trace) >= (2 + skip_lines):
 			del trace[1:(skip_lines + 1)]
 		trace = [x for x in trace if x] # removes empty lines
-	
+
 	trace_string = "\n".join(trace)
 
 	await loggingdb.insert_error(message, error, trace_string)
@@ -311,7 +311,7 @@ def update_commandinfo():
 		"cogs": [],
 		"commands": []
 	}
-	commands = sorted(bot.commands, key=lambda c: c.name) 
+	commands = sorted(bot.commands, key=lambda c: c.name)
 	for cmd in commands:
 		if cmd.cog and cmd.cog.name == "Owner":
 			continue
