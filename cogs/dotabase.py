@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from sqlalchemy.sql.expression import func
 from sqlalchemy import and_, or_
 from __main__ import settings, httpgetter
@@ -31,10 +31,10 @@ ABILITY_KEY_MAP = {
 }
 # some specific heroes have weird places for their ultimate keys
 ABILITY_ULTI_KEY_MAP = {
-	"3": 4, "10": 6, "19": 4, "23": 4, 
-	"54": 4, "68": 4, "73": 4, "74": 6, 
-	"86": 6, "88": 5, "89": 4, 
-	"90": 4, "91": 4, "98": 5, "100": 5, 
+	"3": 4, "10": 6, "19": 4, "23": 4,
+	"54": 4, "68": 4, "73": 4, "74": 6,
+	"86": 6, "88": 5, "89": 4,
+	"90": 4, "91": 4, "98": 5, "100": 5,
 	"103": 4, "108": 4, "110": 5, "114": 6, "120": 4
 }
 for i in range(1, 20):
@@ -176,7 +176,7 @@ class Dotabase(MangoCog):
 							hero_stats[stat["stat"]] = vars(hero)[stat["stat"]]
 				all_hero_stats.append(hero_stats)
 			self.leveled_hero_stats.append(all_hero_stats)
-		
+
 	def get_wiki_url(self, obj):
 		if isinstance(obj, Hero):
 			wikiurl = obj.localized_name
@@ -240,7 +240,7 @@ class Dotabase(MangoCog):
 					return ability
 				cleaned_name = cleaned_name.replace(" ", "")
 				if cleaned_name == text.replace(" ", ""):
-					return ability			
+					return ability
 			for ability in ability_query:
 				name = clean_input(ability.localized_name)
 				if " " in name:
@@ -262,7 +262,7 @@ class Dotabase(MangoCog):
 						custom_position = ABILITY_ULTI_KEY_MAP.get(str(hero.id))
 						if custom_position is not None and custom_position < len(abilities):
 							ability_position = custom_position
-						else: 
+						else:
 							ability_position = len(abilities)
 					return abilities[ability_position - 1]
 		return None
@@ -418,7 +418,7 @@ class Dotabase(MangoCog):
 
 		First tries to match the keyphrase with the name of a response
 
-		If there is no response matching the input string, searches for any response that has the input string as part of its text 
+		If there is no response matching the input string, searches for any response that has the input string as part of its text
 
 		To specify a specific hero to search for responses for, use ';' before the hero's name like this:
 		`{cmdpfx}dota ;rubick`
@@ -667,7 +667,7 @@ class Dotabase(MangoCog):
 		if not hero.is_melee:
 			attack_stats += f"{self.get_emoji('hero_projectile_speed')} {hero.attack_projectile_speed:,}\n"
 		embed.add_field(name="Attack", value=attack_stats)
-		
+
 		base_armor = hero.base_armor + round(hero.attr_agility_base / 6.0, 1)
 		embed.add_field(name="Defence", value=(
 			f"{self.get_emoji('hero_armor')} {base_armor:0.1f}\n"
@@ -923,7 +923,7 @@ class Dotabase(MangoCog):
 				text += f" {footer}"
 			text += "\n"
 			description += text
-			
+
 
 		if item.description:
 			if description != "":
@@ -1345,7 +1345,7 @@ class Dotabase(MangoCog):
 		if tier is not None:
 			tier_color = drawdota.neutral_tier_colors[str(tier)]
 			embed.color = discord.Color(int(tier_color[1:], 16))
-		
+
 		if tier is None:
 			embed.set_footer(text="Also try: ?neutralitems tier 4")
 		await ctx.send(embed=embed, file=image)
@@ -1353,7 +1353,7 @@ class Dotabase(MangoCog):
 	@commands.command(aliases=["startingstats", "tradingstats", "lvlstats", "lvledstats"])
 	async def leveledstats(self, ctx, *, hero : str):
 		"""Gets the stats for a hero at the specified level
-		
+
 		If no level is specified, get the stats for the hero at level 1
 
 		**Examples:**
@@ -1401,14 +1401,14 @@ class Dotabase(MangoCog):
 		embed.set_thumbnail(url=f"{self.vpkurl}{hero.portrait}")
 		if hero.color:
 			embed.color = discord.Color(int(hero.color[1:], 16))
-		embed.set_footer(text="The stats shown above do not account for talents, passives, or items")		
-		
+		embed.set_footer(text="The stats shown above do not account for talents, passives, or items")
+
 		await ctx.send(embed=embed)
 
 	@commands.command(aliases=["statstable", "stattable", "heroestable", "leveledstatstable", "besthero", "bestheroes"])
 	async def herotable(self, ctx, *, table_args : HeroStatsTableArgs):
 		"""Displays a sorted table of heroes and their stats
-		
+
 		Displays a table with computed hero stats showing which heroes have the highest values for the specified stat. To see the list of possible stats, try the `{cmdpfx}leveledstats` command
 
 		**Examples:**
@@ -1452,11 +1452,11 @@ class Dotabase(MangoCog):
 
 		image = discord.File(await drawdota.draw_heroabilities(abilities), "abilities.png")
 		embed.set_image(url=f"attachment://{image.filename}")
-		
+
 		embed.color = discord.Color(int(hero.color[1:], 16))
-		
+
 		await ctx.send(embed=embed, file=image)
-		
+
 
 	@commands.command(aliases = ["rss"])
 	async def blog(self,ctx):
@@ -1467,7 +1467,48 @@ class Dotabase(MangoCog):
 		embed = rsstools.create_embed(title, blog.entries[0])
 		await ctx.send(embed = embed)
 
-	
+	@tasks.loop(minutes=5)
+	async def check_dota_blog(self):
+		feed = await httpgetter.get(r'https://blog.dota2.com/feed', return_type="text")
+		blog = feedparser.parse(feed)
+		title = "Dota 2 Blog"
+
+		updated = rsstools.is_new_blog(blog.entries[0])
+		if not updated: #if its not updated, stop here
+			return
+
+		embed = rsstools.create_embed(title, blog.entries[0]) #generate embed
+
+		##next section copies code in check_dota_patch in general cogs
+		messageables = []
+		#find channels to post in
+		guildinfos = botdata.guildinfo_list()
+		for guildinfo in guildinfos:
+			if guildinfo.dotablogchannel is not None:
+				channel = self.bot.get_channel(guildinfo.dotablogchannel)
+				if channel is not None:
+					messageables.append(channel)
+				else:
+					print(f"couldn't find channel {guildinfo.dotablogchannel} when announcing dota blog")
+
+		#find users
+		userinfos = botdata.userinfo_list()
+		for userinfo in userinfos:
+			if userinfo.dmdotablog:
+				user = self.bot.get_user(userinfo.discord)
+				if user is not None:
+					messageables.append(user)
+				else:
+					print(f"couldn't find user {userinfo.discord} when announcing dota blog")
+
+		#bundle tasks and execute
+		tasks = []
+		for messageable in messageables:
+			tasks.append(messageable.send(embed=embed))
+
+		bundler = AsyncBundler(tasks)
+		await bundler.wait()
+
 
 def setup(bot):
 	bot.add_cog(Dotabase(bot))

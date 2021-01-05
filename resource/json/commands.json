@@ -76,7 +76,8 @@
 				"aghs",
 				"ags",
 				"aghanims",
-				"scepter"
+				"scepter",
+				"shard"
 			],
 			"cog": "Dotabase"
 		},
@@ -87,6 +88,16 @@
 			"help": "Answers any question you might have",
 			"aliases": [],
 			"cog": "General"
+		},
+		{
+			"name": "blog",
+			"signature": "?blog ",
+			"short_help": "Pulls the newest blog post for Dota 2",
+			"help": "Pulls the newest blog post for Dota 2",
+			"aliases": [
+				"rss"
+			],
+			"cog": "Dotabase"
 		},
 		{
 			"name": "botban",
@@ -184,7 +195,7 @@
 			"name": "config",
 			"signature": "?config <name> [value]",
 			"short_help": "Configures the bot's settings for this server",
-			"help": "Configures the bot's settings for this server\n\nBelow are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `?config <settingname>`, and you can configure a setting by typing `?config <settingname> <value>`\n\n**Settings:**\n\u200b`prefix`\n\u200b`reactions`\n\u200b`ttschannel`\n\u200b`botadmin`\n\u200b`intros`\n\u200b`outros`\n\u200b`ttslang`\n\u200b`usenickname`\n\u200b`simpletts`\n\u200b`announcetts`\n\n**Examples**\n\u200b`?config prefix !`\n\u200b`?config reactions enable`\n\u200b`?config ttschannel #tts`\n\u200b`?config botadmin @BotAdmin`\n\u200b`?config intros disable`\n\u200b`?config outros disable`\n\u200b`?config ttslang Russian`\n\u200b`?config usenickname enable`\n\u200b`?config simpletts enable`\n\u200b`?config announcetts enable`",
+			"help": "Configures the bot's settings for this server\n\nBelow are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `?config <settingname>`, and you can configure a setting by typing `?config <settingname> <value>`\n\n**Settings:**\n\u200b`prefix`\n\u200b`reactions`\n\u200b`ttschannel`\n\u200b`botadmin`\n\u200b`intros`\n\u200b`outros`\n\u200b`ttslang`\n\u200b`usenickname`\n\u200b`simpletts`\n\u200b`announcetts`\n\u200b`dotapatchchannel`\n\u200b`dotablogchannel`\n\n**Examples**\n\u200b`?config prefix !`\n\u200b`?config reactions enable`\n\u200b`?config ttschannel #tts`\n\u200b`?config botadmin @BotAdmin`\n\u200b`?config intros disable`\n\u200b`?config outros disable`\n\u200b`?config ttslang Russian`\n\u200b`?config usenickname enable`\n\u200b`?config simpletts enable`\n\u200b`?config announcetts enable`\n\u200b`?config dotapatchchannel #dota`\n\u200b`?config dotablogchannel #dota`",
 			"aliases": [],
 			"cog": "Admin"
 		},
@@ -251,7 +262,7 @@
 			"name": "dota",
 			"signature": "?dota [keyphrase]",
 			"short_help": "Plays a dota response",
-			"help": "Plays a dota response\n\nFirst tries to match the keyphrase with the name of a response\n\nIf there is no response matching the input string, searches for any response that has the input string as part of its text \n\nTo specify a specific hero to search for responses for, use ';' before the hero's name like this:\n\u200b`?dota ;rubick`\n\nTo specify a specific criteria to search for responses for, use ';' before the criteria name like this:\n\u200b`?dota ;rubick ;defeat`\nThere are some aliases for heroes, so the following will work:\n\u200b`?dota sf`\n\u200b`?dota furion`\n\u200b`?dota shredder`\n\nIf failing all of the above, the command will also try to find unlabeled heroes and critera. try:\n\u200b`?dota juggernaut bottling`\nA few critera you can use are: kill, bottling, cooldown, acknowledge, immortality, nomana, and select\n\nTo search for a response without asking mangobyte, try using the [Response Searcher](http://dotabase.dillerm.io/responses/)\nProTip: If you click the discord button next to the response in the above web app, it will copy to your clipboard in the format needed to play using the bot.",
+			"help": "Plays a dota response\n\nFirst tries to match the keyphrase with the name of a response\n\nIf there is no response matching the input string, searches for any response that has the input string as part of its text\n\nTo specify a specific hero to search for responses for, use ';' before the hero's name like this:\n\u200b`?dota ;rubick`\n\nTo specify a specific criteria to search for responses for, use ';' before the criteria name like this:\n\u200b`?dota ;rubick ;defeat`\nThere are some aliases for heroes, so the following will work:\n\u200b`?dota sf`\n\u200b`?dota furion`\n\u200b`?dota shredder`\n\nIf failing all of the above, the command will also try to find unlabeled heroes and critera. try:\n\u200b`?dota juggernaut bottling`\nA few critera you can use are: kill, bottling, cooldown, acknowledge, immortality, nomana, and select\n\nTo search for a response without asking mangobyte, try using the [Response Searcher](http://dotabase.dillerm.io/responses/)\nProTip: If you click the discord button next to the response in the above web app, it will copy to your clipboard in the format needed to play using the bot.",
 			"aliases": [
 				"dotar"
 			],
@@ -432,7 +443,8 @@
 			"short_help": "Tells the story of the player's last match",
 			"help": "Tells the story of the player's last match\n\nInput must be either a discord user, a steam32 id, or a steam64 id",
 			"aliases": [
-				"lastgamestory"
+				"lastgamestory",
+				"lmstory"
 			],
 			"cog": "DotaStats"
 		},
@@ -813,7 +825,7 @@
 			"name": "userconfig",
 			"signature": "?userconfig <name> [value]",
 			"short_help": "Configures the bot's user-specific settings",
-			"help": "Configures the bot's user-specific settings\n\nBelow are the different user-specific settings that you can tweak to customize mangobyte. You can get more information about a setting by typing `?userconfig <settingname>`, and you can configure a setting by typing `?userconfig <settingname> <value>`\n\n**Settings:**\n\u200b`steam`\n\u200b`intro`\n\u200b`outro`\n\u200b`introtts`\n\u200b`outrotts`\n\n**Examples**\n\u200b`?userconfig steam 70388657`\n\u200b`?userconfig intro local:math`\n\u200b`?userconfig outro dota:troll_warlord_troll_lose_03`\n\u200b`?userconfig introtts it's the magnificent`\n\u200b`?userconfig outrotts dun gone left`",
+			"help": "Configures the bot's user-specific settings\n\nBelow are the different user-specific settings that you can tweak to customize mangobyte. You can get more information about a setting by typing `?userconfig <settingname>`, and you can configure a setting by typing `?userconfig <settingname> <value>`\n\n**Settings:**\n\u200b`steam`\n\u200b`intro`\n\u200b`outro`\n\u200b`introtts`\n\u200b`outrotts`\n\u200b`dmdotapatch`\n\u200b`dmdotablog`\n\n**Examples**\n\u200b`?userconfig steam 70388657`\n\u200b`?userconfig intro local:math`\n\u200b`?userconfig outro dota:troll_warlord_troll_lose_03`\n\u200b`?userconfig introtts it's the magnificent`\n\u200b`?userconfig outrotts dun gone left`\n\u200b`?userconfig dmdotapatch enable`\n\u200b`?userconfig dmdotablog enable`",
 			"aliases": [],
 			"cog": "General"
 		},

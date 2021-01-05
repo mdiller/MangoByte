@@ -22,15 +22,14 @@ Want to try out mangobyte on your server? [Click Here](https://discordapp.com/oa
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 86 commands, separated into 7 categories
+Mangobyte currently has 87 commands, separated into 7 categories
 
 #### General
 Commands that don't really fit into the other categories
 
 ```
 ?ask             | Answers any question you might have                        
-?botstats        | Displays some bot statistics  
-?blog            | Pulls up the most recent Dota blog post                              
+?botstats        | Displays some bot statistics                               
 ?cat             | Gets a picture of my cat                                   
 ?changelog       | Gets a rough changelog for mangobyte                       
 ?choose          | Randomly chooses one of the given options                  
@@ -77,6 +76,7 @@ For information about Dota 2, and playing hero responses
 ?ability         | Gets information about a specific hero ability             
 ?addemoticon     | Adds a dota emoticon as an animated emoji                  
 ?aghanim         | Gets the aghs upgrade for the given hero or ability        
+?blog            | Pulls the newest blog post for Dota 2                      
 ?chatwheel       | Plays the given chat wheel sound                           
 ?courage         | Generates a challenge build                                
 ?dota            | Plays a dota response                                      
