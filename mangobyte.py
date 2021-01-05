@@ -143,7 +143,6 @@ async def on_ready():
 	message += f"\n\non_ready took {onReadyTimer}"
 	if is_first_time:
 		message += f"\nFull startup took {startupTimer}"
-	appinfo = await bot.application_info()
 
 	if not settings.debug:
 		await appinfo.owner.send(message)
