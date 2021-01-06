@@ -1169,8 +1169,14 @@ class Dotabase(MangoCog):
 		products = query_filter_list(session.query(Item), Item.recipe, item.name).all()
 		components = []
 		if item.recipe:
-			components = item.recipe.split("|")
-			components = session.query(Item).filter(Item.name.in_(components)).all()
+			component_names = item.recipe.split("|")
+			found_components = session.query(Item).filter(Item.name.in_(component_names)).all()
+			for name in component_names:
+				for item in found_components:
+					if item.name == name:
+						components.append(item)
+						break
+
 
 		embed = discord.Embed()
 
