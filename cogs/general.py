@@ -7,6 +7,7 @@ from cogs.utils import checks, botdatatypes, wikipedia
 from cogs.audio import AudioPlayerNotFoundError
 from sqlalchemy import func
 from collections import OrderedDict
+import json
 import string
 import random
 import datetime
@@ -509,6 +510,7 @@ class General(MangoCog):
 
 	@tasks.loop(hours=12)
 	async def update_topgg(self):
+		print("update_topgg() entered")
 		if settings.debug or (settings.topgg is None):
 			return # nothing to do here
 
@@ -528,8 +530,28 @@ class General(MangoCog):
 		except HttpError as e:
 			await self.send_owner(f"Updating top.gg failed with {e.code} error")
 
+	@tasks.loop(hours=12)
+	async def do_infodump(self):
+		print("do_infodump() entered")
+		if not settings.infodump_path:
+			return # nothing to do here
+
+		guilds_count = len(self.bot.guilds)
+		member_count = botdata.count_users_with_key("steam")
+
+		data = {
+			"servers": guilds_count,
+			"registered_users": member_count
+		}
+		try:
+			with open(settings.infodump_path, "w+") as f:
+				f.write(json.dumps(data))
+		except Exception as e:
+			await self.send_owner(f"do_infodump failed w/ exception: {e}")
+
 	@tasks.loop(minutes=5)
 	async def check_dota_patch(self):
+		print("check_dota_patch() entered")
 		url = "https://www.dota2.com/patches/"
 		try:
 			text = await httpgetter.get(url, return_type="text")

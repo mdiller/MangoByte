@@ -65,6 +65,11 @@ class Settings:
 	def shard_count(self):
 		return self.json_data.get("shard_count", None)
 
+	# an optional path to a place to save server and member count information as json
+	@property
+	def infodump_path(self):
+		return self.json_data.get("infodump_path", None)
+
 	@property
 	def resourcedir(self):
 		return "resource/" # self.json_data["resourcedir"]

@@ -106,10 +106,13 @@ async def on_ready():
 	bot.help_command.cog = bot.get_cog("General")
 
 	periodic_tasks = [
-		general_cog.update_topgg,
 		general_cog.check_dota_patch,
 		dota_cog.check_dota_blog
 	]
+	if settings.topgg:
+		periodic_tasks.append(general_cog.update_topgg)
+	if settings.infodump_path:
+		periodic_tasks.append(general_cog.do_infodump)
 	# start topgg update service thing
 	for task in periodic_tasks:
 		if (not task.is_running()):
