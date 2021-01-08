@@ -258,6 +258,8 @@ async def on_command_error(ctx, error):
 			await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
 			trace_string = await report_error(ctx.message, error, skip_lines=4)
 			if settings.debug:
+				if len(trace_string) > 1950:
+					trace_string = "TRACETOOBIG:" + trace_string[len(trace_string) - 1950:]
 				await ctx.send(f"```{trace_string}```")
 	except discord.errors.Forbidden:
 		try:

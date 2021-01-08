@@ -1092,18 +1092,16 @@ class DotaStats(MangoCog):
 				"stats": [
 					CoolStat("GPM", avg('gold_per_min')),
 					CoolStat("XPM", avg('xp_per_min')),
-					CoolStat("APM", avg('actions_per_min')),
 					CoolStat("Last Hits/min", avg(lambda p: p['last_hits'] / (1 + (p['duration'] / 60)), 2)),
 					CoolStat("Neutral Creeps", avg(lambda p: 100 * p.get('neutral_kills', 0) / (1 + p['last_hits'])))
 				]
 			},
 			{
-				"caption": "Wards placed",
+				"caption": "Other",
 				"stats": [
-					CoolStat("None", percent(lambda p: wards_placed(p) == 0), ignore_value=zeropercent),
-					CoolStat("<5", percent(lambda p: wards_placed(p) < 5 and wards_placed(p) != 0), ignore_value=zeropercent),
-					CoolStat("<20", percent(lambda p: wards_placed(p) < 20 and wards_placed(p) >= 5), ignore_value=zeropercent),
-					CoolStat(">=20", percent(lambda p: wards_placed(p) >= 20), ignore_value=zeropercent)
+					CoolStat("APM", avg('actions_per_min')),
+					CoolStat("Pings", avg('pings')),
+					CoolStat("Wards Placed", avg(lambda p: wards_placed(p)))
 				]
 			},
 			{

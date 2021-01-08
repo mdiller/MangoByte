@@ -9,7 +9,7 @@ import numpy
 import math
 from datetime import datetime, timedelta
 from PIL import Image, ImageDraw, ImageFont
-from .tabledraw import Table, ImageCell, TextCell, ColorCell, DoubleCell, SlantedTextCell
+from .tabledraw import Table, ImageCell, TextCell, ColorCell, DoubleCell, SlantedTextCell, get_table_font
 from io import BytesIO
 from .helpers import run_command, get_pretty_time, read_json, UserError, format_duration_simple
 from .imagetools import *
@@ -23,6 +23,7 @@ discord_color1 = "#2C2F33"
 discord_color2 = "#23272A"
 discord_color3 = "#202225"
 discord_color4 = "#131416" # darker, mostly unused color
+faded_yellow_color = "#c6b37c" # similar to the color of the text for displaying level info
 
 # mostly from https://www.dota2.com/public/css/heropedia.css
 item_quality_colors = {
@@ -114,6 +115,34 @@ async def get_item_image(item_id):
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
+async def get_level_image(level):
+	rowheight = 48
+
+	image = Image.new('RGBA', (rowheight - 4, rowheight), (0, 0, 0, 0))
+	draw = ImageDraw.Draw(image)
+
+	size = image.size
+	outer_radius = 20
+	inner_radius = outer_radius - 2
+	outer_circle = ((size[0] / 2) - outer_radius, (size[1] / 2) - outer_radius, 
+					(size[0] / 2) + outer_radius, (size[1] / 2) + outer_radius)
+	inner_circle = ((size[0] / 2) - inner_radius, (size[1] / 2) - inner_radius, 
+					(size[0] / 2) + inner_radius, (size[1] / 2) + inner_radius)
+	draw.ellipse(outer_circle, fill=discord_color3)
+	draw.ellipse(inner_circle, fill=discord_color4)
+
+	font_adjustment_y = -4
+	level = str(level)
+	font = get_table_font(24)
+	font_size = font.getsize(level)
+	x_loc = (image.size[0] / 2) - (font_size[0] / 2)
+	y_loc = (image.size[1] / 2) - (font_size[1] / 2)
+	draw.text((x_loc, y_loc + font_adjustment_y), level, font=font, fill=faded_yellow_color)
+
+	return image
+
+
+
 async def get_ability_image(ability_id, hero_id=None):
 	try:
 		ability = ability_infos[ability_id]["entity"]
@@ -189,6 +218,40 @@ async def get_neutral_image(item):
 	else:
 		return background
 
+# gets an image for the matches table with the icons for what aghanim effects are active for the given player
+async def get_active_aghs_image(player):
+	global vpkurl
+	is_shard_active = False
+	is_scepter_active = False
+	for i in range(0, 6):
+		# 108 is aghs scepter's item id
+		if player.get(f"item_{i}", 0) == 108:
+			is_scepter_active = True
+	for buff in (player.get("permanent_buffs") or []):
+		# for buffs, 2 is scepter, 12 is shard: https://github.com/odota/dotaconstants/blob/master/json/permanent_buffs.json
+		if buff["permanent_buff"] == 2:
+			is_scepter_active = True
+		if buff["permanent_buff"] == 12:
+			is_shard_active = True
+
+	scepter_image = "/panorama/images/hud/reborn/aghsstatus_scepter_psd.png"
+	if is_scepter_active:
+		scepter_image = "/panorama/images/hud/reborn/aghsstatus_scepter_on_psd.png"
+	shard_image = "/panorama/images/hud/reborn/aghsstatus_shard_psd.png"
+	if is_shard_active:
+		shard_image = "/panorama/images/hud/reborn/aghsstatus_shard_on_psd.png"
+	scepter_image = await get_url_image(vpkurl + scepter_image)
+	shard_image = await get_url_image(vpkurl + shard_image)
+
+	image = Image.new("RGBA", (
+		max(scepter_image.size[0], shard_image.size[0]), 
+		scepter_image.size[1] + shard_image.size[1])
+	)
+
+	image = paste_image(image, scepter_image, 2, 0)
+	image = paste_image(image, shard_image, 0, scepter_image.size[1])
+	
+	return image
 
 async def get_item_images(player):
 	images = []
@@ -236,10 +299,10 @@ async def get_spell_images(spells):
 def get_lane(player):
 	lane_dict = { 1: "Bot", 3: "Top", None: "" }
 	lane_role_dict = { 1: "Safe", 2: "Mid", 3: "Off", 4: "Jungle", None: "" }
-	if 'is_roaming' in player and player['is_roaming']:
-		return "Roaming"
+	if player.get('is_roaming'):
+		return "Roam"
 	elif player.get('lane') in lane_dict:
-		return f"{lane_role_dict[player.get('lane_role')]}({lane_dict[player.get('lane')]})"
+		return f"{lane_role_dict[player.get('lane_role')]}"
 	else:
 		return lane_role_dict[player.get('lane_role')]
 
@@ -248,6 +311,7 @@ async def add_player_row(table, player, is_parsed, is_ability_draft, has_talents
 	row = [
 		ColorCell(width=5, color=("green" if player["isRadiant"] else "red")),
 		ImageCell(img=await get_hero_image(player["hero_id"]), height=48),
+		ImageCell(img=await get_level_image(player.get("level", 1))),
 		TextCell(player.get("personaname", "Anonymous")),
 		TextCell(player.get("kills")),
 		TextCell(player.get("deaths")),
@@ -256,9 +320,9 @@ async def add_player_row(table, player, is_parsed, is_ability_draft, has_talents
 	]
 	if is_parsed:
 		row.extend([
-			TextCell(player.get("actions_per_min")),
+			# TextCell(player.get("actions_per_min")),
 			TextCell(get_lane(player)),
-			TextCell(player.get("pings", "-"), horizontal_align="center")
+			ImageCell(img=await get_active_aghs_image(player), height=48)
 		])
 	if has_talents:
 		row.append(ImageCell(img=await get_talents_image(player.get("ability_upgrades_arr"), player["hero_id"]), height=48))
@@ -284,6 +348,7 @@ async def draw_match_table(match):
 		TextCell("", padding=0),
 		TextCell(""),
 		TextCell(""),
+		TextCell(""),
 		TextCell("K", horizontal_align="center"),
 		TextCell("D", horizontal_align="center"),
 		TextCell("A", horizontal_align="center"),
@@ -291,17 +356,18 @@ async def draw_match_table(match):
 	]
 	if is_parsed:
 		headers.extend([
-			TextCell("APM"),
+			# TextCell("APM"),
 			TextCell("Lane"),
-			TextCell("Pings")
+			TextCell("")
 		])
 	if has_talents:
-		headers.append(TextCell("T", horizontal_align="center"))
+		headers.append(TextCell(""))
 	headers.append(TextCell("Items"))
 	if is_ability_draft:
 		headers[3:3] = [
 			TextCell("Abilities")
 		]
+
 	table.add_row(headers)
 	for cell in table.rows[0]:
 		cell.background = discord_color1
