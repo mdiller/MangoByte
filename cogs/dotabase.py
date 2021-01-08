@@ -1172,9 +1172,9 @@ class Dotabase(MangoCog):
 			component_names = item.recipe.split("|")
 			found_components = session.query(Item).filter(Item.name.in_(component_names)).all()
 			for name in component_names:
-				for item in found_components:
-					if item.name == name:
-						components.append(item)
+				for component in found_components:
+					if component.name == name:
+						components.append(component)
 						break
 
 
