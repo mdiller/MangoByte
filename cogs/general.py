@@ -574,6 +574,7 @@ class General(MangoCog):
 		print(current_patch == "Gameplay Update")
 		print(str(current_patch) == "Gameplay Update")
 		await self.send_owner(f"patches update triggered: (new one is '{current_patch}', old one was '{old_patch}')")
+		botdata["dotapatch"] = current_patch
 
 		def count_class_in_id(element_id, classname):
 			element = soup.find(id=element_id)
@@ -627,7 +628,6 @@ class General(MangoCog):
 				else:
 					print(f"couldn't find user {userinfo.discord} when announcing dota patches")
 
-		botdata["dotapatch"] = current_patch
 		tasks = []
 		for messageable in messageables:
 			tasks.append(messageable.send(embed=embed))
