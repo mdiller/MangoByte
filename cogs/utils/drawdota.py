@@ -320,7 +320,7 @@ async def add_player_row(table, player, is_parsed, is_ability_draft, has_talents
 	]
 	if is_parsed:
 		row.extend([
-			# TextCell(player.get("actions_per_min")),
+			TextCell(player.get("actions_per_min")),
 			TextCell(get_lane(player)),
 			ImageCell(img=await get_active_aghs_image(player), height=48)
 		])
@@ -356,7 +356,7 @@ async def draw_match_table(match):
 	]
 	if is_parsed:
 		headers.extend([
-			# TextCell("APM"),
+			TextCell("APM"),
 			TextCell("Lane"),
 			TextCell("")
 		])
