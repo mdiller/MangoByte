@@ -556,12 +556,17 @@ class General(MangoCog):
 		try:
 			text = await httpgetter.get(url, return_type="text")
 		except HttpError as e:
+			print(f"patches update failed with http {e.code} error")
 			await self.send_owner(f"patches update failed the check with a http {e.code} error")
 			return # failed, so return
 		except Exception as e:
-			await self.send_owner(f"patches update failed the check w/ exception: {e}")
+			etype = str(type(e).__name__)
+			print(f"patches update failed the check w/ exception {etype}: {e}")
+			await self.send_owner(f"patches update failed the check w/ exception {etype}: {e}")
 			return # failed, so return
 		soup = BeautifulSoup(text, "html.parser")
+
+		print("patch parse starting")
 
 		current_patch = soup.find(name="title").contents[0]
 		old_patch = botdata["dotapatch"]
