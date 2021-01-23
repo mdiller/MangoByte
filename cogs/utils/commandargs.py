@@ -143,7 +143,7 @@ class DotaPlayer():
 			try:
 				player = await commands.MemberConverter().convert(ctx, str(player))
 			except commands.BadArgument:
-				raise CustomBadArgument(UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me a their steam id"))
+				raise CustomBadArgument(UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me their steam id"))
 
 		userinfo = botdata.userinfo(player.id)
 		if userinfo.steam is None:
