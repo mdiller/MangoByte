@@ -54,6 +54,11 @@
 		"reaction": "😱"
 	},
 	{
+		"regex": "thonk",
+		"word": true,
+		"reaction": "🤔"
+	},
+	{
 		"regex": "^[A-Z0-9 ]*$",
 		"chance": 0.2,
 		"reaction": "😱"

@@ -873,7 +873,7 @@ class DotaStats(MangoCog):
 
 	# the main internal logic for the playerstats and twenty commands
 	async def do_playerstats(self, ctx, matchfilter, do_downloaded=False):
-		matchfilter.add_projections([ "kills", "deaths", "assists", "party_size", "version", "hero_id", "lane_role", "is_roaming", "lobby_type", "start_time" ])
+		matchfilter.add_projections([ "kills", "deaths", "assists", "party_size", "version", "hero_id", "lane_role", "is_roaming", "lobby_type", "start_time", "duration" ])
 		steam32 = matchfilter.player.steam_id
 
 		# 
@@ -1012,7 +1012,7 @@ class DotaStats(MangoCog):
 					CoolStat(f"[Matches]({matches_url})", len(player_matches)),
 					CoolStat("Winrate", percent(lambda p: p.get('radiant_win') == (p.get('player_slot') < 128)), filter_key="win"),
 					CoolStat("KDA", f"{avg('kills')}/{avg('deaths')}/{avg('assists')}"),
-					CoolStat("Duration", format_duration_simple(avg('duration'))),
+					CoolStat("Duration", format_duration_simple(avg('duration') or 0)),
 					CoolStat("In a Party", percent(lambda p: p.get('party_size') > 1, needs_key='party_size', round_place="floor")),
 					CoolStat("Ranked", percent(lambda p: p['lobby_type'] == 7), filter_key="lobby_type")
 				]

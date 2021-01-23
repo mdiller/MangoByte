@@ -18,6 +18,7 @@ __Filter options:__
 
 - won/lost
 - ranked/unranked
+- turbo/ability draft/all draft
 - radiant/dire
 - significant/not-significant (*turbo matches, etc.*)
 - mid/safe/off/roaming (*lane*)
@@ -37,3 +38,4 @@ __Examples:__
 `?matches ranked won this week`
 `?lastmatch offlane on dire as shaker`
 `?matches @Player lost vs axe`
+`?firstmatch turbo`

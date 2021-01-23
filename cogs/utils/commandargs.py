@@ -37,6 +37,22 @@ def get_cache_hero_stats_patterns(dotabase):
 		hero_stats_patterns = patterns
 	return hero_stats_patterns
 
+game_mode_patterns = {}
+def get_cache_game_mode_patterns():
+	global game_mode_patterns
+	if not game_mode_patterns:
+		patterns = OrderedDict()
+		dota_strings = read_json(settings.resource("json/dota_game_strings.json"))
+		for key in dota_strings:
+			prefix = "game_mode_"
+			if prefix not in key:
+				continue
+			mode_id = int(key.replace(prefix, ""))
+			name = dota_strings[key]
+			pattern = name.lower()
+			patterns[pattern] = mode_id
+		game_mode_patterns = patterns
+	return game_mode_patterns
 
 def clean_input(t):
 	return re.sub(r'[^a-z1-9\s]', r'', str(t).lower())
@@ -272,8 +288,9 @@ class MatchFilter():
 			}),
 			QueryArg("significant", {
 				r"(significant|standard)": 1,
-				r"(not|non)(-| )?(significant|standard)": 0
+				r"(not|non|in|un)(-| )?(significant|standard)": 0
 			}),
+			QueryArg("game_mode", get_cache_game_mode_patterns()),
 			QueryArg("limit", {
 				r"(?:limit|count|show)? ?(\d{1,3})": lambda m: int(m.group(1))
 			}),
@@ -304,6 +321,8 @@ class MatchFilter():
 		playerarg = MatchFilter._get_arg(args, "_player")
 		if playerarg.player is None:
 			playerarg.set_player(await DotaPlayer.from_author(ctx))
+		if (MatchFilter._get_arg(args, "game_mode").has_value()): # custom thing to make sure to not hide unsignificant things
+			MatchFilter._get_arg(args, "significant").value = 0
 		if parser.text:
 			raise CustomBadArgument(UserError(f"I'm not sure what you mean by '{parser.text}'"))
 		return cls(args)
