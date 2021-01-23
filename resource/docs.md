@@ -20,6 +20,7 @@ __Filter options:__
 - ranked/unranked
 - turbo/ability draft/all draft
 - radiant/dire
+- solo/in a group
 - significant/not-significant (*turbo matches, etc.*)
 - mid/safe/off/roaming (*lane*)
 - 5 days/2 weeks/1 year
@@ -38,4 +39,4 @@ __Examples:__
 `?matches ranked won this week`
 `?lastmatch offlane on dire as shaker`
 `?matches @Player lost vs axe`
-`?firstmatch turbo`
+`?firstmatch turbo with a group`

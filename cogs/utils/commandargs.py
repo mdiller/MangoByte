@@ -294,6 +294,12 @@ class MatchFilter():
 			QueryArg("limit", {
 				r"(?:limit|count|show)? ?(\d{1,3})": lambda m: int(m.group(1))
 			}),
+			QueryArg("party_size", {
+				r"solo": 1
+			}),
+			QueryArg("_inparty", {
+				r"((in|with)? (a )?)?(party|group|friends|team)": True
+			}, PostFilter("party_size", lambda p: (p.get("party_size", 0) or 0) > 1)),
 			QueryArg("lane_role", {
 				r"safe( ?lane)?": 1,
 				r"mid(dle)?( ?lane)?": 2,
