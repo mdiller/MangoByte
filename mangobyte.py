@@ -105,10 +105,12 @@ async def on_ready():
 	await artifact_cog.load_card_sets()
 	bot.help_command.cog = bot.get_cog("General")
 
-	periodic_tasks = [
-		general_cog.check_dota_patch,
-		dota_cog.check_dota_blog
-	]
+	# TASKS DISABLED FOR NOW BECAUSE SHIT IS BREAKING
+	# periodic_tasks = [
+	# 	general_cog.check_dota_patch,
+	# 	dota_cog.check_dota_blog
+	# ]
+	periodic_tasks = []
 	if settings.topgg:
 		periodic_tasks.append(general_cog.update_topgg)
 	if settings.infodump_path:
