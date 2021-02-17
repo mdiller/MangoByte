@@ -108,6 +108,8 @@ class GttsLang(ConfigVarType):
 		value = value.lower()
 		for lang in gtts_langs:
 			if lang.lower() == value or gtts_langs[lang].lower() == value:
+				if "-" in lang:
+					raise InvalidInputError("Languages with '-' have unfortunately been deprecated")
 				return lang
 		raise InvalidInputError("See https://github.com/mdiller/MangoByte/blob/master/resource/json/gtts_languages.json for valid languages")
 
