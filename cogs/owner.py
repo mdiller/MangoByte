@@ -147,8 +147,9 @@ class Owner(MangoCog):
 		"""Gets info about a user or a server"""
 		if selector in ["user", "player", "member"]:
 			data = botdata.userinfo(identifier)
-			user = self.bot.get_user(identifier)
-			if user is None:
+			try:
+				user = await self.bot.fetch_user(identifier)
+			except:
 				raise UserError("Couldn't find that user")
 
 			embed = discord.Embed(description=(user.mention + "\n```json\n" + json.dumps(data.json_data, indent='\t') + "\n```"))
