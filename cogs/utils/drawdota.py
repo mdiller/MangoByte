@@ -306,18 +306,31 @@ def get_lane(player):
 	else:
 		return lane_role_dict[player.get('lane_role')]
 
+def get_benchmark(player):
+    benchmarks = player.get('benchmarks')
+    benchmark_keys = ['gold_per_min', 'xp_per_min', 'kills_per_min',
+                      'last_hits_per_min', 'hero_damage_per_min', 'hero_healing_per_min',
+                      'tower_damage', 'stuns_per_min', 'lhten']
+
+    # sum the benchmarks and average them
+    total = 0
+    for key in benchmark_keys:
+        total += benchmarks.get(key).get('pct')
+
+    return round((total / len(keys)) * 100)
 
 async def add_player_row(table, player, is_parsed, is_ability_draft, has_talents):
-	row = [
-		ColorCell(width=5, color=("green" if player["isRadiant"] else "red")),
-		ImageCell(img=await get_hero_image(player["hero_id"]), height=48),
-		ImageCell(img=await get_level_image(player.get("level", 1))),
-		TextCell(player.get("personaname", "Anonymous")),
-		TextCell(player.get("kills")),
-		TextCell(player.get("deaths")),
-		TextCell(player.get("assists")),
-		TextCell(player.get("gold_per_min"), color="yellow")
-	]
+    row = [
+        ColorCell(width=5, color=("green" if player["isRadiant"] else "red")),
+        ImageCell(img=await get_hero_image(player["hero_id"]), height=48),
+        ImageCell(img=await get_level_image(player.get("level", 1))),
+        TextCell(player.get("personaname", "Anonymous")),
+        TextCell(player.get("kills")),
+        TextCell(player.get("deaths")),
+        TextCell(player.get("assists")),
+        TextCell(f"{get_benchmark(player)}%"),
+        TextCell(player.get("gold_per_min"), color="yellow")
+    ]
 	if is_parsed:
 		row.extend([
 			TextCell(player.get("actions_per_min")),
@@ -352,6 +365,7 @@ async def draw_match_table(match):
 		TextCell("K", horizontal_align="center"),
 		TextCell("D", horizontal_align="center"),
 		TextCell("A", horizontal_align="center"),
+		TextCell("BM"), # BM for 'benchmark'
 		TextCell("GPM", color="yellow")
 	]
 	if is_parsed:
