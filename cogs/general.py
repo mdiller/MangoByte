@@ -253,7 +253,18 @@ class General(MangoCog):
 		"""A baked Italian dish
 
 		Contains wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce."""
-		await ctx.send(file=discord.File(settings.resource("images/lasagna.jpg")))
+		lasagna_images = [
+			"images/lasagna1.jpg",
+			"images/lasagna2.jpg",
+			"images/lasagna3.jpg",
+			"images/lasagna4.jpg",
+			"images/lasagna5.jpg",
+			"images/lasagna6.jpg",
+			"images/lasagna7.jpg",
+			"images/lasagna8.jpg",
+			"images/lasagna9.jpg",
+		]
+		await ctx.send(file=discord.File(settings.resource(random.choice(lasagna_images))))
 
 	@commands.command()
 	async def scramble(self, ctx, *, message : str):
