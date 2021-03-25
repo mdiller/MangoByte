@@ -1467,6 +1467,8 @@ class Dotabase(MangoCog):
 	@commands.command(aliases = ["rss"])
 	async def blog(self,ctx):
 		""" Pulls the newest blog post for Dota 2"""
+		await ctx.send("Sorry, Valve broke this for now.")
+		return # return cuz valve broke it
 		feed = await httpgetter.get(r'https://blog.dota2.com/feed', return_type="text")
 		blog = feedparser.parse(feed)
 		title = "Dota 2 Blog"
