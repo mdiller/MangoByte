@@ -19,8 +19,10 @@ def hsv_to_rgb(hsv):
 
 class Color():
 	def __init__(self, value):
+		if isinstance(value, Color):
+			value = value.hex
 		if isinstance(value, str):
-			if not re.match(r"#[0-9a-fA-F]{6}$", value):
+			if not re.match(r"#?[0-9a-fA-F]{6}$", value):
 				raise ValueError("Color given invalid hex color")
 			value = value.lstrip("#")
 			lv = len(value)

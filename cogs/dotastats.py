@@ -5,6 +5,7 @@ from cogs.utils import checks
 from cogs.utils.helpers import *
 from cogs.utils.commandargs import *
 from cogs.utils import drawdota
+from cogs.utils import drawgraph
 import asyncio
 import async_timeout
 import string
@@ -1427,17 +1428,42 @@ class DotaStats(MangoCog):
 		Shows all the ability upgrade orders for all heroes in the match"""
 		match = await get_match(match_id)
 
-		match = await get_match(match_id)
-
 		embed = discord.Embed()
 
 		embed.title = f"Match {match_id}"
-		embed.url = f"https://opendota.com/matches/{match_id}/playback"
+		embed.url = f"https://opendota.com/matches/{match_id}"
 
 		async with ctx.channel.typing():
 			image = discord.File(await drawdota.draw_match_ability_upgrades(match), "upgrades.png")
 			embed.set_image(url=f"attachment://{image.filename}")
 			await ctx.send(embed=embed, file=image)
+
+	@commands.command(aliases=["graph", "dotagraph"])
+	async def matchgraph(self, ctx, match_id : int):
+		"""Creates a graph for a dota match
+
+		I'll update this command to do more than just networth/xp later, i just wanted to get this out so its there
+		"""
+		match = await get_match(match_id)
+
+		if not is_parsed(match):
+			raise MatchNotParsedError(match["match_id"], "create a graph")
+
+		embed = discord.Embed()
+
+		embed.title = f"Match {match_id}"
+		embed.url = f"https://opendota.com/matches/{match_id}"
+		embed.set_footer(text=f"This is a rough draft, im planning on making this much better soon")
+
+		lines = [ match["radiant_gold_adv"], match["radiant_xp_adv"] ]
+		colors = [ "#FFFF00", "#ADD8E6" ]
+		labels = [ "Gold", "Experience" ]
+
+		async with ctx.channel.typing():
+			image = discord.File(drawgraph.drawgraph(lines, colors, labels), "graph.png")
+			embed.set_image(url=f"attachment://{image.filename}")
+			await ctx.send(embed=embed, file=image)
+
 
 
 	# @commands.command(aliases=["wrapped"])

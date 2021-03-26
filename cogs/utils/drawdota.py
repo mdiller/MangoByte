@@ -1007,7 +1007,7 @@ def draw_polygraph(values, labels):
 
 	image = Image.new('RGBA', size)
 	draw = ImageDraw.Draw(image)
-	draw.rectangle([0, 0, image.size[0], image.size[1]], fill="#23272A")
+	draw.rectangle([0, 0, image.size[0], image.size[1]], fill=discord_color2)
 
 	points = get_poly_points(point_count, polygon_radius, center)
 
