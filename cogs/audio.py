@@ -530,6 +530,8 @@ class Audio(MangoCog):
 						await loggingdb.insert_message(message, "smarttts")
 						await self.do_smarttts(message.clean_content, message.guild)
 				except UserError as e:
+					if not guildinfo.ttschannelwarn and ("I'm not in a voice channel on this server/guild" in e.message):
+						return # just dont warn em if theyve said to not warn
 					try:
 						await message.channel.send(e.message)
 					except discord.errors.Forbidden as e:

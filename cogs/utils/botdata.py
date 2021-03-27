@@ -232,6 +232,13 @@ class GuildInfo(BotDataItem):
 			"type": types.TextChannel,
 			"description": "The channel to which mangobyte will post blog notifications",
 			"example": "#dota"
+		},
+		{
+			"key": "ttschannelwarn",
+			"default": True,
+			"type": types.Boolean,
+			"description": "Disable this to prevent mangobyte from saying \"I'm not in a voice channel on this server/guild\" when you type in a tts channel and mangobyte isn't summoned",
+			"example": "disable"
 		}
 	]
 
