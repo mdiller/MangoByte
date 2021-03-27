@@ -27,7 +27,7 @@ def drawgraph(lines, colors, labels):
 	maxvalue = int(math.ceil(maxvalue / round_adjust) * round_adjust)
 
 	y_max = maxvalue
-	x_max = max(map(len, lines))
+	x_max = max(map(len, lines)) - 1
 
 	y_grid_line_count = 6
 	if has_negative_y:
@@ -101,7 +101,7 @@ def drawgraph(lines, colors, labels):
 	# draw legend
 	legend_text_adjustment = font.getsize(labels[0])[1] * -0.09
 	legend_x = 50 * downscale_amount
-	legend_y = 55 * downscale_amount
+	legend_y = 5 * downscale_amount
 	legend_padding = (5 * downscale_amount)
 	legend_spacing = max(map(lambda label: font.getsize(label)[1], labels)) + legend_padding
 	legend_text_pad = 15 * downscale_amount

@@ -254,6 +254,8 @@ class DotaStats(MangoCog):
 
 	def get_pretty_hero(self, player, use_icons=False):
 		dotabase = self.bot.get_cog("Dotabase")
+		if player["hero_id"] not in self.hero_info:
+			return "**Unknown**"
 		name = self.hero_info[player["hero_id"]]["name"]
 		if use_icons:
 			emoji = self.hero_info[player["hero_id"]]["emoji"]
@@ -1439,11 +1441,52 @@ class DotaStats(MangoCog):
 			await ctx.send(embed=embed, file=image)
 
 	@commands.command(aliases=["graph", "dotagraph"])
-	async def matchgraph(self, ctx, match_id : int):
+	async def matchgraph(self, ctx, *, options = ""):
 		"""Creates a graph for a dota match
 
-		I'll update this command to do more than just networth/xp later, i just wanted to get this out so its there
+		Give this match a match_id or it will try to use your last played game
+
+		different types of graphs:
+		teamdiff: creates a graph of the networth/xp differences between the teams
+		playergold: creates a graph of the networths of the players throughout the match
+		(ill probably add more in the futre but thats it for now)
 		"""
+		graphtypes = {
+			"teamdiff": {
+				"pattern": "(team)? ?(diff|networth)",
+				"name": "Team Gold/Experience Difference"
+			},
+			"playergold": {
+				"pattern": "(players? ?(gold)?)",
+				"name": "Player Gold"
+			}
+		}
+
+		graphtype = "teamdiff"
+
+		for key in graphtypes:
+			pattern = graphtypes[key]["pattern"]
+			if re.match(pattern, options):
+				options = re.sub(pattern, "", options)
+				graphtype = key
+				break
+
+		options = options.strip()
+
+		if options.isnumeric():
+			match_id = int(options)
+		elif options == "":
+			try:
+				player = await DotaPlayer.from_author(ctx)
+				steamid = player.steam_id
+			except CustomBadArgument:
+				steamid = None
+				raise SteamNotLinkedError()
+			matchfilter = await MatchFilter.init(None, ctx)
+			match_id = await get_lastmatch_id(matchfilter)
+		else:
+			raise UserError(f"I'm not sure what \"{options}\" means")
+
 		match = await get_match(match_id)
 
 		if not is_parsed(match):
@@ -1455,9 +1498,34 @@ class DotaStats(MangoCog):
 		embed.url = f"https://opendota.com/matches/{match_id}"
 		embed.set_footer(text=f"This is a rough draft, im planning on making this much better soon")
 
-		lines = [ match["radiant_gold_adv"], match["radiant_xp_adv"] ]
-		colors = [ "#FFFF00", "#ADD8E6" ]
-		labels = [ "Gold", "Experience" ]
+		embed.description = graphtypes[graphtype]["name"]
+
+		if graphtype == "teamdiff":
+			lines = [ match["radiant_gold_adv"], match["radiant_xp_adv"] ]
+			colors = [ "#FFFF00", "#ADD8E6" ]
+			labels = [ "Gold", "Experience" ]
+		elif graphtype == "playergold":
+			playercolors = {
+				"0": "#3375FF",
+				"1": "#66FFBF",
+				"2": "#BF00BF",
+				"3": "#F3F00B",
+				"4": "#FF6B00",
+				"128": "#FE86C2",
+				"129": "#A1B447",
+				"130": "#65D9F7",
+				"131": "#008321",
+				"132": "#A46900"
+			}
+			lines = []
+			colors = []
+			labels = []
+			for player in match["players"]:
+				colors.append(playercolors[str(player["player_slot"])] if str(player["player_slot"]) else "#FF0000")
+				lines.append(player["gold_t"])
+				labels.append(self.hero_info[player["hero_id"]]["name"] if player["hero_id"] in self.hero_info else "Unknown")
+		else:
+			raise UserError("oops, look like thats not implemented yet")
 
 		async with ctx.channel.typing():
 			image = discord.File(drawgraph.drawgraph(lines, colors, labels), "graph.png")
