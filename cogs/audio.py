@@ -122,7 +122,7 @@ class AudioPlayer:
 	async def queue_clip(self, clip, ctx):
 		if(self.voice is None):
 			print("tried to talk while not in voice channel")
-			raise UserError("not in voice channel m8")
+			raise AudioPlayerNotFoundError("not in voice channel m8")
 
 		self.clipqueue.put(clip)
 
@@ -529,9 +529,15 @@ class Audio(MangoCog):
 					else:
 						await loggingdb.insert_message(message, "smarttts")
 						await self.do_smarttts(message.clean_content, message.guild)
-				except UserError as e:
+				except AudioPlayerNotFoundError as e:
 					if not guildinfo.ttschannelwarn and ("I'm not in a voice channel on this server/guild" in e.message):
 						return # just dont warn em if theyve said to not warn
+					try:
+						await message.channel.send(e.message)
+					except discord.errors.Forbidden as e:
+						print("on_message usererror blocked because permissions")
+						pass
+				except UserError as e:
 					try:
 						await message.channel.send(e.message)
 					except discord.errors.Forbidden as e:
