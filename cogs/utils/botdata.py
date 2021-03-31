@@ -239,6 +239,21 @@ class GuildInfo(BotDataItem):
 			"type": types.Boolean,
 			"description": "Disable this to prevent mangobyte from saying \"I'm not in a voice channel on this server/guild\" when you type in a tts channel and mangobyte isn't summoned",
 			"example": "disable"
+		},
+		{
+			"key": "allowedbots",
+			"default": [],
+			"list": True,
+			"type": types.UserBot,
+			"description": "A list of bots that mangobyte will not ignore when processing commands or tts",
+			"example": "@Bot123"
+		},
+		{
+			"key": "allowwebhooks",
+			"default": False,
+			"type": types.Boolean,
+			"description": "Whether or not the bot should pay attention to webhooks when processing commands or tts",
+			"example": "enable"
 		}
 	]
 

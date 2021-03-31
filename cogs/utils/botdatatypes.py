@@ -5,7 +5,6 @@ from abc import abstractmethod
 from .helpers import *
 
 
-
 class InvalidInputError(UserError):
 	def __init__(self, message):
 		super().__init__(f"Invalid Input. {message}")
@@ -18,14 +17,47 @@ async def localize_embed(ctx, var, value, example_command):
 	if not issubclass(var["type"], ConfigVarType):
 		raise ValueError(f"Bad variable type for {example_command} variable {var['key']}")
 
-	embed.add_field(name="Value", value=await var["type"].localize(value, ctx))
+	if var.get("list"):
+		localized_value = ""
+		for v in value:
+			localized_value += await var["type"].localize(v, ctx) + "\n"
+		if localized_value == "":
+			localized_value = "None"
+	else:
+		localized_value = await var["type"].localize(value, ctx)
+
+	embed.add_field(name="Value", value=localized_value)
 	embed.add_field(name="Example", value=f"`{example_command} {var['key']} {var['example']}`")
 	return embed
 
 
-async def parse(ctx, var, value):
+async def parse(ctx, var, value, currentvalue):
 	if value in [ "default", "reset", "clear", "null" ]:
 		return var["default"]
+
+	if var.get("list"):
+		currentvalue = currentvalue.copy()
+		subcommands = [ "add", "remove" ]
+		if " " in value:
+			subcommand, value = value.split(" ", 1)
+		else:
+			subcommand = None
+
+		if subcommand == "add":
+			value = await var["type"].parse(value, ctx)
+			if value in currentvalue:
+				raise InvalidInputError("That's already been added!")
+			currentvalue.append(value)
+			return currentvalue
+		elif subcommand == "remove":
+			value = await var["type"].parse(value, ctx)
+			if value not in currentvalue:
+				raise InvalidInputError("That's not currently in there.")
+			currentvalue.remove(value)
+			return currentvalue
+		else:
+			raise InvalidInputError("Start with 'add' or 'remove'")
+
 
 	return await var["type"].parse(value, ctx)
 
@@ -95,6 +127,22 @@ class Role(ConfigVarType):
 			return role.id
 		except commands.BadArgument:
 			raise InvalidInputError("Try giving me a role reference like `@BotAdmin`")
+
+
+class UserBot(ConfigVarType):
+	@classmethod
+	async def _localize(cls, value, ctx):
+		return f"<@{value}>" if value else "None"
+
+	@classmethod
+	async def _parse(cls, value, ctx):
+		try:
+			user = await commands.UserConverter().convert(ctx, value)
+			if not user.bot: 
+				raise InvalidInputError("The user you give here has to be a bot")
+			return user.id
+		except commands.BadArgument:
+			raise InvalidInputError("Try giving me a bot reference like `@Bot123`")
 
 gtts_langs = read_json(settings.resource("json/gtts_languages.json"))
 

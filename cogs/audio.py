@@ -512,6 +512,13 @@ class Audio(MangoCog):
 			guildinfo = botdata.guildinfo(message.guild)
 			if guildinfo.is_banned(message.author):
 				return # banned users cant talk
+			if message.author.bot:
+				if message.webhook_id:
+					if not guildinfo.allowwebhooks:
+						return # if this is a webhook then ignore it because we're not allowing it
+				else:
+					if message.author.id not in guildinfo.allowedbots:
+						return # ignore bots unless theyre explicitly allowed
 			ttschannel = guildinfo.ttschannel
 			if ttschannel == message.channel.id:
 				if message.content.startswith("//") or message.content.startswith("#"):

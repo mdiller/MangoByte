@@ -230,13 +230,12 @@ class Admin(MangoCog):
 			vars_list = "\n".join(map(lambda v: f"`{v['key']}`", GuildInfo.variables))
 			await ctx.send(f"There is no config setting called '{name}'. Try one of these:\n{vars_list}")
 			return
-
 		
+		currentvalue = botdata.guildinfo(ctx.guild)[var["key"]]
 		if not value: # We are just getting a value
-			value = botdata.guildinfo(ctx.guild)[var["key"]]
-			await ctx.send(embed=await botdatatypes.localize_embed(ctx, var, value, f"{self.cmdpfx(ctx)}config"))
+			await ctx.send(embed=await botdatatypes.localize_embed(ctx, var, currentvalue, f"{self.cmdpfx(ctx)}config"))
 		else: # We are setting a value
-			value = await botdatatypes.parse(ctx, var, value)
+			value = await botdatatypes.parse(ctx, var, value, currentvalue)
 			botdata.guildinfo(ctx.guild)[var["key"]] = value
 			await ctx.message.add_reaction("✅")
 

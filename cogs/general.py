@@ -657,14 +657,23 @@ class General(MangoCog):
 
 	@commands.Cog.listener()
 	async def on_message(self, message):
-		if message.author.bot and settings.debug:
+		if message.author == self.bot.user:
+			return # ignore stuff from myself
+
+		if message.guild is None:
+			return # only keep going if we're in a guild
+		guildinfo = botdata.guildinfo(message.guild.id)
+
+		if message.author.bot and (message.author.id in guildinfo.allowedbots) or (message.webhook_id and guildinfo.allowwebhooks):
+			# execute this command from a bot because we're allowing it
 			ctx = await self.bot.get_context(message)
 			await self.bot.invoke(ctx)
-		if message.guild is not None and not botdata.guildinfo(message.guild.id).reactions:
-			return
 
-		if (message.author == self.bot.user) or message.content.startswith(self.cmdpfx(message.guild)):
-			return
+		if message.content.startswith(self.cmdpfx(message.guild)):
+			return # ignore stuff that starts with the command prefix
+
+		if not guildinfo.reactions:
+			return # only keep going for guilds with reactions enabled
 
 		random.seed(message.content)
 
