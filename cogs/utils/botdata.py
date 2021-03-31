@@ -246,7 +246,7 @@ class GuildInfo(BotDataItem):
 			"list": True,
 			"type": types.UserBot,
 			"description": "A list of bots that mangobyte will not ignore when processing commands or tts",
-			"example": "@Bot123"
+			"example": "add @Bot123"
 		},
 		{
 			"key": "allowwebhooks",
