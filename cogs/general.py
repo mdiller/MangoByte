@@ -96,12 +96,11 @@ class General(MangoCog):
 			await ctx.send(f"There is no userconfig setting called '{name}'. Try one of these:\n{vars_list}")
 			return
 
-		
+		currentvalue = botdata.userinfo(ctx.message.author)[var["key"]]
 		if not value: # We are just getting a value
-			value = botdata.userinfo(ctx.message.author)[var["key"]]
-			await ctx.send(embed=await botdatatypes.localize_embed(ctx, var, value, f"{self.cmdpfx(ctx)}userconfig"))
+			await ctx.send(embed=await botdatatypes.localize_embed(ctx, var, currentvalue, f"{self.cmdpfx(ctx)}userconfig"))
 		else: # We are setting a value
-			value = await botdatatypes.parse(ctx, var, value)
+			value = await botdatatypes.parse(ctx, var, value, currentvalue)
 			botdata.userinfo(ctx.message.author)[var["key"]] = value
 			await ctx.message.add_reaction("✅")
 

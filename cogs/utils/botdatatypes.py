@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 from abc import abstractmethod
 from .helpers import *
+import re
 
 
 class InvalidInputError(UserError):
@@ -235,6 +236,17 @@ class SteamId(ConfigVarType):
 		value = str(value)
 		if value.lower() in [ "none", "reset", "default" ]:
 			return None
+
+		patterns = [
+			r"<?https?://(?:www\.)?opendota\.com/players/(\d+)/?>?",
+			r"<?https?://(?:www\.)?dotabuff\.com/players/(\d+)/?>?",
+			r"<?https?://(?:www\.)?steamcommunity\.com/profiles/(\d+)/?>?"
+		]
+		for pattern in patterns:
+			match = re.match(pattern, value)
+			if match:
+				value = match.group(1)
+				break
 
 		if not value.isdigit():
 			raise InvalidInputError("You gotta give me a steam id (SteamId64 / Friend Id) here")
