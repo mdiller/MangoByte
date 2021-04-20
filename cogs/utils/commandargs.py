@@ -4,6 +4,7 @@ import discord
 from discord.ext import commands
 from .helpers import *
 from collections import OrderedDict
+import datetime
 
 
 hero_pattern_cache = {}
@@ -25,7 +26,6 @@ def get_item_pattern(dotabase):
 		pattern = f"\\b{dotabase.item_regex}\\b"
 		pattern = re.compile(pattern, re.IGNORECASE)
 		return pattern
-
 
 hero_stats_patterns = OrderedDict()
 def get_cache_hero_stats_patterns(dotabase):
@@ -201,31 +201,49 @@ class SimpleQueryArg(QueryArg):
 		self.value = value
 
 
+
+# a span of time to look in
 class TimeSpanArg(QueryArg):
-	def __init__(self):
+	def __init__(self, ctx):
 		super().__init__("date")
-		self.count = None
-		self.chunk = None
+		self.dotabase = ctx.bot.get_cog("Dotabase")
+		self.value = None
 
 	async def parse(self, text):
 		match = re.match(self.regex(), text)
-		self.count = int(match.group(2) or "1")
-		self.chunk = match.group(3)
-		self.value = self.days
 
-	@property
-	def days(self):
-		count = {
-			"today": 1,
-			"day": 1,
-			"week": 7,
-			"month": 30,
-			"year": 365
-		}[self.chunk]
-		return count * self.count
+		if match.group("kind"):
+			chunk_count = float(match.group("count") or "1")
+			if chunk_count == 0:
+				self.value = 0
+				return
+			chunk_kind = match.group("kind")
+			if chunk_kind == "patch":
+				patch = self.dotabase.lookup_nth_patch(round(chunk_count))
+				diff = datetime.datetime.now() - patch.timestamp
+				self.value = diff.days
+			else:
+				chunk_kind_value = {
+					"today": 1,
+					"day": 1,
+					"week": 7,
+					"month": 30,
+					"year": 365
+				}[chunk_kind]
+				print(f"using {chunk_count} of {chunk_kind}")
+				self.value = round(chunk_count * chunk_kind_value)
+		else:
+			patch_name = match.group("patch")
+			patch = self.dotabase.lookup_patch(patch_name)
+			diff = datetime.datetime.now() - patch.timestamp
+			self.value = diff.days
 
 	def regex(self):
-		return r"(?:in|over)? ?(?:the )?(this|last|past)? ?(\d+)? ?((?:to)?day|week|month|year)s?"
+		pattern = "(?:in|over|during)? ?"
+		pattern += f"((?:since )?(?:patch )?(?P<patch>{self.dotabase.patches_regex})|(?:the )?(?:this|last|past)? ?(?P<count>\\d+\\.?\\d*)? ?(?P<kind>(?:to)?day|week|month|year|patch)e?s?)"
+		pattern = f"{pattern}"
+		pattern = re.compile(pattern, re.IGNORECASE)
+		return pattern
 
 all_item_slots = [ "item_0", "item_1", "item_2", "item_3", "item_4", "item_5", "item_neutral" ]
 class ItemArg(QueryArg):
@@ -322,7 +340,7 @@ class MatchFilter():
 				r"(not|non|in|un)(-| )?(significant|standard)": 0
 			}),
 			QueryArg("game_mode", get_cache_game_mode_patterns()),
-			TimeSpanArg(),
+			TimeSpanArg(ctx),
 			QueryArg("limit", {
 				r"(?:limit|count|show)? ?(\d{1,3})": lambda m: int(m.group(1))
 			}),

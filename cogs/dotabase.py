@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 from sqlalchemy.sql.expression import func
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, desc
 from __main__ import settings, httpgetter
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
@@ -108,6 +108,7 @@ class Dotabase(MangoCog):
 		self.leveled_hero_stats = [] # by level (0 is null, and 1-30 are filled in)
 		self.hero_regex = ""
 		self.item_regex = ""
+		self.patches_regex = ""
 		self.build_helpers()
 		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
 		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos(), self.get_ability_infos(), self.vpkurl)
@@ -120,6 +121,11 @@ class Dotabase(MangoCog):
 			for alias in aliases:
 				self.hero_aliases[alias] = hero.id
 				self.hero_aliases[alias.replace(" ", "")] = hero.id
+
+		patches_patterns = []
+		for patch in session.query(Patch).filter(Patch.timestamp != None):
+			patches_patterns.append(patch.number)
+		self.patches_regex = f"(?:{'|'.join(patches_patterns)})"
 
 		item_patterns = []
 		for item in session.query(Item).filter(~Item.localized_name.contains("Recipe")):
@@ -310,6 +316,20 @@ class Dotabase(MangoCog):
 				if text in item:
 					return self.item_aliases[item]
 		return None
+
+	def lookup_patch(self, patch_name):
+		query = session.query(Patch).filter(Patch.number == patch_name)
+		if query.count() > 0:
+			return query.first()
+		else:
+			return None
+
+	def lookup_nth_patch(self, n):
+		query = session.query(Patch).order_by(desc(Patch.timestamp))
+		if n > query.count() or n < 0:
+			return None
+		else:
+			return query.all()[n - 1]
 
 	def get_hero_infos(self):
 		result = {}
@@ -1305,6 +1325,7 @@ class Dotabase(MangoCog):
 			"guardian_greaves"
 		]
 
+		random.seed(datetime.now())
 		all_items = read_json(settings.resource("json/courage_items.json"))
 		random.shuffle(all_items)
 		items = all_items[0:5]
