@@ -17,6 +17,16 @@ def get_cache_hero_pattern(dotabase, prefix):
 		hero_pattern_cache[prefix] = pattern
 		return pattern
 
+item_pattern = None
+def get_item_pattern(dotabase):
+	if item_pattern is not None:
+		return item_pattern
+	else:
+		pattern = f"\\b{dotabase.item_regex}\\b"
+		pattern = re.compile(pattern, re.IGNORECASE)
+		return pattern
+
+
 hero_stats_patterns = OrderedDict()
 def get_cache_hero_stats_patterns(dotabase):
 	global hero_stats_patterns
@@ -217,6 +227,27 @@ class TimeSpanArg(QueryArg):
 	def regex(self):
 		return r"(?:in|over)? ?(?:the )?(this|last|past)? ?(\d+)? ?((?:to)?day|week|month|year)s?"
 
+all_item_slots = [ "item_0", "item_1", "item_2", "item_3", "item_4", "item_5", "item_neutral" ]
+class ItemArg(QueryArg):
+	def __init__(self, ctx, name, **kwargs):
+		kwargs["post_filter"] = PostFilter(all_item_slots, self.post_filter_checker)
+		super().__init__(name, **kwargs)
+		self.dotabase = ctx.bot.get_cog("Dotabase")
+		self.item = None
+
+	def post_filter_checker(self, p):
+		for slot in all_item_slots:
+			if p[slot] == self.value:
+				return True
+		return False
+
+	def regex(self):
+		return get_item_pattern(self.dotabase)
+
+	async def parse(self, text):
+		self.item = self.dotabase.lookup_item(text)
+		self.value = self.item.id
+
 class HeroArg(QueryArg):
 	def __init__(self, ctx, name, prefix, **kwargs):
 		super().__init__(name, **kwargs)
@@ -291,6 +322,7 @@ class MatchFilter():
 				r"(not|non|in|un)(-| )?(significant|standard)": 0
 			}),
 			QueryArg("game_mode", get_cache_game_mode_patterns()),
+			TimeSpanArg(),
 			QueryArg("limit", {
 				r"(?:limit|count|show)? ?(\d{1,3})": lambda m: int(m.group(1))
 			}),
@@ -312,9 +344,9 @@ class MatchFilter():
 			QueryArg("_parsed", {
 				r"(is)?( |_)?parsed": True
 			}, PostFilter("version", lambda p: p.get("version") is not None)),
-			TimeSpanArg(),
 			PlayerArg(ctx, "included_account_id", "with "),
 			PlayerArg(ctx, "excluded_account_id", "without "),
+			ItemArg(ctx, "_item"),
 			HeroArg(ctx, "against_hero_id", "(?:against|vs) "),
 			HeroArg(ctx, "with_hero_id", "with "),
 			HeroArg(ctx, "hero_id", "(?:as )?"),
@@ -385,7 +417,10 @@ class MatchFilter():
 			projections = self.projections
 			for arg in self.args:
 				if arg.has_value() and arg.post_filter:
-					projections.append(arg.post_filter.key)
+					if isinstance(arg.post_filter.key, list):
+						projections.extend(arg.post_filter.key)
+					else:
+						projections.append(arg.post_filter.key)
 			if len(projections) > 0:
 				args.extend(map(lambda p: f"project={p}", projections))
 			if self.has_value("limit") and self.is_post_filter_required(): # if we need post_filter, limit afterwards

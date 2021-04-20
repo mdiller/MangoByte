@@ -107,6 +107,7 @@ class Dotabase(MangoCog):
 		self.item_aliases = {}
 		self.leveled_hero_stats = [] # by level (0 is null, and 1-30 are filled in)
 		self.hero_regex = ""
+		self.item_regex = ""
 		self.build_helpers()
 		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
 		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos(), self.get_ability_infos(), self.vpkurl)
@@ -120,13 +121,18 @@ class Dotabase(MangoCog):
 				self.hero_aliases[alias] = hero.id
 				self.hero_aliases[alias.replace(" ", "")] = hero.id
 
+		item_patterns = []
 		for item in session.query(Item).filter(~Item.localized_name.contains("Recipe")):
 			aliases = item.aliases.split("|")
 			aliases.append(clean_input(item.localized_name))
+			pattern = re.sub(r"[^a-z' ]", "", item.localized_name.lower())
+			pattern = pattern.replace("'", "'?")
+			item_patterns.append(pattern)
 			for alias in aliases:
 				if alias not in self.item_aliases:
 					self.item_aliases[alias] = item.id
 					self.item_aliases[alias.replace(" ", "")] = item.id
+		self.item_regex = f"(?:{'|'.join(item_patterns)})"
 
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name

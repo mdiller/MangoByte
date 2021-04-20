@@ -30,6 +30,7 @@ __Filter options:__
 - as `<hero>`
 - against/vs `<hero>`
 - with `<hero>`
+- `<item>` (*the exact name of the item in your inventory at end of game*)
 
 You can also specify to get matches for someone other than yourself by just @mentioning them or adding their steam id to the query
 
@@ -40,3 +41,4 @@ __Examples:__
 `?lastmatch offlane on dire as shaker`
 `?matches @Player lost vs axe`
 `?firstmatch turbo with a group`
+`?playerstats radiance puck`
