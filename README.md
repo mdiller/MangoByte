@@ -22,7 +22,7 @@ Want to try out mangobyte on your server? [Click Here](https://discordapp.com/oa
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 87 commands, separated into 7 categories
+Mangobyte currently has 88 commands, separated into 7 categories
 
 #### General
 Commands that don't really fit into the other categories
@@ -109,6 +109,7 @@ Commands for displaying information about Dota 2 players and matches
 ?lastmatchstory  | Tells the story of the player's last match                 
 ?match           | Gets a summary of the dota match with the given id         
 ?matches         | Gets a list of your matches                                
+?matchgraph      | Creates a graph for a dota match                           
 ?matchids        | Gets a list of matchids that match the given filter        
 ?matchstory      | Tells the story of the match                               
 ?opendota        | Queries the opendota api                                   

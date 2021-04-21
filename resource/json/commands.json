@@ -195,7 +195,7 @@
 			"name": "config",
 			"signature": "?config <name> [value]",
 			"short_help": "Configures the bot's settings for this server",
-			"help": "Configures the bot's settings for this server\n\nBelow are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `?config <settingname>`, and you can configure a setting by typing `?config <settingname> <value>`\n\n**Settings:**\n\u200b`prefix`\n\u200b`reactions`\n\u200b`ttschannel`\n\u200b`botadmin`\n\u200b`intros`\n\u200b`outros`\n\u200b`ttslang`\n\u200b`usenickname`\n\u200b`simpletts`\n\u200b`announcetts`\n\u200b`dotapatchchannel`\n\u200b`dotablogchannel`\n\n**Examples**\n\u200b`?config prefix !`\n\u200b`?config reactions enable`\n\u200b`?config ttschannel #tts`\n\u200b`?config botadmin @BotAdmin`\n\u200b`?config intros disable`\n\u200b`?config outros disable`\n\u200b`?config ttslang Russian`\n\u200b`?config usenickname enable`\n\u200b`?config simpletts enable`\n\u200b`?config announcetts enable`\n\u200b`?config dotapatchchannel #dota`\n\u200b`?config dotablogchannel #dota`",
+			"help": "Configures the bot's settings for this server\n\nBelow are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `?config <settingname>`, and you can configure a setting by typing `?config <settingname> <value>`\n\n**Settings:**\n\u200b`prefix`\n\u200b`reactions`\n\u200b`ttschannel`\n\u200b`botadmin`\n\u200b`intros`\n\u200b`outros`\n\u200b`ttslang`\n\u200b`usenickname`\n\u200b`simpletts`\n\u200b`announcetts`\n\u200b`dotapatchchannel`\n\u200b`dotablogchannel`\n\u200b`ttschannelwarn`\n\u200b`allowedbots`\n\u200b`allowwebhooks`\n\n**Examples**\n\u200b`?config prefix !`\n\u200b`?config reactions enable`\n\u200b`?config ttschannel #tts`\n\u200b`?config botadmin @BotAdmin`\n\u200b`?config intros disable`\n\u200b`?config outros disable`\n\u200b`?config ttslang Russian`\n\u200b`?config usenickname enable`\n\u200b`?config simpletts enable`\n\u200b`?config announcetts enable`\n\u200b`?config dotapatchchannel #dota`\n\u200b`?config dotablogchannel #dota`\n\u200b`?config ttschannelwarn disable`\n\u200b`?config allowedbots add @Bot123`\n\u200b`?config allowwebhooks enable`",
 			"aliases": [],
 			"cog": "Admin"
 		},
@@ -511,6 +511,17 @@
 			"cog": "DotaStats"
 		},
 		{
+			"name": "matchgraph",
+			"signature": "?matchgraph [options]",
+			"short_help": "Creates a graph for a dota match",
+			"help": "Creates a graph for a dota match\n\nGive this match a match_id or it will try to use your last played game\n\ndifferent types of graphs:\nteamdiff: creates a graph of the networth/xp differences between the teams\nplayergold: creates a graph of the networths of the players throughout the match\n(ill probably add more in the futre but thats it for now)",
+			"aliases": [
+				"graph",
+				"dotagraph"
+			],
+			"cog": "DotaStats"
+		},
+		{
 			"name": "matchids",
 			"signature": "?matchids [matchfilter]",
 			"short_help": "Gets a list of matchids that match the given filter",
@@ -551,15 +562,15 @@
 			"name": "opendota",
 			"signature": "?opendota <query>",
 			"short_help": "Queries the opendota api",
-			"help": "Queries the opendota api\n\nYou can use this to get a json file with details about players or matches etc.\nExamples:\n\u200b`?opendota /players/{steamid}`\n\u200b`?opendota /matches/{match_id}`\n\nFor more options and a better explanation, check out their [documentation](https://docs.opendota.com)",
+			"help": "Queries the opendota api\n\nYou can use this to get a json file with details about players or matches etc.\nExamples:\n\u200b`?opendota /players/{steamid}`\n\u200b`?opendota /matches/{match_id}`\n\nNote that this is just a little tool showcasing how you can use the api. You can also put urls like these in your browser to get the same results, which I'd recommend if you're doing this a lot.\n\nFor more options and a better explanation, check out their [documentation](https://docs.opendota.com)",
 			"aliases": [],
 			"cog": "DotaStats"
 		},
 		{
 			"name": "parse",
-			"signature": "?parse <match_id>",
+			"signature": "?parse [match_id]",
 			"short_help": "Requests that OpenDota parses a match",
-			"help": "Requests that OpenDota parses a match\n\nThe input should be the match_id of the match\n\nNote that matches from more than a couple days ago may not be able to be parsed because replay files are not saved that long",
+			"help": "Requests that OpenDota parses a match\n\nThe input should be the match_id of the match\n\nNote that matches from more than a couple days ago may not be able to be parsed because replay files are not saved that long\n\nNot giving a matchid will make mangobyte attempt to use your last played match",
 			"aliases": [
 				"analyze",
 				"studymatch"
