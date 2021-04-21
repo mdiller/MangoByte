@@ -326,10 +326,34 @@ class Dotabase(MangoCog):
 
 	def lookup_nth_patch(self, n):
 		query = session.query(Patch).order_by(desc(Patch.timestamp))
+		if n == 1: 
+			# assume user wants latest MAJOR patch
+			for patch in query:
+				if not re.search(r"[a-zA-Z]", patch.number):
+					return patch
 		if n > query.count() or n < 0:
 			return None
 		else:
 			return query.all()[n - 1]
+
+	def lookup_patch_bounds(self, patch_name):
+		query = session.query(Patch).order_by(Patch.timestamp)
+		start = None
+		end = None
+
+		for patch in query:
+			if start is None:
+				if patch.number == patch_name:
+					start = patch.timestamp
+			else:
+				if re.sub(r"[a-z]", "", patch.number) != patch_name:
+					end = patch.timestamp
+					break
+		if end is None:
+			end = datetime.datetime.now()
+
+		return (start, end)
+
 
 	def get_hero_infos(self):
 		result = {}

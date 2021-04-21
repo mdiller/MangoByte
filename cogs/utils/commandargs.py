@@ -5,6 +5,7 @@ from discord.ext import commands
 from .helpers import *
 from collections import OrderedDict
 import datetime
+import math
 
 
 hero_pattern_cache = {}
@@ -205,8 +206,12 @@ class SimpleQueryArg(QueryArg):
 # a span of time to look in
 class TimeSpanArg(QueryArg):
 	def __init__(self, ctx):
-		super().__init__("date")
+		kwargs = {}
+		kwargs["post_filter"] = PostFilter("start_time", self.post_filter_checker)
+		super().__init__("date", **kwargs)
 		self.dotabase = ctx.bot.get_cog("Dotabase")
+		self.min = None
+		self.max = None
 		self.value = None
 
 	async def parse(self, text):
@@ -220,8 +225,7 @@ class TimeSpanArg(QueryArg):
 			chunk_kind = match.group("kind")
 			if chunk_kind == "patch":
 				patch = self.dotabase.lookup_nth_patch(round(chunk_count))
-				diff = datetime.datetime.now() - patch.timestamp
-				self.value = diff.days
+				self.min = patch.timestamp
 			else:
 				chunk_kind_value = {
 					"today": 1,
@@ -231,16 +235,42 @@ class TimeSpanArg(QueryArg):
 					"year": 365
 				}[chunk_kind]
 				print(f"using {chunk_count} of {chunk_kind}")
-				self.value = round(chunk_count * chunk_kind_value)
+				numdays = chunk_count * chunk_kind_value
+				min_datetime = datetime.datetime.now() - timedelta(days=numdays)
+				self.min = min_datetime
 		else:
 			patch_name = match.group("patch")
-			patch = self.dotabase.lookup_patch(patch_name)
-			diff = datetime.datetime.now() - patch.timestamp
-			self.value = diff.days
+			bounds = self.dotabase.lookup_patch_bounds(patch_name)
+			self.min = bounds[0]
+			self.max = bounds[1]
+			if match.group("since") is not None:
+				self.max = None
+
+
+	def post_filter_checker(self, p):
+		match_time = datetime.datetime.fromtimestamp(p["start_time"])
+		if self.min:
+			if match_time < self.min:
+				return False
+		if self.max:
+			if match_time > self.max:
+				return False
+		return True
+
+	@property
+	def value(self):
+		if self.min is None:
+			return None
+		diff = datetime.datetime.now() - self.min
+		return math.ceil(diff.days + 2) # doesn't matter much because this is just for the request, not for the post filter
+
+	@value.setter
+	def value(self, v):
+		pass
 
 	def regex(self):
 		pattern = "(?:in|over|during)? ?"
-		pattern += f"((?:since )?(?:patch )?(?P<patch>{self.dotabase.patches_regex})|(?:the )?(?:this|last|past)? ?(?P<count>\\d+\\.?\\d*)? ?(?P<kind>(?:to)?day|week|month|year|patch)e?s?)"
+		pattern += f"((?P<since>since )?(?:patch )?(?P<patch>{self.dotabase.patches_regex})|(?:the )?(?:this|last|past)? ?(?P<count>\\d+\\.?\\d*)? ?(?P<kind>(?:to)?day|week|month|year|patch)e?s?)"
 		pattern = f"\\b{pattern}\\b"
 		pattern = re.compile(pattern, re.IGNORECASE)
 		return pattern
