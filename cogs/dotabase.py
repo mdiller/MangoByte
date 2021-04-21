@@ -128,16 +128,20 @@ class Dotabase(MangoCog):
 		self.patches_regex = f"(?:{'|'.join(patches_patterns)})"
 
 		item_patterns = []
+		secondary_item_patterns = []
 		for item in session.query(Item).filter(~Item.localized_name.contains("Recipe")):
 			aliases = item.aliases.split("|")
 			aliases.append(clean_input(item.localized_name))
-			pattern = re.sub(r"[^a-z' ]", "", item.localized_name.lower())
-			pattern = pattern.replace("'", "'?")
-			item_patterns.append(pattern)
 			for alias in aliases:
 				if alias not in self.item_aliases:
 					self.item_aliases[alias] = item.id
 					self.item_aliases[alias.replace(" ", "")] = item.id
+			pattern = re.sub(r"[^a-z' ]", "", item.localized_name.lower())
+			pattern = pattern.replace("'", "'?")
+			if " " in pattern:
+				secondary_item_patterns.extend(pattern.split(" "))
+			item_patterns.append(pattern)
+		item_patterns.extend(secondary_item_patterns)
 		self.item_regex = f"(?:{'|'.join(item_patterns)})"
 
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
