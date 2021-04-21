@@ -124,7 +124,7 @@ class Dotabase(MangoCog):
 
 		patches_patterns = []
 		for patch in session.query(Patch).filter(Patch.timestamp != None):
-			patches_patterns.append(patch.number)
+			patches_patterns.append(patch.number.replace(".", "\\."))
 		self.patches_regex = f"(?:{'|'.join(patches_patterns)})"
 
 		item_patterns = []

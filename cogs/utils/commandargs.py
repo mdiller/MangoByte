@@ -241,7 +241,7 @@ class TimeSpanArg(QueryArg):
 	def regex(self):
 		pattern = "(?:in|over|during)? ?"
 		pattern += f"((?:since )?(?:patch )?(?P<patch>{self.dotabase.patches_regex})|(?:the )?(?:this|last|past)? ?(?P<count>\\d+\\.?\\d*)? ?(?P<kind>(?:to)?day|week|month|year|patch)e?s?)"
-		pattern = f"{pattern}"
+		pattern = f"\\b{pattern}\\b"
 		pattern = re.compile(pattern, re.IGNORECASE)
 		return pattern
 
