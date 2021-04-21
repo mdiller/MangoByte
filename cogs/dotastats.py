@@ -1231,12 +1231,18 @@ class DotaStats(MangoCog):
 
 
 	@commands.command(aliases=["analyze", "studymatch"])
-	async def parse(self, ctx, match_id : int):
+	async def parse(self, ctx, match_id : int = None):
 		"""Requests that OpenDota parses a match
 
 		The input should be the match_id of the match
 
-		Note that matches from more than a couple days ago may not be able to be parsed because replay files are not saved that long"""
+		Note that matches from more than a couple days ago may not be able to be parsed because replay files are not saved that long
+
+		Not giving a matchid will make mangobyte attempt to use your last played match"""
+		if match_id is None:		
+			matchfilter = await MatchFilter.init(None, ctx)
+			match_id = await get_lastmatch_id(matchfilter)
+
 		await ctx.message.add_reaction("⏳")
 		await ctx.send("⏳ Requesting a parse...", delete_after=5)
 
