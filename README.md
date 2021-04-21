@@ -162,9 +162,9 @@ Commands to help manage mangobyte on your server/guild
 
 ![hero_brew](/resource/images/readme/hero_brew.png)
 
-`?ability black hole`
+`?ability dream coil`
 
-![ability_black_hole](/resource/images/readme/ability_black_hole.png)
+![ability_dream_coil](/resource/images/readme/ability_dream_coil.png)
 
 `?item silver edge`
 
@@ -174,13 +174,17 @@ Commands to help manage mangobyte on your server/guild
 
 <img width="600px" src="/resource/images/readme/herotable_lvl20_effhp.png"/>
 
-`?lastmatch`
+`?lastmatch as skywrath this patch`
 
 ![lastmatch](/resource/images/readme/lastmatch.png)
 
 `?playerstats`
 
 ![playerstats](/resource/images/readme/playerstats.png)
+
+`?twenty`
+
+![twenty](/resource/images/readme/twenty.png)
 
 `?laning`
 
