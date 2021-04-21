@@ -1206,15 +1206,17 @@ class Dotabase(MangoCog):
 
 		embed = discord.Embed()
 
+		embed.description = f"**Total Cost:** {self.get_emoji('gold')} {item.cost}"
+
 		if components:
 			value = ""
 			for i in components:
-				value += f"{i.localized_name}\n"
+				value += f"{i.localized_name} ({self.get_emoji('gold')} {i.cost})\n"
 			embed.add_field(name="Created from", value=value)
 		if products:
 			value = ""
 			for i in products:
-				value += f"{i.localized_name}\n"
+				value += f"{i.localized_name} ({self.get_emoji('gold')} {i.cost})\n"
 			embed.add_field(name="Can be made into", value=value)
 
 		title = item.localized_name
