@@ -236,7 +236,7 @@ class TimeSpanArg(QueryArg):
 				}[chunk_kind]
 				print(f"using {chunk_count} of {chunk_kind}")
 				numdays = chunk_count * chunk_kind_value
-				min_datetime = datetime.datetime.now() - timedelta(days=numdays)
+				min_datetime = datetime.datetime.now() - datetime.timedelta(days=numdays)
 				self.min = min_datetime
 		else:
 			patch_name = match.group("patch")

@@ -1355,7 +1355,7 @@ class Dotabase(MangoCog):
 			"guardian_greaves"
 		]
 
-		random.seed(datetime.now())
+		random.seed(datetime.datetime.now())
 		all_items = read_json(settings.resource("json/courage_items.json"))
 		random.shuffle(all_items)
 		items = all_items[0:5]
