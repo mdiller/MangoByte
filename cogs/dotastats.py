@@ -476,7 +476,7 @@ class DotaStats(MangoCog):
 
 		embed = discord.Embed(description=description, color=self.embed_color, timestamp=datetime.datetime.utcfromtimestamp(match['start_time']))
 
-		embed.set_author(name=player['personaname'] or "Anonymous", icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
+		embed.set_author(name=player.get('personaname') or "Anonymous", icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
 
 		damage_format = "KDA: **{kills}**/**{deaths}**/**{assists}**\n"
 		if player.get("hero_damage") is not None:
@@ -487,6 +487,8 @@ class DotaStats(MangoCog):
 			damage_format += "Tower Damage: {tower_damage:,}\n"
 		embed.add_field(name="Damage", value=damage_format.format(**player))
 
+		if not player.get("total_gold"):
+			player["total_gold"] = 0
 		embed.add_field(name="Economy", value=(
 			"Net Worth: {total_gold:,}\n"
 			"Last Hits: {last_hits:,}\n"

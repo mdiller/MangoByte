@@ -1346,31 +1346,32 @@ class Dotabase(MangoCog):
 		`{cmdpfx}courage`
 		`{cmdpfx}courage shadow fiend`"""
 
-		all_boots = [
-			"travel_boots",
-			"phase_boots",
-			"power_treads",
-			"arcane_boots",
-			"tranquil_boots",
-			"guardian_greaves"
-		]
+		all_boots = query_filter_list(session.query(Item), Item.recipe, "item_boots").all()
 
 		random.seed(datetime.datetime.now())
-		all_items = read_json(settings.resource("json/courage_items.json"))
-		random.shuffle(all_items)
-		items = all_items[0:5]
+		items = session.query(Item) \
+			.filter(~Item.localized_name.contains("Recipe")) \
+			.filter(~Item.localized_name.contains("Boots")) \
+			.filter(Item.recipe != None) \
+			.filter(Item.icon != None) \
+			.filter(Item.cost > 2000) \
+			.order_by(func.random()) \
+			.limit(5) \
+			.all()
 		items.append(random.choice(all_boots))
 		random.shuffle(items)
 
 		item_ids = []
 		for item in items:
-			item_ids.append(session.query(Item).filter(Item.name == f"item_{item}").first().id)
+			item_ids.append(item.id)
 		if hero:
 			hero_id = self.lookup_hero_id(hero)
 			if not hero_id:
 				raise UserError(f"Couldn't a hero called '{hero}'")
 		else:
 			hero_id = session.query(Hero).order_by(func.random()).first().id
+
+		print(item_ids)
 
 		image = discord.File(await drawdota.draw_courage(hero_id, item_ids), "courage.png")
 		await ctx.send(file=image)
@@ -1480,7 +1481,7 @@ class Dotabase(MangoCog):
 		`{cmdpfx}herotable attack speed level 21 descending`
 		"""
 		if table_args.stat is None:
-			raise UserError(f"Please select a stat to sort by. For a list of stats, see `{self.cmdpfx()}leveledstats`")
+			raise UserError(f"Please select a stat to sort by. For a list of stats, see `{self.cmdpfx(ctx)}leveledstats`")
 		if table_args.hero_level < 1 or table_args.hero_level > 30:
 			raise UserError("Please select a hero level between 1 and 30")
 		if table_args.hero_count < 2 or table_args.hero_count > 40:

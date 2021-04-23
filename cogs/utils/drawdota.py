@@ -832,7 +832,7 @@ async def draw_courage(hero_id, icon_ids):
 	hero_image = await get_hero_portrait(hero_id)
 	hero_image = hero_image.resize((97, 128), Image.ANTIALIAS)
 
-	table = Table()
+	table = Table(background="#000000")
 	table.add_row([
 		ColorCell(color="white", width=97, height=64),
 		ImageCell(img=await get_item_image(icon_ids[0])),
