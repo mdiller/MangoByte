@@ -12,11 +12,12 @@ reddit = praw.Reddit(client_id=settings["reddit"]["client_id"],
 data = []
 
 for submission in reddit.subreddit("showerthoughts").top(limit=1000):
-	data.append({
-	"title": submission.title,
-	"author": submission.author.name if submission.author else None,
-	"timestamp": int(submission.created_utc)
-		})
+	if not submission.over_18:
+		data.append({
+		"title": submission.title,
+		"author": submission.author.name if submission.author else None,
+		"timestamp": int(submission.created_utc)
+			})
 
 print(f"posts found: {len(data)}")
 

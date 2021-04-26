@@ -114,6 +114,20 @@ class UserInfo(BotDataItem):
 			"type": types.ShortText,
 			"description": "This is what is said after saying your name when announcing that you have left the channel. To set your tts to be nothing, try setting this to `nothing` or `none`\n\nNote that this clip can be no longer than 32 characters.",
 			"example": "dun gone left"
+		},
+		{
+			"key": "dmdotapatch",
+			"default": None,
+			"type": types.Boolean,
+			"description": "If enabled, mango will private message you when a new dota patch gets released",
+			"example": "enable"
+		},
+		{
+			"key": "dmdotablog",
+			"default": None,
+			"type": types.Boolean,
+			"description": "Enabling this will let mangobyte dm you about Dota blog updates",
+			"example": "enable"
 		}
 	]
 
@@ -121,10 +135,10 @@ class UserInfo(BotDataItem):
 		var = next((v for v in self.variables if v["key"] == key), None)
 		if var:
 			self[key] = var["default"]
-	
+
 class GuildInfo(BotDataItem):
 	def __init__(self, botdata, guildid):
-		defaults = OrderedDict([ 
+		defaults = OrderedDict([
 			("voicechannel", None),
 			("invalidcommands", False),
 			("banned_users", []),
@@ -160,7 +174,7 @@ class GuildInfo(BotDataItem):
 			"key": "botadmin",
 			"default": None,
 			"type": types.Role,
-			"description": "Users who have the specified role will be able to use commands from the admin section. To set this role, do `?config botadmin <role>` where <role> is an @mention of a role in the server",
+			"description": "Users who have the specified role will be able to use commands from the admin section. To set this role, do `?config botadmin <role>` where <role> is an @mention of a role in the server. You can also use @everyone to give everyone permissions to use admin commands.",
 			"example": "@BotAdmin"
 		},
 		{
@@ -179,7 +193,7 @@ class GuildInfo(BotDataItem):
 		},
 		{
 			"key": "ttslang",
-			"default": "en-au",
+			"default": "en",
 			"type": types.GttsLang,
 			"description": "Sets the language/voice that mangobyte will use to speak using the `?tts` command. To see a list of all of the possible languages, check out [this file](https://github.com/mdiller/MangoByte/blob/master/resource/json/gtts_languages.json) in the github repo",
 			"example": "Russian"
@@ -192,10 +206,53 @@ class GuildInfo(BotDataItem):
 			"example": "enable"
 		},
 		{
+			"key": "simpletts",
+			"default": False,
+			"type": types.Boolean,
+			"description": "If enabled, the configured ttschannel will use the `?tts` command, instead of the `?smarttts` command.",
+			"example": "enable"
+		},
+		{
 			"key": "announcetts",
 			"default": False,
 			"type": types.Boolean,
 			"description": "Sets whether mangobyte announce the user's name before playing the clip when they the user plays a clip by typing something in the tts channel",
+			"example": "enable"
+		},
+		{
+			"key": "dotapatchchannel",
+			"default": None,
+			"type": types.TextChannel,
+			"description": "The channel in which mangobyte will post to notify about new dota patches when it detects them",
+			"example": "#dota"
+		},
+		{
+			"key": "dotablogchannel",
+			"default": None,
+			"type": types.TextChannel,
+			"description": "The channel to which mangobyte will post blog notifications",
+			"example": "#dota"
+		},
+		{
+			"key": "ttschannelwarn",
+			"default": True,
+			"type": types.Boolean,
+			"description": "Disable this to prevent mangobyte from saying \"I'm not in a voice channel on this server/guild\" when you type in a tts channel and mangobyte isn't summoned",
+			"example": "disable"
+		},
+		{
+			"key": "allowedbots",
+			"default": [],
+			"list": True,
+			"type": types.UserBot,
+			"description": "A list of bots that mangobyte will not ignore when processing commands or tts",
+			"example": "add @Bot123"
+		},
+		{
+			"key": "allowwebhooks",
+			"default": False,
+			"type": types.Boolean,
+			"description": "Whether or not the bot should pay attention to webhooks when processing commands or tts",
 			"example": "enable"
 		}
 	]
@@ -227,7 +284,12 @@ class GuildInfo(BotDataItem):
 class BotData:
 	def __init__(self):
 		self.path = "botdata.json"
-		self.defaults = OrderedDict([ ("userinfo" , []), ("guildinfo" , []) ])
+		self.defaults = OrderedDict([
+			("userinfo" , []),
+			("guildinfo" , []),
+			("dotapatch", None),
+			("dotablog",None)
+		])
 		if not os.path.exists(self.path):
 			self.json_data = self.defaults
 			self.save_data()
@@ -240,6 +302,17 @@ class BotData:
 						print("Adding " + str(key) + " field to botdata.json")
 				write_json(self.path, current)
 			self.json_data = read_json(self.path)
+
+	def __getitem__(self, key):
+		if key not in self.defaults:
+			return self.__dict__[key]
+		return self.json_data.get(key, self.defaults.get(key))
+
+	def __setitem__(self, key, val):
+		if key not in self.defaults:
+			self.__dict__[key] = val
+		self.json_data[key] = val
+		self.save_data()
 
 	def save_data(self):
 		write_json(self.path, self.json_data)
@@ -269,9 +342,15 @@ class BotData:
 	def userinfo_list(self):
 		userinfos = []
 		for data in self.json_data['userinfo']:
-			userinfos.append(UserInfo(self, data["discord"]))
+			userinfos.append(UserInfo(self, data['discord']))
 		return userinfos
 
+	def count_users_with_key(self, key):
+		count = 0
+		for data in self.json_data['userinfo']:
+			if key in data and data[key]:
+				count += 1
+		return count
 
 	# gets the command prefix
 	def command_prefix(self, ctx):
@@ -287,4 +366,4 @@ class BotData:
 		else:
 			return "?"
 
-		
+

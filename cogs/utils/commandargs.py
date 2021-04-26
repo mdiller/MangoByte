@@ -3,6 +3,9 @@ import re
 import discord
 from discord.ext import commands
 from .helpers import *
+from collections import OrderedDict
+import datetime
+import math
 
 
 hero_pattern_cache = {}
@@ -16,6 +19,52 @@ def get_cache_hero_pattern(dotabase, prefix):
 		hero_pattern_cache[prefix] = pattern
 		return pattern
 
+item_pattern = None
+def get_item_pattern(dotabase):
+	if item_pattern is not None:
+		return item_pattern
+	else:
+		pattern = f"\\b{dotabase.item_regex}\\b"
+		pattern = re.compile(pattern, re.IGNORECASE)
+		return pattern
+
+hero_stats_patterns = OrderedDict()
+def get_cache_hero_stats_patterns(dotabase):
+	global hero_stats_patterns
+	if not hero_stats_patterns:
+		patterns = OrderedDict()
+		for category in dotabase.hero_stat_categories:
+			for stat in category["stats"]:
+				pattern = stat["name"]
+				if "regex" in stat:
+					pattern = stat["regex"]
+				patterns[stat["stat"]] = pattern
+		patterns = OrderedDict(reversed(list(patterns.items())))
+		all_pattern = list(map(lambda p: f"(?:{p})", patterns.values()))
+		all_pattern = f"(?:{'|'.join(all_pattern)})"
+		patterns["all"] = all_pattern
+		for stat in patterns:
+			patterns[stat] = re.compile(patterns[stat], re.IGNORECASE)
+		hero_stats_patterns = patterns
+	return hero_stats_patterns
+
+game_mode_patterns = {}
+def get_cache_game_mode_patterns():
+	global game_mode_patterns
+	if not game_mode_patterns:
+		patterns = OrderedDict()
+		dota_strings = read_json(settings.resource("json/dota_game_strings.json"))
+		for key in dota_strings:
+			prefix = "game_mode_"
+			if prefix not in key:
+				continue
+			mode_id = int(key.replace(prefix, ""))
+			name = dota_strings[key]
+			pattern = name.lower()
+			patterns[pattern] = mode_id
+		game_mode_patterns = patterns
+	return game_mode_patterns
+
 def clean_input(t):
 	return re.sub(r'[^a-z1-9\s]', r'', str(t).lower())
 
@@ -26,7 +75,7 @@ class SteamNotLinkedError(UserError):
 		if not self.is_author:
 			super().__init__(f"{user.name} doesn't have a steam account linked. They should try `{{cmdpfx}}userconfig steam` to see how to link their steam account.")
 		else:
-			super().__init__("Yer steam account isn't linked to yer discord account yet.\nTry doin `{cmdpfx}userconfig steam` to see how to link a steam account.")
+			super().__init__("Yer steam account isn't linked to yer discord account yet.\nTry doin' `{cmdpfx}userconfig steam` to see how to link a steam account.")
 
 class NoMatchHistoryError(UserError):
 	def __init__(self, steam_id):
@@ -52,7 +101,7 @@ class InputParser():
 	def take_regex(self, pattern, add_word_boundary=True):
 		if isinstance(pattern, str):
 			if add_word_boundary:
-				pattern = f"\\b(?:{pattern})\\b"
+				pattern = f"\\b(?:{pattern})(?:\\b|(?=( |$)))"
 			pattern = re.compile(pattern, re.IGNORECASE)
 		match = re.search(pattern, self.text)
 		if match is None:
@@ -60,6 +109,14 @@ class InputParser():
 		self.text = re.sub(pattern, "", self.text, count=1)
 		self.trim()
 		return match.group(0)
+
+
+opendota_html_errors = {
+	404: "Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com",
+	521: "[http error 521] Looks like the OpenDota API is down or somethin, so ya gotta wait a sec",
+	502: "[http error 502] Looks like there was an issue with the OpenDota API. Try again in a bit",
+	"default": "OpenDota said we did things wrong 😢. http status code: {}"
+}
 
 
 class DotaPlayer():
@@ -87,17 +144,17 @@ class DotaPlayer():
 			if player > 76561197960265728:
 				player -= 76561197960265728
 			# Don't have to rate limit here because this will be first query ran
-			player_info = await httpgetter.get(f"https://api.opendota.com/api/players/{player}", cache=False)
+			player_info = await httpgetter.get(f"https://api.opendota.com/api/players/{player}", cache=False, errors=opendota_html_errors)
 
 			if player_info.get("profile") is None:
 				raise CustomBadArgument(NoMatchHistoryError(player))
 			return cls(player, f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{player})", is_author)
 
-		if not isinstance(player, discord.User):
+		if not isinstance(player, discord.abc.User):
 			try:
 				player = await commands.MemberConverter().convert(ctx, str(player))
 			except commands.BadArgument:
-				raise CustomBadArgument(UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me a their steam id"))
+				raise CustomBadArgument(UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me their steam id"))
 
 		userinfo = botdata.userinfo(player.id)
 		if userinfo.steam is None:
@@ -111,13 +168,17 @@ class QueryArg():
 	def __init__(self, name, args_dict=None, post_filter=None):
 		self.name = name
 		self.args_dict = args_dict or {}
+		self.post_filter = post_filter
 		self.value = None
-		self.post_filter = None
 
-	def parse(self, text):
+	async def parse(self, text):
 		for key in self.args_dict:
-			if re.match(key, text):
-				self.value = self.args_dict[key]
+			match = re.match(key, text)
+			if match:
+				value = self.args_dict[key]
+				if callable(value):
+					value = value(match)
+				self.value = value
 
 	def has_value(self):
 		return self.value is not None
@@ -129,9 +190,10 @@ class QueryArg():
 		return f"{self.name}={self.value}"
 
 	def check_post_filter(self, p):
-		if (not self.has_value()) or (self.post_filter is None):
-			return True
-		return self.post_filter(p)
+		if self.has_value():
+			if self.post_filter is not None:
+				return self.post_filter.func(p)
+		return True
 
 # added manually
 class SimpleQueryArg(QueryArg):
@@ -140,35 +202,103 @@ class SimpleQueryArg(QueryArg):
 		self.value = value
 
 
-class TimeSpanArg(QueryArg):
-	def __init__(self):
-		super().__init__("date")
-		self.count = None
-		self.chunk = None
 
-	def parse(self, text):
+# a span of time to look in
+class TimeSpanArg(QueryArg):
+	def __init__(self, ctx):
+		kwargs = {}
+		kwargs["post_filter"] = PostFilter("start_time", self.post_filter_checker)
+		super().__init__("date", **kwargs)
+		self.dotabase = ctx.bot.get_cog("Dotabase")
+		self.min = None
+		self.max = None
+		self.value = None
+
+	async def parse(self, text):
 		match = re.match(self.regex(), text)
-		self.count = int(match.group(2) or "1")
-		self.chunk = match.group(3)
-		self.value = self.days
+
+		if match.group("kind"):
+			chunk_count = float(match.group("count") or "1")
+			if chunk_count == 0:
+				self.value = 0
+				return
+			chunk_kind = match.group("kind")
+			if chunk_kind == "patch":
+				patch = self.dotabase.lookup_nth_patch(round(chunk_count))
+				self.min = patch.timestamp
+			else:
+				chunk_kind_value = {
+					"today": 1,
+					"day": 1,
+					"week": 7,
+					"month": 30,
+					"year": 365
+				}[chunk_kind]
+				print(f"using {chunk_count} of {chunk_kind}")
+				numdays = chunk_count * chunk_kind_value
+				min_datetime = datetime.datetime.now() - datetime.timedelta(days=numdays)
+				self.min = min_datetime
+		else:
+			patch_name = match.group("patch")
+			bounds = self.dotabase.lookup_patch_bounds(patch_name)
+			self.min = bounds[0]
+			self.max = bounds[1]
+			if match.group("since") is not None:
+				self.max = None
+
+
+	def post_filter_checker(self, p):
+		match_time = datetime.datetime.fromtimestamp(p["start_time"])
+		if self.min:
+			if match_time < self.min:
+				return False
+		if self.max:
+			if match_time > self.max:
+				return False
+		return True
 
 	@property
-	def days(self):
-		count = {
-			"today": 1,
-			"day": 1,
-			"week": 7,
-			"month": 30,
-			"year": 365
-		}[self.chunk]
-		return count * self.count
+	def value(self):
+		if self.min is None:
+			return None
+		diff = datetime.datetime.now() - self.min
+		return math.ceil(diff.days + 2) # doesn't matter much because this is just for the request, not for the post filter
+
+	@value.setter
+	def value(self, v):
+		pass
 
 	def regex(self):
-		return r"(?:in|over)? ?(?:the )?(this|last|past)? ?(\d+)? ((?:to)?day|week|month|year)s?"
+		pattern = "(?:in|over|during)? ?"
+		pattern += f"((?P<since>since )?(?:patch )?(?P<patch>{self.dotabase.patches_regex})|(?:the )?(?:this|last|past)? ?(?P<count>\\d+\\.?\\d*)? ?(?P<kind>(?:to)?day|week|month|year|patch)e?s?)"
+		pattern = f"\\b{pattern}\\b"
+		pattern = re.compile(pattern, re.IGNORECASE)
+		return pattern
+
+all_item_slots = [ "item_0", "item_1", "item_2", "item_3", "item_4", "item_5", "item_neutral" ]
+class ItemArg(QueryArg):
+	def __init__(self, ctx, name, **kwargs):
+		kwargs["post_filter"] = PostFilter(all_item_slots, self.post_filter_checker)
+		super().__init__(name, **kwargs)
+		self.dotabase = ctx.bot.get_cog("Dotabase")
+		self.item = None
+
+	def post_filter_checker(self, p):
+		for slot in all_item_slots:
+			if p[slot] == self.value:
+				return True
+		return False
+
+	def regex(self):
+		return get_item_pattern(self.dotabase)
+
+	async def parse(self, text):
+		self.item = self.dotabase.lookup_item(text)
+		self.value = self.item.id
 
 class HeroArg(QueryArg):
-	def __init__(self, ctx, name, prefix):
-		super().__init__(name)
+	def __init__(self, ctx, name, prefix, **kwargs):
+		super().__init__(name, **kwargs)
 		self.prefix = prefix
 		self.dotabase = ctx.bot.get_cog("Dotabase")
 		self.hero = None
@@ -176,15 +306,48 @@ class HeroArg(QueryArg):
 	def regex(self):
 		return get_cache_hero_pattern(self.dotabase, self.prefix)
 
-	def parse(self, text):
-		text = re.sub(self.prefix, "", text)
+	async def parse(self, text):
+		text = re.sub(self.prefix, "", text, flags=re.IGNORECASE)
 		self.hero = self.dotabase.lookup_hero(text)
 		self.value = self.hero.id
 
+class PlayerArg(QueryArg):
+	def __init__(self, ctx, name, prefix, **kwargs):
+		super().__init__(name, **kwargs)
+		self.ctx = ctx
+		self.prefix = prefix
+		self.player = None
+
+	def regex(self):
+		pattern = "(<@[!&]?[0-9]+>|\d{5,19})"
+		if self.prefix == "":
+			return re.compile(pattern)
+		return f"{self.prefix}{pattern}"
+
+	def set_player(self, player):
+		self.player = player
+		self.value = player.steam_id
+
+	async def parse(self, text):
+		text = re.sub(self.prefix, "", text, flags=re.IGNORECASE)
+		self.set_player(await DotaPlayer.convert(self.ctx, text))
+
+# a filter to be applied to the match after retrieval
+class PostFilter():
+	def __init__(self, key, func):
+		self.key = key
+		self.func = func
 
 class MatchFilter():
 	def __init__(self, args=None):
 		self.args = args or []
+		self.projections = []
+
+	@classmethod
+	async def init(cls, matchfilter, ctx):
+		if matchfilter is None:
+			matchfilter = await MatchFilter.convert(ctx, "")
+		return matchfilter
 
 	@classmethod
 	async def convert(cls, ctx, argument):
@@ -192,7 +355,7 @@ class MatchFilter():
 		args = [
 			QueryArg("win", {
 				r"wins?|won|victory": 1,
-				r"loss|lost|losses|defeat": 0
+				r"loss|lose|lost|losses|defeat": 0
 			}),
 			QueryArg("is_radiant", {
 				r"(as|on)? ?radiant": 1,
@@ -204,26 +367,48 @@ class MatchFilter():
 			}),
 			QueryArg("significant", {
 				r"(significant|standard)": 1,
-				r"(not|non)(-| )?(significant|standard)": 0
+				r"(not|non|in|un)(-| )?(significant|standard)": 0
 			}),
+			QueryArg("game_mode", get_cache_game_mode_patterns()),
+			TimeSpanArg(ctx),
+			QueryArg("limit", {
+				r"(?:limit|count|show)? ?(\d{1,3})": lambda m: int(m.group(1))
+			}),
+			QueryArg("party_size", {
+				r"solo": 1
+			}),
+			QueryArg("_inparty", {
+				r"((in|with)? (a )?)?(party|group|friends|team)": True
+			}, PostFilter("party_size", lambda p: (p.get("party_size", 0) or 0) > 1)),
 			QueryArg("lane_role", {
 				r"safe( ?lane)?": 1,
 				r"mid(dle)?( ?lane)?": 2,
 				r"(off|hard)( ?lane)?": 3,
 				r"jungl(e|ing)": 4
-			}, lambda p: not p.get("is_roaming")),
-			QueryArg(None, {
+			}, PostFilter("is_roaming", lambda p: p.get("is_roaming") == False)),
+			QueryArg("_roaming", {
 				r"roam(ing)?|gank(ing)?": True
-			}, lambda p: p.get("is_roaming")),
-			TimeSpanArg(),
+			}, PostFilter("is_roaming", lambda p: p.get("is_roaming") == True)),
+			QueryArg("_parsed", {
+				r"(is)?( |_)?parsed": True
+			}, PostFilter("version", lambda p: p.get("version") is not None)),
+			PlayerArg(ctx, "included_account_id", "with "),
+			PlayerArg(ctx, "excluded_account_id", "without "),
+			ItemArg(ctx, "_item"),
 			HeroArg(ctx, "against_hero_id", "(?:against|vs) "),
 			HeroArg(ctx, "with_hero_id", "with "),
-			HeroArg(ctx, "hero_id", "(?:as )?")
+			HeroArg(ctx, "hero_id", "(?:as )?"),
+			PlayerArg(ctx, "_player", "")
 		]
 		for arg in args:
 			value = parser.take_regex(arg.regex())
 			if value:
-				arg.parse(value)
+				await arg.parse(value)
+		playerarg = MatchFilter._get_arg(args, "_player")
+		if playerarg.player is None:
+			playerarg.set_player(await DotaPlayer.from_author(ctx))
+		if (MatchFilter._get_arg(args, "game_mode").has_value()): # custom thing to make sure to not hide unsignificant things
+			MatchFilter._get_arg(args, "significant").value = 0
 		if parser.text:
 			raise CustomBadArgument(UserError(f"I'm not sure what you mean by '{parser.text}'"))
 		return cls(args)
@@ -238,17 +423,29 @@ class MatchFilter():
 				return arg.hero
 		return None
 
+	@property
+	def player(self):
+		for arg in self.args:
+			if arg.name == "_player":
+				return arg.player
+		return None
+
 	def has_value(self, name):
 		for arg in self.args:
 			if arg.name == name:
 				return arg.has_value()
 		return False
 
-	def get_arg(self, name):
-		for arg in self.args:
+	@classmethod
+	def _get_arg(cls, args, name):
+		for arg in args:
 			if arg.name == name:
-				return arg.value
+				return arg
 		return None
+
+	def get_arg(self, name):
+		arg = MatchFilter._get_arg(self.args, name)
+		return None if arg is None else arg.value
 
 	def set_arg(self, name, value, overwrite=True):
 		if (not self.has_value(name)) or overwrite:
@@ -258,9 +455,93 @@ class MatchFilter():
 					return
 			self.args.append(SimpleQueryArg(name, value))
 
-	def to_query_args(self):
-		return "&".join(map(lambda a: a.to_query_arg(), filter(lambda a: a.has_value(), self.args)))
+	def add_projections(self, projections):
+		self.projections.extend(projections)
 
-	def post_filter(self, p):
-		return all(a.post_filter_check() for a in self.args)
+	def to_query_args(self, for_web_url=False):
+		args = filter(lambda a: a.has_value() and a.name and not a.name.startswith("_"), self.args)
+		args = list(map(lambda a: a.to_query_arg(), args))
+		if not for_web_url:
+			projections = self.projections
+			for arg in self.args:
+				if arg.has_value() and arg.post_filter:
+					if isinstance(arg.post_filter.key, list):
+						projections.extend(arg.post_filter.key)
+					else:
+						projections.append(arg.post_filter.key)
+			if len(projections) > 0:
+				args.extend(map(lambda p: f"project={p}", projections))
+			if self.has_value("limit") and self.is_post_filter_required(): # if we need post_filter, limit afterwards
+				args.remove(MatchFilter._get_arg(self.args, "limit").to_query_arg())
+		return "&".join(args)
 
+	# whether or not this query will only return parsed games
+	def is_only_parsed(self):
+		parsed_args_list = [ "lane", "lane_role", "_roaming", "_version" ]
+		return any(self.has_value(key) for key in parsed_args_list)
+
+	def post_filter(self, matches):
+		if self.is_post_filter_required():
+			matches = list(filter(lambda m: all(a.check_post_filter(m) for a in self.args), matches))
+			if self.has_value("limit") and len(matches) > self.get_arg("limit"):
+				matches = matches[0:self.get_arg("limit")]
+		return matches
+
+	def is_post_filter_required(self):
+		for arg in self.args:
+			if arg.has_value() and arg.post_filter is not None:
+				return True
+		return False
+
+	def to_query_url(self):
+		args = self.to_query_args()
+		return f"/players/{self.player.steam_id}/matches?{args}"
+
+
+class HeroStatArg(QueryArg):
+	def __init__(self, ctx, name):
+		super().__init__(name)
+		dotabase = ctx.bot.get_cog("Dotabase")
+		self.patterns = get_cache_hero_stats_patterns(dotabase)
+
+	def regex(self):
+		return self.patterns["all"]
+
+	async def parse(self, text):
+		for stat, pattern in self.patterns.items():
+			if stat != "all" and re.match(pattern, text):
+				self.value = stat
+				return self.value
+
+
+class HeroStatsTableArgs():
+	def __init__(self, kwargs):
+		self.stat = kwargs.get("stat")
+		self.hero_level = kwargs.get("hero_level", 1)
+		self.hero_count = kwargs.get("hero_count", 20)
+		self.reverse = kwargs.get("reverse", False)
+
+	@classmethod
+	async def convert(cls, ctx, argument):
+		parser = InputParser(argument)
+		args = [
+			QueryArg("hero_count", {
+				r"(?:hero ?)?(?:limit|count|show) (\d+)": lambda m: int(m.group(1))
+			}),
+			QueryArg("hero_level", {
+				r"(?:lvl|level)? ?(\d\d?)": lambda m: int(m.group(1))
+			}),
+			QueryArg("reverse", {
+				r"rev(erse)?|desc(ending)?|least-?(most)?": True
+			}),
+			HeroStatArg(ctx, "stat")
+		]
+		kwargs = {}
+		for arg in args:
+			value = parser.take_regex(arg.regex())
+			if value:
+				await arg.parse(value)
+				kwargs[arg.name] = arg.value
+		if parser.text:
+			raise CustomBadArgument(UserError(f"I'm not sure what you mean by '{parser.text}'"))
+		return cls(kwargs)

@@ -23,15 +23,28 @@ import datetime
 from cogs.utils.helpcommand import MangoHelpCommand
 from cogs.utils.clip import *
 from cogs.utils.commandargs import *
+import json
+import sys
+import inspect
 
-logging.basicConfig(level=logging.INFO)
+startupTimer = SimpleTimer()
 
+if not os.path.exists("logs"):
+    os.makedirs("logs")
+# DISCORDPY LOGGING IS NOT NEEDED AT THE MOMENT, SO ILL DISABLE THIS LOGGING FOR NOW
+# print("setting up logger!")
+# timestamp = datetime.datetime.now().strftime("%Y-%m-%d__%I.%M%p")
+# logger = logging.getLogger("discord")
+# logger.setLevel(logging.INFO)
+# handler = logging.FileHandler(filename=f"logs/discord_{timestamp}.log", encoding="utf-8", mode="w")
+# handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s", "%Y-%m-%d %I:%M:%S%p"))
+# logger.addHandler(handler)
 
 description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 				For more information about me, try `{cmdpfx}info`"""
 permissions = 314432
 
-bot = commands.Bot(command_prefix=botdata.command_prefix_botmessage, help_command=MangoHelpCommand(), description=description)
+bot = commands.AutoShardedBot(command_prefix=botdata.command_prefix_botmessage, help_command=MangoHelpCommand(), description=description, shard_count=settings.shard_count)
 
 thinker = Thinker(bot)
 invite_link = f"https://discordapp.com/oauth2/authorize?permissions={permissions}&scope=bot&client_id=213476188037971968"
@@ -46,75 +59,99 @@ deprecated_commands = {
 	"setintro": "userconfig intro",
 	"setoutro": "userconfig outro",
 	"setsteam": "userconfig steam",
-	"register": "userconfig steam"
+	"register": "userconfig steam",
+	"friendstats": "playerstats with @Player"
 }
 
 on_ready_has_run = False
 
+@bot.event
+async def on_shard_ready(shard_id):
+	appinfo = await bot.application_info()
+	if not settings.debug:
+		await appinfo.owner.send(f"shard {shard_id} ({len(bot.shards)} total) called its on_shard_ready ({len(bot.guilds)} guilds)")
 
 @bot.event
 async def on_ready():
+	appinfo = await bot.application_info()
+
+	if not settings.debug:
+		await appinfo.owner.send(f"on_ready() started")
+
 	global on_ready_has_run
+	is_first_time = True
 	if on_ready_has_run:
-		appinfo = await bot.application_info()
-		await appinfo.owner.send("bot tried to run on_ready again")
-		return
+		is_first_time = False
+		print("on_ready called again, waiting 10 seconds before processing")
+		await asyncio.sleep(10)
 	on_ready_has_run = True
-	print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
-	print('Connecting to voice channels if specified in botdata.json ...')
-	start_time = datetime.datetime.now()
+
+	onReadyTimer = SimpleTimer()
+
+	if is_first_time:
+		print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
+		print('Connecting to voice channels if specified in botdata.json ...')
 
 	game = discord.Activity(
-		name="DOTA 3 [?help]", 
+		name="DOTA 3 [?help]",
 		type=discord.ActivityType.playing,
 		start=datetime.datetime.utcnow())
 	await bot.change_presence(status=discord.Status.online, activity=game)
+
+	general_cog = bot.get_cog("General")
 	audio_cog = bot.get_cog("Audio")
+	dota_cog = bot.get_cog("Dotabase")
 	artifact_cog = bot.get_cog("Artifact")
 	await artifact_cog.load_card_sets()
 	bot.help_command.cog = bot.get_cog("General")
 
-	# stuff to help track/log the connection of voice channels
-	connected_count = 0
-	not_found_count = 0
-	timeout_count = 0
-	error_count = 0
+	# TASKS DISABLED FOR NOW BECAUSE SHIT IS BREAKING
+	# periodic_tasks = [
+	# 	general_cog.check_dota_patch,
+	# 	dota_cog.check_dota_blog
+	# ]
+	periodic_tasks = []
+	if settings.topgg:
+		periodic_tasks.append(general_cog.update_topgg)
+	if settings.infodump_path:
+		periodic_tasks.append(general_cog.do_infodump)
+	# start topgg update service thing
+	for task in periodic_tasks:
+		if (not task.is_running()):
+			task.start()
 
-	channel_tasks = []
-	for guildinfo in botdata.guildinfo_list():
-		if guildinfo.voicechannel is not None:
-			channel_tasks.append(initial_channel_connect(audio_cog, guildinfo))
+	if is_first_time: # temporarliy disabling this for re-inits
+		# the re-connecting of voice channels
+		channel_tasks = []
+		for guildinfo in botdata.guildinfo_list():
+			if guildinfo.voicechannel is not None:
+				channel_tasks.append(initial_channel_connect_wrapper(audio_cog, guildinfo))
+		channel_connector = AsyncBundler(channel_tasks)
+		await channel_connector.wait()
 
-	connection_results = await asyncio.gather(*channel_tasks)
-	for code in connection_results:
-		if code == 0:
-			connected_count += 1
-		if code == 1:
-			not_found_count += 1
-		if code == 2:
-			timeout_count += 1
-		if code == 3:
-			error_count += 1
+	if is_first_time:
+		print("\nupdating guilds")
+		await loggingdb.update_guilds(bot.guilds)
 
-	print("\nupdating guilds")
-	await loggingdb.update_guilds(bot.guilds)
-	
-	print("\ninitialization finished\n")
+	finished_text = "initialization finished"
+	if not is_first_time:
+		finished_text = "re-" + finished_text
+	print(f"\n{finished_text}\n")
 
 	message = "__**Initialization complete:**__"
-	if connected_count > 0:
-		message += f"\n{connected_count} voice channels connected"
-	if not_found_count > 0:
-		message += f"\n{not_found_count} voice channels not found"
-	if timeout_count > 0:
-		message += f"\n{timeout_count} voice channels timed out"
-	if error_count > 0:
-		message += f"\n{error_count} voice channels encountered a weird usererror"
-	total_time = (datetime.datetime.now() - start_time).total_seconds()
-	message += f"\n\ntook {total_time:.2f} seconds"
-	appinfo = await bot.application_info()
+	if not is_first_time:
+		message = "__**Re-Initialization complete (shard prolly got poked):**__"
+
+	if is_first_time: # temporarliy disabling this for re-inits
+		message += "\n" + channel_connector.status_as_string("voice channels connected")
+
+	message += f"\n\non_ready took {onReadyTimer}"
+	if is_first_time:
+		message += f"\nFull startup took {startupTimer}"
+
 	if not settings.debug:
 		await appinfo.owner.send(message)
+
 
 async def get_cmd_signature(ctx):
 	bot.help_command.context = ctx
@@ -127,36 +164,53 @@ async def invalid_command_reporting(ctx):
 	else:
 		return botdata.guildinfo(ctx.message.guild.id).invalidcommands
 
+async def initial_channel_connect_wrapper(audio_cog, guildinfo):
+	channel_id = guildinfo.voicechannel
+	server_id = guildinfo.id
+	print(f"connecting voice to: {channel_id}")
+	await initial_channel_connect(audio_cog, guildinfo)
+	print(f"connected: {channel_id}")
+
 
 # returns 0 on successful connect, 1 on not found, and 2 on timeout, 3 on error
 async def initial_channel_connect(audio_cog, guildinfo):
+	global on_ready_has_run
+	channel_id = guildinfo.voicechannel
+	status = "connected"
 	try:
-		print(f"connecting voice to: {guildinfo.voicechannel}")
-		await audio_cog.connect_voice(guildinfo.voicechannel)
-		print(f"connected: {guildinfo.voicechannel}")
-		return 0
+		connect_task = audio_cog.connect_voice(guildinfo.voicechannel)
+		await asyncio.wait_for(connect_task, timeout=200)
+		return "connected"
 	except UserError as e:
 		if e.message == "channel not found":
 			guildinfo.voicechannel = None
-			print("channel not found!")
-			return 1
+			raise
 		else:
-			print(f"weird usererror in on_ready for '{channel}':{e.message}")
-			return 3
+			print(f"weird usererror on connection to channel '{channel_id}': {e.message}")
+			raise
 	except asyncio.TimeoutError:
 		guildinfo.voicechannel = None
-		print("timeout error when connecting to channel")
-		return 2
+		raise
+	except Exception as e:
+		print(f"exception thrown on connection to channel ({channel_id}): {str(e)}")
+		guildinfo.voicechannel = None
+		trace = traceback.format_exc().replace("\"", "'").split("\n")
+		trace = [x for x in trace if x] # removes empty lines
+		trace_string = "\n".join(trace) + "\n"
+		print(trace_string)
+		raise
 
 
 @bot.event
 async def on_command_error(ctx, error):
-	if ctx.message in thinker.messages:
+	if ctx.message.id in thinker.messages:
 		await thinker.stop_thinking(ctx.message)
 
 	cmdpfx = botdata.command_prefix(ctx)
 
-	await loggingdb.command_finished(ctx, "errored", type(error).__name__)
+	if not (isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError)):
+		await loggingdb.command_finished(ctx, "errored", type(error).__name__)
+
 	try:
 		if isinstance(error, commands.CommandNotFound):
 			cmd = ctx.message.content[1:].split(" ")[0]
@@ -171,7 +225,7 @@ async def on_command_error(ctx, error):
 				new_message.content = cmdpfx + cmd.lower() + ctx.message.content[len(cmd) + 1:]
 				await bot.process_commands(new_message)
 			elif await invalid_command_reporting(ctx):
-				await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `{cmdpfx}help` fer a list of things that ARE commands.") 
+				await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `{cmdpfx}help` fer a list of things that ARE commands.")
 		elif isinstance(error, commands.CheckFailure):
 			emoji_dict = read_json(settings.resource("json/emoji.json"))
 			if botdata.guildinfo(ctx).is_disabled(ctx.command):
@@ -180,7 +234,9 @@ async def on_command_error(ctx, error):
 				await ctx.message.add_reaction(bot.get_emoji(emoji_dict["unauthorized"]))
 			return # The user does not have permissions
 		elif isinstance(error, commands.MissingRequiredArgument):
-			await bot.help_command.command_callback(ctx, command=ctx.command.name)
+			help_command = bot.help_command.copy()
+			help_command.context = ctx
+			await help_command.command_callback(ctx, command=ctx.command.name)
 		elif isinstance(error, CustomBadArgument):
 			await error.user_error.send_self(ctx, botdata)
 		elif isinstance(error, commands.BadArgument):
@@ -194,12 +250,17 @@ async def on_command_error(ctx, error):
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.HTTPException):
 			await ctx.send("Looks like there was a problem with discord just then. Try again in a bit.")
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
-			await loggingdb.command_finished(ctx, "user_errored", error.original.message)
 			await error.original.send_self(ctx, botdata)
+			await loggingdb.command_finished(ctx, "user_errored", error.original.message)
+		elif isinstance(error, commands.ConversionError) and isinstance(error.original, UserError):
+			await error.original.send_self(ctx, botdata)
+			await loggingdb.command_finished(ctx, "user_errored", error.original.message)
 		else:
 			await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
 			trace_string = await report_error(ctx.message, error, skip_lines=4)
 			if settings.debug:
+				if len(trace_string) > 1950:
+					trace_string = "TRACETOOBIG:" + trace_string[len(trace_string) - 1950:]
 				await ctx.send(f"```{trace_string}```")
 	except discord.errors.Forbidden:
 		try:
@@ -217,7 +278,7 @@ async def print_missing_perms(ctx, error):
 	perms_strings = read_json(settings.resource("json/permissions.json"))
 	perms = []
 	for i in range(0, 32):
-		if ((permissions >> i) & 1) and not my_perms._bit(i):
+		if ((permissions >> i) & 1) and not ((permissions >> i) & 1):
 			words = perms_strings["0x{:08x}".format(1 << i)].split("_")
 			for i in range(0, len(words)):
 				words[i] = f"**{words[i][0] + words[i][1:].lower()}**"
@@ -241,13 +302,69 @@ async def report_error(message, error, skip_lines=2):
 		if skip_lines > 0 and len(trace) >= (2 + skip_lines):
 			del trace[1:(skip_lines + 1)]
 		trace = [x for x in trace if x] # removes empty lines
-	
+
 	trace_string = "\n".join(trace)
 
 	await loggingdb.insert_error(message, error, trace_string)
 
 	print(f"\nError on: {message.clean_content}\n{trace_string}\n")
 	return trace_string
+
+def update_commandinfo():
+	commands_file = "resource/json/commands.json"
+	data = {
+		"cogs": [],
+		"commands": []
+	}
+	commands = sorted(bot.commands, key=lambda c: c.name)
+	for cmd in commands:
+		if cmd.cog and cmd.cog.name == "Owner":
+			continue
+		data["commands"].append({
+			"name": cmd.name,
+			"signature": bot.help_command.get_command_signature(cmd),
+			"short_help": cmd.short_doc,
+			"help": bot.help_command.fill_template(cmd.help),
+			"aliases": cmd.aliases,
+			"cog": cmd.cog.name if cmd.cog else "General"
+		})
+	for cog in bot.cogs:
+		if cog == "Owner":
+			continue
+		data["cogs"].append({
+			"name": cog,
+			"short_help": bot.help_command.cog_short_doc(bot.cogs[cog]),
+			"help":  inspect.getdoc(bot.cogs[cog])
+		})
+
+	with open(commands_file, "w+") as f:
+		f.write(json.dumps(data, indent="\t"))
+
+	max_command_len = max(map(lambda c: len(c["name"]), data["commands"]))
+	max_short_help_len = max(map(lambda c: len(c["short_help"]), data["commands"]))
+
+	docs = ""
+	docs += f"Mangobyte currently has {len(data['commands'])} commands, separated into {len(data['cogs'])} categories\n"
+	for cog in data["cogs"]:
+		docs += f"\n#### {cog['name']}\n"
+		docs += f"{cog['short_help']}\n"
+		docs += "\n```\n"
+		for cmd in data["commands"]:
+			if cmd["cog"] == cog["name"]:
+				docs += f"?{cmd['name']: <{max_command_len + 1}} | {cmd['short_help']: <{max_short_help_len + 1}}\n"
+		docs += "```\n"
+
+	readme_file = "README.md"
+	readme_replacement_start = "<!-- COMMANDS_START -->\n"
+	readme_replacement_end = "\n<!-- COMMANDS_END -->"
+	with open(readme_file, "r") as f:
+		text = f.read()
+	text = re.sub(f"({readme_replacement_start}).*({readme_replacement_end})", f"\\1{docs}\\2", text, flags=re.S)
+	with open(readme_file, "w+") as f:
+		f.write(text)
+
+	print("done!")
+
 
 from cogs.general import General
 from cogs.audio import Audio
@@ -267,6 +384,11 @@ if __name__ == '__main__':
 	bot.add_cog(Artifact(bot))
 	bot.add_cog(Admin(bot))
 	bot.add_cog(Owner(bot))
-	bot.run(settings.token)
+
+	if len(sys.argv) > 1 and sys.argv[1] == "commands":
+		update_commandinfo()
+	else:
+		print(f"Starting mango at {datetime.datetime.today().strftime('%d-%b-%Y %I:%M %p')}")
+		bot.run(settings.token)
 
 

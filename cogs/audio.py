@@ -38,6 +38,7 @@ class AudioPlayer:
 	"""The guild-specific objects used for mangobyte's audio output"""
 	def __init__(self, bot, guild):
 		self.bot = bot
+		self.guild_id = guild.id
 		self.guild = guild
 		self.player = None
 		self.clipqueue = queue.Queue()
@@ -45,7 +46,7 @@ class AudioPlayer:
 
 	@property
 	def voice(self):
-		return next((voice for voice in self.bot.voice_clients if voice.guild == self.guild), None)
+		return self.guild.voice_client
 
 	@property
 	def voice_channel(self):
@@ -54,15 +55,31 @@ class AudioPlayer:
 		else:
 			return self.voice.channel
 
+	async def update_guild(self):
+		self.guild = await self.bot.fetch_guild(self.guild.id)
+
 	# connects to a voice channel
 	async def connect(self, channel):
 		if not isinstance(channel, discord.VoiceChannel):
 			channel = self.bot.get_channel(channel)
 
-		if self.voice is None:
+		voice = self.voice
+
+		if voice is None:
+			print(f"attempting connect to: {channel.id}")
 			await channel.connect()
+			print(f"finished connect to: {channel.id}")
+		elif voice.channel and voice.channel.id == channel.id:
+			print(f"doin' a disconnect and reconnect for: {channel.id}")
+			await voice.disconnect(force=True)
+			await asyncio.sleep(2)
+			await channel.connect()
+			print(f"finished reconnect for: {channel.id}")
+			# print(f"leaving this because we're supposedly already connected? ({channel.id})")
 		else:
-			await self.voice.move_to(channel)
+			print(f"attempting move to: {channel.id}")
+			await voice.move_to(channel)
+			print(f"finished move to: {channel.id}")
 
 	def done_talking(self, error):
 		if error:
@@ -86,7 +103,14 @@ class AudioPlayer:
 	async def play_next_clip(self):
 		clip = self.next_clip()
 
-		self.voice.play(discord.FFmpegPCMAudio(clip.audiopath), after=self.done_talking)
+		try:
+			self.voice.play(discord.FFmpegPCMAudio(clip.audiopath), after=self.done_talking)
+		except discord.errors.ClientException as e:
+			if str(e) == "Not connected to voice.":
+				raise UserError("Error playing clip. Try doing `?resummon`.")
+			else:
+				raise
+
 		self.voice.source = discord.PCMVolumeTransformer(self.voice.source)
 		self.voice.source.volume = clip.volume
 		print("playing: " + clip.audiopath)
@@ -98,7 +122,7 @@ class AudioPlayer:
 	async def queue_clip(self, clip, ctx):
 		if(self.voice is None):
 			print("tried to talk while not in voice channel")
-			raise UserError("not in voice channel m8")
+			raise AudioPlayerNotFoundError("not in voice channel m8")
 
 		self.clipqueue.put(clip)
 
@@ -198,6 +222,7 @@ class Audio(MangoCog):
 
 		audioplayer = await self.audioplayer(channel, error_on_none=False)
 		if audioplayer is not None:
+			await audioplayer.update_guild()
 			await audioplayer.connect(channel)
 		else:
 			audioplayer = AudioPlayer(self.bot, channel.guild)
@@ -205,15 +230,18 @@ class Audio(MangoCog):
 			self.audioplayers.append(audioplayer)
 
 	async def disconnect(self, guild):
-		audioplayer = await self.audioplayer(guild, False)
-		if audioplayer is not None:
-			if audioplayer.voice is not None:
-				await audioplayer.voice.disconnect()
-			self.audioplayers.remove(audioplayer)
-		elif guild.me and guild.me.voice:
+		if guild.me and guild.me.voice:
 			voice = next((voice for voice in self.bot.voice_clients if voice.guild == guild), None)
 			if voice:
-				await voice.disconnect()
+				print("calling disconnect!")
+				await voice.disconnect(force=True)
+			else:
+				print("can't find voice to disconnect!\nvoices available:")
+				for v in self.bot.voice_clients:
+					print(v.vcid)
+		audioplayer = await self.audioplayer(guild, False)
+		if audioplayer is not None:
+			self.audioplayers.remove(audioplayer)
 
 
 	@commands.command()
@@ -484,11 +512,17 @@ class Audio(MangoCog):
 			guildinfo = botdata.guildinfo(message.guild)
 			if guildinfo.is_banned(message.author):
 				return # banned users cant talk
+			if message.author.bot:
+				if message.webhook_id:
+					if not guildinfo.allowwebhooks:
+						return # if this is a webhook then ignore it because we're not allowing it
+				else:
+					if message.author.id not in guildinfo.allowedbots:
+						return # ignore bots unless theyre explicitly allowed
 			ttschannel = guildinfo.ttschannel
 			if ttschannel == message.channel.id:
 				if message.content.startswith("//") or message.content.startswith("#"):
 					return # commented out stuff should be ignored
-				await loggingdb.insert_message(message, "smarttts")
 				try:
 					if guildinfo.announcetts:
 						name = message.author.name
@@ -496,11 +530,32 @@ class Audio(MangoCog):
 							name = message.author.nick
 						name = await self.fix_name(name)
 						await self.do_tts(f"{name} says", message.guild)
-					await self.do_smarttts(message.clean_content, message.guild)
+					if guildinfo.simpletts:
+						await loggingdb.insert_message(message, "tts")
+						await self.do_tts(message.clean_content, message.guild)
+					else:
+						await loggingdb.insert_message(message, "smarttts")
+						await self.do_smarttts(message.clean_content, message.guild)
+				except AudioPlayerNotFoundError as e:
+					if not guildinfo.ttschannelwarn:
+						return # just dont warn em if theyve said to not warn
+					try:
+						await message.channel.send(e.message)
+					except discord.errors.Forbidden as e:
+						print("on_message usererror blocked because permissions")
+						pass
 				except UserError as e:
-					await message.channel.send(e.message)
+					try:
+						await message.channel.send(e.message)
+					except discord.errors.Forbidden as e:
+						print("on_message usererror blocked because permissions")
+						pass
 				except Exception as e:
-					await message.channel.send("Uh-oh, sumthin dun gone wrong 😱")
+					try:
+						await message.channel.send("Uh-oh, sumthin dun gone wrong 😱")
+					except discord.errors.Forbidden as e:
+						print("on_message usererror blocked because permissions")
+						pass
 					await report_error(message, TtsChannelError(e))
 
 
@@ -526,78 +581,88 @@ class Audio(MangoCog):
 	#function called when this event occurs
 	@commands.Cog.listener()
 	async def on_voice_state_update(self, member, before, after):
-		if member.bot and member.id != self.bot.user.id:
-			return # ignore bots except for mahself
-		if before and after and before.channel == after.channel:
-			return # if the member didnt change channels, dont worry about it
-		if before and before.channel and botdata.guildinfo(before.channel.guild).outros:
-			beforeplayer = await self.audioplayer(before.channel, error_on_none=False)
-			if beforeplayer is not None and beforeplayer.voice is not None and beforeplayer.voice.channel.id == before.channel.id:
-				ctx = before.channel.guild
-				guildinfo = botdata.guildinfo(before.channel.guild)
-				userinfo = botdata.userinfo(member.id)
+		channel_id = "not sure yet"
+		try:
+			if member.bot and member.id != self.bot.user.id:
+				return # ignore bots except for mahself
+			if before and after and before.channel == after.channel:
+				return # if the member didnt change channels, dont worry about it
+			if before and before.channel and botdata.guildinfo(before.channel.guild).outros:
+				beforeplayer = await self.audioplayer(before.channel, error_on_none=False)
+				if beforeplayer is not None and beforeplayer.voice is not None and beforeplayer.voice.channel.id == before.channel.id:
+					ctx = before.channel.guild
+					guildinfo = botdata.guildinfo(before.channel.guild)
+					userinfo = botdata.userinfo(member.id)
+					channel_id = before.channel.id
 
-				try:
-					outroclip = userinfo.outro
-					if outroclip:
-						outroclip = await self.get_clip(userinfo.outro, ctx)
-						if outroclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
-							userinfo.set_default(ctx, "outro")
-							outroclip = userinfo.outro
-				except:
-					userinfo.set_default(ctx, "outro")
-					outroclip = userinfo.outro
+					if member.id == self.bot.user.id:
+						return # dont play outros for self, thatd be a bug
 
-				outrotts = userinfo.outrotts
-				name = member.name
-				if guildinfo.usenickname and member.nick:
-					name = member.nick
+					try:
+						outroclip = userinfo.outro
+						if outroclip:
+							outroclip = await self.get_clip(userinfo.outro, ctx)
+							if outroclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
+								userinfo.set_default(ctx, "outro")
+								outroclip = userinfo.outro
+					except:
+						userinfo.set_default(ctx, "outro")
+						outroclip = userinfo.outro
+
+					outrotts = userinfo.outrotts
+					name = member.name
+					if guildinfo.usenickname and member.nick:
+						name = member.nick
 
 
-				text = (await self.fix_name(name)) + " " + outrotts
-				print(text)
+					text = (await self.fix_name(name)) + " " + outrotts
+					print(text)
 
-				await asyncio.sleep(0.5)
-				if not outroclip is None:				
-					await self.play_clip(outroclip, before.channel)
-				await self.play_clip("tts:" + text, before.channel)
-		if after and after.channel and botdata.guildinfo(after.channel.guild).intros:
-			afterplayer = await self.audioplayer(after.channel, error_on_none=False)
-			if afterplayer is not None and afterplayer.voice is not None and afterplayer.voice.channel.id == after.channel.id:
-				ctx = after.channel.guild
-				guildinfo = botdata.guildinfo(after.channel.guild)
-				if member.id == self.bot.user.id:
-					guildinfo.voicechannel = after.channel.id
+					await asyncio.sleep(0.5)
+					if not outroclip is None:				
+						await self.play_clip(outroclip, before.channel)
+					await self.play_clip("tts:" + text, before.channel)
+			if after and after.channel and botdata.guildinfo(after.channel.guild).intros:
+				afterplayer = await self.audioplayer(after.channel, error_on_none=False)
+				if afterplayer is not None and afterplayer.voice is not None and afterplayer.voice.channel.id == after.channel.id:
+					ctx = after.channel.guild
+					guildinfo = botdata.guildinfo(after.channel.guild)
+					channel_id = after.channel.id
+					if member.id == self.bot.user.id:
+						guildinfo.voicechannel = after.channel.id
+						return # dont play intros for self.
 
-				userinfo = botdata.userinfo(member.id)
+					userinfo = botdata.userinfo(member.id)
 
-				try:
-					introclip = userinfo.intro
-					if introclip:
-						introclip = await self.get_clip(userinfo.intro, ctx)
-						if introclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
-							userinfo.set_default(ctx, "intro")
-							introclip = userinfo.intro
-				except:
-					userinfo.set_default(ctx, "intro")
-					introclip = userinfo.intro
+					try:
+						introclip = userinfo.intro
+						if introclip:
+							introclip = await self.get_clip(userinfo.intro, ctx)
+							if introclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
+								userinfo.set_default(ctx, "intro")
+								introclip = userinfo.intro
+					except:
+						userinfo.set_default(ctx, "intro")
+						introclip = userinfo.intro
 
-				introtts = userinfo.introtts
-				name = member.name
-				if guildinfo.usenickname and member.nick:
-					name = member.nick
+					introtts = userinfo.introtts
+					name = member.name
+					if guildinfo.usenickname and member.nick:
+						name = member.nick
 
-				# Special case for default
-				if userinfo.intro == "local:helloits" and introtts == "it's":
-					introtts = ""
+					# Special case for default
+					if userinfo.intro == "local:helloits" and introtts == "it's":
+						introtts = ""
 
-				text = introtts + " " + await self.fix_name(name)
-				print(text + " joined the channel")
+					text = introtts + " " + await self.fix_name(name)
+					print(text + " joined the channel")
 
-				await asyncio.sleep(3)
-				if not introclip is None:
-					await self.play_clip(introclip, after.channel)
-				await self.play_clip("tts:" + text, after.channel)
+					await asyncio.sleep(3)
+					if not introclip is None:
+						await self.play_clip(introclip, after.channel)
+					await self.play_clip("tts:" + text, after.channel)
+		except UserError as e:
+			print(f"Bad voice channel connection to ({channel_id}) from on_voice_state_update: {e.message}")
 
 
 def setup(bot):

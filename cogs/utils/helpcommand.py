@@ -20,6 +20,11 @@ def get_config_help(variables, command):
 		f"**Examples**\n"
 		f"{examples}")
 
+
+text_help_server = "Feel free to visit the [Mangobyte Help Server/Guild](https://discord.gg/d6WWHxx) if you have any questions!"
+text_category_help = "To get more information about a specific category, try `{cmdpfx}help <category>`"
+text_command_help = "To get more information about a specific command, try `{cmdpfx}help <command>`"
+
 class MangoHelpCommand(DefaultHelpCommand):
 	def __init__(self, **options):
 		options["verify_checks"] = False
@@ -36,7 +41,8 @@ class MangoHelpCommand(DefaultHelpCommand):
 			return cog.qualified_name + ':' if cog is not None else no_category
 
 		if self.show_all:
-			embed = self.embed_description(self.bot.description + "\n\nTo get more information about a specific command, try `{cmdpfx}help <command>`", self.bot)
+			# ?help all
+			embed = self.embed_description(f"{self.bot.description}\n\n{text_help_server}\n\n{text_category_help}\n{text_command_help}", self.bot)
 			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url, url="https://github.com/mdiller/MangoByte")
 
 			filtered = await self.filter_commands(self.bot.commands, sort=True, key=get_category)
@@ -47,9 +53,10 @@ class MangoHelpCommand(DefaultHelpCommand):
 					continue
 				commands = list(commands)
 				if len(commands) > 0:
-					embed.add_field(name=category, value=self.list_commands(commands))
+					embed.add_field(name=category, value=self.list_commands(commands, only_name=True), inline=False)
 		else:
-			embed = self.embed_description(self.bot.description + "\n\nTo get more information about a specific category, try `{cmdpfx}help <category>`\nTo show all commands, try `{cmdpfx}help all`", self.bot)
+			# ?help
+			embed = self.embed_description(f"{self.bot.description}\n\n{text_help_server}\n\n{text_category_help}\nTo show all commands, try `{{cmdpfx}}help all`", self.bot)
 			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url, url="https://github.com/mdiller/MangoByte")
 			for cog in self.bot.cogs:
 				if cog == "Owner":
@@ -58,6 +65,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 		await self.send_embed(embed)
 
 	async def send_command_help(self, command):
+		# ?help <command>
 		embed = self.embed_description(command.help, command)
 		embed.set_author(name=self.get_command_signature(command))
 		if command.aliases:
@@ -65,9 +73,13 @@ class MangoHelpCommand(DefaultHelpCommand):
 		await self.send_embed(embed)
 
 	async def send_cog_help(self, cog):
-		embed = self.embed_description(inspect.getdoc(cog), cog)
+		# ? help <cog>
+		description = inspect.getdoc(cog)
+		description += f"\n\n{text_command_help}"
+		description += "\n\n**Commands:**\n" + self.list_commands(await self.filter_commands(cog.get_commands()))
+		embed = self.embed_description(description, cog)
 		embed.set_author(name=cog.__class__.__name__)
-		embed.add_field(name="Commands", value=self.list_commands(await self.filter_commands(cog.get_commands())))
+		# embed.add_field(name="Commands", value=self.list_commands(await self.filter_commands(cog.get_commands())))
 		await self.send_embed(embed)
 
 	async def send_embed(self, embed):
@@ -78,6 +90,9 @@ class MangoHelpCommand(DefaultHelpCommand):
 	async def command_callback(self, ctx, *, command=None):
 		if command:
 			command = command.lower()
+			trimming_pattern = f"(^<|>$|^{re.escape(botdata.command_prefix(ctx))})"
+			while re.match(trimming_pattern, command):
+				command = re.sub(trimming_pattern, "", command)
 			if command == "all":
 				command = None
 				self.show_all = True
@@ -93,26 +108,31 @@ class MangoHelpCommand(DefaultHelpCommand):
 
 		await super().command_callback(ctx, command=command)
 
-	def list_commands(self, commands):
+	def list_commands(self, commands, only_name=False):
 		results = []
+		commands = sorted(commands, key=lambda c: c.name) 
 		for command in commands:
 			if command.name in command.aliases:
 				# skip aliases
 				continue
-			entry = '`{0:{2}<{width}} | {1}`'.format(command.name, command.short_doc, u"\u00A0", width=self.get_max_size(commands))
-			results.append(self.shorten_text(entry))
+			if only_name:
+				results.append("`{{cmdpfx}}{0:{1}<30}`".format(command.name, u"\u00A0"))
+			else:
+				entry = '`{{cmdpfx}}{0:{2}<{width}} | {1}`'.format(command.name, command.short_doc, u"\u00A0", width=self.get_max_size(commands))
+				results.append(self.shorten_text(entry))
 		if results:
-			return "\n".join(results)
+			return self.fill_template("\n".join(results))
 		else:
 			return "`<empty>`"
 	
 	def get_command_signature(self, command):
-		return '%s%s %s' % (self.clean_prefix, command.qualified_name, command.signature)
+		return '%s%s %s' % (botdata.command_prefix(self.context), command.qualified_name, command.signature)
 
 	def fill_template(self, text):
 		text = re.sub("\{config_help\}", get_config_help(GuildInfo.variables, "config"), text)
 		text = re.sub("\{userconfig_help\}", get_config_help(UserInfo.variables, "userconfig"), text)
 		text = re.sub("\{cmdpfx\}", botdata.command_prefix(self.context), text)
+		text = re.sub("\n`", u"\n\u200b`", text)
 		return text
 
 	def cog_short_doc(self, cog):

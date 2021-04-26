@@ -42,15 +42,18 @@ class Owner(MangoCog):
 		return await self.bot.loop.run_in_executor(ThreadPoolExecutor(max_workers=1), youtube_download_func, youtube_id, video_file)
 
 	@commands.command()
-	async def updateemoji(self, ctx):
-		"""Updates the emoji information for the bot"""
+	async def updateemoji(self, ctx, name=None):
+		"""Updates the emoji information for the bot
+
+		passing in a name will target that emoji specifically"""
 		emoji_json = read_json(settings.resource("json/emoji.json"))
 		with ctx.channel.typing():
 			for emoji in ctx.guild.emojis:
-				imgpath = settings.resource(f"images/emojis/{emoji.name}.png")
-				with open(imgpath, 'wb+') as f:
-					f.write((await httpgetter.get(emoji.url, return_type="bytes")).read())
-				emoji_json[emoji.name] = emoji.id
+				if name is None or name == emoji.name:
+					imgpath = settings.resource(f"images/emojis/{emoji.name}.png")
+					with open(imgpath, 'wb+') as f:
+						f.write((await httpgetter.get(str(emoji.url), return_type="bytes")).read())
+					emoji_json[emoji.name] = emoji.id
 		write_json(settings.resource("json/emoji.json"), emoji_json)
 		await ctx.send("done!")
 
@@ -144,8 +147,9 @@ class Owner(MangoCog):
 		"""Gets info about a user or a server"""
 		if selector in ["user", "player", "member"]:
 			data = botdata.userinfo(identifier)
-			user = self.bot.get_user(identifier)
-			if user is None:
+			try:
+				user = await self.bot.fetch_user(identifier)
+			except:
 				raise UserError("Couldn't find that user")
 
 			embed = discord.Embed(description=(user.mention + "\n```json\n" + json.dumps(data.json_data, indent='\t') + "\n```"))
@@ -170,6 +174,8 @@ class Owner(MangoCog):
 			embed.set_author(name=guild.name)
 			if guild.icon_url != "":
 				embed.set_thumbnail(url=guild.icon_url)
+			embed.add_field(name="Region", value=guild.region)
+			embed.add_field(name="Member Count", value=guild.member_count)
 			if invite:
 				embed.add_field(name="Invite", value=invite.url)
 			await ctx.send(embed=embed)
@@ -188,7 +194,7 @@ class Owner(MangoCog):
 
 	@commands.command()
 	async def getcache(self, ctx, uri):
-		"""Gets the file in the cache that is pointed to by the uri"""
+		"""Gets a file in the cache"""
 		filename = httpgetter.cache.get_filename(uri)
 
 		if filename is None:
@@ -218,6 +224,43 @@ class Owner(MangoCog):
 			await asyncio.sleep(0.5)
 			count -= 1
 
+	@commands.command()
+	async def remoteresummon(self, ctx, guild_id : int):
+		"""Re-summons the bot for the given guild
+
+		This command is useful if you are having issues with mangobyte not being responsive"""
+		audio = self.bot.get_cog("Audio")
+		if not audio:
+			raise UserError("You must have the Audio cog enabled to do this")
+
+		guild = self.bot.get_guild(guild_id)
+
+		if guild is None:
+			raise UserError(f"guild '{guild_id}' not found")
+
+		guildinfo = botdata.guildinfo(guild_id)
+
+		channel = None
+		if guild.me.voice:
+			channel = guild.me.voice.channel
+		elif guildinfo.voicechannel is not None:
+			channel = self.bot.get_channel(guildinfo.voicechannel)
+		else:
+			raise UserError("I'm not sure where you want me to resummon to. I'm not in any channel currently.")
+
+		await audio.disconnect(guild)
+
+		await asyncio.sleep(1)
+
+		try:
+			await audio.connect_voice(channel)
+			guildinfo.voicechannel = channel.id
+		except asyncio.TimeoutError:
+			cmdpfx = botdata.command_prefix(ctx)
+			raise UserError(f"There was a timeout when attempting to do the `{cmdpfx}summon`")
+
+		await ctx.message.add_reaction("✅")
+
 
 	@commands.command(aliases=["logs", "logger"])
 	async def loggingdb(self, ctx, table, identifier):
@@ -243,6 +286,11 @@ class Owner(MangoCog):
 					await ctx.send(chunk)
 		if not found:
 			raise UserError("Couldn't find anything for that")
+
+	@commands.command(aliases=["restart", "quit", "kill", "pokemango"])
+	async def close(self, ctx):
+		"""Kills the bot"""
+		await self.bot.close()
 
 def setup(bot):
 	bot.add_cog(Owner(bot))

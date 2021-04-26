@@ -4,6 +4,7 @@ import sys
 import json
 import subprocess
 import asyncio
+import datetime
 from collections import OrderedDict
 
 MENTION_TRANSFORMS = {
@@ -119,26 +120,88 @@ class UserError(Exception):
 class Thinker():
 	def __init__(self, bot):
 		self.bot = bot
-		self.messages = {} # Dictionary of message, time
+		self.messages = {} # Dictionary of message_id, { time: time, message: message }
 		self.bot.loop.create_task(self.thinking_task())
 		# May be used in future
 		self.clocks = [ "🕛", "🕐", "🕑", "🕒", "🕓", "🕔", "🕕", "🕖", "🕗", "🕘", "🕙", "🕚" ]
 
 	async def think(self, message):
-		self.messages[message] = 0
+		self.messages[message.id] = {
+			"message": message,
+			"time": 0
+		}
 		await message.add_reaction("🤔")
 
 	async def stop_thinking(self, message):
-		last_time = self.messages.pop(message)
+		last_time = self.messages.pop(message.id)
 		await message.remove_reaction("🤔", self.bot.user)
 
 	async def thinking_task(self):
 		await self.bot.wait_until_ready()
 		while not self.bot.is_closed:
-			for message in self.messages:
-				self.messages[message] += 1
+			for message_id in self.messages:
+				self.messages[message_id]["time"] += 1
 			await asyncio.sleep(1)
 
+class SimpleTimer():
+	def __init__(self):
+		self.start = datetime.datetime.now()
+		self.end = None
+
+	def stop(self):
+		self.end = datetime.datetime.now()
+
+	@property
+	def seconds(self):
+		if self.end is None:
+			self.stop()
+		return int((self.end - self.start).total_seconds())
+
+	def __str__(self):
+		s = self.seconds % 60
+		m = self.seconds // 60
+		text = f"{s} second{'s' if s != 1 else ''}"
+		if m > 0:
+			text = f"{m} minute{'s' if m != 1 else ''} and " + text
+		return text
+
+	def __repr__(self):
+		return self.__str__()
+
+class AsyncBundler():
+	def __init__(self, tasks):
+		# self.executor = task_executor
+		self.tasks = tasks
+		self.success_count = 0
+		self.exceptions_dict = OrderedDict()
+		self.completed = False
+
+	async def exec_wrapper(self, task):
+		try:
+			result = await task
+			self.success_count += 1
+			return result
+		except Exception as e:
+			etype = str(type(e).__name__)
+			print(f"AsyncBundler found exception {etype}: {e}")
+			if etype not in self.exceptions_dict:
+				self.exceptions_dict[etype] = 0
+			self.exceptions_dict[etype] += 1
+			return None
+
+	async def wait(self):
+		tasks = list(map(lambda t: self.exec_wrapper(t), self.tasks))
+		results = await asyncio.gather(*tasks)
+		self.exceptions_dict = OrderedDict(sorted(self.exceptions_dict.items(), key=lambda t: t[0]))
+		self.completed = True
+		return results
+
+	# gets the status as a string
+	def status_as_string(self, success_str="succeeded"):
+		result = f"{self.success_count} {success_str}"
+		for e in self.exceptions_dict:
+			result += f"\n{self.exceptions_dict[e]} failed with {e}"
+		return result
 
 class HttpError(UserError):
 	"""An http error with an error code"""

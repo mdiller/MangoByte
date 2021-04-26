@@ -97,6 +97,7 @@ obj/
 .vs/
 
 # Other
+logs/
 
 *.db
 

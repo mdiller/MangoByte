@@ -11,7 +11,7 @@ from cogs.utils import botdatatypes
 from .mangocog import *
 
 class Admin(MangoCog):
-	"""Administrative commands
+	"""Commands to help manage mangobyte on your server/guild
 	
 	Primarily used to stop people from ruining stuff, and to configure mangobyte to do different things.
 
@@ -126,7 +126,7 @@ class Admin(MangoCog):
 
 	@commands.command()
 	async def summon(self, ctx, channel : str = None):
-		"""Summons the bot to the voice channel you are currently in
+		"""Summons the bot to the voice channel
 
 		You can specify the specific voice channel that you would like to connect to. If no channel is specified, it will connect to whatever channel you are currently in.
 		**Examples:**
@@ -169,7 +169,7 @@ class Admin(MangoCog):
 
 	@commands.command()
 	async def unsummon(self, ctx):
-		"""Removes the bot from the voice channel it is currently in"""
+		"""Removes the bot from the voice channel"""
 		audio = self.bot.get_cog("Audio")
 		if not audio:
 			raise UserError("You must have the Audio cog enabled to do this")
@@ -182,7 +182,7 @@ class Admin(MangoCog):
 
 	@commands.command()
 	async def resummon(self, ctx):
-		"""Removes and then re-summons the bot to the voice channel
+		"""Re-summons the bot to the voice channel
 
 		This command is useful if you are having issues with mangobyte not being responsive"""
 		audio = self.bot.get_cog("Audio")
@@ -230,13 +230,12 @@ class Admin(MangoCog):
 			vars_list = "\n".join(map(lambda v: f"`{v['key']}`", GuildInfo.variables))
 			await ctx.send(f"There is no config setting called '{name}'. Try one of these:\n{vars_list}")
 			return
-
 		
+		currentvalue = botdata.guildinfo(ctx.guild)[var["key"]]
 		if not value: # We are just getting a value
-			value = botdata.guildinfo(ctx.guild)[var["key"]]
-			await ctx.send(embed=await botdatatypes.localize_embed(ctx, var, value, f"{self.cmdpfx(ctx)}config"))
+			await ctx.send(embed=await botdatatypes.localize_embed(ctx, var, currentvalue, f"{self.cmdpfx(ctx)}config"))
 		else: # We are setting a value
-			value = await botdatatypes.parse(ctx, var, value)
+			value = await botdatatypes.parse(ctx, var, value, currentvalue)
 			botdata.guildinfo(ctx.guild)[var["key"]] = value
 			await ctx.message.add_reaction("✅")
 

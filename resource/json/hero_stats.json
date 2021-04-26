@@ -1,0 +1,158 @@
+[
+	{
+		"section": "Attributes",
+		"stats": [
+			{
+				"stat": "agility",
+				"name": "Agility",
+				"display": "int",
+				"regex": "agi(lity)?",
+				"lambda": "lambda hero, h: hero.attr_agility_base + (hero.attr_agility_gain * (h['level'] - 1))"
+			},
+			{
+				"stat": "attr_agility_gain",
+				"regex": "agi(lity)? gain",
+				"name": "Agility Gain"
+			},
+			{
+				"stat": "strength",
+				"name": "Strength",
+				"display": "int",
+				"regex": "str(ength)?",
+				"lambda": "lambda hero, h: hero.attr_strength_base + (hero.attr_strength_gain * (h['level'] - 1))"
+			},
+			{
+				"stat": "attr_strength_gain",
+				"regex": "str(ength)? gain",
+				"name": "Strength Gain"
+			},
+			{
+				"stat": "intelligence",
+				"name": "Intelligence",
+				"display": "int",
+				"regex": "int(elligence)?",
+				"lambda": "lambda hero, h: hero.attr_intelligence_base + (hero.attr_intelligence_gain * (h['level'] - 1))"
+			},
+			{
+				"stat": "attr_intelligence_gain",
+				"regex": "int(elligence)? gain",
+				"name": "Intelligence Gain"
+			}
+		]
+	},
+	{
+		"section": "Combat Stats",
+		"stats": [
+			{
+				"stat": "attacks_per_second",
+				"name": "Attacks Per Second",
+				"regex": "attacks? per sec(ond)?|aps|(attack|attk)s? (speed|time|rate)",
+				"lambda": "lambda hero, h: ((hero.base_attack_speed + h['agility']) * 0.01) / hero.attack_rate"
+			},
+			{
+				"stat": "damage",
+				"name": "Damage Per Hit (Avg)",
+				"display": "int",
+				"regex": "(damage|dmg)( per hit( \\(?avg\\)?)?)?",
+				"lambda": "lambda hero, h: h[hero.attr_primary] + hero.attack_damage_min + ((hero.attack_damage_max - hero.attack_damage_min) / 2)"
+			},
+			{
+				"stat": "dps",
+				"name": "Damage Per Second",
+				"regex": "dps|(damage|dmg) per sec(ond)?",
+				"lambda": "lambda hero, h: h['attacks_per_second'] * h['damage']"
+			},
+			{
+				"stat": "health",
+				"name": "Health",
+				"regex": "health|hp|hit ?points?",
+				"lambda": "lambda hero, h: 200 + (20 * h['strength'])"
+			},
+			{
+				"stat": "health_regen",
+				"name": "Health Regen",
+				"regex": "health regen(eration)?",
+				"lambda": "lambda hero, h: int(hero.base_health_regen or 0) + (0.1 * h['strength'])"
+			},
+			{
+				"stat": "armor",
+				"name": "Armor",
+				"lambda": "lambda hero, h: hero.base_armor + (h['agility'] / 6.0)"
+			},
+			{
+				"stat": "physical_dmg_multiplier",
+				"name": "Physical Damage Resistance",
+				"display": "resistance_percentage",
+				"regex": "(phys(ical)?|armor)( damage| dmg)? (resist(ance)?|reduction)",
+				"lambda": "lambda hero, h: 1 - ((0.06 * h['armor']) / (1 + 0.06 * abs(h['armor'])))"
+			},
+			{
+				"stat": "physical_effective_health",
+				"name": "Effective Health (Physical)",
+				"display": "int",
+				"regex": "eff(ective)?( phys(ical)?)? (health|hp)( \\(?physical\\)?)?",
+				"lambda": "lambda hero, h: h['health'] / h['physical_dmg_multiplier']"
+			},
+			{
+				"stat": "magic_dmg_multiplier",
+				"name": "Magic Damage Resistance",
+				"display": "resistance_percentage",
+				"regex": "magic(al)?( damage| dmg)? (resist(ance)?|reduction)",
+				"lambda": "lambda hero, h: (1 - (hero.magic_resistance / 100)) * (1 - (h['strength'] * 0.0008))"
+			},
+			{
+				"stat": "magic_effective_health",
+				"name": "Effective Health (Magic)",
+				"display": "int",
+				"regex": "eff(ective)?( health| hp)? \\(?magic\\)?( health| hp)?",
+				"lambda": "lambda hero, h: h['health'] / h['magic_dmg_multiplier']"
+			},
+			{
+				"stat": "mana",
+				"name": "Mana",
+				"regex": "mana|mp",
+				"lambda": "lambda hero, h: 75 + (12 * h['intelligence'])"
+			},
+			{
+				"stat": "mana_regen",
+				"name": "Mana Regen",
+				"regex": "mana regen(eration)?",
+				"lambda": "lambda hero, h: int(hero.base_mana_regen or 0) + (0.05 * h['intelligence'])"
+			}
+			
+		]
+	},
+	{
+		"section": "Movement / Vision",
+		"stats": [
+			{
+				"stat": "movement_speed",
+				"name": "Movement Speed",
+				"regex": "move(ment)?( speed)?",
+				"display": "int",
+				"lambda": "lambda hero, h: hero.base_movement * (1 + (h['agility'] * 0.0005))"
+			},
+			{
+				"stat": "movement_speed_boots",
+				"name": "Movement Speed w/ Boots",
+				"regex": "move(ment)?( speed)? w(/|ith) boots",
+				"display": "int",
+				"lambda": "lambda hero, h: hero.base_movement * (1 + (h['agility'] * 0.0005) + 0.15)"
+			},
+			{
+				"stat": "turn_rate",
+				"name": "Turn Rate"
+			},
+			{
+				"stat": "vision_day",
+				"regex": "vision \\)?day(time)?\\)?",
+				"name": "Vision (Daytime)"
+			},
+			{
+				"stat": "vision_night",
+				"regex": "vision \\)?(night|nite)(time)?\\)?",
+				"name": "Vision (Nighttime)"
+			}
+		]
+	}
+]

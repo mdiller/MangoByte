@@ -9,22 +9,33 @@ import os
 import random
 import html
 import requests
+import functools
 from concurrent.futures import ThreadPoolExecutor
 
 def tts_save(filename, text, lang):
 	# run_command(["pico2wave", "--wave", filename, "-l", "en-GB", text])
-	try:
-		tts = gTTS(text=text, lang=lang)
-		tts.save(filename)
-	except AttributeError:
-		raise UserError("Whoops. Looks like gtts is broken right now.")
-	except (RecursionError, requests.exceptions.HTTPError):
-		raise UserError("There was a problem converting that via gtts")
-	except AssertionError as e:
-		if e.args and e.args[0] == "No text to send to TTS API":
-			raise UserError("I can't convert that to TTS. Looks like there's not much there.")
-		else:
-			raise
+	loop_count = 10
+	while loop_count > 0:
+		loop_count -= 1
+		try:
+			tts = gTTS(text=text, lang=lang, lang_check=False)
+			tts.save(filename)
+		except ValueError as e:
+			if loop_count > 0 and e.args and e.args[0] == "Unable to find token seed! Did https://translate.google.com change?":
+				print(f"Got bad seed exception. Looping {loop_count} more times")
+				continue # loop, as reccomended here: https://github.com/pndurette/gTTS/issues/176#issuecomment-723393140
+			else:
+				raise
+		except AttributeError:
+			raise UserError("Whoops. Looks like gtts is broken right now.")
+		except (RecursionError, requests.exceptions.HTTPError):
+			raise UserError("There was a problem converting that via gtts")
+		except AssertionError as e:
+			if e.args and e.args[0] == "No text to send to TTS API":
+				raise UserError("I can't convert that to TTS. Looks like there's not much there.")
+			else:
+				raise
+		return # if we succeed, return
 
 class ClipNotFound(UserError):
 	def __init__(self, cliptype, clipname):
@@ -134,7 +145,7 @@ class TtsClip(Clip):
 		if not filename:
 			filename = await httpgetter.cache.new(uri, "wav")
 			try:
-				await bot.loop.run_in_executor(ThreadPoolExecutor(max_workers=1), tts_save, filename, text, ttslang)
+				await bot.loop.run_in_executor(ThreadPoolExecutor(), functools.partial(tts_save, filename, text, ttslang))
 			except:
 				await httpgetter.cache.remove(uri)
 				raise
@@ -156,6 +167,8 @@ class UrlClip(Clip):
 	@classmethod
 	def type(cls):
 		return "url"
+
+voice_actor_links = read_json(settings.resource("json/voice_actor_links.json"))
 
 class DotaClip(Clip):
 	async def init(self, responsename, bot, ctx):
@@ -180,7 +193,10 @@ class DotaClip(Clip):
 		if self.response.criteria != "":
 			embed.add_field(name="Criteria", value=self.response.pretty_criteria.replace('|', '\n'))
 		if self.response.voice.voice_actor:
-			embed.add_field(name="Voice Actor", value=self.response.voice.voice_actor)
+			actor_name = self.response.voice.voice_actor
+			if actor_name in voice_actor_links:
+				actor_name = f"[{actor_name}]({voice_actor_links[actor_name]})"
+			embed.add_field(name="Voice Actor", value=actor_name)
 		if self.voice_thumbnail:
 			embed.set_thumbnail(url=self.voice_thumbnail)
 

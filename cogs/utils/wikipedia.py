@@ -1,5 +1,6 @@
 from __main__ import settings, httpgetter
 from bs4 import BeautifulSoup, Tag
+from .helpers import *
 import re
 
 
@@ -35,8 +36,13 @@ def tagsToMarkdown(tag, plaintext=False):
 			if tag["href"].startswith("#"):
 				return "" # dont include references
 			href = re.sub("^/wiki/", "https://en.wikipedia.org/wiki/", tag['href'])
+			href = re.sub("^//upload.wikimedia.org", "https://upload.wikimedia.org", href)
 			href = re.sub(r"(\(|\))", r"\\\1", href)
-			return f"[{tagsToMarkdown(tag.contents)}]({href})"
+
+			contents = tagsToMarkdown(tag.contents)
+			if contents == "":
+				return ""
+			return f"[{contents}]({href})"
 		else:
 			# raise UserError(f"Unrecognized tag: {tag.name}")
 			return tagsToMarkdown(tag.contents)
@@ -52,8 +58,10 @@ async def find_disambiguations(pageid):
 	filtered_lis = [li for li in lis if not 'tocsection' in ''.join(li.get('class', []))]
 	return [li.a.get_text() for li in filtered_lis if li.a]
 
-async def retrieve_page_info(title):
-	data = await httpgetter.get(f"{base_query}&list=search&srprop&srlimit=1&srinfo=suggestion&srsearch={title}")
+async def retrieve_page_info(title_input):
+	data = await httpgetter.get(f"{base_query}&list=search&srprop&srlimit=1&srinfo=suggestion&srsearch={title_input}")
+	if len(data["query"]["search"]) == 0:
+		raise UserError("Couldn't find anything for that")
 	info = data["query"]["search"][0]
 	title = info["title"]
 	pageid = info["pageid"]
@@ -61,7 +69,7 @@ async def retrieve_page_info(title):
 	page_info = data["query"]["pages"][str(pageid)]
 	if "pageprops" in page_info and "disambiguation" in page_info["pageprops"]:
 		options = await find_disambiguations(pageid)
-		if len(options) == 0 or options[0] == title:
+		if len(options) == 0 or options[0] == title or options[0] == title_input:
 			raise UserError("Couldn't find anything for that")
 		else:
 			return await retrieve_page_info(options[0])
@@ -85,7 +93,16 @@ class WikipediaPage():
 		page_html = BeautifulSoup(page_html, "html.parser")
 		page_html = page_html.find(id="mw-content-text")
 
-		summary = tagsToMarkdown(page_html.find("div").find(lambda tag: tag.name == "p" and not tag.attrs, recursive=False).contents)
+		def findSummaryParagraph(tag):
+			has_content = False
+			for child in tag.contents:
+				if child.name != "span" and str(child).strip() != "":
+					has_content = True
+			return tag.name == "p" and not tag.attrs and has_content
+
+		summary_html = page_html.find("div").find(findSummaryParagraph, recursive=False).contents
+
+		summary = tagsToMarkdown(summary_html)
 		def markdownLength(text):
 			text = re.sub(r"\[([^\[]*)]\([^\(]*\)", r"\1", text)
 			return len(text)

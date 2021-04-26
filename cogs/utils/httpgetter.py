@@ -58,7 +58,7 @@ class Cache:
 
 	#creates a new entry in the cache and returns the filename of the new entry
 	async def new(self, uri, extension=None):
-		with (await self.lock):
+		async with self.lock:
 			if uri in self.files:
 				return self.cache_dir + self.files[uri]
 			filename = f"{self.cache['count']:0>4}"
@@ -89,11 +89,12 @@ class Cache:
 
 
 	async def remove(self, uri):
-		with (await self.lock):
-			filename = self.cache_dir + self.files.pop(uri)
-			self.save_cache()
-			if os.path.isfile(filename):
-				os.remove(filename)
+		async with self.lock:
+			if uri in self.files:
+				filename = self.cache_dir + self.files.pop(uri)
+				self.save_cache()
+				if os.path.isfile(filename):
+					os.remove(filename)
 
 def raise_error(url, code, errors):
 	print(f"http {code} error on: {url}")
@@ -111,11 +112,10 @@ class HttpGetter:
 
 	async def get(self, url, return_type="json", cache=False, errors={}):
 		if cache and self.cache.get_filename(url):
-			await loggingdb.insert_http_request(url, 0, True, True)
 			return self.cache.get(url, return_type)
 
-		async with self.session.get(url) as r:
-			await loggingdb.insert_http_request(url, r.status, False, cache)
+		async with self.session.get(url, timeout=60) as r:
+			await loggingdb.insert_http_request(url, r.status, cache)
 			if r.status == 200:
 				if cache:
 					await self.cache.save(url, return_type, r)
@@ -133,9 +133,9 @@ class HttpGetter:
 			else:
 				raise_error(url, r.status, errors)
 
-	async def post(self, url, return_type="json", errors={}):
-		async with self.session.post(url) as r:
-			await loggingdb.insert_http_request(url, r.status, False, False)
+	async def post(self, url, return_type="json", errors={}, body={}, headers={}):
+		async with self.session.post(url, json=body, headers=headers) as r:
+			await loggingdb.insert_http_request(url, r.status, False)
 			if r.status == 200:
 				if return_type == "json":
 					return json.loads(await r.text(), object_pairs_hook=OrderedDict)

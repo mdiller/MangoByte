@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 from abc import abstractmethod
 from .helpers import *
-
+import re
 
 
 class InvalidInputError(UserError):
@@ -18,14 +18,47 @@ async def localize_embed(ctx, var, value, example_command):
 	if not issubclass(var["type"], ConfigVarType):
 		raise ValueError(f"Bad variable type for {example_command} variable {var['key']}")
 
-	embed.add_field(name="Value", value=await var["type"].localize(value, ctx))
+	if var.get("list"):
+		localized_value = ""
+		for v in value:
+			localized_value += await var["type"].localize(v, ctx) + "\n"
+		if localized_value == "":
+			localized_value = "None"
+	else:
+		localized_value = await var["type"].localize(value, ctx)
+
+	embed.add_field(name="Value", value=localized_value)
 	embed.add_field(name="Example", value=f"`{example_command} {var['key']} {var['example']}`")
 	return embed
 
 
-async def parse(ctx, var, value):
+async def parse(ctx, var, value, currentvalue):
 	if value in [ "default", "reset", "clear", "null" ]:
 		return var["default"]
+
+	if var.get("list"):
+		currentvalue = currentvalue.copy()
+		subcommands = [ "add", "remove" ]
+		if " " in value:
+			subcommand, value = value.split(" ", 1)
+		else:
+			subcommand = None
+
+		if subcommand == "add":
+			value = await var["type"].parse(value, ctx)
+			if value in currentvalue:
+				raise InvalidInputError("That's already been added!")
+			currentvalue.append(value)
+			return currentvalue
+		elif subcommand == "remove":
+			value = await var["type"].parse(value, ctx)
+			if value not in currentvalue:
+				raise InvalidInputError("That's not currently in there.")
+			currentvalue.remove(value)
+			return currentvalue
+		else:
+			raise InvalidInputError("Start with 'add' or 'remove'")
+
 
 	return await var["type"].parse(value, ctx)
 
@@ -96,6 +129,22 @@ class Role(ConfigVarType):
 		except commands.BadArgument:
 			raise InvalidInputError("Try giving me a role reference like `@BotAdmin`")
 
+
+class UserBot(ConfigVarType):
+	@classmethod
+	async def _localize(cls, value, ctx):
+		return f"<@{value}>" if value else "None"
+
+	@classmethod
+	async def _parse(cls, value, ctx):
+		try:
+			user = await commands.UserConverter().convert(ctx, value)
+			if not user.bot: 
+				raise InvalidInputError("The user you give here has to be a bot")
+			return user.id
+		except commands.BadArgument:
+			raise InvalidInputError("Try giving me a bot reference like `@Bot123`")
+
 gtts_langs = read_json(settings.resource("json/gtts_languages.json"))
 
 class GttsLang(ConfigVarType):
@@ -108,6 +157,8 @@ class GttsLang(ConfigVarType):
 		value = value.lower()
 		for lang in gtts_langs:
 			if lang.lower() == value or gtts_langs[lang].lower() == value:
+				if "-" in lang:
+					raise InvalidInputError("Languages with '-' have unfortunately been deprecated")
 				return lang
 		raise InvalidInputError("See https://github.com/mdiller/MangoByte/blob/master/resource/json/gtts_languages.json for valid languages")
 
@@ -185,6 +236,17 @@ class SteamId(ConfigVarType):
 		value = str(value)
 		if value.lower() in [ "none", "reset", "default" ]:
 			return None
+
+		patterns = [
+			r"<?https?://(?:www\.)?opendota\.com/players/(\d+)/?>?",
+			r"<?https?://(?:www\.)?dotabuff\.com/players/(\d+)/?>?",
+			r"<?https?://(?:www\.)?steamcommunity\.com/profiles/(\d+)/?>?"
+		]
+		for pattern in patterns:
+			match = re.match(pattern, value)
+			if match:
+				value = match.group(1)
+				break
 
 		if not value.isdigit():
 			raise InvalidInputError("You gotta give me a steam id (SteamId64 / Friend Id) here")

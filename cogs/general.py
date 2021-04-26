@@ -1,11 +1,13 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from __main__ import settings, botdata, invite_link, httpgetter, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.botdata import UserInfo
 from cogs.utils import checks, botdatatypes, wikipedia
 from cogs.audio import AudioPlayerNotFoundError
 from sqlalchemy import func
+from collections import OrderedDict
+import json
 import string
 import random
 import datetime
@@ -16,6 +18,13 @@ import re
 import praw
 import os
 from .mangocog import *
+
+donate_links = {
+	"Patreon": "https://www.patreon.com/dillerm",
+	"BuyMeACoffee": "https://www.buymeacoffee.com/dillerm",
+	"Ko-fi": "https://ko-fi.com/dillerm",
+	"PayPal": "https://www.paypal.me/dillerm"
+}
 
 def load_words():
 	words = {}
@@ -54,11 +63,12 @@ def load_md_as_dict(filename):
 	for match in pattern.finditer(text):
 		name = match.group(1).strip()
 		description = match.group(2).strip()
+		description = re.sub("\n`", u"\n\u200b`", description)
 		result[name] = description
 	return result
 
 class General(MangoCog):
-	"""Basic and admin commands
+	"""Commands that don't really fit into the other categories
 
 	Random and/or fun commands with a variety of uses"""
 	def __init__(self, bot):
@@ -86,12 +96,11 @@ class General(MangoCog):
 			await ctx.send(f"There is no userconfig setting called '{name}'. Try one of these:\n{vars_list}")
 			return
 
-		
+		currentvalue = botdata.userinfo(ctx.message.author)[var["key"]]
 		if not value: # We are just getting a value
-			value = botdata.userinfo(ctx.message.author)[var["key"]]
-			await ctx.send(embed=await botdatatypes.localize_embed(ctx, var, value, f"{self.cmdpfx(ctx)}userconfig"))
+			await ctx.send(embed=await botdatatypes.localize_embed(ctx, var, currentvalue, f"{self.cmdpfx(ctx)}userconfig"))
 		else: # We are setting a value
-			value = await botdatatypes.parse(ctx, var, value)
+			value = await botdatatypes.parse(ctx, var, value, currentvalue)
 			botdata.userinfo(ctx.message.author)[var["key"]] = value
 			await ctx.message.add_reaction("✅")
 
@@ -169,21 +178,22 @@ class General(MangoCog):
 			"Developed as an open source project, hosted on [GitHub]({}). "
 			"Implemented using {} and a python discord api wrapper [discord.py]({})".format(github, python_version, discordpy)))
 
-		cmdpfx = self.cmdpfx(ctx)
-		embed.add_field(name="Features", value=(
-			f"• Answers questions (`{cmdpfx}ask`)\n"
-			f"• Plays audio clips (`{cmdpfx}play`, `{cmdpfx}dota`)\n"
-			f"• Greets users joining a voice channel\n"
-			f"• For a list of command categories, try `{cmdpfx}help`"))
-
 		help_guild_link = "https://discord.gg/d6WWHxx"
 
 		embed.add_field(name="Help", value=(
 			f"If you want to invite mangobyte to your server/guild, click this [invite link]({invite_link}). "
 			f"If you have a question, suggestion, or just want to try out mah features, check out the [Help Server/Guild]({help_guild_link})."))
 
-		embed.add_field(name="Donate", value=(
-			f"If you want to donate money to support MangoByte's server costs, click [here]({self.donation_link})"))
+		cmdpfx = self.cmdpfx(ctx)
+		embed.add_field(name="Features", value=(
+			f"• Answers questions (`{cmdpfx}ask`)\n"
+			f"• Plays audio clips (`{cmdpfx}play`, `{cmdpfx}dota`)\n"
+			f"• Greets users joining a voice channel\n"
+			f"• For a list of command categories, try `{cmdpfx}help`"), inline=False)
+
+		donate_stuff = "\n".join(map(lambda key: f"• [{key}]({donate_links[key]})", donate_links))
+		embed.add_field(name="Donating", value=(
+			f"If you want to donate money to support MangoByte's server costs, click one of the links below. If you want to learn more about how much I spend on MangoByte per month try `{cmdpfx}donate`.\n{donate_stuff}"))
 
 		owner = (await self.bot.application_info()).owner
 
@@ -206,7 +216,7 @@ class General(MangoCog):
 		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url)
 
 		embed.add_field(name="Servers/Guilds", value="{:,}".format(len(self.bot.guilds)))
-		embed.add_field(name="Registered Users", value="{:,}".format(len(list(filter(lambda user: user.steam, botdata.userinfo_list())))))
+		embed.add_field(name="Registered Users", value="{:,}".format(botdata.count_users_with_key("steam")))
 
 		thisweek = "timestamp between datetime('now', '-7 days') AND datetime('now', 'localtime')"
 		query_results = await loggingdb.query_multiple([
@@ -217,16 +227,16 @@ class General(MangoCog):
 		])
 
 
-		embed.add_field(name="Commands", value=f"{query_results[0][0][0]:,}")
+		# embed.add_field(name="Commands", value=f"{query_results[0][0][0]:,}")
 		embed.add_field(name="Commands (This Week)", value=f"{query_results[1][0][0]:,}")
 
 		cmdpfx = self.cmdpfx(ctx)
 		top_commands = query_results[2]
-		if len(top_commands) >= 3:
-			embed.add_field(name="Top Commands", value=(
-				f"`{cmdpfx}{top_commands[0][0]}`\n"
-				f"`{cmdpfx}{top_commands[1][0]}`\n"
-				f"`{cmdpfx}{top_commands[2][0]}`\n"))
+		# if len(top_commands) >= 3:
+		# 	embed.add_field(name="Top Commands", value=(
+		# 		f"`{cmdpfx}{top_commands[0][0]}`\n"
+		# 		f"`{cmdpfx}{top_commands[1][0]}`\n"
+		# 		f"`{cmdpfx}{top_commands[2][0]}`\n"))
 
 		top_commands_weekly = query_results[3]
 		if len(top_commands_weekly) >= 3:
@@ -242,34 +252,18 @@ class General(MangoCog):
 		"""A baked Italian dish
 
 		Contains wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce."""
-		await ctx.send(file=discord.File(settings.resource("images/lasagna.jpg")))
-
-	@commands.command()
-	async def helpold(self, ctx, command : str=None):
-		"""Shows this message."""
-		def repl(obj):
-			return MENTION_TRANSFORMS.get(obj.group(0), '')
-
-		# help by itself just lists our own commands.
-		if command == "all":
-			embed = await self.bot.formatter.format_as_embed(ctx, self.bot, True)
-		elif command == None:
-			embed = await self.bot.formatter.format_as_embed(ctx, self.bot, False)
-		else:
-			# try to see if it is a cog name
-			name = MENTION_PATTERN.sub(repl, command).lower()
-			if name in map(lambda c: c.lower(), self.bot.cogs):
-				for cog in self.bot.cogs:
-					if cog.lower() == name:
-						command = self.bot.cogs[cog]
-			else:
-				command = self.bot.all_commands.get(name)
-				if command is None:
-					await ctx.send(self.bot.command_not_found.format(name))
-					return
-			embed = await self.bot.formatter.format_as_embed(ctx, command)
-
-		await ctx.send(embed=embed)
+		lasagna_images = [
+			"images/lasagna1.jpg",
+			"images/lasagna2.jpg",
+			"images/lasagna3.jpg",
+			"images/lasagna4.jpg",
+			"images/lasagna5.jpg",
+			"images/lasagna6.jpg",
+			"images/lasagna7.jpg",
+			"images/lasagna8.jpg",
+			"images/lasagna9.jpg",
+		]
+		await ctx.send(file=discord.File(settings.resource(random.choice(lasagna_images))))
 
 	@commands.command()
 	async def scramble(self, ctx, *, message : str):
@@ -297,7 +291,9 @@ class General(MangoCog):
 		
 		Uses my own implementation of the [Wikipedia API](https://www.mediawiki.org/wiki/API:Tutorial)
 
-		You can also try `{cmdpfx} wiki random` to get a random wiki page
+		You can also try `{cmdpfx}wiki random` to get a random wiki page
+		
+		Note that I've had to remove the images from these (unless you're in a NSFW channel) because I have no way of checking if it is an NSFW image, and posting an NSFW image in non-NSFW channels would be against discord's ToS. Sorry about that!
 
 		**Example:**
 		`{cmdpfx}wiki potato`
@@ -310,20 +306,23 @@ class General(MangoCog):
 		embed.title = f"**{page.title}**"
 		embed.url = page.url
 
+		footer_text = "Retrieved from Wikipedia"
+
 		if page.image:
-			embed.set_image(url=page.image)
+			if (not isinstance(ctx.channel, discord.DMChannel)) and ctx.channel.is_nsfw():
+				embed.set_image(url=page.image)
+			else:
+				footer_text += ". (Image omitted because I can't check if it is NSFW) D:"
 
-		embed.set_footer(text="Retrieved from Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
-
-		# if page.image and re.search(r"\.svg$", page.image, re.IGNORECASE):
-		# 	await ctx.send(embed=embed, file=svg_png_image)
-		# 	return
+		embed.set_footer(text=footer_text, icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 		
 		await ctx.send(embed=embed)
 
 	@commands.command()
 	async def reddit(self, ctx, url_or_id):
-		"""Gets a reddit submission and returns a nice embed of it"""
+		"""Displays a formatted reddit post
+
+		Note that this will only get nsfw posts if you call this in an nsfw channel"""
 		if settings.reddit is None:
 			raise UserError("This MangoByte has not been configured to get reddit submissions. Gotta add your info to `settings.json`")
 
@@ -343,6 +342,12 @@ class General(MangoCog):
 			description = submission.selftext
 		except:
 			raise UserError("Couldn't properly find that reddit submission")
+
+		
+		if submission.over_18:
+			if (isinstance(ctx.channel, discord.DMChannel)) or (not ctx.channel.is_nsfw()):
+				raise UserError("That is an NSFW post, so I can't link it in this non-nsfw channel.")
+
 
 		character_limit = 600
 		# convert between markdown types
@@ -444,7 +449,7 @@ class General(MangoCog):
 		result = fill_word_template(template, self.words)
 
 		await ctx.send(start + result)
-		if ctx.guild.me.voice:
+		if ctx.guild and ctx.guild.me.voice:
 			await self.play_clip(f"tts:{start_local}{result}", ctx)
 		
 	
@@ -498,10 +503,11 @@ class General(MangoCog):
 			embed.description = "\n".join(map(lambda name: f"• {name}", list(self.docs_data.keys())))
 			await ctx.send(embed=embed)
 			return
+		clean_topic = topic.lower().replace(" ", "")
 		found_topic = None
 		for name in self.docs_data:
 			simple_name = name.lower().replace(" ", "")
-			if topic in simple_name:
+			if clean_topic in simple_name:
 				found_topic = name
 				break
 		if found_topic is None:
@@ -512,14 +518,161 @@ class General(MangoCog):
 		embed.description = self.docs_data[found_topic]
 		await ctx.send(embed=embed)
 
+	@tasks.loop(hours=12)
+	async def update_topgg(self):
+		print("update_topgg() entered")
+		if settings.debug or (settings.topgg is None):
+			return # nothing to do here
+
+		bot_id = self.bot.user.id
+		topgg_token = settings.topgg
+		guilds_count = len(self.bot.guilds)
+
+		try:
+			url = f"https://top.gg/api/bots/{bot_id}/stats"
+			body = {
+				"server_count": guilds_count
+			}
+			headers = {
+				"Authorization": topgg_token
+			}
+			response = await httpgetter.post(url, body=body, headers=headers)
+		except HttpError as e:
+			await self.send_owner(f"Updating top.gg failed with {e.code} error")
+
+	@tasks.loop(hours=12)
+	async def do_infodump(self):
+		print("do_infodump() entered")
+		if not settings.infodump_path:
+			return # nothing to do here
+
+		guilds_count = len(self.bot.guilds)
+		member_count = botdata.count_users_with_key("steam")
+
+		data = {
+			"servers": guilds_count,
+			"registered_users": member_count
+		}
+		try:
+			with open(settings.infodump_path, "w+") as f:
+				f.write(json.dumps(data))
+		except Exception as e:
+			await self.send_owner(f"do_infodump failed w/ exception: {e}")
+
+	@tasks.loop(minutes=5)
+	async def check_dota_patch(self):
+		print("check_dota_patch() entered")
+		url = "https://www.dota2.com/patches/"
+		try:
+			text = await httpgetter.get(url, return_type="text")
+		except HttpError as e:
+			print(f"patches update failed with http {e.code} error")
+			await self.send_owner(f"patches update failed the check with a http {e.code} error")
+			return # failed, so return
+		except Exception as e:
+			etype = str(type(e).__name__)
+			print(f"patches update failed the check w/ exception {etype}: {e}")
+			await self.send_owner(f"patches update failed the check w/ exception {etype}: {e}")
+			return # failed, so return
+		soup = BeautifulSoup(text, "html.parser")
+
+		print("patch parse starting")
+
+		current_patch = soup.find(name="title").contents[0]
+		old_patch = botdata["dotapatch"]
+
+		if old_patch == current_patch:
+			return # thats the current patch, do nothing
+		if current_patch.strip() == "Gameplay Update":
+			return # thats what happens when theyre tryna switch it and theyre in the process, so give it a minute and try again later
+		print(f"\"{current_patch}\"")
+		print(current_patch == "Gameplay Update")
+		print(str(current_patch) == "Gameplay Update")
+		await self.send_owner(f"patches update triggered: (new one is '{current_patch}', old one was '{old_patch}')")
+		botdata["dotapatch"] = current_patch
+
+		def count_class_in_id(element_id, classname):
+			element = soup.find(id=element_id)
+			if element is None:
+				return 0
+			return len(element.find_all(lambda tag: tag.get("class") == [ classname ]))
+
+		description = ""
+		section_counts = OrderedDict()
+		section_counts["General"] = count_class_in_id("GeneralSection", "PatchNote")
+		section_counts["Item"] = count_class_in_id("ItemsSection", "ItemName")
+		section_counts["Hero"] = count_class_in_id("HeroesSection", "HeroName")
+		for section in section_counts:
+			count = section_counts[section]
+			if count > 0:
+				description += f"\n{count} {section} changes"
+
+		image_meta_tag = soup.find(name="meta", attrs={ "property" : "og:image" })
+
+		if image_meta_tag is not None:
+			description = ""
+
+		if description == "" and image_meta_tag is None:
+			description = "*Couldn't parse the changes.*"
+
+		# we can improve this embed later but for now this is what we got
+		embed = discord.Embed(timestamp=datetime.datetime.utcnow())
+		embed.title = current_patch
+		embed.url = url
+		embed.description = description
+		embed.set_thumbnail(url="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/blog/play/dota_logo.png")
+		if image_meta_tag:
+			embed.set_image(url=image_meta_tag["content"])
+
+		messageables = []
+		guildinfos = botdata.guildinfo_list()
+		for guildinfo in guildinfos:
+			if guildinfo.dotapatchchannel is not None:
+				channel = self.bot.get_channel(guildinfo.dotapatchchannel)
+				if channel is not None:
+					messageables.append(channel)
+				else:
+					print(f"couldn't find channel {guildinfo.dotapatchchannel} when announcing dota patches")
+
+		userinfos = botdata.userinfo_list()
+		for userinfo in userinfos:
+			if userinfo.dmdotapatch:
+				user = self.bot.get_user(userinfo.discord)
+				if user is not None:
+					messageables.append(user)
+				else:
+					print(f"couldn't find user {userinfo.discord} when announcing dota patches")
+
+		tasks = []
+		for messageable in messageables:
+			tasks.append(messageable.send(embed=embed))
+
+		bundler = AsyncBundler(tasks)
+		print("waiting for dota patch bundle to complete")
+		await bundler.wait()
+		print("dota patch bundle completed")
+		await self.send_owner("__Dota Patch Sent!__\n" + bundler.status_as_string())
+
 
 	@commands.Cog.listener()
 	async def on_message(self, message):
-		if message.guild is not None and not botdata.guildinfo(message.guild.id).reactions:
-			return
+		if message.author == self.bot.user:
+			return # ignore stuff from myself
 
-		if (message.author == self.bot.user) or message.content.startswith(self.cmdpfx(message.guild)):
-			return
+		if message.guild is None:
+			return # only keep going if we're in a guild
+		guildinfo = botdata.guildinfo(message.guild.id)
+
+		if message.author.bot and (message.author.id in guildinfo.allowedbots) or (message.webhook_id and guildinfo.allowwebhooks):
+			# execute this command from a bot because we're allowing it
+			ctx = await self.bot.get_context(message)
+			await self.bot.invoke(ctx)
+
+		if message.content.startswith(self.cmdpfx(message.guild)):
+			return # ignore stuff that starts with the command prefix
+
+		if not guildinfo.reactions:
+			return # only keep going for guilds with reactions enabled
 
 		random.seed(message.content)
 
@@ -557,11 +710,34 @@ class General(MangoCog):
 		"""Posts the donation information"""
 		embed = discord.Embed()
 
-		embed.description = "I host MangoByte on [DigitalOcean](https://www.digitalocean.com), which costs `$15` per month. (2nd row in the 'Flexible Droplet' table [here](https://www.digitalocean.com/pricing/)). "
-		embed.description += "I have a decently paying job, so MangoByte won't be going down anytime soon, but if you want to help with the server costs, or just support me because you feel like it, feel free to donate using the link below:"
-		embed.description += f"\n\n[Donation Link]({self.donation_link})"
+		donate_stuff = "\n".join(map(lambda key: f"• [{key}]({donate_links[key]})", donate_links))
+		embed.description = "I host MangoByte on [DigitalOcean](https://www.digitalocean.com), which costs `$15` per month. "
+		embed.description += "Mango makes 100,000+ api calls to opendota per month, which adds up to a bit over `$10` a month. (the [api calls start costing money](https://www.opendota.com/api-keys) if you do over 50,000 a month). "
+		embed.description += "I have a job, and MangoByte won't be going down anytime soon, but if you want to help with the server costs, or just support me because you feel like it, feel free to donate using any of the links below. "
+		embed.description += "I don't have any paid benefits/features at the moment for people who donate, but the support is definetly appreciated! "
+		embed.description += f"\n\n{donate_stuff}"
 
 		await ctx.send(embed=embed)
+
+
+	@commands.command(aliases=[ "kitten", "cats", "kittens", "minnie", "minerva" ])
+	async def cat(self, ctx):
+		"""Gets a picture of my cat
+
+		These are pictures of my (the developer of mangobyte) cat. Shes a bit over a year old now. Her name is Minnie. Short for Minerva. Also known as "Kitten", "Sneakerdoodle", or "Noodle." Shes a good kitten. """
+		cat_dir = settings.resource("images/cat")
+		imagepath = os.path.join(cat_dir, random.choice(os.listdir(cat_dir)))
+		await ctx.send(file=discord.File(imagepath))
+
+	@commands.command(aliases=[ "dogs", "doggos", "doggo", "comet", "fizzgig" ])
+	async def dog(self, ctx):
+		"""Gets a picture of one of my dogs
+
+		These are pictures of my (the developer of mangobyte) dogs. Thier names are Fizzgig and Comet. One is floof. Other is big doggo. Floof older. Both good boys. """
+		cat_dir = settings.resource("images/dog")
+		imagepath = os.path.join(cat_dir, random.choice(os.listdir(cat_dir)))
+		await ctx.send(file=discord.File(imagepath))
+
 
 
 def setup(bot):

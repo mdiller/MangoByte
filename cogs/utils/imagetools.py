@@ -19,8 +19,10 @@ def hsv_to_rgb(hsv):
 
 class Color():
 	def __init__(self, value):
+		if isinstance(value, Color):
+			value = value.hex
 		if isinstance(value, str):
-			if not re.match(r"#[0-9a-fA-F]{6}$", value):
+			if not re.match(r"#?[0-9a-fA-F]{6}$", value):
 				raise ValueError("Color given invalid hex color")
 			value = value.lstrip("#")
 			lv = len(value)
@@ -135,7 +137,7 @@ def colorize_image(filename1, filename2, out_filename):
 
 # pastes image 2 onto image 1, preserving alpha/transparency
 # this will close the first image that was passed in, as it is assumed that this will replace it
-def paste_image(image1, image2, x, y):
+def paste_image(image1, image2, x=0, y=0):
 	temp_image = Image.new("RGBA", image1.size)
 	temp_image.paste(image2, (x, y))
 	return Image.alpha_composite(image1, temp_image)

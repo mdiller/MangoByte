@@ -55,6 +55,21 @@ class Settings:
 	def odota(self):
 		return self.json_data.get("odota", None)
 
+	# an optional api key for the topgg api. If not given, then the bot wont update the topgg api
+	@property
+	def topgg(self):
+		return self.json_data.get("topgg", None)
+
+	# an optional number of shards to use for the bot. by default will use as many as it thinks it needs
+	@property
+	def shard_count(self):
+		return self.json_data.get("shard_count", None)
+
+	# an optional path to a place to save server and member count information as json
+	@property
+	def infodump_path(self):
+		return self.json_data.get("infodump_path", None)
+
 	@property
 	def resourcedir(self):
 		return "resource/" # self.json_data["resourcedir"]
