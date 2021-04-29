@@ -48,7 +48,10 @@ namespace MangoTester
     [OneTimeTearDown]
     public static async Task MainTeardown()
     {
-      await Bot.DisconnectAsync();
+      if (Bot != null)
+      {
+        await Bot?.DisconnectAsync();
+      }
     }
   }
 }

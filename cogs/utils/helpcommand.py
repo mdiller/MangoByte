@@ -20,7 +20,7 @@ def get_config_help(variables, command):
 		f"**Examples**\n"
 		f"{examples}")
 
-
+test_regex = r"\n\[([^|]+)\|([^\]]+)\]"
 text_help_server = "Feel free to visit the [Mangobyte Help Server/Guild](https://discord.gg/d6WWHxx) if you have any questions!"
 text_category_help = "To get more information about a specific category, try `{cmdpfx}help <category>`"
 text_command_help = "To get more information about a specific command, try `{cmdpfx}help <command>`"
@@ -129,11 +129,22 @@ class MangoHelpCommand(DefaultHelpCommand):
 		return '%s%s %s' % (botdata.command_prefix(self.context), command.qualified_name, command.signature)
 
 	def fill_template(self, text):
+		text = re.sub(test_regex, "", text)
 		text = re.sub("\{config_help\}", get_config_help(GuildInfo.variables, "config"), text)
 		text = re.sub("\{userconfig_help\}", get_config_help(UserInfo.variables, "userconfig"), text)
 		text = re.sub("\{cmdpfx\}", botdata.command_prefix(self.context), text)
 		text = re.sub("\n`", u"\n\u200b`", text)
 		return text
+
+	# extracts tests info from the command comments
+	def get_tests(self, text):
+		tests = []
+		for match in re.finditer(test_regex, text):
+			tests.append({
+				"command": match.group(1),
+				"expected": match.group(2)
+			})
+		return tests
 
 	def cog_short_doc(self, cog):
 		return self.fill_template(inspect.getdoc(cog).split('\n')[0])

@@ -326,7 +326,8 @@ def update_commandinfo():
 			"short_help": cmd.short_doc,
 			"help": bot.help_command.fill_template(cmd.help),
 			"aliases": cmd.aliases,
-			"cog": cmd.cog.name if cmd.cog else "General"
+			"cog": cmd.cog.name if cmd.cog else "General",
+			"tests": bot.help_command.get_tests(cmd.help),
 		})
 	for cog in bot.cogs:
 		if cog == "Owner":

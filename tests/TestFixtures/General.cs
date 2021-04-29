@@ -9,6 +9,16 @@ namespace MangoTester.TestFixtures
   public class General : BaseTestFixture
   {
     [Test]
+    [TestCaseSource(typeof(TestCaseBuilder), nameof(TestCaseBuilder.GetTestCases))]
+    public async Task GeneratedTests(string command, string expected)
+    {
+      await Bot.SendMessageAsync(Channel, command);
+
+      var message = await WaitForMessage();
+      Assert.That(message.HasEmbed(), "message should return an embed");
+    }
+
+    [Test]
     public async Task Reddit()
     {
       await Bot.SendMessageAsync(Channel, "?reddit");

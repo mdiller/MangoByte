@@ -677,6 +677,8 @@ class Dotabase(MangoCog):
 
 		You can give this command almost any variant of the hero's name, or the hero's id
 
+		[?hero sf|embed]
+		[?hero inker|embed]
 		**Examples:**
 		`{cmdpfx}hero sf`
 		`{cmdpfx}hero inker`
