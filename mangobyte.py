@@ -44,7 +44,12 @@ description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 				For more information about me, try `{cmdpfx}info`"""
 permissions = 314432
 
-bot = commands.AutoShardedBot(command_prefix=botdata.command_prefix_botmessage, help_command=MangoHelpCommand(), description=description, shard_count=settings.shard_count)
+bot = commands.AutoShardedBot(
+	command_prefix=botdata.command_prefix_botmessage, 
+	help_command=MangoHelpCommand(), 
+	description=description, 
+	case_insensitive=True,
+	shard_count=settings.shard_count)
 
 thinker = Thinker(bot)
 invite_link = f"https://discordapp.com/oauth2/authorize?permissions={permissions}&scope=bot&client_id=213476188037971968"
@@ -89,8 +94,8 @@ async def on_ready():
 	onReadyTimer = SimpleTimer()
 
 	if is_first_time:
-		print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
-		print('Connecting to voice channels if specified in botdata.json ...')
+		print("Logged in as:\n{0} (ID: {0.id})".format(bot.user))
+		print("Connecting to voice channels if specified in botdata.json ...")
 
 	game = discord.Activity(
 		name="DOTA 3 [?help]",

@@ -160,55 +160,55 @@ Commands to help manage mangobyte on your server/guild
 
 `?hero brew`
 
-![hero_brew](/resource/images/readme/hero_brew.png)
+![hero_brew](resource/images/readme/hero_brew.png)
 
 `?ability dream coil`
 
-![ability_dream_coil](/resource/images/readme/ability_dream_coil.png)
+![ability_dream_coil](resource/images/readme/ability_dream_coil.png)
 
 `?item silver edge`
 
-![item_silver_edge](/resource/images/readme/item_silver_edge.png)
+![item_silver_edge](resource/images/readme/item_silver_edge.png)
 
 `?herotable lvl 20 effective hp`
 
-<img width="600px" src="/resource/images/readme/herotable_lvl20_effhp.png"/>
+<img width="600px" src="resource/images/readme/herotable_lvl20_effhp.png"/>
 
 `?lastmatch as skywrath this patch`
 
-![lastmatch](/resource/images/readme/lastmatch.png)
+![lastmatch](resource/images/readme/lastmatch.png)
 
 `?playerstats`
 
-![playerstats](/resource/images/readme/playerstats.png)
+![playerstats](resource/images/readme/playerstats.png)
 
 `?twenty`
 
-![twenty](/resource/images/readme/twenty.png)
+![twenty](resource/images/readme/twenty.png)
 
 `?laning`
 
-![laning](/resource/images/readme/laning.gif)
+![laning](resource/images/readme/laning.gif)
 
 `?recent`
 
-<img width="600px" src="/resource/images/readme/recent.png"/>
+<img width="600px" src="resource/images/readme/recent.png"/>
 
 `?recent tinker wins` (See the options you can use for this [here](resource/docs.md))
 
-<img width="600px" src="/resource/images/readme/recent_tinker_wins.png"/>
+<img width="600px" src="resource/images/readme/recent_tinker_wins.png"/>
 
 `?rolesgraph`
 
-![rolesgraph](/resource/images/readme/rolesgraph.png)
+![rolesgraph](resource/images/readme/rolesgraph.png)
 
 `?help config`
 
-![help_config](/resource/images/readme/help_config.png)
+![help_config](resource/images/readme/help_config.png)
 
 `?help userconfig`
 
-![help_userconfig](/resource/images/readme/help_userconfig.png)
+![help_userconfig](resource/images/readme/help_userconfig.png)
 
 
 ## Installation

@@ -15,6 +15,8 @@ from concurrent.futures import ThreadPoolExecutor
 def tts_save(filename, text, lang):
 	# run_command(["pico2wave", "--wave", filename, "-l", "en-GB", text])
 	loop_count = 10
+	if "-" in lang:
+		lang = "en"
 	while loop_count > 0:
 		loop_count -= 1
 		try:

@@ -1425,7 +1425,7 @@ class DotaStats(MangoCog):
 		embed.set_author(
 			name=playerinfo["profile"]["personaname"] or "Anonymous", 
 			icon_url=playerinfo["profile"]["avatar"] or default_steam_icon, 
-			url=playerinfo["profile"]["profileurl"] or f"https://www.opendota.com/players/{steam32}")
+			url=playerinfo["profile"]["profileurl"] or f"https://www.opendota.com/players/{player.steam_id}")
 
 		image = discord.File(drawdota.draw_polygraph(role_scores, roles), "rolesgraph.png")
 		embed.set_image(url=f"attachment://{image.filename}")
