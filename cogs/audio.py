@@ -348,7 +348,7 @@ class Audio(MangoCog):
 		while not audioplayer.clipqueue.empty():
 			try:
 				audioplayer.clipqueue.get()
-			except Empty:
+			except queue.Empty:
 				continue
 		if audioplayer.voice is not None:
 			audioplayer.voice.stop()

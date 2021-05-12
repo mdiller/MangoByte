@@ -175,7 +175,7 @@ class LoggingDb():
 
 	async def query(self, query):
 		async with self.lock, Database(self.database_url) as database:
-			return await database.fetch_all(query=q)
+			return await database.fetch_all(query=query)
 
 	async def insert_row(self, database, table, row):
 		await database.execute(query=table.__table__.insert().values(row2dict(row)))
@@ -331,7 +331,7 @@ class LoggingDb():
 
 	# only called manually
 	def add_missing_guilds(self, current_guilds):
-		update_guilds(current_guilds, self.session)
+		self.update_guilds(current_guilds, self.session)
 		guilds = {}
 		for message in self.session.query(Message).order_by(Message.timestamp):
 			if message.server_id not in guilds:
