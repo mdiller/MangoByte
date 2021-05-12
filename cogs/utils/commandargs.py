@@ -6,27 +6,25 @@ from .helpers import *
 from collections import OrderedDict
 import datetime
 import math
+from functools import lru_cache
 
-
-hero_pattern_cache = {}
+@lru_cache(maxsize=None)
 def get_cache_hero_pattern(dotabase, prefix):
-	if prefix in hero_pattern_cache:
-		return hero_pattern_cache[prefix]
-	else:
-		pattern = f"{prefix}{dotabase.hero_regex}"
-		pattern = f"\\b(?:{pattern})\\b"
-		pattern = re.compile(pattern, re.IGNORECASE)
-		hero_pattern_cache[prefix] = pattern
-		return pattern
+	pattern = f"{prefix}{dotabase.hero_regex}"
+	pattern = f"\\b(?:{pattern})\\b"
+	pattern = re.compile(pattern, re.IGNORECASE)
+	return pattern
 
-item_pattern = None
-def get_item_pattern(dotabase):
-	if item_pattern is not None:
-		return item_pattern
-	else:
-		pattern = f"\\b{dotabase.item_regex}\\b"
-		pattern = re.compile(pattern, re.IGNORECASE)
-		return pattern
+
+@lru_cache(maxsize=None)
+def get_item_pattern(dotabase, level=1):
+	regex_levels = [
+		dotabase.item_regex_1,
+		dotabase.item_regex_2
+	]
+	pattern = f"\\b{regex_levels[level - 1]}\\b"
+	pattern = re.compile(pattern, re.IGNORECASE)
+	return pattern
 
 hero_stats_patterns = OrderedDict()
 def get_cache_hero_stats_patterns(dotabase):
@@ -165,13 +163,14 @@ class DotaPlayer():
 		return cls(userinfo.steam, player.mention, is_author)
 
 class QueryArg():
-	def __init__(self, name, args_dict=None, post_filter=None):
+	def __init__(self, name, args_dict=None, post_filter=None, parse_levels=1):
 		self.name = name
 		self.args_dict = args_dict or {}
 		self.post_filter = post_filter
 		self.value = None
+		self.parse_levels = parse_levels
 
-	async def parse(self, text):
+	async def parse(self, text, level=1):
 		for key in self.args_dict:
 			match = re.match(key, text)
 			if match:
@@ -269,8 +268,8 @@ class TimeSpanArg(QueryArg):
 		pass
 
 	def regex(self):
-		pattern = "(?:in|over|during)? ?"
-		pattern += f"((?P<since>since )?(?:patch )?(?P<patch>{self.dotabase.patches_regex})|(?:the )?(?:this|last|past)? ?(?P<count>\\d+\\.?\\d*)? ?(?P<kind>(?:to)?day|week|month|year|patch)e?s?)"
+		pattern = "(?:(?:in|over|during) )?"
+		pattern += f"((?P<since>since )?(?:patch )?(?P<patch>{self.dotabase.patches_regex})|(?:the )?(?:(?:this|last|past) )?(?:(?P<count>\\d+\\.?\\d*) )?(?P<kind>(?:to)?day|week|month|year|patch)e?s?)"
 		pattern = f"\\b{pattern}\\b"
 		pattern = re.compile(pattern, re.IGNORECASE)
 		return pattern
@@ -279,6 +278,7 @@ all_item_slots = [ "item_0", "item_1", "item_2", "item_3", "item_4", "item_5", "
 class ItemArg(QueryArg):
 	def __init__(self, ctx, name, **kwargs):
 		kwargs["post_filter"] = PostFilter(all_item_slots, self.post_filter_checker)
+		kwargs["parse_levels"] = 2
 		super().__init__(name, **kwargs)
 		self.dotabase = ctx.bot.get_cog("Dotabase")
 		self.item = None
@@ -289,10 +289,10 @@ class ItemArg(QueryArg):
 				return True
 		return False
 
-	def regex(self):
-		return get_item_pattern(self.dotabase)
+	def regex(self, level=1):
+		return get_item_pattern(self.dotabase, level)
 
-	async def parse(self, text):
+	async def parse(self, text, level=1):
 		self.item = self.dotabase.lookup_item(text)
 		self.value = self.item.id
 
@@ -404,6 +404,13 @@ class MatchFilter():
 			value = parser.take_regex(arg.regex())
 			if value:
 				await arg.parse(value)
+		for level in [ 2 ]:
+			for arg in args:
+				if arg.parse_levels >= level and not arg.has_value():
+					value = parser.take_regex(arg.regex(level=level))
+					if value:
+						await arg.parse(value, level=level)
+
 		playerarg = MatchFilter._get_arg(args, "_player")
 		if playerarg.player is None:
 			playerarg.set_player(await DotaPlayer.from_author(ctx))

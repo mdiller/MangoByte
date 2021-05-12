@@ -107,7 +107,8 @@ class Dotabase(MangoCog):
 		self.item_aliases = {}
 		self.leveled_hero_stats = [] # by level (0 is null, and 1-30 are filled in)
 		self.hero_regex = ""
-		self.item_regex = ""
+		self.item_regex_1 = ""
+		self.item_regex_2 = ""
 		self.patches_regex = ""
 		self.build_helpers()
 		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
@@ -141,8 +142,9 @@ class Dotabase(MangoCog):
 			if " " in pattern:
 				secondary_item_patterns.extend(pattern.split(" "))
 			item_patterns.append(pattern)
+		self.item_regex_1 = f"(?:{'|'.join(item_patterns)})"
 		item_patterns.extend(secondary_item_patterns)
-		self.item_regex = f"(?:{'|'.join(item_patterns)})"
+		self.item_regex_2 = f"(?:{'|'.join(item_patterns)})"
 
 		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
 			self.criteria_aliases[crit.name.lower()] = crit.name
