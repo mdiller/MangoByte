@@ -40,8 +40,9 @@ class Admin(MangoCog):
 			await ctx.send("Ya can't ban mah owner, man. 😠")
 			return
 		if checks.is_admin_check(ctx.message.channel, ctx, user):
-			await ctx.send("Ya can't ban other admins")
-			return
+			if not checks.is_owner_check(ctx.message.author):
+				await ctx.send("Ya can't ban other admins")
+				return
 		if user.id == self.bot.user.id:
 			await ctx.send("Lol you can't ban me, silly")
 			return
