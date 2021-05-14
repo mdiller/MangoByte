@@ -428,7 +428,7 @@ class Dotabase(MangoCog):
 	def get_chatwheel_sound_clip(self, text):
 		message = self.get_chatwheel_sound(text)
 		if message:
-			return f"url:{self.vpkurl}{message.sound}"
+			return f"dotachatwheel:{message.id}"
 		else:
 			return None
 
@@ -439,6 +439,11 @@ class Dotabase(MangoCog):
 		text = simplify(text)
 		if text == "":
 			return None
+		if text.isdigit():
+			query = session.query(ChatWheelMessage).filter_by(id=int(text))
+			if query.count() > 0:
+				return query.first()
+
 		for message in session.query(ChatWheelMessage):
 			if message.sound:
 				strings = list(map(simplify, [ message.name, message.message, message.label ]))
@@ -671,7 +676,7 @@ class Dotabase(MangoCog):
 		if message is None:
 			raise UserError(f"Couldn't find chat wheel sound '{text}'")
 
-		await self.play_clip(f"url:{self.vpkurl}{message.sound}", ctx)
+		await self.play_clip(f"dotachatwheel:{message.id}", ctx)
 
 	@commands.command()
 	async def hero(self, ctx, *, hero : str):

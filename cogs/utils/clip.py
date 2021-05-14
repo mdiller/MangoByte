@@ -205,6 +205,34 @@ class DotaClip(Clip):
 		self.add_info_embed_parts(embed)
 		return embed
 
+class DotaChatWheel(Clip):
+	async def init(self, chatwheel_id, bot, ctx):
+		dotabase = bot.get_cog("Dotabase")
+		self.message = dotabase.get_chatwheel_sound(chatwheel_id)
+		if self.message == None:
+			raise ClipNotFound(self.type(), chatwheel_id)
+
+		filename = await httpgetter.get(dotabase.vpkurl + self.message.sound, "filename", cache=True)
+		return await Clip.init(self, chatwheel_id, filename, text=self.message.message, volume=0.4)
+
+	@classmethod
+	def type(cls):
+		return "dotachatwheel"
+
+	async def get_info_embed(self):
+		embed = discord.Embed()
+		embed.description = self.message.message
+		if self.message.label != "":
+			embed.add_field(name="Label", value=self.message.label)
+		if self.message.category:
+			embed.add_field(name="Category", value=self.message.category)
+		allchat_value = "Yes" if self.message.all_chat else "No"
+		embed.add_field(name="All-Chat", value=allchat_value)
+
+		self.add_info_embed_parts(embed)
+		return embed
+
+
 gtts_langs = read_json(settings.resource("json/gtts_languages.json"))
 
 class GttsLang():
