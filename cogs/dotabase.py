@@ -645,7 +645,7 @@ class Dotabase(MangoCog):
 	async def chatwheel(self, ctx, *, text):
 		"""Plays the given chat wheel sound
 
-		Give the command a number between 1 and 6 to page through all of the available chat options:
+		Give the command a number between 1 and 22 to page through all of the available chat options:
 		`{cmdpfx}chatwheel 1`
 		`{cmdpfx}chatwheel 3`
 
