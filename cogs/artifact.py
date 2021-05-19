@@ -11,7 +11,7 @@ from .mangocog import *
 import random
 import os
 import re
-
+import json
 
 class Artifact(MangoCog):
 	"""Artifact related commands
@@ -56,6 +56,8 @@ class Artifact(MangoCog):
 					break # this set doesnt exist yet
 				else:
 					raise
+			except json.decoder.JSONDecodeError as e:
+				break # valve has removed the api D:
 			data = (await httpgetter.get(f"{set_data['cdn_root']}{set_data['url']}"))["card_set"]
 			card_sets_data.append(data)
 

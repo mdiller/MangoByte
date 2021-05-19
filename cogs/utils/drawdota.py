@@ -623,20 +623,29 @@ async def create_dota_emoticon(emoticon, url):
 	if filename and not settings.debug:
 		return filename
 
-	filename = await httpgetter.cache.new(uri, "gif")
+	filetype = "gif" if emoticon.frames > 1 else "png"
+
+	filename = await httpgetter.cache.new(uri, filetype)
 
 	image = Image.open(await httpgetter.get(url, "bytes", cache=True))
 	image = remove_semi_transparent(image, (255, 255, 255, 0))
 
+	if filetype == "png":
+		image.save(filename, "png")
+		return filename
+
 	frame_width = image.width / emoticon.frames
 
-	process = subprocess.Popen(["gifsicle", 
-		"--multifile", 
-		"-d", str(emoticon.ms_per_frame // 10), 
-		"-U", "--disposal=bg",
-		"--loopcount=0",
-		"--transparent", "0",
-		"-", "-o", filename], stdin=subprocess.PIPE, bufsize=-1)
+	try:
+		process = subprocess.Popen(["gifsicle", 
+			"--multifile", 
+			"-d", str(emoticon.ms_per_frame // 10), 
+			"-U", "--disposal=bg",
+			"--loopcount=0",
+			"--transparent", "0",
+			"-", "-o", filename], stdin=subprocess.PIPE, bufsize=-1)
+	except OSError as e:
+		raise UserError("Whoever setup this mangobyte doesn't have gifsicle installed")
 
 	for i in range(0, emoticon.frames):
 		box = (i * frame_width, 0, (i + 1) * frame_width, image.height)
@@ -699,7 +708,9 @@ async def dota_rank_icon(rank_tier, leaderboard_rank):
 def get_datetime_cell(match, region_data):
 	match_date = datetime.utcfromtimestamp(match["start_time"])
 	region = str(match.get("region"))
-	if region and region in region_data:
+	if region is None or region == "None":
+		region = "1" # Default to US West
+	if region in region_data:
 		match_date += timedelta(hours=region_data[region]["UTC_offset"])
 	# character for leading space is different on windows
 	lead_char = "#" if os.name == "nt" else "-"

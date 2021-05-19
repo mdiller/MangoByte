@@ -560,6 +560,17 @@ class Dotabase(MangoCog):
 
 		return None
 
+	async def get_laugh_response(self, hero=None):
+		query = session.query(Response)
+		if hero is not None:
+			hero = self.lookup_hero(hero)
+			query = query.filter(Response.hero_id == hero.id)
+		query = query.filter(Response.criteria.like(f"%|HeroChatWheel%"))
+		query = query.filter(Response.criteria.like(f"%IsEmoteLaugh%"))
+		query = query.order_by(func.random())
+
+		return query.first()
+
 	@commands.command(aliases=["hi"])
 	async def hello(self, ctx):
 		"""Says hello
@@ -615,7 +626,8 @@ class Dotabase(MangoCog):
 		"""WOW I WONDER WAT THIS DOES
 
 		Laughs using dota. Thats what it does."""
-		await self.hero_keyphrase_command(";laugh", hero, ctx)
+		response = await self.get_laugh_response(hero)
+		await self.play_response(response, ctx)
 
 	@commands.command(aliases=["ty"])
 	async def thanks(self, ctx, *, hero=None):
@@ -1041,7 +1053,9 @@ class Dotabase(MangoCog):
 			raise UserError(f"Couldn't find an emoticon with the name '{name}'")
 
 		url = self.vpkurl + emoticon.url
-		image = discord.File(await drawdota.create_dota_emoticon(emoticon, url), f"{name}.gif")
+
+		filetype = "gif" if emoticon.frames > 1 else "png"
+		image = discord.File(await drawdota.create_dota_emoticon(emoticon, url), f"{name}.{filetype}")
 
 		await ctx.send(file=image)
 

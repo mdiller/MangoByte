@@ -71,9 +71,9 @@ class SteamNotLinkedError(UserError):
 		self.is_author = user is None
 		self.user = user
 		if not self.is_author:
-			super().__init__(f"{user.name} doesn't have a steam account linked. They should try `{{cmdpfx}}userconfig steam` to see how to link their steam account.")
+			super().__init__(f"{user.name} doesn't have a steam account linked to mangobyte. They should try `{{cmdpfx}}userconfig steam` to see how to link their steam account to mangobyte.")
 		else:
-			super().__init__("Yer steam account isn't linked to yer discord account yet.\nTry doin' `{cmdpfx}userconfig steam` to see how to link a steam account.")
+			super().__init__("Ya haven't told me what yer steam account is.\nTry doin' `{cmdpfx}userconfig steam` to see how to link a steam account to mangobyte.")
 
 class NoMatchHistoryError(UserError):
 	def __init__(self, steam_id):
