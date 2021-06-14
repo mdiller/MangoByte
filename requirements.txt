@@ -5,7 +5,7 @@ beautifulsoup4>=4.6.3
 colorgram.py==1.1.0
 gTTS>=2.2.1
 gTTS-token>=1.1.4
-SQLAlchemy>=1.2.11
+SQLAlchemy==1.2.11
 Pillow>=6.2.0
 youtube-dl>=2018.8.28
 dotabase>=7.2.3
