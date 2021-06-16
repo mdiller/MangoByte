@@ -1,4 +1,5 @@
 from __main__ import settings, botdata, httpgetter
+from cogs.utils.commandargs import HeroStatsTableArgs
 import aiohttp
 import asyncio
 import async_timeout
@@ -721,6 +722,29 @@ def get_datetime_cell(match, region_data):
 		TextCell(str_time, font_size=18, horizontal_align="center")
 	)
 
+async def draw_meta_table(heroes): 
+	region_data = read_json(settings.resource("json/region_data.json"))
+	border_size = 10
+	grey_color = "#BBBBBB"
+	table = Table(background=discord_color2)
+	#Header
+	headers=[
+		TextCell("Hero", padding=0), 
+		TextCell("Pick/Ban %"), 
+		TextCell("Win%")
+	]
+
+	table.add_row(headers)
+	for cell in table.rows[0]: 
+		cell.background = discord_color1
+
+	table.add_row([ColorCell(color=discord_color1, height=6) for i in range(len(headers))])
+	first = True
+
+	for hero in heroes: 
+		pass
+
+	pass
 
 async def draw_matches_table(matches, game_strings):
 	region_data = read_json(settings.resource("json/region_data.json"))	
