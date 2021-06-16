@@ -723,6 +723,8 @@ def get_datetime_cell(match, region_data):
 	)
 
 async def draw_meta_table(heroes): 
+	"""Takes a list of [heroes+p/b%+wr%] and draws a nice little discord-friendly table"""
+	
 	region_data = read_json(settings.resource("json/region_data.json"))
 	border_size = 10
 	grey_color = "#BBBBBB"

@@ -258,11 +258,21 @@ class DotaStats(MangoCog):
 		r = requests.get(url)
 		return r.json()
 
+	def sort_meta(self, json, num): 
+		"""re-orders the meta json based on pick/ban + winrate.
+		num = number of top heroes to include """
+		sorted_json = dict(json)
+		sorted_json = sorted(key = lambda x: x['pro_win'])
+		print
+		pass
+
 	@commands.command()
 	async def meta(self, ctx): 
 		"""returns the list of top meta heroes from https://opendota.com/heroes"""
-
-		print(await self.get_meta_json())
+		json = await self.get_meta_json()
+		sorted_json = self.sort_meta(json, 10)
+		print(sorted_json)
+		# print(await self.get_meta_json())
 
 	def get_pretty_hero(self, player, use_icons=False):
 		dotabase = self.bot.get_cog("Dotabase")
