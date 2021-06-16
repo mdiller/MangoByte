@@ -47,12 +47,13 @@ opendota_html_errors = {
 default_steam_icon = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/fe/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg"
 
 def opendota_query_get_url(querystring):
-	if settings.odota:
-		if "?" in querystring:
-			querystring += f"&api_key={settings.odota}"
-		else:
-			querystring += f"?api_key={settings.odota}"
-	return f"https://api.opendota.com/api{querystring}"
+  """returns query string 'https://api.opendota.com/api{querystring}' """
+  if settings.odota:
+	  if "?" in querystring:
+		  querystring += f"&api_key={settings.odota}"
+	  else:
+		  querystring += f"?api_key={settings.odota}"
+  return f"https://api.opendota.com/api{querystring}"
 
 async def opendota_query(querystring, cache=False):
 	url = opendota_query_get_url(querystring)
@@ -251,6 +252,17 @@ class DotaStats(MangoCog):
 		self.lookup_hero = dotabase.lookup_hero
 		self.chat_wheel_info = dotabase.get_chat_wheel_infos()
 		self.dota_gif_lock = asyncio.Lock()
+
+	async def get_meta_json(self): 
+		url = 'https://api.opendota.com/api/herostats'
+		r = requests.get(url)
+		return r.json()
+
+	@commands.command()
+	async def meta(self, ctx): 
+		"""returns the list of top meta heroes from https://opendota.com/heroes"""
+
+		print(await self.get_meta_json())
 
 	def get_pretty_hero(self, player, use_icons=False):
 		dotabase = self.bot.get_cog("Dotabase")
