@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from __main__ import settings, botdata, httpgetter
+from mangobyte import settings, botdata, httpgetter
 from cogs.utils.deck_decoder import ParseDeck
 from cogs.utils.helpers import *
 from cogs.utils.clip import *

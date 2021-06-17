@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from __main__ import settings, botdata, thinker, httpgetter
+from mangobyte import settings, botdata, thinker, httpgetter
 from cogs.utils import checks
 from cogs.utils.helpers import *
 from cogs.utils.commandargs import *
@@ -21,6 +21,8 @@ import random
 import aiohttp
 import typing
 import math
+import mock
+import httpx
 from types import *
 from .mangocog import *
 
@@ -255,16 +257,22 @@ class DotaStats(MangoCog):
 
 	async def get_meta_json(self): 
 		url = 'https://api.opendota.com/api/herostats'
-		r = requests.get(url)
+		async with httpx.AsyncClient() as client:
+			r = await client.get(url)
 		return r.json()
 
-	def sort_meta(self, json, num): 
+	def sort_meta(self, json, num=10): 
 		"""re-orders the meta json based on pick/ban + winrate.
 		num = number of top heroes to include """
-		sorted_json = dict(json)
-		sorted_json = sorted(key = lambda x: x['pro_win'])
-		print
-		pass
+		sorted_json = sorted(
+			json, 
+			reverse=True, 
+			key=lambda x: ((x["pro_pick"] + x["pro_ban"]) / 993.0) 
+			+ (x['pro_win'] / x['pro_pick']),
+			)
+		if num > 0: 
+			return sorted_json[:num]
+		return sorted_json
 
 	@commands.command()
 	async def meta(self, ctx): 

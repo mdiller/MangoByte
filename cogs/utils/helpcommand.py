@@ -1,4 +1,4 @@
-from __main__ import botdata, settings
+from mangobyte import botdata, settings
 import discord, itertools, inspect, re
 from discord.ext.commands import *
 from .botdata import GuildInfo, UserInfo

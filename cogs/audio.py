@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
-from __main__ import settings, botdata, report_error, loggingdb
+from mangobyte import settings, botdata, report_error, loggingdb
 from cogs.utils import checks
 import cogs.utils.botdatatypes as botdatatypes
 import asyncio

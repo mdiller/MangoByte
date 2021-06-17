@@ -1,4 +1,4 @@
-from __main__ import settings, botdata
+from mangobyte import settings, botdata
 from PIL import Image, ImageDraw, ImageFont
 from .imagetools import *
 import math

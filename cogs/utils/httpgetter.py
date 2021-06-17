@@ -1,4 +1,4 @@
-from __main__ import settings, loggingdb
+from mangobyte import settings, loggingdb
 from .helpers import *
 import re
 import aiohttp

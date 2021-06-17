@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands, tasks
 from sqlalchemy.sql.expression import func
 from sqlalchemy import and_, or_, desc
-from __main__ import settings, httpgetter
+from mangobyte import settings, httpgetter
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
 from cogs.utils.commandargs import *
