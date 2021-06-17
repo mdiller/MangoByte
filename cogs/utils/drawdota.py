@@ -89,6 +89,12 @@ def init_dota_info(hero_info, item_info, ability_info, the_vpkurl):
 def get_hero_name(hero_id):
 	return hero_infos[hero_id]["name"]
 
+def get_hero_winrate(hero): 
+	pass
+
+def get_hero_pickban(hero): 
+	pass
+
 async def get_url_image(url):
 	return Image.open(await httpgetter.get(url, "bytes", cache=True))
 
@@ -744,7 +750,15 @@ async def draw_meta_table(heroes):
 	first = True
 
 	for hero in heroes: 
-		pass
+		table.add_row([
+			ImageCell(img=await get_hero_image(hero["hero_id"]), height=48), 
+			TextCell(get_hero_name(hero["hero_id"]), font_size=24),
+			TextCell(get_hero_winrate(hero), fontsize=24),
+			TextCell(get_hero_pickban(hero), fontsize=24)
+		])
+
+
+
 
 	pass
 
