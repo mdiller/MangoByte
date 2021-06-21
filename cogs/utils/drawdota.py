@@ -1,5 +1,4 @@
 from __main__ import settings, botdata, httpgetter
-from cogs.utils.commandargs import HeroStatsTableArgs
 import aiohttp
 import asyncio
 import async_timeout

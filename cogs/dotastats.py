@@ -1,4 +1,4 @@
-from cogs.utils.metastats import get_total_pro_games
+from cogs.utils.metastats import *
 import discord
 from discord.ext import commands
 from __main__ import settings, botdata, thinker, httpgetter
@@ -50,7 +50,6 @@ opendota_html_errors = {
 default_steam_icon = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/fe/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg"
 
 def opendota_query_get_url(querystring):
-  """returns query string 'https://api.opendota.com/api{querystring}' """
   if settings.odota:
 	  if "?" in querystring:
 		  querystring += f"&api_key={settings.odota}"

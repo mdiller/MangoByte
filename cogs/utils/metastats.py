@@ -1,36 +1,3 @@
-from __main__ import settings, botdata, httpgetter
-from cogs.utils.commandargs import HeroStatsTableArgs
-import aiohttp
-import asyncio
-import async_timeout
-import sys
-import subprocess
-import os
-import numpy
-import math
-from datetime import datetime, timedelta
-from PIL import Image, ImageDraw, ImageFont
-from .tabledraw import (
-    Table,
-    ImageCell,
-    TextCell,
-    ColorCell,
-    DoubleCell,
-    SlantedTextCell,
-    get_table_font,
-)
-from io import BytesIO
-from .helpers import (
-    run_command,
-    get_pretty_time,
-    read_json,
-    UserError,
-    format_duration_simple,
-)
-from .imagetools import *
-from concurrent.futures import ThreadPoolExecutor
-
-
 def get_hero_winrate(hero):
     """returns hero winrate from list of meta heroes"""
     if hero['pro_pick'] == 0: return 0
