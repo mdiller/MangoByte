@@ -2,7 +2,7 @@ import discord
 import asyncio
 import shutil
 from discord.ext import commands
-from mangobyte import settings, botdata, httpgetter, loggingdb
+from __main__ import settings, botdata, httpgetter, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.botdata import GuildInfo
 from cogs.utils.clip import GttsLang

@@ -1,4 +1,4 @@
-from mangobyte import settings, botdata, loggingdb
+from __main__ import settings, botdata, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
 import discord

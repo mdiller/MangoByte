@@ -1,4 +1,4 @@
-from mangobyte import settings
+from __main__ import settings
 import discord
 from discord.ext import commands
 from abc import abstractmethod

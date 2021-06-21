@@ -1,4 +1,4 @@
-from mangobyte import settings, botdata, httpgetter
+from __main__ import settings, botdata, httpgetter
 from cogs.utils.commandargs import HeroStatsTableArgs
 import aiohttp
 import asyncio
@@ -15,6 +15,7 @@ from io import BytesIO
 from .helpers import run_command, get_pretty_time, read_json, UserError, format_duration_simple
 from .imagetools import *
 from concurrent.futures import ThreadPoolExecutor
+from .metastats import *
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -88,12 +89,6 @@ def init_dota_info(hero_info, item_info, ability_info, the_vpkurl):
 
 def get_hero_name(hero_id):
 	return hero_infos[hero_id]["name"]
-
-def get_hero_winrate(hero): 
-	pass
-
-def get_hero_pickban(hero): 
-	pass
 
 async def get_url_image(url):
 	return Image.open(await httpgetter.get(url, "bytes", cache=True))
@@ -731,7 +726,6 @@ def get_datetime_cell(match, region_data):
 async def draw_meta_table(heroes): 
 	"""Takes a list of [heroes+p/b%+wr%] and draws a nice little discord-friendly table"""
 	
-	region_data = read_json(settings.resource("json/region_data.json"))
 	border_size = 10
 	grey_color = "#BBBBBB"
 	table = Table(background=discord_color2)
@@ -754,13 +748,18 @@ async def draw_meta_table(heroes):
 			ImageCell(img=await get_hero_image(hero["hero_id"]), height=48), 
 			TextCell(get_hero_name(hero["hero_id"]), font_size=24),
 			TextCell(get_hero_winrate(hero), fontsize=24),
-			TextCell(get_hero_pickban(hero), fontsize=24)
+			TextCell(get_hero_pick_percent(hero, heroes), fontsize=24)
 		])
 
+	image = table.render()
+	border_image = Image.new('RGBA', (image.size[0] + (border_size * 2), image.size[1] + border_size), color=discord_color1)
+	image = paste_image(border_image, image, border_size, 0)
 
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
 
-
-	pass
+	return fp
 
 async def draw_matches_table(matches, game_strings):
 	region_data = read_json(settings.resource("json/region_data.json"))	

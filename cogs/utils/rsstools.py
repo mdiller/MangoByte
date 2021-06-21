@@ -3,7 +3,7 @@
 import discord
 from dateutil import parser
 import re
-from mangobyte import botdata
+from __main__ import botdata
 from bs4 import BeautifulSoup
 
 def is_new_blog(entry):

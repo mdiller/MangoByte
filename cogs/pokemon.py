@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from mangobyte import settings, botdata, httpgetter
+from __main__ import settings, botdata, httpgetter
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
 from cogs.utils import checks

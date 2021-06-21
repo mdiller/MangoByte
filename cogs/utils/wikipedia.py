@@ -1,4 +1,4 @@
-from mangobyte import settings, httpgetter
+from __main__ import settings, httpgetter
 from bs4 import BeautifulSoup, Tag
 from .helpers import *
 import re

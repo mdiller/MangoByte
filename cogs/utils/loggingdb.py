@@ -1,4 +1,4 @@
-from mangobyte import settings
+from __main__ import settings
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Table, DateTime
 from sqlalchemy.orm import sessionmaker, relationship

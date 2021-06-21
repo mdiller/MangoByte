@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands, tasks
-from mangobyte import settings, botdata, invite_link, httpgetter, loggingdb
+from __main__ import settings, botdata, invite_link, httpgetter, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.botdata import UserInfo
 from cogs.utils import checks, botdatatypes, wikipedia

@@ -4,8 +4,8 @@ from collections import OrderedDict
 
 #
 # loosely based off of the red discord bot's settings
-# to import from mangobyte.py, use:
-# from mangobyte import settings
+# to import from __main__.py, use:
+# from __main__ import settings
 #
 
 class Settings:
