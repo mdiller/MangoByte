@@ -22,7 +22,6 @@ import random
 import aiohttp
 import typing
 import math
-import mock
 import httpx
 from types import *
 from .mangocog import *
@@ -50,12 +49,12 @@ opendota_html_errors = {
 default_steam_icon = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/fe/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg"
 
 def opendota_query_get_url(querystring):
-  if settings.odota:
-	  if "?" in querystring:
-		  querystring += f"&api_key={settings.odota}"
-	  else:
-		  querystring += f"?api_key={settings.odota}"
-  return f"https://api.opendota.com/api{querystring}"
+	if settings.odota:
+		if "?" in querystring:
+			querystring += f"&api_key={settings.odota}"
+		else:
+			querystring += f"?api_key={settings.odota}"
+	return f"https://api.opendota.com/api{querystring}"
 
 async def opendota_query(querystring, cache=False):
 	url = opendota_query_get_url(querystring)
