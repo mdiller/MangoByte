@@ -1,4 +1,4 @@
-from cogs.utils.metastats import *
+from cogs.utils.metastats import get_total_pro_games
 import discord
 from discord.ext import commands
 from __main__ import settings, botdata, thinker, httpgetter
