@@ -33,7 +33,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 def get_hero_winrate(hero):
     """returns hero winrate from list of meta heroes"""
-    return hero.get('pro_win', 0) / hero.get('pro_pick', 1)
+    if hero['pro_pick'] == 0: return 0
+    else: return hero.get('pro_win', 0) / hero.get('pro_pick', 1)
 
 
 def get_hero_pick_percent(hero, heroes):
@@ -48,10 +49,11 @@ def get_total_pro_games(heroes):
     total = 0
     for hero in heroes:
         total += hero.get('pro_pick', 0)  # sums total games in the list
-    return total/10
-
+    total = total/10
+    print(total)
+    return total
 
 def get_hero_pickban_percent(hero, heroes):
     return (
-        get_hero_ban_percent(hero) + get_hero_pick_percent(hero)
+        hero.get('pro_pick', 0) + hero.get('pro_ban', 0)
     ) / get_total_pro_games(heroes)

@@ -723,7 +723,7 @@ def get_datetime_cell(match, region_data):
 		TextCell(str_time, font_size=18, horizontal_align="center")
 	)
 
-async def draw_meta_table(heroes): 
+async def draw_meta_table(sorted_heroes, heroes): 
 	"""Takes a list of [heroes+p/b%+wr%] and draws a nice little discord-friendly table"""
 	
 	border_size = 10
@@ -731,9 +731,10 @@ async def draw_meta_table(heroes):
 	table = Table(background=discord_color2)
 	#Header
 	headers=[
+		TextCell(""), 
 		TextCell("Hero", padding=0), 
-		TextCell("Pick/Ban %"), 
-		TextCell("Win%")
+		TextCell("Win %"), 
+		TextCell("Pick/Ban %")
 	]
 
 	table.add_row(headers)
@@ -743,12 +744,12 @@ async def draw_meta_table(heroes):
 	table.add_row([ColorCell(color=discord_color1, height=6) for i in range(len(headers))])
 	first = True
 
-	for hero in heroes: 
+	for hero in sorted_heroes: 
 		table.add_row([
 			ImageCell(img=await get_hero_image(hero["hero_id"]), height=48), 
 			TextCell(get_hero_name(hero["hero_id"]), font_size=24),
-			TextCell(get_hero_winrate(hero), fontsize=24),
-			TextCell(get_hero_pick_percent(hero, heroes), fontsize=24)
+			TextCell("%.2f" % get_hero_winrate(hero), fontsize=24),
+			TextCell("%.2f" % get_hero_pickban_percent(hero, heroes), fontsize=24)
 		])
 
 	image = table.render()

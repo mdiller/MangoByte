@@ -265,11 +265,13 @@ class DotaStats(MangoCog):
 	def sort_meta(self, json, num=10): 
 		"""re-orders the meta json based on pick/ban + winrate.
 		num = number of top heroes to include """
+		total_games = get_total_pro_games(json)
+
 		sorted_json = sorted(
 			json, 
 			reverse=True, 
-			key=lambda x: ((x.get('pro_pick', 0) + x.get('pro_ban', 0)) / get_total_pro_games(json)) 
-			+ (x.get('pro_win', 0) / x.get('pro_pick', 1)),
+			key=lambda x: (((x.get('pro_pick', 0) + x.get('pro_ban', 0)) / total_games)
+			+ ((x.get('pro_win', 0) / x.get('pro_pick', 1)))),
 			)
 		if num > 0: 
 			return sorted_json[:num]
@@ -277,12 +279,12 @@ class DotaStats(MangoCog):
 
 	async def print_meta(self, ctx): 
 		json = await self.get_meta_json()
-		json = self.sort_meta(json)
+		sorted_json = self.sort_meta(json)
 		
 		description = ("These heroes seem to be spicy, as the kids say")
 
 		embed = discord.Embed(description = description, color=self.embed_color)
-		meta_table = discord.File(await drawdota.draw_meta_table(json), "meta.png")
+		meta_table = discord.File(await drawdota.draw_meta_table(sorted_json, json), "meta.png")
 		embed.set_image(url=f"attachment://{meta_table.filename}")
 		await ctx.send(embed=embed, file=meta_table)
 
@@ -292,13 +294,6 @@ class DotaStats(MangoCog):
 		"""returns the list of top meta heroes from https://opendota.com/heroes"""
 		await ctx.channel.trigger_typing()
 		await self.print_meta(ctx)
-
-
-
-		# sorted_json = self.sort_meta(json, 10)
-		# print(json)
-		# print(sorted_json)
-		# print(await self.get_meta_json())
 
 	def get_pretty_hero(self, player, use_icons=False):
 		dotabase = self.bot.get_cog("Dotabase")
