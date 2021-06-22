@@ -747,8 +747,8 @@ async def draw_meta_table(sorted_heroes, heroes):
 		table.add_row([
 			ImageCell(img=await get_hero_image(hero["hero_id"]), height=48), 
 			TextCell(get_hero_name(hero["hero_id"]), fontsize=24),
-			TextCell(f"{get_hero_winrate(hero):.2f}", fontsize=24),
-			TextCell(f"{get_hero_pickban_percent(hero, heroes):.2f}", fontsize=24)
+			TextCell(f"{get_hero_winrate(hero):.0%}", fontsize=24),
+			TextCell(f"{get_hero_pickban_percent(hero, heroes):.0%}", fontsize=24)
 		])
 
 	image = table.render()
