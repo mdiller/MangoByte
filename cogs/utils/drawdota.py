@@ -730,8 +730,8 @@ async def draw_meta_table(sorted_heroes, heroes):
 	table = Table(background=discord_color2)
 	#Header
 	headers=[
-		TextCell(""), 
-		TextCell("Hero", padding=0), 
+		TextCell("Hero"), 
+		TextCell("", padding=0), 
 		TextCell("Win %"), 
 		TextCell("Pick/Ban %")
 	]
@@ -746,9 +746,9 @@ async def draw_meta_table(sorted_heroes, heroes):
 	for hero in sorted_heroes: 
 		table.add_row([
 			ImageCell(img=await get_hero_image(hero["hero_id"]), height=48), 
-			TextCell(get_hero_name(hero["hero_id"]), font_size=24),
-			TextCell("%.2f" % get_hero_winrate(hero), fontsize=24),
-			TextCell("%.2f" % get_hero_pickban_percent(hero, heroes), fontsize=24)
+			TextCell(get_hero_name(hero["hero_id"]), fontsize=24),
+			TextCell(f"{get_hero_winrate(hero):.2f}", fontsize=24),
+			TextCell(f"{get_hero_pickban_percent(hero, heroes):.2f}", fontsize=24)
 		])
 
 	image = table.render()
