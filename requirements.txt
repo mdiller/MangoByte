@@ -15,4 +15,3 @@ databases==0.2.2
 aiosqlite==0.10.0
 feedparser >= 6.0.2
 python-dateutil>=2.8.1
-httpx==0.18.1

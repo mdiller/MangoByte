@@ -17,7 +17,6 @@ def get_total_pro_games(heroes):
     for hero in heroes:
         total += hero.get('pro_pick', 0)  # sums total games in the list
     total = total/10
-    print(total)
     return total
 
 def get_hero_pickban_percent(hero, heroes):
