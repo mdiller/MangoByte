@@ -726,22 +726,18 @@ async def draw_meta_table(sorted_heroes, heroes):
 	"""Takes a list of [heroes+p/b%+wr%] and draws a nice little discord-friendly table"""
 	
 	border_size = 10
-	grey_color = "#BBBBBB"
 	table = Table(background=discord_color2)
 	#Header
 	headers=[
-		TextCell("Hero", background=discord_color1), 
-		TextCell("", padding=0, background=discord_color1), 
-		TextCell("Win %", background=discord_color1), 
-		TextCell("Pick/Ban %", background=discord_color1)
+		TextCell("Hero", background=discord_color1, padding=6), 
+		TextCell("", background=discord_color1, padding=6), 
+		TextCell("Win %", background=discord_color1, padding=6), 
+		TextCell("Pick/Ban %", background=discord_color1, padding=6)
 	]
 
 	table.add_row(headers)
 	for cell in table.rows[0]: 
 		cell.background = discord_color1
-
-	table.add_row([ColorCell(color=discord_color1, height=6) for i in range(len(headers))])
-	first = True
 
 	for hero in sorted_heroes: 
 		table.add_row([
