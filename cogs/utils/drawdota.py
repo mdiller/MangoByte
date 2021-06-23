@@ -730,10 +730,10 @@ async def draw_meta_table(sorted_heroes, heroes):
 	table = Table(background=discord_color2)
 	#Header
 	headers=[
-		TextCell("Hero"), 
-		TextCell("", padding=0), 
-		TextCell("Win %"), 
-		TextCell("Pick/Ban %")
+		TextCell("Hero", background=discord_color1), 
+		TextCell("", padding=0, background=discord_color1), 
+		TextCell("Win %", background=discord_color1), 
+		TextCell("Pick/Ban %", background=discord_color1)
 	]
 
 	table.add_row(headers)
