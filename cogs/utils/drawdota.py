@@ -14,7 +14,7 @@ from io import BytesIO
 from .helpers import run_command, get_pretty_time, read_json, UserError, format_duration_simple
 from .imagetools import *
 from concurrent.futures import ThreadPoolExecutor
-from .metastats import *
+from .metastats import get_hero_winrate, get_hero_pickban_percent
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -723,7 +723,8 @@ def get_datetime_cell(match, region_data):
 	)
 
 async def draw_meta_table(sorted_heroes, heroes): 
-	"""Takes a list of [heroes+p/b%+wr%] and draws a nice little discord-friendly table"""
+	"""Takes a sorted json and an unsorted json of
+	heroes and draws a nice little discord-friendly table"""
 	
 	border_size = 10
 	table = Table(background=discord_color2)
@@ -736,8 +737,6 @@ async def draw_meta_table(sorted_heroes, heroes):
 	]
 
 	table.add_row(headers)
-	for cell in table.rows[0]: 
-		cell.background = discord_color1
 
 	for hero in sorted_heroes: 
 		table.add_row([
