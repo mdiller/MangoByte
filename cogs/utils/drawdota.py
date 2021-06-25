@@ -14,6 +14,7 @@ from io import BytesIO
 from .helpers import run_command, get_pretty_time, read_json, UserError, format_duration_simple
 from .imagetools import *
 from concurrent.futures import ThreadPoolExecutor
+from .metastats import get_hero_winrate, get_hero_pickban_percent
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -721,6 +722,39 @@ def get_datetime_cell(match, region_data):
 		TextCell(str_time, font_size=18, horizontal_align="center")
 	)
 
+async def draw_meta_table(sorted_heroes, heroes): 
+	"""Takes a sorted json and an unsorted json of
+	heroes and draws a nice little discord-friendly table"""
+	
+	border_size = 10
+	table = Table(background=discord_color2)
+	#Header
+	headers=[
+		TextCell("Hero", background=discord_color1, padding=6), 
+		TextCell("", background=discord_color1, padding=6), 
+		TextCell("Win %", background=discord_color1, padding=6), 
+		TextCell("Pick/Ban %", background=discord_color1, padding=6)
+	]
+
+	table.add_row(headers)
+
+	for hero in sorted_heroes: 
+		table.add_row([
+			ImageCell(img=await get_hero_image(hero["hero_id"]), height=48), 
+			TextCell(get_hero_name(hero["hero_id"]), fontsize=24),
+			TextCell(f"{get_hero_winrate(hero):.0%}", fontsize=24),
+			TextCell(f"{get_hero_pickban_percent(hero, heroes):.0%}", fontsize=24)
+		])
+
+	image = table.render()
+	border_image = Image.new('RGBA', (image.size[0] + (border_size * 2), image.size[1] + border_size), color=discord_color1)
+	image = paste_image(border_image, image, border_size, 0)
+
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
+
+	return fp
 
 async def draw_matches_table(matches, game_strings):
 	region_data = read_json(settings.resource("json/region_data.json"))	

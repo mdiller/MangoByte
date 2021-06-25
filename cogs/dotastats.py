@@ -1,3 +1,4 @@
+from cogs.utils.metastats import get_total_pro_games
 import discord
 from discord.ext import commands
 from __main__ import settings, botdata, thinker, httpgetter
@@ -251,6 +252,35 @@ class DotaStats(MangoCog):
 		self.lookup_hero = dotabase.lookup_hero
 		self.chat_wheel_info = dotabase.get_chat_wheel_infos()
 		self.dota_gif_lock = asyncio.Lock()
+
+	async def get_meta_json(self): 
+		url = 'https://api.opendota.com/api/herostats'
+		return await httpgetter.get(url)
+
+	def sort_meta(self, json, num=10): 
+		"""re-orders the meta json based on pick/ban + winrate.
+		num = number of top heroes to include """
+		total_games = get_total_pro_games(json)
+		sorted_json = sorted(
+			json, 
+			reverse=True, 
+			# sorts by (winrate) + (pick/ban rate)
+			key=lambda x: (((x.get('pro_pick', 0) + x.get('pro_ban', 0)) / total_games)
+			+ ((x.get('pro_win', 0) / x.get('pro_pick', 1)))),
+			)
+		if num > 0: 
+			return sorted_json[:num]
+		return sorted_json
+
+	async def print_meta(self, ctx, num_to_list): 
+		"""prints the meta table"""
+		json = await self.get_meta_json()
+		sorted_json = self.sort_meta(json, num_to_list)
+		description = (f"Top {num_to_list} meta hero(s) in professional matches")
+		embed = discord.Embed(description = description, color=self.embed_color)
+		meta_table = discord.File(await drawdota.draw_meta_table(sorted_json, json), "meta.png")
+		embed.set_image(url=f"attachment://{meta_table.filename}")
+		await ctx.send(embed=embed, file=meta_table)
 
 	def get_pretty_hero(self, player, use_icons=False):
 		dotabase = self.bot.get_cog("Dotabase")
@@ -725,6 +755,16 @@ class DotaStats(MangoCog):
 		embed.set_footer(text=f"Try {self.cmdpfx(ctx)}matches to get more details about these matches")
 
 		await ctx.send(embed=embed)
+
+	@commands.command()
+	async def meta(self, ctx, *, count : int = 10): 
+		"""prints the top meta heroes from https://opendota.com/heroes"""
+		await ctx.channel.trigger_typing()
+		if count > 119:
+			raise UserError("Limit of matches can't be more than the number of heroes")
+		if count < 1: 
+			raise UserError("Limit of matches can't be less than 1")
+		await self.print_meta(ctx, count)
 
 	@commands.command(aliases=["whois"])
 	async def profile(self, ctx, player : DotaPlayer = None):
