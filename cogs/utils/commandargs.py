@@ -1,4 +1,4 @@
-from __main__ import settings, botdata, httpgetter
+from mangobyte import settings, botdata, httpgetter
 import re
 import discord
 from discord.ext import commands

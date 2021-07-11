@@ -1,4 +1,3 @@
-from __main__ import settings, loggingdb
 from .helpers import *
 import re
 import aiohttp
@@ -8,6 +7,7 @@ default_cache = { "count": 0, "files": {} }
 
 class Cache:
 	def __init__(self, loop):
+		from mangobyte import settings
 		self.loop = loop
 		self.cache_dir = settings.resource("cache/")
 		self.index_file = self.cache_dir + "cache_index.json"
@@ -115,6 +115,7 @@ class HttpGetter:
 			return self.cache.get(url, return_type)
 
 		async with self.session.get(url, timeout=60) as r:
+			from mangobyte import loggingdb
 			await loggingdb.insert_http_request(url, r.status, cache)
 			if r.status == 200:
 				if cache:
@@ -135,6 +136,7 @@ class HttpGetter:
 
 	async def post(self, url, return_type="json", errors={}, body={}, headers={}):
 		async with self.session.post(url, json=body, headers=headers) as r:
+			from mangobyte import loggingdb
 			await loggingdb.insert_http_request(url, r.status, False)
 			if r.status == 200:
 				if return_type == "json":

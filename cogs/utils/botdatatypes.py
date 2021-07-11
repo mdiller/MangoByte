@@ -1,4 +1,3 @@
-from __main__ import settings
 import discord
 from discord.ext import commands
 from abc import abstractmethod
@@ -145,18 +144,23 @@ class UserBot(ConfigVarType):
 		except commands.BadArgument:
 			raise InvalidInputError("Try giving me a bot reference like `@Bot123`")
 
-gtts_langs = read_json(settings.resource("json/gtts_languages.json"))
 
 class GttsLang(ConfigVarType):
+
+	@classmethod
+	def calc_gtts_langs():
+		from mangobyte import settings
+		return read_json(settings.resource("json/gtts_languages.json"))
+
 	@classmethod
 	async def _localize(cls, value, ctx):
-		return gtts_langs[value]
+		return cls.calc_gtts_langs()[value]
 
 	@classmethod
 	async def _parse(cls, value, ctx):
 		value = value.lower()
-		for lang in gtts_langs:
-			if lang.lower() == value or gtts_langs[lang].lower() == value:
+		for lang in cls.calc_gtts_langs():
+			if lang.lower() == value or cls.calc_gtts_langs()[lang].lower() == value:
 				if "-" in lang:
 					raise InvalidInputError("Languages with '-' have unfortunately been deprecated")
 				return lang

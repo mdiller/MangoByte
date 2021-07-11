@@ -1,4 +1,3 @@
-from __main__ import settings
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Table, DateTime
 from sqlalchemy.orm import sessionmaker, relationship
@@ -154,6 +153,7 @@ def row2dict(row):
 # inserters
 
 def print_debug(text):
+	from mangobyte import settings
 	if True or settings.debug:
 		print(text)
 

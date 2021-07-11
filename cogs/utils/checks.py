@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from __main__ import botdata
+from mangobyte import botdata
 
 #
 # This is a "heavily" modified version of checks.py, originally made by Rapptz

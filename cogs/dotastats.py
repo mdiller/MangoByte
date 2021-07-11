@@ -1,7 +1,7 @@
 from cogs.utils.metastats import get_total_pro_games
 import discord
 from discord.ext import commands
-from __main__ import settings, botdata, thinker, httpgetter
+from mangobyte import settings, botdata, thinker, httpgetter
 from cogs.utils import checks
 from cogs.utils.helpers import *
 from cogs.utils.commandargs import *
