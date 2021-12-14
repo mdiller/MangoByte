@@ -55,6 +55,11 @@ class Settings:
 	def odota(self):
 		return self.json_data.get("odota", None)
 
+	# an optional api key for the stratz api (if not given, you won't be able to use the stratz api)
+	@property
+	def stratz(self):
+		return self.json_data.get("stratz", None)
+
 	# an optional api key for the topgg api. If not given, then the bot wont update the topgg api
 	@property
 	def topgg(self):

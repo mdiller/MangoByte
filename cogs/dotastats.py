@@ -94,6 +94,9 @@ async def get_match(match_id):
 
 # rate_limit = false if this is the only query we're sending
 async def get_stratz_match(match_id):
+	if settings.stratz is None:
+		raise UserError("Stratz not configured properly. The bot owner has gotta put the stratz api key in the config file")
+
 	url = f"https://api.stratz.com/api/v1/match/{match_id}"
 	cached_data = httpgetter.cache.get(url, "json")
 	
@@ -104,10 +107,11 @@ async def get_stratz_match(match_id):
 			await httpgetter.cache.remove(url)
 
 	try:
+		auth_header = { "Authorization": f"Bearer {settings.stratz}" }
 		return await httpgetter.get(url, cache=True, errors={
 			500: "Looks like something wrong with the STRATZ api",
 			204: "STRATZ hasn't recieved this match yet. Try again a bit later"
-		})
+		}, headers=auth_header)
 	except aiohttp.ClientConnectorError:
 		print("ClientConnectorError on stratz api result")
 		raise StratzMatchNotParsedError(match_id)

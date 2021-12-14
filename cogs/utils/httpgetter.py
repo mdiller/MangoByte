@@ -110,11 +110,11 @@ class HttpGetter:
 		self.session = aiohttp.ClientSession(loop=self.loop)
 		self.cache = Cache(self.loop)
 
-	async def get(self, url, return_type="json", cache=False, errors={}):
+	async def get(self, url, return_type="json", cache=False, errors={}, headers=None):
 		if cache and self.cache.get_filename(url):
 			return self.cache.get(url, return_type)
 
-		async with self.session.get(url, timeout=60) as r:
+		async with self.session.get(url, headers=headers, timeout=60) as r:
 			await loggingdb.insert_http_request(url, r.status, cache)
 			if r.status == 200:
 				if cache:
