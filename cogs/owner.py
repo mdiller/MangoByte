@@ -2,6 +2,7 @@ import discord
 import youtube_dl
 import asyncio
 import shutil
+from dotabase import Hero
 from sqlalchemy import desc
 from discord.ext import commands
 from __main__ import settings, botdata, httpgetter, loggingdb
@@ -45,9 +46,26 @@ class Owner(MangoCog):
 	async def updateemoji(self, ctx, name=None):
 		"""Updates the emoji information for the bot
 
+		will also add new heroes to the emoji's if there are any
+
 		passing in a name will target that emoji specifically"""
 		emoji_json = read_json(settings.resource("json/emoji.json"))
+
+		# find any heroes not currently added
 		with ctx.channel.typing():
+			dotabase = self.bot.get_cog("Dotabase")
+			for hero in dotabase.session.query(Hero):
+				emoji_name =f"dota_hero_{hero.name}"
+				if emoji_name not in emoji_json:
+					# missing this hero, gotta add it
+					await ctx.send(f"Adding emoji for {hero.localized_name}")
+					url = dotabase.vpkurl + hero.icon
+					image = await httpgetter.get(url, return_type="filename", cache=True)
+					with open(image, "rb") as f:
+						image = f.read()
+					emoji = await ctx.guild.create_custom_emoji(name=emoji_name, image=image, reason=f"New Hero got added")
+					emoji_json[emoji_name] = emoji.id
+
 			for emoji in ctx.guild.emojis:
 				if name is None or name == emoji.name:
 					imgpath = settings.resource(f"images/emojis/{emoji.name}.png")
