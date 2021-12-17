@@ -29,14 +29,6 @@ ABILITY_KEY_MAP = {
 	"f": 5,
 	"r": 4 # the last ability in the list, except for invoker
 }
-# some specific heroes have weird places for their ultimate keys
-ABILITY_ULTI_KEY_MAP = {
-	"3": 4, "10": 6, "19": 4, "23": 4,
-	"54": 4, "68": 4, "73": 4, "74": 6,
-	"86": 6, "88": 5, "89": 4,
-	"90": 4, "91": 4, "98": 5, "100": 5,
-	"103": 4, "108": 4, "110": 5, "114": 6, "120": 4
-}
 for i in range(1, 20):
 	ABILITY_KEY_MAP[str(i)] = i
 
@@ -277,11 +269,13 @@ class Dotabase(MangoCog):
 					if ability_position > len(abilities):
 						raise UserError(f"{hero.localized_name} doesn't have that many abilities")
 					if key == "r": # if is ultimate and not invoker, get last ability in list
-						custom_position = ABILITY_ULTI_KEY_MAP.get(str(hero.id))
-						if custom_position is not None and custom_position < len(abilities):
-							ability_position = custom_position
-						else:
-							ability_position = len(abilities)
+						def filter_ulti(ability):
+							for bad_behavior in [ "not_learnable", "hidden" ]:
+								if bad_behavior in (ability.behavior or ""):
+									return False
+							return True
+						abilities = list(filter(filter_ulti, abilities))
+						ability_position = len(abilities)
 					return abilities[ability_position - 1]
 		return None
 
