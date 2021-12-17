@@ -885,7 +885,8 @@ class Dotabase(MangoCog):
 			ability_special.insert(0, first_attr)
 
 		formatted_attributes = []
-		aghs_attributes = []
+		scepter_attributes = []
+		shard_attributes = []
 		for attribute in ability_special:
 			header = attribute.get("header")
 			if not header:
@@ -898,8 +899,10 @@ class Dotabase(MangoCog):
 			if footer:
 				text += f" {footer}"
 
-			if attribute.get("aghs_upgrade") and not (ability.scepter_grants or ability.shard_grants):
-				aghs_attributes.append(text)
+			if attribute.get("scepter_upgrade") and not ability.scepter_grants:
+				scepter_attributes.append(text)
+			elif attribute.get("shard_upgrade") and not ability.shard_grants:
+				shard_attributes.append(text)
 			else:
 				formatted_attributes.append(text)
 
@@ -921,7 +924,7 @@ class Dotabase(MangoCog):
 			else:
 				description += f"\n\n{self.get_emoji('aghanims_scepter')} __**Upgradable by Aghanim's Scepter**__\n"
 				description += f"*{ability.scepter_description}*\n"
-				for attribute in aghs_attributes:
+				for attribute in scepter_attributes:
 					description += f"\n{attribute}"
 
 		# aghs shard
@@ -931,8 +934,8 @@ class Dotabase(MangoCog):
 			else:
 				description += f"\n\n{self.get_emoji('aghanims_shard')} __**Upgradable by Aghanim's Shard**__\n"
 				description += f"*{ability.shard_description}*\n"
-				# for attribute in aghs_attributes:
-				# 	description += f"\n{attribute}"
+				for attribute in shard_attributes:
+					description += f"\n{attribute}"
 
 		embed = discord.Embed(description=description)
 
@@ -1173,12 +1176,20 @@ class Dotabase(MangoCog):
 
 	@commands.command(aliases=["aghs", "ags", "aghanims", "scepter", "shard"])
 	async def aghanim(self, ctx, *, name):
-		"""Gets the aghs upgrade for the given hero or ability"""
+		"""Gets the aghs upgrade for the given hero or ability
+
+		This command will get the information about shard upgrades AND scepter upgrades.
+		If you want just shard or just scepter upgrades, try using `{cmdpfx}scepter` or `{cmdpfx}shard`"""
+		only_do_scepter = ctx.invoked_with == "scepter"
+		only_do_shard = ctx.invoked_with == "shard"
+
 		abilities = []
 		hero = self.lookup_hero(name)
 		if hero:
 			for ability in hero.abilities:
-				if ability.scepter_upgrades or ability.shard_upgrades or ability.scepter_grants or ability.shard_grants:
+				if (ability.shard_upgrades or ability.shard_grants) and not only_do_scepter:
+					abilities.append(ability)
+				elif (ability.scepter_upgrades or ability.scepter_grants) and not only_do_shard:
 					abilities.append(ability)
 
 			if len(abilities) == 0:
@@ -1187,13 +1198,17 @@ class Dotabase(MangoCog):
 			ability = self.lookup_ability(name, True)
 			if not ability:
 				raise UserError("Couldn't find a hero or ability by that name")
-			if not ability.aghanim:
-				raise UserError(f"Looks like {ability.localized_name} doesn't have an aghs upgrade")
 			abilities = [ ability ]
 
 		item_shard = self.lookup_item("aghanim's shard")
 		item_scepter = self.lookup_item("aghanim's scepter")
-		for upgrade_type in [ "scepter", "shard" ]:
+		upgrade_types = [ "scepter", "shard" ]
+		if only_do_scepter:
+			upgrade_types = [ "scepter" ]
+		elif only_do_shard:
+			upgrade_types = [ "shard" ]
+
+		for upgrade_type in upgrade_types:
 			aghs_item = item_scepter
 			icon_url = f"{self.vpkurl}/panorama/images/hud/reborn/aghsstatus_scepter_on_psd.png"
 			if upgrade_type == "shard":
@@ -1213,7 +1228,7 @@ class Dotabase(MangoCog):
 				if upgrade_type == "scepter" and ability.scepter_upgrades and not ability.scepter_grants:
 					for attribute in ability_special:
 						header = attribute.get("header")
-						if not (header and attribute.get("aghs_upgrade")):
+						if not (header and attribute.get("scepter_upgrade")):
 							continue
 						header = format_pascal_case(header)
 						value = attribute["value"]
