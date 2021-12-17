@@ -17,6 +17,7 @@ from io import BytesIO
 import re
 import praw
 import os
+import logging
 from .mangocog import *
 
 donate_links = {
@@ -115,6 +116,8 @@ class General(MangoCog):
 		if count > 20:
 			await ctx.send("thats too many pings. stahp trying to break me.😠")
 			return
+
+		logging.info("ping!")
 
 		ping_string = ""
 		for i in range(0, count):

@@ -18,7 +18,6 @@ import traceback
 import asyncio
 import string
 from discord.ext import commands
-import logging
 import datetime
 from cogs.utils.helpcommand import MangoHelpCommand
 from cogs.utils.clip import *
@@ -28,6 +27,24 @@ import sys
 import inspect
 
 startupTimer = SimpleTimer()
+
+
+import logging
+import logging.config
+from pythonjsonlogger import jsonlogger
+
+class ElkJsonFormatter(jsonlogger.JsonFormatter):
+    def add_fields(self, log_record, record, message_dict):
+        super(ElkJsonFormatter, self).add_fields(log_record, record, message_dict)
+        log_record['@timestamp'] = datetime.datetime.now().isoformat()
+        log_record['level'] = record.levelname
+        log_record['logger'] = record.name
+
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger("MainLogger")
+
+logging.info('Application running!')
+
 
 if not os.path.exists("logs"):
     os.makedirs("logs")
