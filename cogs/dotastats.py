@@ -265,6 +265,7 @@ class DotaStats(MangoCog):
 		"""re-orders the meta json based on pick/ban + winrate.
 		num = number of top heroes to include """
 		total_games = get_total_pro_games(json)
+		json = list(filter(lambda x: x.get('pro_pick', 1) > 0, json))
 		sorted_json = sorted(
 			json, 
 			reverse=True, 
