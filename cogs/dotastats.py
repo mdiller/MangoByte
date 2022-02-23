@@ -1,6 +1,6 @@
 from cogs.utils.metastats import get_total_pro_games
-import discord
-from discord.ext import commands
+import disnake
+from disnake.ext import commands
 from __main__ import settings, botdata, thinker, httpgetter
 from cogs.utils import checks
 from cogs.utils.helpers import *
@@ -247,7 +247,7 @@ class DotaStats(MangoCog):
 
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
-		self.embed_color = discord.Color.teal()
+		self.embed_color = disnake.Color.teal()
 		dotabase = self.bot.get_cog("Dotabase")
 		if not dotabase:
 			raise ImportError("The Dotabase cog must be added before the DotaStats cog")
@@ -282,8 +282,8 @@ class DotaStats(MangoCog):
 		json = await self.get_meta_json()
 		sorted_json = self.sort_meta(json, num_to_list)
 		description = (f"Top {num_to_list} meta hero(s) in professional matches")
-		embed = discord.Embed(description = description, color=self.embed_color)
-		meta_table = discord.File(await drawdota.draw_meta_table(sorted_json, json), "meta.png")
+		embed = disnake.Embed(description = description, color=self.embed_color)
+		meta_table = disnake.File(await drawdota.draw_meta_table(sorted_json, json), "meta.png")
 		embed.set_image(url=f"attachment://{meta_table.filename}")
 		await ctx.send(embed=embed, file=meta_table)
 
@@ -477,7 +477,7 @@ class DotaStats(MangoCog):
 			story += f"\n\n{teamfights[i]}"
 			i += 1
 
-		embed = discord.Embed(description=story, color=self.embed_color)
+		embed = disnake.Embed(description=story, color=self.embed_color)
 		embed.title = f"Story of Match {game['match_id']}"
 		embed.url = f"https://www.opendota.com/matches/{game['match_id']}/story"
 		embed.set_footer(text=f"For more information, try {self.cmdpfx(ctx)}match {game['match_id']}")
@@ -509,7 +509,7 @@ class DotaStats(MangoCog):
 					f"[OpenDota](https://www.opendota.com/matches/{match_id}), or "
 					f"[STRATZ](https://www.stratz.com/match/{match_id})")
 
-		embed = discord.Embed(description=description, color=self.embed_color, timestamp=datetime.datetime.utcfromtimestamp(match['start_time']))
+		embed = disnake.Embed(description=description, color=self.embed_color, timestamp=datetime.datetime.utcfromtimestamp(match['start_time']))
 
 		embed.set_author(name=player.get('personaname') or "Anonymous", icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
 
@@ -530,7 +530,7 @@ class DotaStats(MangoCog):
 			"Denies: {denies}\n"
 			"Level: {level}\n".format(**player)))
 
-		match_image = discord.File(await drawdota.create_match_image(match), "match.png")
+		match_image = disnake.File(await drawdota.create_match_image(match), "match.png")
 		embed.set_image(url=f"attachment://{match_image.filename}")
 		embed.set_footer(text=str(match_id))
 
@@ -575,14 +575,14 @@ class DotaStats(MangoCog):
 					f"[OpenDota](https://www.opendota.com/matches/{match_id}), or "
 					f"[STRATZ](https://www.stratz.com/match/{match_id})")
 
-		embed = discord.Embed(description=description, 
+		embed = disnake.Embed(description=description, 
 							timestamp=datetime.datetime.utcfromtimestamp(match['start_time']), color=self.embed_color)
 		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
 
 		embed.add_field(name="Game Mode", value=game_mode)
 		embed.add_field(name="Lobby Type", value=game_mode)
 
-		match_image = discord.File(await drawdota.create_match_image(match), filename="matchimage.png")
+		match_image = disnake.File(await drawdota.create_match_image(match), filename="matchimage.png")
 
 		embed.set_image(url=f"attachment://{match_image.filename}")
 		embed.set_footer(text=str(match_id))
@@ -696,7 +696,7 @@ class DotaStats(MangoCog):
 		matches = sorted(matches, key=lambda m: m.get("start_time"), reverse=True)
 
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 
 		embed.title = "Recent Matches"
 		embed.url = f"https://www.opendota.com/players/{steam32}/matches"
@@ -704,10 +704,10 @@ class DotaStats(MangoCog):
 			embed.title += f" as {hero.localized_name}"
 			embed.url += f"?hero_id={hero.id}"
 			if hero.color:
-				embed.color = discord.Color(int(hero.color[1:], 16))
+				embed.color = disnake.Color(int(hero.color[1:], 16))
 
 		matches_image = await drawdota.draw_matches_table(matches, self.dota_game_strings)
-		matches_image = discord.File(matches_image, "matches.png")
+		matches_image = disnake.File(matches_image, "matches.png")
 		embed.set_image(url=f"attachment://{matches_image.filename}")
 		embed.set_footer(text=f"Try {self.cmdpfx(ctx)}matchids to get copy-pastable match ids")
 
@@ -748,7 +748,7 @@ class DotaStats(MangoCog):
 		matches = sorted(matches, key=lambda m: m.get("start_time"), reverse=True)
 
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 
 		embed.title = "Recent Matches"
 		embed.url = f"https://www.opendota.com/players/{steam32}/matches"
@@ -852,7 +852,7 @@ class DotaStats(MangoCog):
 		if playerinfo["profile"].get("plus"):
 			plus_text = f"\n{self.get_emoji('dota_plus')} has Dota Plus"
 
-		embed = discord.Embed(color=self.embed_color)
+		embed = disnake.Embed(color=self.embed_color)
 
 		embed.set_author(
 			name=playerinfo["profile"]["personaname"] or "Anonymous", 
@@ -888,7 +888,7 @@ class DotaStats(MangoCog):
 			player_mention = player.steam_id
 
 		rank_icon = await drawdota.dota_rank_icon(playerinfo.get("rank_tier"), playerinfo.get("leaderboard_rank"))
-		rank_icon = discord.File(rank_icon, "rank.png")
+		rank_icon = disnake.File(rank_icon, "rank.png")
 		embed.set_thumbnail(url=f"attachment://{rank_icon.filename}")
 
 		embed.set_footer(text=f"Steam ID: {steam32}")
@@ -962,7 +962,7 @@ class DotaStats(MangoCog):
 		# 
 		# STEP 2: initialize discord embed, depending on what we filtered for
 		# 
-		embed = discord.Embed(color=self.embed_color)
+		embed = disnake.Embed(color=self.embed_color)
 		embed_attachment = None
 
 		if do_downloaded:
@@ -980,7 +980,7 @@ class DotaStats(MangoCog):
 			hero = self.lookup_hero(matchfilter.get_arg("hero_id"))
 			author_icon_url = self.hero_info[hero.id]["icon"]
 			embed.set_thumbnail(url=self.hero_info[hero.id]['portrait'])
-			embed.color = discord.Color(int(hero.color[1:], 16))
+			embed.color = disnake.Color(int(hero.color[1:], 16))
 
 		# if this is stats for playing with someone
 		if matchfilter.has_value("included_account_id"):
@@ -989,7 +989,7 @@ class DotaStats(MangoCog):
 			player2_id = matchfilter.get_arg("included_account_id")
 			player2_info = await opendota_query(f"/players/{player2_id}")
 			avatar2 = player2_info['profile']['avatarfull'] or default_steam_icon
-			image = discord.File(await drawdota.combine_image_halves(avatar1, avatar2), "profile.png")
+			image = disnake.File(await drawdota.combine_image_halves(avatar1, avatar2), "profile.png")
 			embed.set_thumbnail(url=f"attachment://{image.filename}")
 			embed_attachment = image
 			author_name += f" + {player2_info['profile']['personaname'] or 'Anonymous'}"
@@ -1224,7 +1224,7 @@ class DotaStats(MangoCog):
 		async with ctx.channel.typing():
 			await thinker.think(ctx.message)
 			try:
-				image = discord.File(await self.create_dota_gif(match, stratz_match, start, end, ms_per_second), "map.gif")
+				image = disnake.File(await self.create_dota_gif(match, stratz_match, start, end, ms_per_second), "map.gif")
 				await ctx.send(file=image)
 			finally:
 				await thinker.stop_thinking(ctx.message)
@@ -1261,7 +1261,7 @@ class DotaStats(MangoCog):
 			player_data = next((p for p in match['players'] if p['account_id'] == steamid), None)
 		perspective = player_data.get("isRadiant") if player_data else True
 
-		embed = discord.Embed(description=await self.get_lane_stories(match, perspective, True))
+		embed = disnake.Embed(description=await self.get_lane_stories(match, perspective, True))
 
 		embed.title = f"Laning"
 		embed.url = f"https://stratz.com/en-us/match/{match_id}/playback"
@@ -1270,7 +1270,7 @@ class DotaStats(MangoCog):
 		async with ctx.channel.typing():
 			await thinker.think(ctx.message)
 			try:
-				image = discord.File(await self.create_dota_gif(match, stratz_match, -89, 600, 100), "map.gif")
+				image = disnake.File(await self.create_dota_gif(match, stratz_match, -89, 600, 100), "map.gif")
 				embed.set_image(url=f"attachment://{image.filename}")
 				await ctx.send(embed=embed, file=image)
 			finally:
@@ -1385,7 +1385,7 @@ class DotaStats(MangoCog):
 			raise UserError("There isn't anyone in my voice channel 😢")
 		#raise UserError("This command is broken right now but my developer is working on fixing it! For now you can mention people manually in the command and it should work.")
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 		embed.add_field(name="Discord", value="\n".join(mentions))
 		embed.add_field(name="Steam", value="\n".join(links))
 		if show_ranks:
@@ -1419,7 +1419,7 @@ class DotaStats(MangoCog):
 		filename = re.search("/([/0-9a-zA-Z]+)", query).group(1).replace("/", "_")
 		filename = tempdir + f"/{filename}.json"
 		write_json(filename, data)
-		await ctx.send(file=discord.File(filename))
+		await ctx.send(file=disnake.File(filename))
 		os.remove(filename)
 
 	@commands.command()
@@ -1466,13 +1466,13 @@ class DotaStats(MangoCog):
 		divisor = max(role_scores)
 		role_scores = list(map(lambda x: x / divisor, role_scores))
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 		embed.set_author(
 			name=playerinfo["profile"]["personaname"] or "Anonymous", 
 			icon_url=playerinfo["profile"]["avatar"] or default_steam_icon, 
 			url=playerinfo["profile"]["profileurl"] or f"https://www.opendota.com/players/{player.steam_id}")
 
-		image = discord.File(drawdota.draw_polygraph(role_scores, roles), "rolesgraph.png")
+		image = disnake.File(drawdota.draw_polygraph(role_scores, roles), "rolesgraph.png")
 		embed.set_image(url=f"attachment://{image.filename}")
 		await ctx.send(embed=embed, file=image)
 
@@ -1483,13 +1483,13 @@ class DotaStats(MangoCog):
 		Shows all the ability upgrade orders for all heroes in the match"""
 		match = await get_match(match_id)
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 
 		embed.title = f"Match {match_id}"
 		embed.url = f"https://opendota.com/matches/{match_id}"
 
 		async with ctx.channel.typing():
-			image = discord.File(await drawdota.draw_match_ability_upgrades(match), "upgrades.png")
+			image = disnake.File(await drawdota.draw_match_ability_upgrades(match), "upgrades.png")
 			embed.set_image(url=f"attachment://{image.filename}")
 			await ctx.send(embed=embed, file=image)
 
@@ -1545,7 +1545,7 @@ class DotaStats(MangoCog):
 		if not is_parsed(match):
 			raise MatchNotParsedError(match["match_id"], "create a graph")
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 
 		embed.title = f"Match {match_id}"
 		embed.url = f"https://opendota.com/matches/{match_id}"
@@ -1581,7 +1581,7 @@ class DotaStats(MangoCog):
 			raise UserError("oops, look like thats not implemented yet")
 
 		async with ctx.channel.typing():
-			image = discord.File(drawgraph.drawgraph(lines, colors, labels), "graph.png")
+			image = disnake.File(drawgraph.drawgraph(lines, colors, labels), "graph.png")
 			embed.set_image(url=f"attachment://{image.filename}")
 			await ctx.send(embed=embed, file=image)
 
@@ -1604,7 +1604,7 @@ class DotaStats(MangoCog):
 		await httpgetter.get(wrapped_url, return_type="text")
 		await thinker.stop_thinking(ctx.message)
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 
 		embed.title = f"Dota 2 Wrapped"
 		embed.url = wrapped_url

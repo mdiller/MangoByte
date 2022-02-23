@@ -1,5 +1,5 @@
-import discord
-from discord.ext import commands
+import disnake
+from disnake.ext import commands
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
 from __main__ import settings, botdata, report_error, loggingdb
@@ -60,7 +60,7 @@ class AudioPlayer:
 
 	# connects to a voice channel
 	async def connect(self, channel):
-		if not isinstance(channel, discord.VoiceChannel):
+		if not isinstance(channel, disnake.VoiceChannel):
 			channel = self.bot.get_channel(channel)
 
 		voice = self.voice
@@ -104,14 +104,14 @@ class AudioPlayer:
 		clip = self.next_clip()
 
 		try:
-			self.voice.play(discord.FFmpegPCMAudio(clip.audiopath), after=self.done_talking)
-		except discord.errors.ClientException as e:
+			self.voice.play(disnake.FFmpegPCMAudio(clip.audiopath), after=self.done_talking)
+		except disnake.errors.ClientException as e:
 			if str(e) == "Not connected to voice.":
 				raise UserError("Error playing clip. Try doing `?resummon`.")
 			else:
 				raise
 
-		self.voice.source = discord.PCMVolumeTransformer(self.voice.source)
+		self.voice.source = disnake.PCMVolumeTransformer(self.voice.source)
 		self.voice.source.volume = clip.volume
 		print("playing: " + clip.audiopath)
 		if self.last_clip != None and clip.audiopath != self.last_clip.audiopath:
@@ -178,13 +178,13 @@ class Audio(MangoCog):
 	# gets the audioplayer for the current guild/channel/context
 	async def audioplayer(self, ctx, error_on_none=True):
 		# TODO: ACCOUNT FOR WHEN THIS MESSAGE IS A PM
-		if isinstance(ctx, discord.ext.commands.Context):
+		if isinstance(ctx, disnake.ext.commands.Context):
 			if ctx.message.guild is None: # This is a private channel, so give it user
 				ctx = ctx.message.author
 			else:
 				ctx = ctx.message.guild
 
-		if isinstance(ctx, discord.User):
+		if isinstance(ctx, disnake.User):
 			author = ctx
 			for audioplayer in self.audioplayers:
 				member = audioplayer.guild.get_member(author.id)
@@ -196,9 +196,9 @@ class Audio(MangoCog):
 				raise AudioPlayerNotFoundError("You're not in any voice channels that I'm in")
 			else:
 				return None
-		elif isinstance(ctx, discord.Guild):
+		elif isinstance(ctx, disnake.Guild):
 			guild = ctx
-		elif isinstance(ctx, discord.abc.GuildChannel):
+		elif isinstance(ctx, disnake.abc.GuildChannel):
 			guild = ctx.guild
 		else:
 			raise ValueError(f"Incorrect type '{type(ctx)}' given to audioplayer function")
@@ -214,7 +214,7 @@ class Audio(MangoCog):
 
 	# Connects an audioplayer for the correct guild to the indicated channel
 	async def connect_voice(self, channel):
-		if not isinstance(channel, discord.abc.GuildChannel):
+		if not isinstance(channel, disnake.abc.GuildChannel):
 			channel = self.bot.get_channel(channel)
 		if channel is None:
 			raise UserError("channel not found")
@@ -409,11 +409,11 @@ class Audio(MangoCog):
 		await ctx.send(embed=clip_info_embed)
 
 		try:
-			await ctx.send(file=discord.File(clip.audiopath, filename=filename))
+			await ctx.send(file=disnake.File(clip.audiopath, filename=filename))
 		except FileNotFoundError as e:
 			# The file is probably actually a url
 			fp = urllib.request.urlopen(clip.audiopath)
-			await ctx.send(file=discord.File(fp, filename=filename))
+			await ctx.send(file=disnake.File(fp, filename=filename))
 			fp.close()
 
 	@commands.command()
@@ -542,19 +542,19 @@ class Audio(MangoCog):
 						return # just dont warn em if theyve said to not warn
 					try:
 						await message.channel.send(e.message)
-					except discord.errors.Forbidden as e:
+					except disnake.errors.Forbidden as e:
 						print("on_message usererror blocked because permissions")
 						pass
 				except UserError as e:
 					try:
 						await message.channel.send(e.message)
-					except discord.errors.Forbidden as e:
+					except disnake.errors.Forbidden as e:
 						print("on_message usererror blocked because permissions")
 						pass
 				except Exception as e:
 					try:
 						await message.channel.send("Uh-oh, sumthin dun gone wrong 😱")
-					except discord.errors.Forbidden as e:
+					except disnake.errors.Forbidden as e:
 						print("on_message usererror blocked because permissions")
 						pass
 					await report_error(message, TtsChannelError(e))

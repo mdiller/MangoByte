@@ -1,6 +1,6 @@
 from .helpers import *
 import os
-import discord
+import disnake
 import cogs.utils.botdatatypes as types
 from collections import OrderedDict
 
@@ -267,9 +267,9 @@ class GuildInfo(BotDataItem):
 		self.remove_list_item("banned_users", user.id)
 
 	def is_disabled(self, cmd):
-		if isinstance(cmd, discord.ext.commands.Command):
+		if isinstance(cmd, disnake.ext.commands.Command):
 			return self.is_disabled(cmd.name) or self.is_disabled(cmd.cog_name)
-		if isinstance(cmd, discord.ext.commands.Cog):
+		if isinstance(cmd, disnake.ext.commands.Cog):
 			return self.is_disabled(cmd.name)
 		return cmd in self.disabled_commands
 
@@ -318,16 +318,16 @@ class BotData:
 		write_json(self.path, self.json_data)
 
 	def userinfo(self, userid):
-		if isinstance(userid, discord.User) or  isinstance(userid, discord.Member):
+		if isinstance(userid, disnake.User) or  isinstance(userid, disnake.Member):
 			userid = userid.id
 		return UserInfo(self, userid)
 
 	def guildinfo(self, guildid):
-		if isinstance(guildid, discord.ext.commands.Context):
+		if isinstance(guildid, disnake.ext.commands.Context):
 			guildid = guildid.message.guild
-		if isinstance(guildid, discord.abc.GuildChannel):
+		if isinstance(guildid, disnake.abc.GuildChannel):
 			guildid = guildid.guild
-		if isinstance(guildid, discord.Guild):
+		if isinstance(guildid, disnake.Guild):
 			guildid = guildid.id
 		if guildid is None:
 			return None

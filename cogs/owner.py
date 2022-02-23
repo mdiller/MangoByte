@@ -1,10 +1,10 @@
-import discord
+import disnake
 import youtube_dl
 import asyncio
 import shutil
 from dotabase import Hero
 from sqlalchemy import desc
-from discord.ext import commands
+from disnake.ext import commands
 from __main__ import settings, botdata, httpgetter, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.botdata import GuildInfo
@@ -170,8 +170,8 @@ class Owner(MangoCog):
 			except:
 				raise UserError("Couldn't find that user")
 
-			embed = discord.Embed(description=(user.mention + "\n```json\n" + json.dumps(data.json_data, indent='\t') + "\n```"))
-			embed.set_thumbnail(url=user.avatar_url)
+			embed = disnake.Embed(description=(user.mention + "\n```json\n" + json.dumps(data.json_data, indent='\t') + "\n```"))
+			embed.set_thumbnail(url=user.avatar.url)
 			if data.steam:
 				embed.add_field(name="Profiles", value=(
 					f"[Steam](http://steamcommunity.com/id/{data.steam})\n"
@@ -188,7 +188,7 @@ class Owner(MangoCog):
 					invite = await channel.create_invite()
 					break
 
-			embed = discord.Embed(description=("```json\n" + json.dumps(data.json_data, indent='\t') + "\n```"))
+			embed = disnake.Embed(description=("```json\n" + json.dumps(data.json_data, indent='\t') + "\n```"))
 			embed.set_author(name=guild.name)
 			if guild.icon_url != "":
 				embed.set_thumbnail(url=guild.icon_url)
@@ -218,7 +218,7 @@ class Owner(MangoCog):
 		if filename is None:
 			raise UserError("Couldn't find a file at that uri")
 
-		await ctx.send(file=discord.File(filename))
+		await ctx.send(file=disnake.File(filename))
 
 	@commands.command()
 	async def errors(self, ctx, count : int=5, page : int=0, excludestring=None):

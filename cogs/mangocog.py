@@ -1,7 +1,7 @@
 from __main__ import settings, botdata, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
-import discord
+import disnake
 
 emoji_dict = read_json(settings.resource("json/emoji.json"))
 
@@ -15,7 +15,7 @@ def simple_get_emoji(key, bot):
 	return str(emoji)
 
 
-class MangoCog(discord.ext.commands.Cog):
+class MangoCog(disnake.ext.commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 

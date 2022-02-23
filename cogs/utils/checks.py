@@ -1,5 +1,5 @@
-import discord
-from discord.ext import commands
+import disnake
+from disnake.ext import commands
 from __main__ import botdata
 
 #
@@ -20,7 +20,7 @@ def is_admin_check(channel, ctx, user=None):
 		user = ctx.message.author
 	if is_owner_check(user):
 		return True
-	if isinstance(channel, discord.abc.PrivateChannel):
+	if isinstance(channel, disnake.abc.PrivateChannel):
 		return False # All admin commands should be guild specific and not work on PM channels
 	admin_role_id = botdata.guildinfo(ctx.message.guild).botadmin
 	if admin_role_id:
@@ -35,4 +35,4 @@ def is_admin():
 	return commands.check(lambda ctx: is_admin_check(ctx.message.channel, ctx))
 
 def is_not_PM():
-	return commands.check(lambda ctx: not isinstance(ctx.message.channel, discord.abc.PrivateChannel))
+	return commands.check(lambda ctx: not isinstance(ctx.message.channel, disnake.abc.PrivateChannel))

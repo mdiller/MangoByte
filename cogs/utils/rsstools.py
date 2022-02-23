@@ -1,6 +1,6 @@
 """ A collection of functions for RSS feed parsing"""
 
-import discord
+import disnake
 from dateutil import parser
 import re
 from __main__ import botdata
@@ -28,7 +28,7 @@ def is_new_blog(entry):
 
 def create_embed(blog_title, entry):
 	""" Takes a blog title and feedparser entry, and returns a rich embed object linking to the post"""
-	response = discord.Embed(type='rich')
+	response = disnake.Embed(type='rich')
 
 	### pull the hook from the entry html for introduction
 	soup = BeautifulSoup(entry.content[0]['value'], "html.parser")

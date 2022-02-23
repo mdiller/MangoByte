@@ -1,5 +1,5 @@
-import discord
-from discord.ext import commands
+import disnake
+from disnake.ext import commands
 from __main__ import settings, botdata, httpgetter
 from cogs.utils.deck_decoder import ParseDeck
 from cogs.utils.helpers import *
@@ -121,7 +121,7 @@ class Artifact(MangoCog):
 		if card is None:
 			raise UserError(f"Couldn't find any card with the name '{card_name}'")
 
-		embed = discord.Embed(color=discord.Color(card.color.integer))
+		embed = disnake.Embed(color=disnake.Color(card.color.integer))
 		if card.mini_image:
 			embed.set_author(name=card.name, icon_url=card.mini_image)
 		else:
@@ -172,13 +172,13 @@ class Artifact(MangoCog):
 
 		cards = list(filter(lambda c: c is not None, cards))
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 
 		embed.title = deck_info["name"]
 		embed.url = f"https://playartifact.com/d/{deck_string}"
 
 		deck_image = await drawdota.draw_artifact_deck(deck_string, cards, hero_turns, card_counts)
-		deck_image = discord.File(deck_image, "deck.png")
+		deck_image = disnake.File(deck_image, "deck.png")
 		embed.set_image(url=f"attachment://{deck_image.filename}")
 
 		await ctx.send(embed=embed, file=deck_image)

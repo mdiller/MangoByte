@@ -13,11 +13,11 @@ from cogs.utils.httpgetter import HttpGetter
 httpgetter = HttpGetter()
 
 from cogs.utils.helpers import *
-import discord
+import disnake
 import traceback
 import asyncio
 import string
-from discord.ext import commands
+from disnake.ext import commands
 import logging
 import datetime
 from cogs.utils.helpcommand import MangoHelpCommand
@@ -97,11 +97,11 @@ async def on_ready():
 		print("Logged in as:\n{0} (ID: {0.id})".format(bot.user))
 		print("Connecting to voice channels if specified in botdata.json ...")
 
-	game = discord.Activity(
+	game = disnake.Activity(
 		name="DOTA 3 [?help]",
-		type=discord.ActivityType.playing,
+		type=disnake.ActivityType.playing,
 		start=datetime.datetime.utcnow())
-	await bot.change_presence(status=discord.Status.online, activity=game)
+	await bot.change_presence(status=disnake.Status.online, activity=game)
 
 	general_cog = bot.get_cog("General")
 	audio_cog = bot.get_cog("Audio")
@@ -250,9 +250,9 @@ async def on_command_error(ctx, error):
 				"Thats the wrong type of argument for that command.\n\n"
 				f"Ya gotta do it like this:\n`{signature}`\n\n"
 				f"Try `{cmdpfx}help {ctx.command}` for a more detailed description of the command"))
-		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.Forbidden):
+		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, disnake.errors.Forbidden):
 			await print_missing_perms(ctx, error)
-		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.errors.HTTPException):
+		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, disnake.errors.HTTPException):
 			await ctx.send("Looks like there was a problem with discord just then. Try again in a bit.")
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
 			await error.original.send_self(ctx, botdata)
@@ -267,10 +267,10 @@ async def on_command_error(ctx, error):
 				if len(trace_string) > 1950:
 					trace_string = "TRACETOOBIG:" + trace_string[len(trace_string) - 1950:]
 				await ctx.send(f"```{trace_string}```")
-	except discord.errors.Forbidden:
+	except disnake.errors.Forbidden:
 		try:
 			await ctx.author.send("Looks like I don't have permission to talk in that channel, sorry")
-		except discord.errors.Forbidden:
+		except disnake.errors.Forbidden:
 			pass
 
 error_file = "errors.json"

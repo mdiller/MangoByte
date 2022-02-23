@@ -1,7 +1,7 @@
 from __main__ import settings, botdata, httpgetter
 import re
-import discord
-from discord.ext import commands
+import disnake
+from disnake.ext import commands
 from .helpers import *
 from collections import OrderedDict
 import datetime
@@ -78,8 +78,8 @@ class SteamNotLinkedError(UserError):
 class NoMatchHistoryError(UserError):
 	def __init__(self, steam_id):
 		super().__init__(f"")
-		self.embed = discord.Embed(description=f"It looks like you either haven't played dota on this account, or the matches you've played are hidden. If you've played matches on this account, you should try enabling the **Expose Public Match Data** option in dota (see image below). Once you've done that, go to [your opendota profile](http://www.opendota.com/players/{steam_id}) and click the button under your name that says **REFRESH**")
-		self.file = discord.File(settings.resource("images/expose_match_data.png"), "tip.png")
+		self.embed = disnake.Embed(description=f"It looks like you either haven't played dota on this account, or the matches you've played are hidden. If you've played matches on this account, you should try enabling the **Expose Public Match Data** option in dota (see image below). Once you've done that, go to [your opendota profile](http://www.opendota.com/players/{steam_id}) and click the button under your name that says **REFRESH**")
+		self.file = disnake.File(settings.resource("images/expose_match_data.png"), "tip.png")
 		self.embed.set_image(url=f"attachment://{self.file.filename}")
 
 class CustomBadArgument(commands.BadArgument):
@@ -148,7 +148,7 @@ class DotaPlayer():
 				raise CustomBadArgument(NoMatchHistoryError(player))
 			return cls(player, f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{player})", is_author)
 
-		if not isinstance(player, discord.abc.User):
+		if not isinstance(player, disnake.abc.User):
 			try:
 				player = await commands.MemberConverter().convert(ctx, str(player))
 			except commands.BadArgument:

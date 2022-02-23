@@ -1,5 +1,5 @@
-import discord
-from discord.ext import commands, tasks
+import disnake
+from disnake.ext import commands, tasks
 from __main__ import settings, botdata, invite_link, httpgetter, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.botdata import UserInfo
@@ -155,10 +155,10 @@ class General(MangoCog):
 			description += f"\n[`{small_sha}`]({commit_url}/commit/{full_sha}) {message}"
 
 		if recent_date != 0:
-			embed = discord.Embed(description=description, color=discord.Color.green(), timestamp=datetime.datetime.utcfromtimestamp(recent_date))
+			embed = disnake.Embed(description=description, color=disnake.Color.green(), timestamp=datetime.datetime.utcfromtimestamp(recent_date))
 			embed.set_footer(text="Most recent change at")
 		else:
-			embed = discord.Embed(description=description, color=discord.Color.green())
+			embed = disnake.Embed(description=description, color=disnake.Color.green())
 
 		embed.set_author(name="Changelog", url=f"{commit_url}/commits/master")
 		await ctx.send(embed=embed)
@@ -168,17 +168,17 @@ class General(MangoCog):
 		"""Prints info about mangobyte"""
 		github = "https://github.com/mdiller/MangoByte"
 		python_version = "[Python {}.{}.{}]({})".format(*os.sys.version_info[:3], "https://www.python.org/")
-		discordpy = "https://github.com/Rapptz/discord.py"
+		library_url = "https://github.com/DisnakeDev/disnake"
 
-		embed = discord.Embed(description="The juiciest unsigned 8 bit integer you eva gonna see", color=discord.Color.green())
+		embed = disnake.Embed(description="The juiciest unsigned 8 bit integer you eva gonna see", color=disnake.Color.green())
 
-		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url, url=github)
+		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar.url, url=github)
 
 		embed.add_field(name="Development Info", value=(
 			"Developed as an open source project, hosted on [GitHub]({}). "
-			"Implemented using {} and a python discord api wrapper [discord.py]({})".format(github, python_version, discordpy)))
+			"Implemented using {} and a python discord api wrapper [disnake]({})".format(github, python_version, library_url)))
 
-		help_guild_link = "https://discord.gg/d6WWHxx"
+		help_guild_link = "https://disnake.gg/d6WWHxx"
 
 		embed.add_field(name="Help", value=(
 			f"If you want to invite mangobyte to your server/guild, click this [invite link]({invite_link}). "
@@ -197,7 +197,7 @@ class General(MangoCog):
 
 		owner = (await self.bot.application_info()).owner
 
-		embed.set_footer(text="MangoByte developed by {}".format(owner.name), icon_url=owner.avatar_url)
+		embed.set_footer(text="MangoByte developed by {}".format(owner.name), icon_url=owner.avatar.url)
 
 		await ctx.send(embed=embed)
 
@@ -211,9 +211,9 @@ class General(MangoCog):
 		"""Displays some bot statistics"""
 		await ctx.channel.trigger_typing()
 
-		embed = discord.Embed(color=discord.Color.green())
+		embed = disnake.Embed(color=disnake.Color.green())
 
-		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url)
+		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar.url)
 
 		embed.add_field(name="Servers/Guilds", value="{:,}".format(len(self.bot.guilds)))
 		embed.add_field(name="Registered Users", value="{:,}".format(botdata.count_users_with_key("steam")))
@@ -263,7 +263,7 @@ class General(MangoCog):
 			"images/lasagna8.jpg",
 			"images/lasagna9.jpg",
 		]
-		await ctx.send(file=discord.File(settings.resource(random.choice(lasagna_images))))
+		await ctx.send(file=disnake.File(settings.resource(random.choice(lasagna_images))))
 
 	@commands.command()
 	async def scramble(self, ctx, *, message : str):
@@ -302,14 +302,14 @@ class General(MangoCog):
 
 		page = await wikipedia.get_wikipedia_page(thing)
 
-		embed = discord.Embed(description=page.markdown)
+		embed = disnake.Embed(description=page.markdown)
 		embed.title = f"**{page.title}**"
 		embed.url = page.url
 
 		footer_text = "Retrieved from Wikipedia"
 
 		if page.image:
-			if (not isinstance(ctx.channel, discord.DMChannel)) and ctx.channel.is_nsfw():
+			if (not isinstance(ctx.channel, disnake.DMChannel)) and ctx.channel.is_nsfw():
 				embed.set_image(url=page.image)
 			else:
 				footer_text += ". (Image omitted because I can't check if it is NSFW) D:"
@@ -345,7 +345,7 @@ class General(MangoCog):
 
 		
 		if submission.over_18:
-			if (isinstance(ctx.channel, discord.DMChannel)) or (not ctx.channel.is_nsfw()):
+			if (isinstance(ctx.channel, disnake.DMChannel)) or (not ctx.channel.is_nsfw()):
 				raise UserError("That is an NSFW post, so I can't link it in this non-nsfw channel.")
 
 
@@ -361,7 +361,7 @@ class General(MangoCog):
 		if len(description) > character_limit:
 			description = f"{description[0:character_limit]}...\n[Read More]({submission.shortlink})"
 
-		embed = discord.Embed(description=description, color=discord.Color(int("ff4500", 16)))
+		embed = disnake.Embed(description=description, color=disnake.Color(int("ff4500", 16)))
 		embed.set_footer(text=f"/r/{submission.subreddit}", icon_url="https://images-na.ssl-images-amazon.com/images/I/418PuxYS63L.png")
 
 		embed.title = submission.title
@@ -390,7 +390,7 @@ class General(MangoCog):
 		author = thought["author"]
 		author = f"u/{author}" if author else "[deleted]"
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 
 		embed.description = thought["title"]
 		embed.timestamp = datetime.datetime.utcfromtimestamp(thought["timestamp"])
@@ -406,7 +406,7 @@ class General(MangoCog):
 
 		filename = settings.resource("temp/response.json")
 		write_json(filename, data)
-		await ctx.send(file=discord.File(filename))
+		await ctx.send(file=disnake.File(filename))
 		os.remove(filename)
 
 	@commands.command()
@@ -498,7 +498,7 @@ class General(MangoCog):
 		`{cmdpfx}docs matchfilter`
 		"""
 		if topic is None:
-			embed = discord.Embed()
+			embed = disnake.Embed()
 			embed.title = "Available Topics"
 			embed.description = "\n".join(map(lambda name: f"• {name}", list(self.docs_data.keys())))
 			await ctx.send(embed=embed)
@@ -513,7 +513,7 @@ class General(MangoCog):
 		if found_topic is None:
 			raise UserError(f"Couldn't find a topic called '{topic}'")
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 		embed.title = found_topic
 		embed.description = self.docs_data[found_topic]
 		await ctx.send(embed=embed)
@@ -616,7 +616,7 @@ class General(MangoCog):
 			description = "*Couldn't parse the changes.*"
 
 		# we can improve this embed later but for now this is what we got
-		embed = discord.Embed(timestamp=datetime.datetime.utcnow())
+		embed = disnake.Embed(timestamp=datetime.datetime.utcnow())
 		embed.title = current_patch
 		embed.url = url
 		embed.description = description
@@ -708,7 +708,7 @@ class General(MangoCog):
 	@commands.command(aliases=[ "tipjar", "donation" ])
 	async def donate(self, ctx):
 		"""Posts the donation information"""
-		embed = discord.Embed()
+		embed = disnake.Embed()
 
 		donate_stuff = "\n".join(map(lambda key: f"• [{key}]({donate_links[key]})", donate_links))
 		embed.description = "I host MangoByte on [DigitalOcean](https://www.digitalocean.com), which costs `$15` per month. "
@@ -727,7 +727,7 @@ class General(MangoCog):
 		These are pictures of my (the developer of mangobyte) cat. Shes a bit over a year old now. Her name is Minnie. Short for Minerva. Also known as "Kitten", "Sneakerdoodle", or "Noodle." Shes a good kitten. """
 		cat_dir = settings.resource("images/cat")
 		imagepath = os.path.join(cat_dir, random.choice(os.listdir(cat_dir)))
-		await ctx.send(file=discord.File(imagepath))
+		await ctx.send(file=disnake.File(imagepath))
 
 	@commands.command(aliases=[ "dogs", "doggos", "doggo", "comet", "fizzgig" ])
 	async def dog(self, ctx):
@@ -736,7 +736,7 @@ class General(MangoCog):
 		These are pictures of my (the developer of mangobyte) dogs. Thier names are Fizzgig and Comet. One is floof. Other is big doggo. Floof older. Both good boys. """
 		cat_dir = settings.resource("images/dog")
 		imagepath = os.path.join(cat_dir, random.choice(os.listdir(cat_dir)))
-		await ctx.send(file=discord.File(imagepath))
+		await ctx.send(file=disnake.File(imagepath))
 
 
 

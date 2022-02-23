@@ -1,6 +1,6 @@
 from __main__ import botdata, settings
-import discord, itertools, inspect, re
-from discord.ext.commands import *
+import disnake, itertools, inspect, re
+from disnake.ext.commands import *
 from .botdata import GuildInfo, UserInfo
 from .helpers import read_json, MENTION_PATTERN
 from cogs.mangocog import simple_get_emoji
@@ -21,7 +21,7 @@ def get_config_help(variables, command):
 		f"{examples}")
 
 
-text_help_server = "Feel free to visit the [Mangobyte Help Server/Guild](https://discord.gg/d6WWHxx) if you have any questions!"
+text_help_server = "Feel free to visit the [Mangobyte Help Server/Guild](https://disnake.gg/d6WWHxx) if you have any questions!"
 text_category_help = "To get more information about a specific category, try `{cmdpfx}help <category>`"
 text_command_help = "To get more information about a specific command, try `{cmdpfx}help <command>`"
 
@@ -43,7 +43,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 		if self.show_all:
 			# ?help all
 			embed = self.embed_description(f"{self.bot.description}\n\n{text_help_server}\n\n{text_category_help}\n{text_command_help}", self.bot)
-			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url, url="https://github.com/mdiller/MangoByte")
+			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar.url, url="https://github.com/mdiller/MangoByte")
 
 			filtered = await self.filter_commands(self.bot.commands, sort=True, key=get_category)
 			to_iterate = itertools.groupby(filtered, key=get_category)
@@ -57,7 +57,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 		else:
 			# ?help
 			embed = self.embed_description(f"{self.bot.description}\n\n{text_help_server}\n\n{text_category_help}\nTo show all commands, try `{{cmdpfx}}help all`", self.bot)
-			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url, url="https://github.com/mdiller/MangoByte")
+			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar.url, url="https://github.com/mdiller/MangoByte")
 			for cog in self.bot.cogs:
 				if cog == "Owner":
 					continue
@@ -140,11 +140,11 @@ class MangoHelpCommand(DefaultHelpCommand):
 
 	def embed_description(self, description, helptarget):
 		if not description:
-			return discord.Embed()
+			return disnake.Embed()
 		description = self.fill_template(description)
 		guildinfo = botdata.guildinfo(self.context)
 		if helptarget and guildinfo and guildinfo.is_disabled(helptarget):
 			emoji = simple_get_emoji("command_disabled", self.context.bot)
 			thing = "command" if isinstance(helptarget, Command) else "category"
 			description = f"{emoji} *This {thing} has been disabled on this server*\n{description}"
-		return discord.Embed(description=description, color=discord.Color.blue())
+		return disnake.Embed(description=description, color=disnake.Color.blue())

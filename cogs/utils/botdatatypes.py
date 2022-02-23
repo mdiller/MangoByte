@@ -1,6 +1,6 @@
 from __main__ import settings
-import discord
-from discord.ext import commands
+import disnake
+from disnake.ext import commands
 from abc import abstractmethod
 from .helpers import *
 import re
@@ -12,7 +12,7 @@ class InvalidInputError(UserError):
 
 
 async def localize_embed(ctx, var, value, example_command):
-	embed = discord.Embed(description=var["description"])
+	embed = disnake.Embed(description=var["description"])
 	embed.set_author(name=var["key"])
 
 	if not issubclass(var["type"], ConfigVarType):

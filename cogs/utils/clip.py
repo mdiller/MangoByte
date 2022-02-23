@@ -3,7 +3,7 @@ from __main__ import settings, botdata, httpgetter
 from .helpers import *
 from gtts import gTTS
 import urllib.request
-import discord
+import disnake
 import re
 import os
 import random
@@ -82,7 +82,7 @@ class Clip(object):
 		return round(float(run_command(["ffprobe", "-i", self.audiopath, "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0"])), 2)
 
 	async def get_info_embed(self):
-		embed = discord.Embed()
+		embed = disnake.Embed()
 		embed.description = self.text if self.text is not None else ""
 		self.add_info_embed_parts(embed)
 		return embed
@@ -126,7 +126,7 @@ class LocalClip(Clip):
 				result += f" - {self.author}"
 			else:
 				result += f"By {self.author}"
-		embed = discord.Embed()
+		embed = disnake.Embed()
 		embed.description = result
 		if self.source:
 			embed.add_field(name="Source", value=self.source)
@@ -190,7 +190,7 @@ class DotaClip(Clip):
 		return "dota"
 
 	async def get_info_embed(self):
-		embed = discord.Embed()
+		embed = disnake.Embed()
 		embed.description = f"\"{self.response.text}\" - {self.response.voice.name}"
 		if self.response.criteria != "":
 			embed.add_field(name="Criteria", value=self.response.pretty_criteria.replace('|', '\n'))
@@ -220,7 +220,7 @@ class DotaChatWheel(Clip):
 		return "dotachatwheel"
 
 	async def get_info_embed(self):
-		embed = discord.Embed()
+		embed = disnake.Embed()
 		embed.description = self.message.message
 		if self.message.label != "":
 			embed.add_field(name="Label", value=self.message.label)

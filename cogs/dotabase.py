@@ -1,5 +1,5 @@
-import discord
-from discord.ext import commands, tasks
+import disnake
+from disnake.ext import commands, tasks
 from sqlalchemy.sql.expression import func
 from sqlalchemy import and_, or_, desc
 from __main__ import settings, httpgetter
@@ -673,7 +673,7 @@ class Dotabase(MangoCog):
 			for message in query.offset((page - 1) * page_size).limit(page_size):
 				if message.sound:
 					sounds.append(f"{self.get_emoji('chat_wheel_sound')} {message.message}")
-			embed = discord.Embed(description="\n".join(sounds))
+			embed = disnake.Embed(description="\n".join(sounds))
 			embed.set_author(name=f"Chat Wheel Sounds ({page}/{max_pages})")
 			await ctx.send(embed=embed)
 			return
@@ -711,10 +711,10 @@ class Dotabase(MangoCog):
 		description += add_attr("agility", lambda h: h.attr_agility_base, lambda h: h.attr_agility_gain)
 		description += add_attr("intelligence", lambda h: h.attr_intelligence_base, lambda h: h.attr_intelligence_gain)
 
-		embed = discord.Embed(description=description)
+		embed = disnake.Embed(description=description)
 
 		if hero.color:
-			embed.color = discord.Color(int(hero.color[1:], 16))
+			embed.color = disnake.Color(int(hero.color[1:], 16))
 
 		wikiurl = self.get_wiki_url(hero)
 
@@ -773,7 +773,7 @@ class Dotabase(MangoCog):
 			raise UserError("That doesn't look like a hero")
 
 		image = await drawdota.draw_hero_talents(hero)
-		image = discord.File(image, f"{hero.name}_talents.png")
+		image = disnake.File(image, f"{hero.name}_talents.png")
 
 		await ctx.send(file=image)
 
@@ -931,7 +931,7 @@ class Dotabase(MangoCog):
 				for attribute in shard_attributes:
 					description += f"\n{attribute}"
 
-		embed = discord.Embed(description=description)
+		embed = disnake.Embed(description=description)
 
 		embed.title = ability.localized_name
 		embed.url = self.get_wiki_url(ability)
@@ -1014,11 +1014,11 @@ class Dotabase(MangoCog):
 		if item.cooldown and item.cooldown != "0":
 			description += f"{self.get_emoji('cooldown')} {clean_values(item.cooldown)}"
 
-		embed = discord.Embed(description=description)
+		embed = disnake.Embed(description=description)
 
 		color = drawdota.get_item_color(item)
 		if color is not None:
-			embed.color = discord.Color(int(color[1:], 16))
+			embed.color = disnake.Color(int(color[1:], 16))
 
 
 		embed.title = item.localized_name
@@ -1052,7 +1052,7 @@ class Dotabase(MangoCog):
 		url = self.vpkurl + emoticon.url
 
 		filetype = "gif" if emoticon.frames > 1 else "png"
-		image = discord.File(await drawdota.create_dota_emoticon(emoticon, url), f"{name}.{filetype}")
+		image = disnake.File(await drawdota.create_dota_emoticon(emoticon, url), f"{name}.{filetype}")
 
 		await ctx.send(file=image)
 
@@ -1158,7 +1158,7 @@ class Dotabase(MangoCog):
 		maxlen = 1950
 		if len(lore_text) > maxlen:
 			lore_text = lore_text[:maxlen] + "..."
-		embed = discord.Embed(description=lore_text)
+		embed = disnake.Embed(description=lore_text)
 
 		embed.title = lore_info["name"]
 		embed.url = self.get_wiki_url(lore_info["object"])
@@ -1237,7 +1237,7 @@ class Dotabase(MangoCog):
 
 				if description == "":
 					continue
-				embed = discord.Embed(description=description)
+				embed = disnake.Embed(description=description)
 				title = f"{aghs_item.localized_name} ({ability.localized_name})"
 				embed.set_author(name=title, icon_url=icon_url)
 				embed.set_thumbnail(url=f"{self.vpkurl}{ability.icon}")
@@ -1262,7 +1262,7 @@ class Dotabase(MangoCog):
 						break
 
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 
 		embed.description = f"**Total Cost:** {self.get_emoji('gold')} {item.cost}"
 
@@ -1288,9 +1288,9 @@ class Dotabase(MangoCog):
 
 		color = drawdota.get_item_color(item)
 		if color is not None:
-			embed.color = discord.Color(int(color[1:], 16))
+			embed.color = disnake.Color(int(color[1:], 16))
 
-		image = discord.File(await drawdota.draw_itemrecipe(item, components, products), "recipe.png")
+		image = disnake.File(await drawdota.draw_itemrecipe(item, components, products), "recipe.png")
 		embed.set_image(url=f"attachment://{image.filename}")
 
 		await ctx.send(embed=embed, file=image)
@@ -1346,7 +1346,7 @@ class Dotabase(MangoCog):
 				hero_name = name1.split(" ")[0] + " " + combine_words(name1.split(" ")[-1], name2.split(" ")[-1])
 
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 
 		embed.title = hero_name
 
@@ -1358,9 +1358,9 @@ class Dotabase(MangoCog):
 		color1 = imagetools.Color(hero1.color)
 		color2 = imagetools.Color(hero2.color)
 		color = color1.blend(color2)
-		embed.color = discord.Color(color.integer)
+		embed.color = disnake.Color(color.integer)
 
-		image = discord.File(await drawdota.fuse_hero_images(hero1, hero2), "hero.png")
+		image = disnake.File(await drawdota.fuse_hero_images(hero1, hero2), "hero.png")
 		embed.set_thumbnail(url=f"attachment://{image.filename}")
 
 		await ctx.send(embed=embed, file=image)
@@ -1403,7 +1403,7 @@ class Dotabase(MangoCog):
 
 		print(item_ids)
 
-		image = discord.File(await drawdota.draw_courage(hero_id, item_ids), "courage.png")
+		image = disnake.File(await drawdota.draw_courage(hero_id, item_ids), "courage.png")
 		await ctx.send(file=image)
 
 
@@ -1425,7 +1425,7 @@ class Dotabase(MangoCog):
 			if tier < 1 or tier > 5:
 				raise UserError("Please specify a tier between 1 and 5")
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 
 		title = "Neutral Items"
 		if tier is not None:
@@ -1434,11 +1434,11 @@ class Dotabase(MangoCog):
 		embed.url = "https://dota2.gamepedia.com/Neutral_Items"
 
 		all_neutral_items = session.query(Item).filter(Item.neutral_tier != None).filter(Item.recipe == None).order_by(Item.localized_name).all()
-		image = discord.File(await drawdota.draw_neutralitems(tier, all_neutral_items), "neutralitems.png")
+		image = disnake.File(await drawdota.draw_neutralitems(tier, all_neutral_items), "neutralitems.png")
 		embed.set_image(url=f"attachment://{image.filename}")
 		if tier is not None:
 			tier_color = drawdota.neutral_tier_colors[str(tier)]
-			embed.color = discord.Color(int(tier_color[1:], 16))
+			embed.color = disnake.Color(int(tier_color[1:], 16))
 
 		if tier is None:
 			embed.set_footer(text="Also try: ?neutralitems tier 4")
@@ -1488,13 +1488,13 @@ class Dotabase(MangoCog):
 				value += "%"
 			description += f"\n{name}: **{value}**"
 
-		embed = discord.Embed(description=description)
+		embed = disnake.Embed(description=description)
 
 		title = f"Level {level} {hero.localized_name}"
 		embed.set_author(name=title, icon_url=f"{self.vpkurl}{hero.icon}")
 		embed.set_thumbnail(url=f"{self.vpkurl}{hero.portrait}")
 		if hero.color:
-			embed.color = discord.Color(int(hero.color[1:], 16))
+			embed.color = disnake.Color(int(hero.color[1:], 16))
 		embed.set_footer(text="The stats shown above do not account for talents, passives, or items")
 
 		await ctx.send(embed=embed)
@@ -1517,9 +1517,9 @@ class Dotabase(MangoCog):
 		if table_args.hero_count < 2 or table_args.hero_count > 40:
 			raise UserError("Please select a hero count between 2 and 40")
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 
-		image = discord.File(await drawdota.draw_herostatstable(table_args, self.hero_stat_categories, self.leveled_hero_stats), "herotable.png")
+		image = disnake.File(await drawdota.draw_herostatstable(table_args, self.hero_stat_categories, self.leveled_hero_stats), "herotable.png")
 		embed.set_image(url=f"attachment://{image.filename}")
 		embed.set_footer(text="The stats shown above do not account for talents, passives, or items")
 
@@ -1539,15 +1539,15 @@ class Dotabase(MangoCog):
 					continue
 			abilities.append(ability)
 
-		embed = discord.Embed()
+		embed = disnake.Embed()
 
 		embed.title = hero.localized_name
 		embed.url = self.get_wiki_url(hero)
 
-		image = discord.File(await drawdota.draw_heroabilities(abilities), "abilities.png")
+		image = disnake.File(await drawdota.draw_heroabilities(abilities), "abilities.png")
 		embed.set_image(url=f"attachment://{image.filename}")
 
-		embed.color = discord.Color(int(hero.color[1:], 16))
+		embed.color = disnake.Color(int(hero.color[1:], 16))
 
 		await ctx.send(embed=embed, file=image)
 

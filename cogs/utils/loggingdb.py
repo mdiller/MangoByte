@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 import sqlalchemy
 from databases import Database, DatabaseURL
 import asyncio
-import discord
+import disnake
 import datetime
 import os
 import re
@@ -16,7 +16,7 @@ def message_to_embed(message, cog):
 	if message:
 		return message.to_embed(cog)
 	else:
-		return discord.Embed(description="None")
+		return disnake.Embed(description="None")
 
 
 class Message(Base):
@@ -36,11 +36,11 @@ class Message(Base):
 	command = Column(String) # keeping for legacy
 
 	def to_embed(self, cog):
-		embed = discord.Embed(description=self.content)
+		embed = disnake.Embed(description=self.content)
 
 		author = cog.bot.get_user(self.author_id)
 		if author is not None:
-			embed.set_author(name=f"{author.name} ({author.id})", icon_url=author.avatar_url)
+			embed.set_author(name=f"{author.name} ({author.id})", icon_url=author.avatar.url)
 		else:
 			embed.set_author(name=self.author_id)
 
@@ -79,7 +79,7 @@ class Command(Base):
 				embed.add_field(name="Status", value=self.status)
 				if self.error:
 					embed.add_field(name="Error", value=self.error)
-					embed.color = discord.Color.red()
+					embed.color = disnake.Color.red()
 
 		return embed
 
@@ -127,7 +127,7 @@ class Error(Base):
 
 	def to_embed(self, cog):
 		embed = message_to_embed(self.message, cog)
-		embed.color = discord.Color.red()
+		embed.color = disnake.Color.red()
 
 		embed.timestamp = self.timestamp
 

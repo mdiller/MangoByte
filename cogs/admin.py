@@ -1,7 +1,7 @@
-import discord
+import disnake
 import asyncio
 import shutil
-from discord.ext import commands
+from disnake.ext import commands
 from __main__ import settings, botdata, httpgetter, loggingdb
 from cogs.utils.helpers import *
 from cogs.utils.botdata import GuildInfo
@@ -22,7 +22,7 @@ class Admin(MangoCog):
 	def bot_check(self, ctx):
 		"""Checks to make sure the user has permissions"""
 		guildinfo = botdata.guildinfo(ctx)
-		if not isinstance(ctx.message.channel, discord.abc.PrivateChannel):
+		if not isinstance(ctx.message.channel, disnake.abc.PrivateChannel):
 			if guildinfo.is_banned(ctx.message.author):
 				return False
 			if guildinfo.is_disabled(ctx.command):
@@ -34,7 +34,7 @@ class Admin(MangoCog):
 		return checks.is_admin_check(ctx.message.channel, ctx)
 
 	@commands.command()
-	async def botban(self, ctx, user: discord.Member):
+	async def botban(self, ctx, user: disnake.Member):
 		"""Bans the user from using commands"""
 		if checks.is_owner_check(user):
 			await ctx.send("Ya can't ban mah owner, man. 😠")
@@ -50,7 +50,7 @@ class Admin(MangoCog):
 		await ctx.send("{} has henceforth been banned from using commands 😤".format(user.mention))
 
 	@commands.command()
-	async def botunban(self, ctx, user: discord.Member):
+	async def botunban(self, ctx, user: disnake.Member):
 		"""Unbans the user, allowing them to use commands"""
 		if checks.is_owner_check(user) or user == self.bot.user:
 			await ctx.send("Ha ha. Very funny.")
@@ -87,7 +87,7 @@ class Admin(MangoCog):
 			raise UserError("Couldn't find a command or command category by that name")
 
 		secure_cogs = [ "Admin", "Owner" ]
-		if isinstance(cmd, discord.ext.commands.Command):
+		if isinstance(cmd, disnake.ext.commands.Command):
 			if guildinfo.is_disabled(cmd.cog_name):
 				raise UserError(f"The category this command belongs to ({cmd.cog_name}) is already disabled")
 			if cmd.cog_name in secure_cogs:

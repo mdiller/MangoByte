@@ -1,5 +1,5 @@
-import discord
-from discord.ext import commands
+import disnake
+from disnake.ext import commands
 from __main__ import settings, botdata, httpgetter
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
@@ -19,16 +19,16 @@ async def pokeapi_query(url, fullurl=False):
 
 def poke_color(color):
 	return {
-		"black": discord.Color(0x000000),
-		"blue": discord.Color.blue(),
-		"brown": discord.Color(0xD2691E),
-		"gray": discord.Color(0xA9A9A9),
-		"green": discord.Color.green(),
-		"pink": discord.Color(0xFF69B4),
-		"purple": discord.Color.purple(),
-		"red": discord.Color.red(),
-		"white": discord.Color(0xFFFFFF),
-		"yellow": discord.Color(0xFFFF00)
+		"black": disnake.Color(0x000000),
+		"blue": disnake.Color.blue(),
+		"brown": disnake.Color(0xD2691E),
+		"gray": disnake.Color(0xA9A9A9),
+		"green": disnake.Color.green(),
+		"pink": disnake.Color(0xFF69B4),
+		"purple": disnake.Color.purple(),
+		"red": disnake.Color.red(),
+		"white": disnake.Color(0xFFFFFF),
+		"yellow": disnake.Color(0xFFFF00)
 	}[color]
 
 
@@ -133,7 +133,7 @@ class Pokemon(MangoCog):
 		flavor_text = localize(species_data["flavor_text_entries"], "flavor_text")
 		flavor_text = flavor_text.replace("\n", " ")
 
-		embed = discord.Embed(description=flavor_text, color=poke_color(species_data["color"]["name"]))
+		embed = disnake.Embed(description=flavor_text, color=poke_color(species_data["color"]["name"]))
 		embed.title = data["localized_name"] + f" #{data['id']}"
 		embed.url = data["wiki_url"]
 
@@ -166,7 +166,7 @@ class Pokemon(MangoCog):
 		if not data["sprites"].get("front_shiny"):
 			await ctx.send("This pokemon doesn't have a shiny version")
 
-		embed = discord.Embed(color=poke_color(species_data["color"]["name"]))
+		embed = disnake.Embed(color=poke_color(species_data["color"]["name"]))
 		embed.set_image(url=data["sprites"].get("front_shiny"))
 
 		# fails silently if there's no cry for this pokemon
