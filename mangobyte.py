@@ -1,7 +1,11 @@
 
 # The following have to be imported and initialized in the correct order
+from argparse import ArgumentError
 from cogs.utils.settings import Settings
 settings = Settings()
+
+from cogs.utils.logger import setup_logger
+logger = setup_logger()
 
 from cogs.utils.botdata import BotData
 botdata = BotData()
@@ -16,9 +20,7 @@ from cogs.utils.helpers import *
 import disnake
 import traceback
 import asyncio
-import string
 from disnake.ext import commands
-import logging
 import datetime
 from cogs.utils.helpcommand import MangoHelpCommand
 from cogs.utils.clip import *
@@ -28,9 +30,6 @@ import sys
 import inspect
 
 startupTimer = SimpleTimer()
-
-if not os.path.exists("logs"):
-    os.makedirs("logs")
 
 description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 				For more information about me, try `{cmdpfx}info`"""
@@ -53,24 +52,24 @@ initialize_started = False
 
 @bot.event
 async def on_shard_ready(shard_id):
-	print(f"shard {shard_id} ({len(bot.shards)} total) called its on_shard_ready ({len(bot.guilds)} guilds)")
+	logger.info(f"shard {shard_id} ({len(bot.shards)} total) called its on_shard_ready ({len(bot.guilds)} guilds)")
 
 @bot.event
 async def on_ready():
-	print(f"on_ready() started")
+	logger.info(f"on_ready() started")
 	global initialize_started
 	
 	if not initialize_started:
 		initialize_started = True
 		await initialize()
 	else:
-		print("on_ready called again")
+		logger.info("on_ready called again")
 
 # the full initialization of the bot
 async def initialize():
 	try:
-		print("Logged in as:\n{0} (ID: {0.id})".format(bot.user))
-		print("Connecting to voice channels if specified in botdata.json ...")
+		logger.info("Logged in as:\n{0} (ID: {0.id})".format(bot.user))
+		logger.info("Connecting to voice channels if specified in botdata.json ...")
 
 		bot.help_command.cog = bot.get_cog("General")
 		appinfo = await bot.application_info()
@@ -108,10 +107,10 @@ async def initialize():
 		message = "__**Initialization Started**__\n"
 		if should_space_connects:
 			message += f"{voice_channel_count} voice channels to connect, should take about {expected_minutes} minutes and finish around {expected_finish}"
-		print(message)
+		logger.info(message)
 		if not settings.debug:
 			await appinfo.owner.send(message)
-		
+
 		# trigger the actual voice channel reconnecting
 		audio_cog = bot.get_cog("Audio")
 		channel_tasks = []
@@ -124,17 +123,20 @@ async def initialize():
 		channel_connector = AsyncBundler(channel_tasks)
 		await channel_connector.wait()
 	except Exception as e:
-		# logging.error(traceback.format_exc())
+		logger.error(traceback.format_exc())
 		seconds_to_wait = 60
-		print(f"errored with {e} during initialization, waiting {seconds_to_wait} seconds before finishing")
+		logger.error(f"errored with {e} during initialization, waiting {seconds_to_wait} seconds before finishing")
 		await asyncio.sleep(seconds_to_wait)
 	finally:
+		logger.info("updating guilds")
+		await loggingdb.update_guilds(bot.guilds)
+
 		message = "__**Initialization Complete:**__\n"
 		message += channel_connector.status_as_string("voice channels connected") + "\n\n"
 		message += f"initialization took {initTimer}" + "\n"
 		message += f"Full startup took {startupTimer}"
 
-		print(message + "\n")
+		logger.info(message + "\n")
 		if not settings.debug:
 			await appinfo.owner.send(message)
 
@@ -143,9 +145,6 @@ async def initialize():
 			type=disnake.ActivityType.playing,
 			start=datetime.datetime.utcnow())
 		await bot.change_presence(status=disnake.Status.online, activity=game)
-
-		print("updating guilds")
-		await loggingdb.update_guilds(bot.guilds)
 
 
 async def get_cmd_signature(ctx):
@@ -162,9 +161,9 @@ async def invalid_command_reporting(ctx):
 async def initial_channel_connect_wrapper(audio_cog, guildinfo):
 	channel_id = guildinfo.voicechannel
 	server_id = guildinfo.id
-	print(f"connecting voice to: {channel_id}")
+	logger.info(f"connecting voice to: {channel_id}")
 	await initial_channel_connect(audio_cog, guildinfo)
-	print(f"connected: {channel_id}")
+	logger.info(f"connected: {channel_id}")
 
 
 # returns 0 on successful connect, 1 on not found, and 2 on timeout, 3 on error
@@ -180,18 +179,18 @@ async def initial_channel_connect(audio_cog, guildinfo):
 			guildinfo.voicechannel = None
 			raise
 		else:
-			print(f"weird usererror on connection to channel '{channel_id}': {e.message}")
+			logger.info(f"weird usererror on connection to channel '{channel_id}': {e.message}")
 			raise
 	except asyncio.TimeoutError:
 		guildinfo.voicechannel = None
 		raise
 	except Exception as e:
-		print(f"exception thrown on connection to channel ({channel_id}): {str(e)}")
+		logger.error(f"exception thrown on connection to channel ({channel_id}): {str(e)}")
 		guildinfo.voicechannel = None
 		trace = traceback.format_exc().replace("\"", "'").split("\n")
 		trace = [x for x in trace if x] # removes empty lines
 		trace_string = "\n".join(trace) + "\n"
-		print(trace_string)
+		logger.error(trace_string)
 		raise
 
 
@@ -213,7 +212,7 @@ async def on_command_error(ctx, error):
 			cmd = ctx.message.content[1:].split(" ")[0]
 			slash_command_names = list(map(lambda c: c.name, bot.slash_commands))
 			if cmd in deprecated_commands:
-				print(f"deprecated command '{cmd}' attempted")
+				logger.info(f"deprecated command '{cmd}' attempted")
 				if deprecated_commands[cmd].startswith("_"):
 					await ctx.send(f"{cmdpfx}{cmd}` has been deprecated. {deprecated_commands[cmd][1:]}")
 					return
@@ -222,7 +221,7 @@ async def on_command_error(ctx, error):
 				await ctx.send(f"`{cmdpfx}{cmd}` has been deprecated. Try `{altprefix}{deprecated_commands[cmd]}` instead.")
 				return
 			elif cmd in slash_command_names:
-				print(f"deprecated command '{cmd}' attempted")
+				logger.info(f"deprecated command '{cmd}' attempted")
 				await ctx.send(f"`{cmdpfx}{cmd}` has been moved to a slash command. Try typing `/{cmd}`.")
 				return
 			elif cmd == "" or cmd.startswith("?") or cmd.startswith("!"):
@@ -315,7 +314,7 @@ async def report_error(message, error, skip_lines=2):
 
 	await loggingdb.insert_error(message, error, trace_string)
 
-	print(f"\nError on: {message.clean_content}\n{trace_string}\n")
+	logger.error(f"\nError on: {message.content}\nAuthor Id: {message.author.id}\n{trace_string}\n")
 	return trace_string
 
 def update_commandinfo():
@@ -382,7 +381,7 @@ def update_commandinfo():
 	with open(readme_file, "w+") as f:
 		f.write(text)
 
-	print("done!")
+	logger.info("done!")
 
 
 from cogs.general import General
@@ -407,7 +406,7 @@ if __name__ == '__main__':
 	if len(sys.argv) > 1 and sys.argv[1] == "commands":
 		update_commandinfo()
 	else:
-		print(f"Starting mango at {datetime.datetime.today().strftime('%d-%b-%Y %I:%M %p')}")
+		logger.info(f"Starting mango at {datetime.datetime.today().strftime('%d-%b-%Y %I:%M %p')}")
 		bot.run(settings.token)
 
 

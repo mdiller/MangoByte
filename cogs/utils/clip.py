@@ -11,6 +11,8 @@ import html
 import requests
 import functools
 from concurrent.futures import ThreadPoolExecutor
+import logging
+logger = logging.getLogger("mangologger")
 
 def tts_save(filename, text, lang):
 	# run_command(["pico2wave", "--wave", filename, "-l", "en-GB", text])
@@ -24,7 +26,7 @@ def tts_save(filename, text, lang):
 			tts.save(filename)
 		except ValueError as e:
 			if loop_count > 0 and e.args and e.args[0] == "Unable to find token seed! Did https://translate.google.com change?":
-				print(f"Got bad seed exception. Looping {loop_count} more times")
+				logger.error(f"Got bad seed exception. Looping {loop_count} more times")
 				continue # loop, as reccomended here: https://github.com/pndurette/gTTS/issues/176#issuecomment-723393140
 			else:
 				raise

@@ -3,6 +3,8 @@ import os
 import disnake
 import cogs.utils.botdatatypes as types
 from collections import OrderedDict
+import logging
+logger = logging.getLogger("mangologger")
 
 class ListVar:
 	def __init__(self, t):
@@ -299,7 +301,7 @@ class BotData:
 				for key in self.defaults.keys():
 					if key not in current.keys():
 						current[key] = self.defaults[key]
-						print("Adding " + str(key) + " field to botdata.json")
+						logger.info("Adding " + str(key) + " field to botdata.json")
 				write_json(self.path, current)
 			self.json_data = read_json(self.path)
 

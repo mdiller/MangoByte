@@ -18,6 +18,8 @@ import re
 import praw
 import os
 from .mangocog import *
+import logging
+logger = logging.getLogger("mangologger")
 
 donate_links = {
 	"Patreon": "https://www.patreon.com/dillerm",
@@ -413,7 +415,7 @@ class General(MangoCog):
 				except AudioPlayerNotFoundError:
 					pass # Not needed for this 
 				return
-		print("didnt match anything for ask")
+		logger.info("didnt match anything for ask")
 
 	@commands.command()
 	async def insult(self, ctx):
@@ -511,7 +513,7 @@ class General(MangoCog):
 
 	@tasks.loop(hours=12)
 	async def update_topgg(self):
-		print("update_topgg() entered")
+		logger.info("update_topgg() entered")
 		if settings.debug or (settings.topgg is None):
 			return # nothing to do here
 
@@ -533,7 +535,7 @@ class General(MangoCog):
 
 	@tasks.loop(hours=12)
 	async def do_infodump(self):
-		print("do_infodump() entered")
+		logger.info("do_infodump() entered")
 		if not settings.infodump_path:
 			return # nothing to do here
 
@@ -552,22 +554,22 @@ class General(MangoCog):
 
 	@tasks.loop(minutes=5)
 	async def check_dota_patch(self):
-		print("check_dota_patch() entered")
+		logger.info("check_dota_patch() entered")
 		url = "https://www.dota2.com/patches/"
 		try:
 			text = await httpgetter.get(url, return_type="text")
 		except HttpError as e:
-			print(f"patches update failed with http {e.code} error")
+			logger.info(f"patches update failed with http {e.code} error")
 			await self.send_owner(f"patches update failed the check with a http {e.code} error")
 			return # failed, so return
 		except Exception as e:
 			etype = str(type(e).__name__)
-			print(f"patches update failed the check w/ exception {etype}: {e}")
+			logger.info(f"patches update failed the check w/ exception {etype}: {e}")
 			await self.send_owner(f"patches update failed the check w/ exception {etype}: {e}")
 			return # failed, so return
 		soup = BeautifulSoup(text, "html.parser")
 
-		print("patch parse starting")
+		logger.info("patch parse starting")
 
 		current_patch = soup.find(name="title").contents[0]
 		old_patch = botdata["dotapatch"]
@@ -576,9 +578,9 @@ class General(MangoCog):
 			return # thats the current patch, do nothing
 		if current_patch.strip() == "Gameplay Update":
 			return # thats what happens when theyre tryna switch it and theyre in the process, so give it a minute and try again later
-		print(f"\"{current_patch}\"")
-		print(current_patch == "Gameplay Update")
-		print(str(current_patch) == "Gameplay Update")
+		logger.info(f"\"{current_patch}\"")
+		logger.info(current_patch == "Gameplay Update")
+		logger.info(str(current_patch) == "Gameplay Update")
 		await self.send_owner(f"patches update triggered: (new one is '{current_patch}', old one was '{old_patch}')")
 		botdata["dotapatch"] = current_patch
 
@@ -623,7 +625,7 @@ class General(MangoCog):
 				if channel is not None:
 					messageables.append(channel)
 				else:
-					print(f"couldn't find channel {guildinfo.dotapatchchannel} when announcing dota patches")
+					logger.info(f"couldn't find channel {guildinfo.dotapatchchannel} when announcing dota patches")
 
 		userinfos = botdata.userinfo_list()
 		for userinfo in userinfos:
@@ -632,16 +634,16 @@ class General(MangoCog):
 				if user is not None:
 					messageables.append(user)
 				else:
-					print(f"couldn't find user {userinfo.discord} when announcing dota patches")
+					logger.info(f"couldn't find user {userinfo.discord} when announcing dota patches")
 
 		tasks = []
 		for messageable in messageables:
 			tasks.append(messageable.send(embed=embed))
 
 		bundler = AsyncBundler(tasks)
-		print("waiting for dota patch bundle to complete")
+		logger.info("waiting for dota patch bundle to complete")
 		await bundler.wait()
-		print("dota patch bundle completed")
+		logger.info("dota patch bundle completed")
 		await self.send_owner("__Dota Patch Sent!__\n" + bundler.status_as_string())
 
 
@@ -682,7 +684,7 @@ class General(MangoCog):
 	async def on_command(self, ctx):
 		msg = await loggingdb.insert_message(ctx.message, ctx.command.name)
 		await loggingdb.insert_command(ctx)
-		print(msg)
+		logger.info(msg)
 
 	@commands.Cog.listener()
 	async def on_command_completion(self, ctx):

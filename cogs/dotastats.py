@@ -24,6 +24,8 @@ import typing
 import math
 from types import *
 from .mangocog import *
+import logging
+logger = logging.getLogger("mangologger")
 
 class MatchNotParsedError(UserError):
 	def __init__(self, match_id, action=None):
@@ -113,7 +115,7 @@ async def get_stratz_match(match_id):
 			204: "STRATZ hasn't recieved this match yet. Try again a bit later"
 		}, headers=auth_header)
 	except aiohttp.ClientConnectorError:
-		print("ClientConnectorError on stratz api result")
+		logger.info("ClientConnectorError on stratz api result")
 		raise StratzMatchNotParsedError(match_id)
 
 async def get_lastmatch_id(matchfilter, reverse=False):

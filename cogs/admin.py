@@ -9,6 +9,8 @@ from cogs.utils.clip import GttsLang
 from cogs.utils import checks
 from cogs.utils import botdatatypes
 from .mangocog import *
+import logging
+logger = logging.getLogger("mangologger")
 
 class Admin(MangoCog):
 	"""Commands to help manage mangobyte on your server/guild

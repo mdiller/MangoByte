@@ -8,6 +8,8 @@ from .mangocog import *
 from cogs.audio import AudioPlayerNotFoundError
 import os
 import re
+import logging
+logger = logging.getLogger("mangologger")
 
 async def pokeapi_query(url, fullurl=False):
 	if not fullurl:

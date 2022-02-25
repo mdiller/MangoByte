@@ -15,6 +15,8 @@ import urllib.request
 from random import randint
 from .mangocog import *
 from ctypes.util import find_library
+import logging
+logger = logging.getLogger("mangologger")
 
 intro_outro_length = 4.5
 
@@ -31,7 +33,7 @@ def remove_if_temp(mp3name):
 	if os.path.isfile(mp3name):
 		if os.path.dirname(mp3name) == settings.resource("temp"):
 			os.remove(mp3name)
-			print("removed temp file " + mp3name)
+			logger.info("removed temp file " + mp3name)
 
 
 class AudioPlayer:
@@ -66,31 +68,31 @@ class AudioPlayer:
 		voice = self.voice
 
 		if voice is None:
-			print(f"attempting connect to: {channel.id}")
+			logger.info(f"attempting connect to: {channel.id}")
 			await channel.connect()
-			print(f"finished connect to: {channel.id}")
+			logger.info(f"finished connect to: {channel.id}")
 		elif voice.channel and voice.channel.id == channel.id:
-			print(f"doin' a disconnect and reconnect for: {channel.id}")
+			logger.info(f"doin' a disconnect and reconnect for: {channel.id}")
 			await voice.disconnect(force=True)
 			await asyncio.sleep(2)
 			await channel.connect()
-			print(f"finished reconnect for: {channel.id}")
-			# print(f"leaving this because we're supposedly already connected? ({channel.id})")
+			logger.info(f"finished reconnect for: {channel.id}")
+			# logger.info(f"leaving this because we're supposedly already connected? ({channel.id})")
 		else:
-			print(f"attempting move to: {channel.id}")
+			logger.info(f"attempting move to: {channel.id}")
 			await voice.move_to(channel)
-			print(f"finished move to: {channel.id}")
+			logger.info(f"finished move to: {channel.id}")
 
 	def done_talking(self, error):
 		if error:
-			print(f"Error on voice.play: {error.message}")
+			logger.info(f"Error on voice.play: {error.message}")
 		if not self.clipqueue.empty():
 			coro = self.play_next_clip()
 			fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
 			try:
 				fut.result()
 			except:
-				print(f"Error playing next clip")
+				logger.info(f"Error playing next clip")
 				pass
 
 	# gets the next clip from the clip queue
@@ -113,7 +115,7 @@ class AudioPlayer:
 
 		self.voice.source = disnake.PCMVolumeTransformer(self.voice.source)
 		self.voice.source.volume = clip.volume
-		print("playing: " + clip.audiopath)
+		logger.info("playing: " + clip.audiopath)
 		if self.last_clip != None and clip.audiopath != self.last_clip.audiopath:
 			remove_if_temp(self.last_clip.audiopath)
 		self.last_clip = clip
@@ -121,7 +123,7 @@ class AudioPlayer:
 	# try queueing an mp3 to play
 	async def queue_clip(self, clip, ctx):
 		if(self.voice is None):
-			print("tried to talk while not in voice channel")
+			logger.info("tried to talk while not in voice channel")
 			raise AudioPlayerNotFoundError("not in voice channel m8")
 
 		self.clipqueue.put(clip)
@@ -233,12 +235,12 @@ class Audio(MangoCog):
 		if guild.me and guild.me.voice:
 			voice = next((voice for voice in self.bot.voice_clients if voice.guild == guild), None)
 			if voice:
-				print("calling disconnect!")
+				logger.info("calling disconnect!")
 				await voice.disconnect(force=True)
 			else:
-				print("can't find voice to disconnect!\nvoices available:")
+				logger.info("can't find voice to disconnect!\nvoices available:")
 				for v in self.bot.voice_clients:
-					print(v.vcid)
+					logger.info(v.vcid)
 		audioplayer = await self.audioplayer(guild, False)
 		if audioplayer is not None:
 			self.audioplayers.remove(audioplayer)
@@ -543,19 +545,19 @@ class Audio(MangoCog):
 					try:
 						await message.channel.send(e.message)
 					except disnake.errors.Forbidden as e:
-						print("on_message usererror blocked because permissions")
+						logger.info("on_message usererror blocked because permissions")
 						pass
 				except UserError as e:
 					try:
 						await message.channel.send(e.message)
 					except disnake.errors.Forbidden as e:
-						print("on_message usererror blocked because permissions")
+						logger.info("on_message usererror blocked because permissions")
 						pass
 				except Exception as e:
 					try:
 						await message.channel.send("Uh-oh, sumthin dun gone wrong 😱")
 					except disnake.errors.Forbidden as e:
-						print("on_message usererror blocked because permissions")
+						logger.info("on_message usererror blocked because permissions")
 						pass
 					await report_error(message, TtsChannelError(e))
 
@@ -617,7 +619,7 @@ class Audio(MangoCog):
 
 
 					text = (await self.fix_name(name)) + " " + outrotts
-					print(text)
+					logger.info(text)
 
 					await asyncio.sleep(0.5)
 					if not outroclip is None:				
@@ -656,14 +658,14 @@ class Audio(MangoCog):
 						introtts = ""
 
 					text = introtts + " " + await self.fix_name(name)
-					print(text + " joined the channel")
+					logger.info(text + " joined the channel")
 
 					await asyncio.sleep(3)
 					if not introclip is None:
 						await self.play_clip(introclip, after.channel)
 					await self.play_clip("tts:" + text, after.channel)
 		except UserError as e:
-			print(f"Bad voice channel connection to ({channel_id}) from on_voice_state_update: {e.message}")
+			logger.error(f"Bad voice channel connection to ({channel_id}) from on_voice_state_update: {e.message}")
 
 
 def setup(bot):

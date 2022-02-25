@@ -15,6 +15,8 @@ from .helpers import run_command, get_pretty_time, read_json, UserError, format_
 from .imagetools import *
 from concurrent.futures import ThreadPoolExecutor
 from .metastats import get_hero_winrate, get_hero_pickban_percent
+import logging
+logger = logging.getLogger("mangologger")
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -438,15 +440,15 @@ def optimize_gif(uri, filename):
 	]
 	size_limit = 8
 
-	print(f"optimizing: {uri}")
+	logger.info(f"optimizing: {uri}")
 	file_size = os.path.getsize(filename) / 1000000
-	print(f"bytes: {file_size} MB")
+	logger.info(f"bytes: {file_size} MB")
 	i = 0
 
 	while file_size >= size_limit and i < len(optimization):
 		output = run_command(["gifsicle", "--conserve-memory", filename, "-o", filename] + optimization[i])
 		file_size = os.path.getsize(filename) / 1000000
-		print(f"bytes: {file_size} MB")
+		logger.info(f"bytes: {file_size} MB")
 		i += 1
 
 	if file_size >= size_limit:
@@ -664,7 +666,7 @@ async def dota_rank_icon(rank_tier, leaderboard_rank):
 		rank_tier = 0
 
 	uri = f"dota_rank:{rank_tier}_{leaderboard_rank}"
-	print(uri)
+	logger.info(uri)
 	filename = httpgetter.cache.get_filename(uri)
 	if filename and not settings.debug:
 		return filename

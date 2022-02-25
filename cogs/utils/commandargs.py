@@ -7,6 +7,8 @@ from collections import OrderedDict
 import datetime
 import math
 from functools import lru_cache
+import logging
+logger = logging.getLogger("mangologger")
 
 @lru_cache(maxsize=None)
 def get_cache_hero_pattern(dotabase, prefix):
@@ -233,7 +235,7 @@ class TimeSpanArg(QueryArg):
 					"month": 30,
 					"year": 365
 				}[chunk_kind]
-				print(f"using {chunk_count} of {chunk_kind}")
+				logger.info(f"using {chunk_count} of {chunk_kind}")
 				numdays = chunk_count * chunk_kind_value
 				min_datetime = datetime.datetime.now() - datetime.timedelta(days=numdays)
 				self.min = min_datetime

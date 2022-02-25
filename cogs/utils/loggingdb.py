@@ -9,6 +9,8 @@ import disnake
 import datetime
 import os
 import re
+import logging
+logger = logging.getLogger("mangologger")
 
 Base = declarative_base()
 
@@ -155,7 +157,7 @@ def row2dict(row):
 
 def print_debug(text):
 	if True or settings.debug:
-		print(text)
+		logger.info(text)
 
 class LoggingDb():
 	def __init__(self, loggingdb_path):
@@ -224,7 +226,7 @@ class LoggingDb():
 	
 			cmd = self.session.query(Command).filter_by(message_id=ctx.message.id).order_by(sqlalchemy.desc(Command.id)).first()
 			if not cmd:
-				print("couldnt find cmd to finish")
+				logger.info("couldnt find cmd to finish")
 				return
 	
 			cmd.status = status
@@ -327,7 +329,7 @@ class LoggingDb():
 				if cmd:
 					message.command = cmd.name
 		self.session.commit()
-		print("done updating logged commands!")
+		logger.info("done updating logged commands!")
 
 	# only called manually
 	def add_missing_guilds(self, current_guilds):

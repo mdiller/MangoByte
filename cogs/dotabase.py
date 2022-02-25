@@ -18,6 +18,8 @@ import json
 from .mangocog import *
 from dotabase import *
 from cogs.audio import AudioPlayerNotFoundError
+import logging
+logger = logging.getLogger("mangologger")
 
 session = dotabase_session()
 
@@ -585,7 +587,7 @@ class Dotabase(MangoCog):
 		]
 		dota_response = random.choice(dota_hellos)
 		response = session.query(Response).filter(Response.name == dota_response).first()
-		print("hello: " + response.name)
+		logger.info("hello: " + response.name)
 		await self.play_response(response, ctx)
 
 	# Plays the correct command for the given keyphrase and hero, if a valid one is given
@@ -1401,7 +1403,7 @@ class Dotabase(MangoCog):
 		else:
 			hero_id = session.query(Hero).order_by(func.random()).first().id
 
-		print(item_ids)
+		logger.info(item_ids)
 
 		image = disnake.File(await drawdota.draw_courage(hero_id, item_ids), "courage.png")
 		await ctx.send(file=image)
@@ -1585,7 +1587,7 @@ class Dotabase(MangoCog):
 				if channel is not None:
 					messageables.append(channel)
 				else:
-					print(f"couldn't find channel {guildinfo.dotablogchannel} when announcing dota blog")
+					logger.info(f"couldn't find channel {guildinfo.dotablogchannel} when announcing dota blog")
 
 		#find users
 		userinfos = botdata.userinfo_list()
@@ -1595,7 +1597,7 @@ class Dotabase(MangoCog):
 				if user is not None:
 					messageables.append(user)
 				else:
-					print(f"couldn't find user {userinfo.discord} when announcing dota blog")
+					logger.info(f"couldn't find user {userinfo.discord} when announcing dota blog")
 
 		#bundle tasks and execute
 		tasks = []

@@ -12,6 +12,8 @@ import random
 import os
 import re
 import json
+import logging
+logger = logging.getLogger("mangologger")
 
 class Artifact(MangoCog):
 	"""Artifact related commands

@@ -6,6 +6,8 @@ import subprocess
 import asyncio
 import datetime
 from collections import OrderedDict
+import logging
+logger = logging.getLogger("mangologger")
 
 MENTION_TRANSFORMS = {
 	'@everyone': '@\u200beveryone',
@@ -183,7 +185,7 @@ class AsyncBundler():
 			return result
 		except Exception as e:
 			etype = str(type(e).__name__)
-			print(f"AsyncBundler found exception {etype}: {e}")
+			logger.info(f"AsyncBundler found exception {etype}: {e}")
 			if etype not in self.exceptions_dict:
 				self.exceptions_dict[etype] = 0
 			self.exceptions_dict[etype] += 1

@@ -4,6 +4,8 @@ from disnake.ext.commands import *
 from .botdata import GuildInfo, UserInfo
 from .helpers import read_json, MENTION_PATTERN
 from cogs.mangocog import simple_get_emoji
+import logging
+logger = logging.getLogger("mangologger")
 
 
 def get_config_help(variables, command):

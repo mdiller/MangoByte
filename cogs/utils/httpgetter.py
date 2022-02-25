@@ -3,6 +3,8 @@ from .helpers import *
 import re
 import aiohttp
 from io import BytesIO
+import logging
+logger = logging.getLogger("mangologger")
 
 default_cache = { "count": 0, "files": {} }
 
@@ -97,7 +99,7 @@ class Cache:
 					os.remove(filename)
 
 def raise_error(url, code, errors):
-	print(f"http {code} error on: {url}")
+	logger.error(f"http {code} error on: {url}")
 	template = errors.get(code, errors.get("default", "Http request failed with a {} error"))
 	if code == 404:
 		raise Http404Error(template)

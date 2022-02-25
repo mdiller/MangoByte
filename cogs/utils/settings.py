@@ -21,7 +21,7 @@ class Settings:
 				for key in self.defaults.keys():
 					if key not in current.keys():
 						current[key] = self.defaults[key]
-						print("Adding " + str(key) + " field to settings.json")
+						logger.info("Adding " + str(key) + " field to settings.json")
 				write_json(self.path, current)
 			self.json_data = read_json(self.path)
 		if self.token == "":

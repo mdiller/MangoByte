@@ -5,19 +5,26 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Run Mangobyte",
+			"name": "Mangobyte",
 			"type": "python",
 			"request": "launch",
 			"program": "mangobyte.py",
 			"console": "integratedTerminal"
 		},
 		{
-			"name": "Mango commands",
+			"name": "Refresh mango commands",
 			"type": "python",
 			"request": "launch",
 			"program": "mangobyte.py",
 			"console": "integratedTerminal",
 			"args": [ "commands" ]
+		},
+		{
+			"name": "Run Current File",
+			"type": "python",
+			"request": "launch",
+			"program": "${file}",
+			"console": "integratedTerminal"
 		}
 	]
 }
