@@ -305,9 +305,10 @@ class Owner(MangoCog):
 		if not found:
 			raise UserError("Couldn't find anything for that")
 
-	@commands.command(aliases=["restart", "quit", "kill", "pokemango"])
+	@commands.command(aliases=["restart", "quit", "kill", "pokemango", "exit"])
 	async def close(self, ctx):
 		"""Kills the bot"""
+		await self.bot.change_presence(status=disnake.Status.offline)
 		await self.bot.close()
 
 def setup(bot):

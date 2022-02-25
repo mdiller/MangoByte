@@ -75,6 +75,11 @@ class Settings:
 	def infodump_path(self):
 		return self.json_data.get("infodump_path", None)
 
+	# an optional list of test-guilds for testing slash commands
+	@property
+	def test_guilds(self):
+		return self.json_data.get("test_guilds", None)
+
 	@property
 	def resourcedir(self):
 		return "resource/" # self.json_data["resourcedir"]

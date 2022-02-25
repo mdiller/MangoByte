@@ -22,136 +22,137 @@ Want to try out mangobyte on your server? [Click Here](https://discordapp.com/oa
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 88 commands, separated into 7 categories
+Mangobyte currently has 89 commands, separated into 7 categories
 
 #### General
 Commands that don't really fit into the other categories
 
 ```
-?ask             | Answers any question you might have                        
-?botstats        | Displays some bot statistics                               
-?cat             | Gets a picture of my cat                                   
-?changelog       | Gets a rough changelog for mangobyte                       
-?choose          | Randomly chooses one of the given options                  
-?docs            | Shows the documentation for the given topic                
-?dog             | Gets a picture of one of my dogs                           
-?donate          | Posts the donation information                             
-?echo            | Echo...                                                    
-?help            | Shows this message                                         
-?info            | Prints info about mangobyte                                
-?insult          | Gets a nice insult for ya                                  
-?invite          | Prints the invite link                                     
-?lasagna         | A baked Italian dish                                       
-?ping            | Pongs a number of times(within reason)                     
-?random_number   | Gets a random number between the minimum and maximum       
-?reddit          | Displays a formatted reddit post                           
-?restget         | Gets a json response from a rest api and returns it        
-?scramble        | Scrambles the insides of words                             
-?showerthought   | Gets a top post from r/ShowerThoughts                      
-?userconfig      | Configures the bot's user-specific settings                
-?wiki            | Looks up a thing on wikipedia                              
+?ask             | Answers any question you might have                         
+?botstats        | Displays some bot statistics                                
+?cat             | Gets a picture of my cat                                    
+?changelog       | Gets a rough changelog for mangobyte                        
+?choose          | Randomly chooses one of the given options                   
+?docs            | Shows the documentation for the given topic                 
+?dog             | Gets a picture of one of my dogs                            
+?donate          | Posts the donation information                              
+?echo            | Echo...                                                     
+?help            | Shows this message                                          
+?info            | Prints info about mangobyte                                 
+?insult          | Gets a nice insult for ya                                   
+?invite          | Prints the invite link                                      
+?lasagna         | A baked Italian dish                                        
+/ping            | Pongs a number of times(within reason)                      
+?random_number   | Gets a random number between the minimum and maximum        
+?reddit          | Displays a formatted reddit post                            
+?restget         | Gets a json response from a rest api and returns it         
+?scramble        | Scrambles the insides of words                              
+?showerthought   | Gets a top post from r/ShowerThoughts                       
+?userconfig      | Configures the bot's user-specific settings                 
+?wiki            | Looks up a thing on wikipedia                               
 ```
 
 #### Audio
 For playing audio in a voice channel
 
 ```
-?clipinfo        | Gets information and a file for the given clip             
-?clips           | Lists the local audio clips available for the play command 
-?later           | Tells you how much later it is                             
-?play            | Plays an audio clip                                        
-?playurl         | Plays an mp3 file at a url                                 
-?replay          | Replays the last played clip                               
-?smarttts        | Automatically find the best fit for the tts given          
-?stop            | Stops the currently playing audio                          
-?tts             | Like echo but for people who can't read                    
-?ttsclip         | Tries to text-to-speech the given clip                     
+?clipinfo        | Gets information and a file for the given clip              
+?clips           | Lists the local audio clips available for the play command  
+?later           | Tells you how much later it is                              
+?play            | Plays an audio clip                                         
+?playurl         | Plays an mp3 file at a url                                  
+?replay          | Replays the last played clip                                
+?smarttts        | Automatically find the best fit for the tts given           
+?stop            | Stops the currently playing audio                           
+?tts             | Like echo but for people who can't read                     
+?ttsclip         | Tries to text-to-speech the given clip                      
 ```
 
 #### Dotabase
 For information about Dota 2, and playing hero responses
 
 ```
-?abilities       | Shows all of the abilities/spells for that hero            
-?ability         | Gets information about a specific hero ability             
-?addemoticon     | Adds a dota emoticon as an animated emoji                  
-?aghanim         | Gets the aghs upgrade for the given hero or ability        
-?blog            | Pulls the newest blog post for Dota 2                      
-?chatwheel       | Plays the given chat wheel sound                           
-?courage         | Generates a challenge build                                
-?dota            | Plays a dota response                                      
-?emoticon        | Gets the gif of a dota emoticon                            
-?fuseheroes      | See what would happen if you fused two heroes together     
-?hello           | Says hello                                                 
-?hero            | Gets information about a specific hero                     
-?herotable       | Displays a sorted table of heroes and their stats          
-?inthebag        | Proclaims that 'IT' (whatever it is) is in the bag         
-?item            | Gets information about a specific item                     
-?leveledstats    | Gets the stats for a hero at the specified level           
-?lol             | WOW I WONDER WAT THIS DOES                                 
-?lore            | Gets the lore of a hero, ability, or item                  
-?neutralitems    | Displays all of the neutral items                          
-?no              | Nopes.                                                     
-?recipe          | Shows the recipes involving this item                      
-?talents         | Gets the talents of a specific hero                        
-?thanks          | Gives thanks                                               
-?yes             | Oooooh ya.                                                 
+?abilities       | Shows all of the abilities/spells for that hero             
+?ability         | Gets information about a specific hero ability              
+?addemoticon     | Adds a dota emoticon as an animated emoji                   
+?aghanim         | Gets the aghs upgrade for the given hero or ability         
+?blog            | Pulls the newest blog post for Dota 2                       
+?chatwheel       | Plays the given chat wheel sound                            
+?courage         | Generates a challenge build                                 
+?dota            | Plays a dota response                                       
+?emoticon        | Gets the gif of a dota emoticon                             
+?fuseheroes      | See what would happen if you fused two heroes together      
+?hello           | Says hello                                                  
+?hero            | Gets information about a specific hero                      
+?herotable       | Displays a sorted table of heroes and their stats           
+?inthebag        | Proclaims that 'IT' (whatever it is) is in the bag          
+?item            | Gets information about a specific item                      
+?leveledstats    | Gets the stats for a hero at the specified level            
+?lol             | WOW I WONDER WAT THIS DOES                                  
+?lore            | Gets the lore of a hero, ability, or item                   
+?neutralitems    | Displays all of the neutral items                           
+?no              | Nopes.                                                      
+?recipe          | Shows the recipes involving this item                       
+?talents         | Gets the talents of a specific hero                         
+?thanks          | Gives thanks                                                
+?yes             | Oooooh ya.                                                  
 ```
 
 #### DotaStats
 Commands for displaying information about Dota 2 players and matches
 
 ```
-?dotagif         | Creates a gif of a specific part of a dota match           
-?firstmatch      | Gets info about the player's first dota game               
-?laning          | Creates gif of the laning stage with a caption             
-?lastmatch       | Gets info about the player's last dota game                
-?lastmatchstory  | Tells the story of the player's last match                 
-?match           | Gets a summary of the dota match with the given id         
-?matches         | Gets a list of your matches                                
-?matchgraph      | Creates a graph for a dota match                           
-?matchids        | Gets a list of matchids that match the given filter        
-?matchstory      | Tells the story of the match                               
-?opendota        | Queries the opendota api                                   
-?parse           | Requests that OpenDota parses a match                      
-?playerstats     | Gets player match statistics                               
-?profile         | Displays information about the player's dota profile       
-?rolesgraph      | Gets a graph displaying the player's hero roles            
-?skillbuild      | Gets the ability upgrades for a match                      
-?twenty          | Gets stats from the player's last 20 parsed games          
-?whoishere       | Shows what discord users are which steam users             
+?dotagif         | Creates a gif of a specific part of a dota match            
+?firstmatch      | Gets info about the player's first dota game                
+?laning          | Creates gif of the laning stage with a caption              
+?lastmatch       | Gets info about the player's last dota game                 
+?lastmatchstory  | Tells the story of the player's last match                  
+?match           | Gets a summary of the dota match with the given id          
+?matches         | Gets a list of your matches                                 
+?matchgraph      | Creates a graph for a dota match                            
+?matchids        | Gets a list of matchids that match the given filter         
+?matchstory      | Tells the story of the match                                
+?meta            | prints the top meta heroes from https://opendota.com/heroes 
+?opendota        | Queries the opendota api                                    
+?parse           | Requests that OpenDota parses a match                       
+?playerstats     | Gets player match statistics                                
+?profile         | Displays information about the player's dota profile        
+?rolesgraph      | Gets a graph displaying the player's hero roles             
+?skillbuild      | Gets the ability upgrades for a match                       
+?twenty          | Gets stats from the player's last 20 parsed games           
+?whoishere       | Shows what discord users are which steam users              
 ```
 
 #### Pokemon
 Pokemon related commands
 
 ```
-?pokecry         | Plays the pokemon's sound effect                           
-?pokedex         | Looks up information about the indicated pokemon           
-?shiny           | Gets the shiny version of this pokemon                     
+?pokecry         | Plays the pokemon's sound effect                            
+?pokedex         | Looks up information about the indicated pokemon            
+?shiny           | Gets the shiny version of this pokemon                      
 ```
 
 #### Artifact
 Artifact related commands
 
 ```
-?card            | Displays info about the artifact card                      
-?deck            | Displays the card list for the given deck                  
-?updateartifact  | Updates all the artifact card data                         
+?card            | Displays info about the artifact card                       
+?deck            | Displays the card list for the given deck                   
+?updateartifact  | Updates all the artifact card data                          
 ```
 
 #### Admin
 Commands to help manage mangobyte on your server/guild
 
 ```
-?botban          | Bans the user from using commands                          
-?botunban        | Unbans the user, allowing them to use commands             
-?config          | Configures the bot's settings for this server              
-?disablecommand  | Disabled the specified command or command category         
-?enablecommand   | Re-enables the specified command or command category       
-?resummon        | Re-summons the bot to the voice channel                    
-?summon          | Summons the bot to the voice channel                       
-?unsummon        | Removes the bot from the voice channel                     
+?botban          | Bans the user from using commands                           
+?botunban        | Unbans the user, allowing them to use commands              
+?config          | Configures the bot's settings for this server               
+?disablecommand  | Disabled the specified command or command category          
+?enablecommand   | Re-enables the specified command or command category        
+?resummon        | Re-summons the bot to the voice channel                     
+?summon          | Summons the bot to the voice channel                        
+?unsummon        | Removes the bot from the voice channel                      
 ```
 
 <!-- COMMANDS_END -->

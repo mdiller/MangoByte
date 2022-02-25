@@ -45,7 +45,8 @@
 			"aliases": [
 				"spells"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "ability",
@@ -55,7 +56,8 @@
 			"aliases": [
 				"spell"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "addemoticon",
@@ -65,13 +67,14 @@
 			"aliases": [
 				"addemoji"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "aghanim",
 			"signature": "?aghanim <name>",
 			"short_help": "Gets the aghs upgrade for the given hero or ability",
-			"help": "Gets the aghs upgrade for the given hero or ability",
+			"help": "Gets the aghs upgrade for the given hero or ability\n\nThis command will get the information about shard upgrades AND scepter upgrades.\nIf you want just shard or just scepter upgrades, try using `?scepter` or `?shard`",
 			"aliases": [
 				"aghs",
 				"ags",
@@ -79,7 +82,8 @@
 				"scepter",
 				"shard"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "ask",
@@ -87,7 +91,8 @@
 			"short_help": "Answers any question you might have",
 			"help": "Answers any question you might have",
 			"aliases": [],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "blog",
@@ -97,7 +102,8 @@
 			"aliases": [
 				"rss"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "botban",
@@ -105,7 +111,8 @@
 			"short_help": "Bans the user from using commands",
 			"help": "Bans the user from using commands",
 			"aliases": [],
-			"cog": "Admin"
+			"cog": "Admin",
+			"prefix": "?"
 		},
 		{
 			"name": "botstats",
@@ -113,7 +120,8 @@
 			"short_help": "Displays some bot statistics",
 			"help": "Displays some bot statistics",
 			"aliases": [],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "botunban",
@@ -121,7 +129,8 @@
 			"short_help": "Unbans the user, allowing them to use commands",
 			"help": "Unbans the user, allowing them to use commands",
 			"aliases": [],
-			"cog": "Admin"
+			"cog": "Admin",
+			"prefix": "?"
 		},
 		{
 			"name": "card",
@@ -131,7 +140,8 @@
 			"aliases": [
 				"artifact"
 			],
-			"cog": "Artifact"
+			"cog": "Artifact",
+			"prefix": "?"
 		},
 		{
 			"name": "cat",
@@ -145,7 +155,8 @@
 				"minnie",
 				"minerva"
 			],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "changelog",
@@ -153,15 +164,17 @@
 			"short_help": "Gets a rough changelog for mangobyte",
 			"help": "Gets a rough changelog for mangobyte\n\nNote that this is a very rough changelog built from git commit messages and so will sometimes not relate directly to your perspective.\n\nFor more commit versions or better detailed information, check out the source on [GitHub](https://github.com/mdiller/MangoByte/commits/master)",
 			"aliases": [],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "chatwheel",
 			"signature": "?chatwheel <text>",
 			"short_help": "Plays the given chat wheel sound",
-			"help": "Plays the given chat wheel sound\n\nGive the command a number between 1 and 6 to page through all of the available chat options:\n\u200b`?chatwheel 1`\n\u200b`?chatwheel 3`\n\n**Examples:**\n\u200b`?chatwheel Lakad Matataaaag!`\n\u200b`?chatwheel disastah`\n\u200b`?chatwheel Wan Bu Liao La`\n\u200b`?chatwheel \u73a9\u4e0d\u4e86\u5566`\n\u200b`?chatwheel ehto gg`\n\u200b`?chatwheel \u042d\u0442\u043e \u0413\u0413`",
+			"help": "Plays the given chat wheel sound\n\nGive the command a number between 1 and 22 to page through all of the available chat options:\n\u200b`?chatwheel 1`\n\u200b`?chatwheel 3`\n\n**Examples:**\n\u200b`?chatwheel Lakad Matataaaag!`\n\u200b`?chatwheel disastah`\n\u200b`?chatwheel Wan Bu Liao La`\n\u200b`?chatwheel \u73a9\u4e0d\u4e86\u5566`\n\u200b`?chatwheel ehto gg`\n\u200b`?chatwheel \u042d\u0442\u043e \u0413\u0413`",
 			"aliases": [],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "choose",
@@ -171,7 +184,8 @@
 			"aliases": [
 				"pickone"
 			],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "clipinfo",
@@ -179,7 +193,8 @@
 			"short_help": "Gets information and a file for the given clip",
 			"help": "Gets information and a file for the given clip\n\nNot giving a clipid will print info about the last clip played\n\nclipid is specified like this:\n\u200b`local:shitpickle`\n\u200b`dota:shredder_timb_ally_01`",
 			"aliases": [],
-			"cog": "Audio"
+			"cog": "Audio",
+			"prefix": "?"
 		},
 		{
 			"name": "clips",
@@ -189,7 +204,8 @@
 			"aliases": [
 				"playlist"
 			],
-			"cog": "Audio"
+			"cog": "Audio",
+			"prefix": "?"
 		},
 		{
 			"name": "config",
@@ -197,7 +213,8 @@
 			"short_help": "Configures the bot's settings for this server",
 			"help": "Configures the bot's settings for this server\n\nBelow are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `?config <settingname>`, and you can configure a setting by typing `?config <settingname> <value>`\n\n**Settings:**\n\u200b`prefix`\n\u200b`reactions`\n\u200b`ttschannel`\n\u200b`botadmin`\n\u200b`intros`\n\u200b`outros`\n\u200b`ttslang`\n\u200b`usenickname`\n\u200b`simpletts`\n\u200b`announcetts`\n\u200b`dotapatchchannel`\n\u200b`dotablogchannel`\n\u200b`ttschannelwarn`\n\u200b`allowedbots`\n\u200b`allowwebhooks`\n\n**Examples**\n\u200b`?config prefix !`\n\u200b`?config reactions enable`\n\u200b`?config ttschannel #tts`\n\u200b`?config botadmin @BotAdmin`\n\u200b`?config intros disable`\n\u200b`?config outros disable`\n\u200b`?config ttslang Russian`\n\u200b`?config usenickname enable`\n\u200b`?config simpletts enable`\n\u200b`?config announcetts enable`\n\u200b`?config dotapatchchannel #dota`\n\u200b`?config dotablogchannel #dota`\n\u200b`?config ttschannelwarn disable`\n\u200b`?config allowedbots add @Bot123`\n\u200b`?config allowwebhooks enable`",
 			"aliases": [],
-			"cog": "Admin"
+			"cog": "Admin",
+			"prefix": "?"
 		},
 		{
 			"name": "courage",
@@ -205,7 +222,8 @@
 			"short_help": "Generates a challenge build",
 			"help": "Generates a challenge build\n\nCreates a challenge build with a random (or given) hero and a random set of items\n\n**Examples:**\n\u200b`?courage`\n\u200b`?courage shadow fiend`",
 			"aliases": [],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "deck",
@@ -213,7 +231,8 @@
 			"short_help": "Displays the card list for the given deck",
 			"help": "Displays the card list for the given deck\n\nExample:\n\u200b`?deck ADCJWkTZX05uwGDCRV4XQGy3QGLmqUBg4GQJgGLGgO7AaABR3JlZW4vQmxhY2sgRXhhbXBsZQ__`",
 			"aliases": [],
-			"cog": "Artifact"
+			"cog": "Artifact",
+			"prefix": "?"
 		},
 		{
 			"name": "disablecommand",
@@ -221,7 +240,8 @@
 			"short_help": "Disabled the specified command or command category",
 			"help": "Disabled the specified command or command category\n\n**Examples:**\n\u200b`?disablecommand wiki`\n\u200b`?disablecommand Audio`",
 			"aliases": [],
-			"cog": "Admin"
+			"cog": "Admin",
+			"prefix": "?"
 		},
 		{
 			"name": "docs",
@@ -231,7 +251,8 @@
 			"aliases": [
 				"documentation"
 			],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "dog",
@@ -245,7 +266,8 @@
 				"comet",
 				"fizzgig"
 			],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "donate",
@@ -256,7 +278,8 @@
 				"tipjar",
 				"donation"
 			],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "dota",
@@ -266,7 +289,8 @@
 			"aliases": [
 				"dotar"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "dotagif",
@@ -276,7 +300,8 @@
 			"aliases": [
 				"dota_gif"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "echo",
@@ -284,7 +309,8 @@
 			"short_help": "Echo...",
 			"help": "Echo...\n\nI would hurl words into this darkness and wait for an echo, and if an echo sounded, no matter how faintly, I would send other words to tell, to march, to fight, to create a sense of the hunger for life that gnaws in us all",
 			"aliases": [],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "emoticon",
@@ -294,7 +320,8 @@
 			"aliases": [
 				"emoji"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "enablecommand",
@@ -302,7 +329,8 @@
 			"short_help": "Re-enables the specified command or command category",
 			"help": "Re-enables the specified command or command category\n\nOnly works on commands that have already been disabled by the `?disablecommand` command\n\n**Examples:**\n\u200b`?enablecommand wiki`\n\u200b`?enablecommand Audio`",
 			"aliases": [],
-			"cog": "Admin"
+			"cog": "Admin",
+			"prefix": "?"
 		},
 		{
 			"name": "firstmatch",
@@ -313,7 +341,8 @@
 				"firstgame",
 				"fm"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "fuseheroes",
@@ -325,7 +354,8 @@
 				"fuze",
 				"fuzeheroes"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "hello",
@@ -335,7 +365,8 @@
 			"aliases": [
 				"hi"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "help",
@@ -343,7 +374,8 @@
 			"short_help": "Shows this message",
 			"help": "Shows this message",
 			"aliases": [],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "hero",
@@ -351,7 +383,8 @@
 			"short_help": "Gets information about a specific hero",
 			"help": "Gets information about a specific hero\n\nYou can give this command almost any variant of the hero's name, or the hero's id\n\n**Examples:**\n\u200b`?hero sf`\n\u200b`?hero inker`\n\u200b`?hero furi`",
 			"aliases": [],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "herotable",
@@ -366,7 +399,8 @@
 				"besthero",
 				"bestheroes"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "info",
@@ -374,7 +408,8 @@
 			"short_help": "Prints info about mangobyte",
 			"help": "Prints info about mangobyte",
 			"aliases": [],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "insult",
@@ -382,7 +417,8 @@
 			"short_help": "Gets a nice insult for ya",
 			"help": "Gets a nice insult for ya\n\nMention someone in discord and I'll insult them instead of you\n\n**Example:**\n\u200b`?insult`\n\u200b`?insult @InnocentMan`",
 			"aliases": [],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "inthebag",
@@ -390,7 +426,8 @@
 			"short_help": "Proclaims that 'IT' (whatever it is) is in the bag",
 			"help": "Proclaims that 'IT' (whatever it is) is in the bag",
 			"aliases": [],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "invite",
@@ -398,7 +435,8 @@
 			"short_help": "Prints the invite link",
 			"help": "Prints the invite link",
 			"aliases": [],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "item",
@@ -406,7 +444,8 @@
 			"short_help": "Gets information about a specific item",
 			"help": "Gets information about a specific item\n\n**Examples:**\n\u200b`?item shadow blade`\n\u200b`?item tango`",
 			"aliases": [],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "laning",
@@ -416,7 +455,8 @@
 			"aliases": [
 				"lanes"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "lasagna",
@@ -424,7 +464,8 @@
 			"short_help": "A baked Italian dish",
 			"help": "A baked Italian dish\n\nContains wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce.",
 			"aliases": [],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "lastmatch",
@@ -435,7 +476,8 @@
 				"lastgame",
 				"lm"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "lastmatchstory",
@@ -446,7 +488,8 @@
 				"lastgamestory",
 				"lmstory"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "later",
@@ -454,7 +497,8 @@
 			"short_help": "Tells you how much later it is",
 			"help": "Tells you how much later it is\n\nTheres 19 different ones",
 			"aliases": [],
-			"cog": "Audio"
+			"cog": "Audio",
+			"prefix": "?"
 		},
 		{
 			"name": "leveledstats",
@@ -467,7 +511,8 @@
 				"lvlstats",
 				"lvledstats"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "lol",
@@ -479,7 +524,8 @@
 				"haha",
 				"lerl"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "lore",
@@ -487,7 +533,8 @@
 			"short_help": "Gets the lore of a hero, ability, or item",
 			"help": "Gets the lore of a hero, ability, or item\n\nReturns a random piece of lore if no name is specified\n\n**Examples:**\n\u200b`?lore bristleback`\n\u200b`?lore shadow blade`\n\u200b`?lore venomous gale`",
 			"aliases": [],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "match",
@@ -497,7 +544,8 @@
 			"aliases": [
 				"matchdetails"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "matches",
@@ -508,7 +556,8 @@
 				"recentmatches",
 				"recent"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "matchgraph",
@@ -519,7 +568,8 @@
 				"graph",
 				"dotagraph"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "matchids",
@@ -527,7 +577,8 @@
 			"short_help": "Gets a list of matchids that match the given filter",
 			"help": "Gets a list of matchids that match the given filter\n\nTo see how to filter for specific matches, try `?docs matchfilter`\n\n**Example:**\n\u200b`?matchids @PlayerPerson mid witch doctor ranked`\n\u200b`?matchids natures prophet`\n\u200b`?matchids @PlayerPerson riki`",
 			"aliases": [],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "matchstory",
@@ -535,7 +586,17 @@
 			"short_help": "Tells the story of the match",
 			"help": "Tells the story of the match\n\nThe story is based on the given perspective, or the player's perspective if they were in the match.",
 			"aliases": [],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
+		},
+		{
+			"name": "meta",
+			"signature": "?meta [count=10]",
+			"short_help": "prints the top meta heroes from https://opendota.com/heroes",
+			"help": "prints the top meta heroes from https://opendota.com/heroes",
+			"aliases": [],
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "neutralitems",
@@ -546,7 +607,8 @@
 				"neutrals",
 				"neutraltier"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "no",
@@ -556,7 +618,8 @@
 			"aliases": [
 				"nope"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "opendota",
@@ -564,7 +627,8 @@
 			"short_help": "Queries the opendota api",
 			"help": "Queries the opendota api\n\nYou can use this to get a json file with details about players or matches etc.\nExamples:\n\u200b`?opendota /players/{steamid}`\n\u200b`?opendota /matches/{match_id}`\n\nNote that this is just a little tool showcasing how you can use the api. You can also put urls like these in your browser to get the same results, which I'd recommend if you're doing this a lot.\n\nFor more options and a better explanation, check out their [documentation](https://docs.opendota.com)",
 			"aliases": [],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "parse",
@@ -575,15 +639,17 @@
 				"analyze",
 				"studymatch"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "ping",
-			"signature": "?ping [count=1]",
+			"signature": null,
 			"short_help": "Pongs a number of times(within reason)",
-			"help": "Pongs a number of times(within reason)\n\nPongs... a number of times.... within reason. *glares at blanedale*",
+			"help": "Pongs a number of times(within reason)",
 			"aliases": [],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "/"
 		},
 		{
 			"name": "play",
@@ -591,7 +657,8 @@
 			"short_help": "Plays an audio clip",
 			"help": "Plays an audio clip\n\nExample:\n\u200b`?play hello`\n\nFor a complete list of the available clips, try `?playlist`\n\nThis can also play other clip types via their ClipID\nExample:\n\u200b`?play tts:hello there`",
 			"aliases": [],
-			"cog": "Audio"
+			"cog": "Audio",
+			"prefix": "?"
 		},
 		{
 			"name": "playerstats",
@@ -602,7 +669,8 @@
 				"pstats",
 				"herostats"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "playurl",
@@ -610,7 +678,8 @@
 			"short_help": "Plays an mp3 file at a url",
 			"help": "Plays an mp3 file at a url\n\nMake sure to use http, not https",
 			"aliases": [],
-			"cog": "Audio"
+			"cog": "Audio",
+			"prefix": "?"
 		},
 		{
 			"name": "pokecry",
@@ -620,7 +689,8 @@
 			"aliases": [
 				"cry"
 			],
-			"cog": "Pokemon"
+			"cog": "Pokemon",
+			"prefix": "?"
 		},
 		{
 			"name": "pokedex",
@@ -630,7 +700,8 @@
 			"aliases": [
 				"pokemon"
 			],
-			"cog": "Pokemon"
+			"cog": "Pokemon",
+			"prefix": "?"
 		},
 		{
 			"name": "profile",
@@ -640,7 +711,8 @@
 			"aliases": [
 				"whois"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "random_number",
@@ -650,7 +722,8 @@
 			"aliases": [
 				"random"
 			],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "recipe",
@@ -662,7 +735,8 @@
 				"craft",
 				"crafting"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "reddit",
@@ -670,7 +744,8 @@
 			"short_help": "Displays a formatted reddit post",
 			"help": "Displays a formatted reddit post\n\nNote that this will only get nsfw posts if you call this in an nsfw channel",
 			"aliases": [],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "replay",
@@ -678,7 +753,8 @@
 			"short_help": "Replays the last played clip",
 			"help": "Replays the last played clip\n                ",
 			"aliases": [],
-			"cog": "Audio"
+			"cog": "Audio",
+			"prefix": "?"
 		},
 		{
 			"name": "restget",
@@ -688,7 +764,8 @@
 			"aliases": [
 				"restapi"
 			],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "resummon",
@@ -696,7 +773,8 @@
 			"short_help": "Re-summons the bot to the voice channel",
 			"help": "Re-summons the bot to the voice channel\n\nThis command is useful if you are having issues with mangobyte not being responsive",
 			"aliases": [],
-			"cog": "Admin"
+			"cog": "Admin",
+			"prefix": "?"
 		},
 		{
 			"name": "rolesgraph",
@@ -704,7 +782,8 @@
 			"short_help": "Gets a graph displaying the player's hero roles",
 			"help": "Gets a graph displaying the player's hero roles\n\nThe graph is based on the player's last 30 games",
 			"aliases": [],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "scramble",
@@ -712,7 +791,8 @@
 			"short_help": "Scrambles the insides of words",
 			"help": "Scrambles the insides of words",
 			"aliases": [],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "shiny",
@@ -720,7 +800,8 @@
 			"short_help": "Gets the shiny version of this pokemon",
 			"help": "Gets the shiny version of this pokemon\n\npokemon should be specified using either their name or id number\n\nExample:\n\u200b`?shiny charizard`",
 			"aliases": [],
-			"cog": "Pokemon"
+			"cog": "Pokemon",
+			"prefix": "?"
 		},
 		{
 			"name": "showerthought",
@@ -732,7 +813,8 @@
 				"showerthoughts",
 				"thought"
 			],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "skillbuild",
@@ -744,7 +826,8 @@
 				"skillbuilds",
 				"matchbuilds"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "smarttts",
@@ -754,7 +837,8 @@
 			"aliases": [
 				"stts"
 			],
-			"cog": "Audio"
+			"cog": "Audio",
+			"prefix": "?"
 		},
 		{
 			"name": "stop",
@@ -762,7 +846,8 @@
 			"short_help": "Stops the currently playing audio",
 			"help": "Stops the currently playing audio\n\nAlso empties the clip queue",
 			"aliases": [],
-			"cog": "Audio"
+			"cog": "Audio",
+			"prefix": "?"
 		},
 		{
 			"name": "summon",
@@ -770,7 +855,8 @@
 			"short_help": "Summons the bot to the voice channel",
 			"help": "Summons the bot to the voice channel\n\nYou can specify the specific voice channel that you would like to connect to. If no channel is specified, it will connect to whatever channel you are currently in.\n**Examples:**\n\u200b`?summon`\n\u200b`?summon General`",
 			"aliases": [],
-			"cog": "Admin"
+			"cog": "Admin",
+			"prefix": "?"
 		},
 		{
 			"name": "talents",
@@ -778,7 +864,8 @@
 			"short_help": "Gets the talents of a specific hero",
 			"help": "Gets the talents of a specific hero\n\nYou can give this command almost any variant of the hero's name, or the hero's id, in the same format as `?hero`\n\n**Examples:**\n\u200b`?talents shadow fiend`",
 			"aliases": [],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "thanks",
@@ -788,7 +875,8 @@
 			"aliases": [
 				"ty"
 			],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		},
 		{
 			"name": "tts",
@@ -796,7 +884,8 @@
 			"short_help": "Like echo but for people who can't read",
 			"help": "Like echo but for people who can't read\n\nTalks in whatever voice channel mangobyte is currently in\n\nExample:\n\u200b`?tts Hello I'm a bot`",
 			"aliases": [],
-			"cog": "Audio"
+			"cog": "Audio",
+			"prefix": "?"
 		},
 		{
 			"name": "ttsclip",
@@ -804,7 +893,8 @@
 			"short_help": "Tries to text-to-speech the given clip",
 			"help": "Tries to text-to-speech the given clip\n\nOnly works on clips that have text specified\n\nExample:\n\u200b`?ttsclip yodel`",
 			"aliases": [],
-			"cog": "Audio"
+			"cog": "Audio",
+			"prefix": "?"
 		},
 		{
 			"name": "twenty",
@@ -814,7 +904,8 @@
 			"aliases": [
 				"chatstats"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "unsummon",
@@ -822,7 +913,8 @@
 			"short_help": "Removes the bot from the voice channel",
 			"help": "Removes the bot from the voice channel",
 			"aliases": [],
-			"cog": "Admin"
+			"cog": "Admin",
+			"prefix": "?"
 		},
 		{
 			"name": "updateartifact",
@@ -830,7 +922,8 @@
 			"short_help": "Updates all the artifact card data",
 			"help": "Updates all the artifact card data",
 			"aliases": [],
-			"cog": "Artifact"
+			"cog": "Artifact",
+			"prefix": "?"
 		},
 		{
 			"name": "userconfig",
@@ -838,7 +931,8 @@
 			"short_help": "Configures the bot's user-specific settings",
 			"help": "Configures the bot's user-specific settings\n\nBelow are the different user-specific settings that you can tweak to customize mangobyte. You can get more information about a setting by typing `?userconfig <settingname>`, and you can configure a setting by typing `?userconfig <settingname> <value>`\n\n**Settings:**\n\u200b`steam`\n\u200b`intro`\n\u200b`outro`\n\u200b`introtts`\n\u200b`outrotts`\n\u200b`dmdotapatch`\n\u200b`dmdotablog`\n\n**Examples**\n\u200b`?userconfig steam 70388657`\n\u200b`?userconfig intro local:math`\n\u200b`?userconfig outro dota:troll_warlord_troll_lose_03`\n\u200b`?userconfig introtts it's the magnificent`\n\u200b`?userconfig outrotts dun gone left`\n\u200b`?userconfig dmdotapatch enable`\n\u200b`?userconfig dmdotablog enable`",
 			"aliases": [],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "whoishere",
@@ -848,7 +942,8 @@
 			"aliases": [
 				"profiles"
 			],
-			"cog": "DotaStats"
+			"cog": "DotaStats",
+			"prefix": "?"
 		},
 		{
 			"name": "wiki",
@@ -861,7 +956,8 @@
 				"wikipedia",
 				"whatis"
 			],
-			"cog": "General"
+			"cog": "General",
+			"prefix": "?"
 		},
 		{
 			"name": "yes",
@@ -869,7 +965,8 @@
 			"short_help": "Oooooh ya.",
 			"help": "Oooooh ya.",
 			"aliases": [],
-			"cog": "Dotabase"
+			"cog": "Dotabase",
+			"prefix": "?"
 		}
 	]
 }

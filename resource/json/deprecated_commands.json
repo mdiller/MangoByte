@@ -1,0 +1,13 @@
+{
+	"ttschannel": "config ttschannel",
+	"unttschannel": "config ttschannel none",
+	"opendotasql": "_Try visiting https://www.opendota.com/explorer instead.",
+	"setintrotts": "userconfig introtts",
+	"setwelcome": "userconfig introtts",
+	"setoutrotts": "userconfig outrotts",
+	"setintro": "userconfig intro",
+	"setoutro": "userconfig outro",
+	"setsteam": "userconfig steam",
+	"register": "userconfig steam",
+	"friendstats": "playerstats with @Player"
+}

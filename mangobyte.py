@@ -31,14 +31,6 @@ startupTimer = SimpleTimer()
 
 if not os.path.exists("logs"):
     os.makedirs("logs")
-# DISCORDPY LOGGING IS NOT NEEDED AT THE MOMENT, SO ILL DISABLE THIS LOGGING FOR NOW
-# print("setting up logger!")
-# timestamp = datetime.datetime.now().strftime("%Y-%m-%d__%I.%M%p")
-# logger = logging.getLogger("discord")
-# logger.setLevel(logging.INFO)
-# handler = logging.FileHandler(filename=f"logs/discord_{timestamp}.log", encoding="utf-8", mode="w")
-# handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s", "%Y-%m-%d %I:%M:%S%p"))
-# logger.addHandler(handler)
 
 description = """The juiciest unsigned 8 bit integer you is eva gonna see.
 				For more information about me, try `{cmdpfx}info`"""
@@ -49,113 +41,111 @@ bot = commands.AutoShardedBot(
 	help_command=MangoHelpCommand(), 
 	description=description, 
 	case_insensitive=True,
-	shard_count=settings.shard_count)
+	shard_count=settings.shard_count,
+	sync_commands_debug=False,
+	test_guilds=settings.test_guilds,
+	reload=False)
 
 thinker = Thinker(bot)
-invite_link = f"https://discordapp.com/oauth2/authorize?permissions={permissions}&scope=bot&client_id=213476188037971968"
+invite_link = f"https://discordapp.com/oauth2/authorize?permissions={permissions}&scope=bot%20applications.commands&client_id=213476188037971968"
 
-deprecated_commands = {
-	"ttschannel": "config ttschannel",
-	"unttschannel": "config ttschannel none",
-	"opendotasql": "https://www.opendota.com/explorer",
-	"setintrotts": "userconfig introtts",
-	"setwelcome": "userconfig introtts",
-	"setoutrotts": "userconfig outrotts",
-	"setintro": "userconfig intro",
-	"setoutro": "userconfig outro",
-	"setsteam": "userconfig steam",
-	"register": "userconfig steam",
-	"friendstats": "playerstats with @Player"
-}
-
-on_ready_has_run = False
+initialize_started = False
 
 @bot.event
 async def on_shard_ready(shard_id):
-	appinfo = await bot.application_info()
-	if not settings.debug:
-		await appinfo.owner.send(f"shard {shard_id} ({len(bot.shards)} total) called its on_shard_ready ({len(bot.guilds)} guilds)")
+	print(f"shard {shard_id} ({len(bot.shards)} total) called its on_shard_ready ({len(bot.guilds)} guilds)")
 
 @bot.event
 async def on_ready():
-	appinfo = await bot.application_info()
+	print(f"on_ready() started")
+	global initialize_started
+	
+	if not initialize_started:
+		initialize_started = True
+		await initialize()
+	else:
+		print("on_ready called again")
 
-	if not settings.debug:
-		await appinfo.owner.send(f"on_ready() started")
-
-	global on_ready_has_run
-	is_first_time = True
-	if on_ready_has_run:
-		is_first_time = False
-		print("on_ready called again, waiting 10 seconds before processing")
-		await asyncio.sleep(10)
-	on_ready_has_run = True
-
-	onReadyTimer = SimpleTimer()
-
-	if is_first_time:
+# the full initialization of the bot
+async def initialize():
+	try:
 		print("Logged in as:\n{0} (ID: {0.id})".format(bot.user))
 		print("Connecting to voice channels if specified in botdata.json ...")
 
-	game = disnake.Activity(
-		name="DOTA 3 [?help]",
-		type=disnake.ActivityType.playing,
-		start=datetime.datetime.utcnow())
-	await bot.change_presence(status=disnake.Status.online, activity=game)
+		bot.help_command.cog = bot.get_cog("General")
+		appinfo = await bot.application_info()
+		general_cog = bot.get_cog("General")
+		audio_cog = bot.get_cog("Audio")
+		initTimer = SimpleTimer()
+		
+		activity = disnake.Activity(
+			name="restarting...",
+			type=disnake.ActivityType.playing,
+			start=datetime.datetime.utcnow())
+		await bot.change_presence(status=disnake.Status.dnd, activity=activity)
 
-	general_cog = bot.get_cog("General")
-	audio_cog = bot.get_cog("Audio")
-	dota_cog = bot.get_cog("Dotabase")
-	artifact_cog = bot.get_cog("Artifact")
-	await artifact_cog.load_card_sets()
-	bot.help_command.cog = bot.get_cog("General")
+		periodic_tasks = []
+		if settings.topgg:
+			periodic_tasks.append(general_cog.update_topgg)
+		if settings.infodump_path:
+			periodic_tasks.append(general_cog.do_infodump)
+		for task in periodic_tasks:
+			if (not task.is_running()):
+				task.start()
 
-	# TASKS DISABLED FOR NOW BECAUSE SHIT IS BREAKING
-	# periodic_tasks = [
-	# 	general_cog.check_dota_patch,
-	# 	dota_cog.check_dota_blog
-	# ]
-	periodic_tasks = []
-	if settings.topgg:
-		periodic_tasks.append(general_cog.update_topgg)
-	if settings.infodump_path:
-		periodic_tasks.append(general_cog.do_infodump)
-	# start topgg update service thing
-	for task in periodic_tasks:
-		if (not task.is_running()):
-			task.start()
-
-	if is_first_time: # temporarliy disabling this for re-inits
-		# the re-connecting of voice channels
+		# now do voice channels and the rest!
+		minimum_channels_to_space = 20
+		voice_channels_per_minute_timing = 12
+		voice_channel_count = 0
+		for guildinfo in botdata.guildinfo_list():
+			if guildinfo.voicechannel is not None:
+				voice_channel_count += 1
+		expected_minutes = int(round(voice_channel_count / voice_channels_per_minute_timing))
+		expected_finish = (datetime.datetime.now() + datetime.timedelta(minutes=expected_minutes)).strftime('%I:%M %p')
+		if expected_finish[0] == "0":
+			expected_finish = expected_finish[1:]
+		should_space_connects =  voice_channel_count > minimum_channels_to_space
+		message = "__**Initialization Started**__\n"
+		if should_space_connects:
+			message += f"{voice_channel_count} voice channels to connect, should take about {expected_minutes} minutes and finish around {expected_finish}"
+		print(message)
+		if not settings.debug:
+			await appinfo.owner.send(message)
+		
+		# trigger the actual voice channel reconnecting
+		audio_cog = bot.get_cog("Audio")
 		channel_tasks = []
 		for guildinfo in botdata.guildinfo_list():
 			if guildinfo.voicechannel is not None:
-				channel_tasks.append(initial_channel_connect_wrapper(audio_cog, guildinfo))
+				task = asyncio.create_task(initial_channel_connect_wrapper(audio_cog, guildinfo))
+				channel_tasks.append(task)
+				if should_space_connects:
+					await asyncio.sleep(int(60 / voice_channels_per_minute_timing))
 		channel_connector = AsyncBundler(channel_tasks)
 		await channel_connector.wait()
+	except Exception as e:
+		# logging.error(traceback.format_exc())
+		seconds_to_wait = 60
+		print(f"errored with {e} during initialization, waiting {seconds_to_wait} seconds before finishing")
+		await asyncio.sleep(seconds_to_wait)
+	finally:
+		message = "__**Initialization Complete:**__\n"
+		message += channel_connector.status_as_string("voice channels connected") + "\n\n"
+		message += f"initialization took {initTimer}" + "\n"
+		message += f"Full startup took {startupTimer}"
 
-	if is_first_time:
-		print("\nupdating guilds")
+		print(message + "\n")
+		if not settings.debug:
+			await appinfo.owner.send(message)
+
+		game = disnake.Activity(
+			name="DOTA 3 [?help]",
+			type=disnake.ActivityType.playing,
+			start=datetime.datetime.utcnow())
+		await bot.change_presence(status=disnake.Status.online, activity=game)
+
+		print("updating guilds")
 		await loggingdb.update_guilds(bot.guilds)
-
-	finished_text = "initialization finished"
-	if not is_first_time:
-		finished_text = "re-" + finished_text
-	print(f"\n{finished_text}\n")
-
-	message = "__**Initialization complete:**__"
-	if not is_first_time:
-		message = "__**Re-Initialization complete (shard prolly got poked):**__"
-
-	if is_first_time: # temporarliy disabling this for re-inits
-		message += "\n" + channel_connector.status_as_string("voice channels connected")
-
-	message += f"\n\non_ready took {onReadyTimer}"
-	if is_first_time:
-		message += f"\nFull startup took {startupTimer}"
-
-	if not settings.debug:
-		await appinfo.owner.send(message)
 
 
 async def get_cmd_signature(ctx):
@@ -179,7 +169,6 @@ async def initial_channel_connect_wrapper(audio_cog, guildinfo):
 
 # returns 0 on successful connect, 1 on not found, and 2 on timeout, 3 on error
 async def initial_channel_connect(audio_cog, guildinfo):
-	global on_ready_has_run
 	channel_id = guildinfo.voicechannel
 	status = "connected"
 	try:
@@ -206,6 +195,9 @@ async def initial_channel_connect(audio_cog, guildinfo):
 		raise
 
 
+with open(settings.resource("json/deprecated_commands.json"), "r") as f:
+	deprecated_commands = json.loads(f.read())
+
 @bot.event
 async def on_command_error(ctx, error):
 	if ctx.message.id in thinker.messages:
@@ -219,8 +211,19 @@ async def on_command_error(ctx, error):
 	try:
 		if isinstance(error, commands.CommandNotFound):
 			cmd = ctx.message.content[1:].split(" ")[0]
+			slash_command_names = list(map(lambda c: c.name, bot.slash_commands))
 			if cmd in deprecated_commands:
-				await ctx.send(f"You shouldn't use `{cmdpfx}{cmd}` anymore. It's *deprecated*. Try `{cmdpfx}{deprecated_commands[cmd]}` instead.")
+				print(f"deprecated command '{cmd}' attempted")
+				if deprecated_commands[cmd].startswith("_"):
+					await ctx.send(f"{cmdpfx}{cmd}` has been deprecated. {deprecated_commands[cmd][1:]}")
+					return
+				is_slash_command = deprecated_commands[cmd] in slash_command_names
+				altprefix = "/" if is_slash_command else cmdpfx
+				await ctx.send(f"`{cmdpfx}{cmd}` has been deprecated. Try `{altprefix}{deprecated_commands[cmd]}` instead.")
+				return
+			elif cmd in slash_command_names:
+				print(f"deprecated command '{cmd}' attempted")
+				await ctx.send(f"`{cmdpfx}{cmd}` has been moved to a slash command. Try typing `/{cmd}`.")
 				return
 			elif cmd == "" or cmd.startswith("?") or cmd.startswith("!"):
 				return # These were probably not meant to be commands
@@ -321,8 +324,7 @@ def update_commandinfo():
 		"cogs": [],
 		"commands": []
 	}
-	commands = sorted(bot.commands, key=lambda c: c.name)
-	for cmd in commands:
+	for cmd in bot.commands:
 		if cmd.cog and cmd.cog.name == "Owner":
 			continue
 		data["commands"].append({
@@ -331,7 +333,18 @@ def update_commandinfo():
 			"short_help": cmd.short_doc,
 			"help": bot.help_command.fill_template(cmd.help),
 			"aliases": cmd.aliases,
-			"cog": cmd.cog.name if cmd.cog else "General"
+			"cog": cmd.cog.name if cmd.cog else "General",
+			"prefix": "?"
+		})
+	for cmd in bot.slash_commands:
+		data["commands"].append({
+			"name": cmd.name,
+			"signature": None,
+			"short_help": cmd.description,
+			"help": cmd.description,
+			"aliases": [],
+			"cog": cmd.cog.name if cmd.cog else "General",
+			"prefix": "/"
 		})
 	for cog in bot.cogs:
 		if cog == "Owner":
@@ -341,6 +354,7 @@ def update_commandinfo():
 			"short_help": bot.help_command.cog_short_doc(bot.cogs[cog]),
 			"help":  inspect.getdoc(bot.cogs[cog])
 		})
+	data["commands"] = list(sorted(data["commands"], key=lambda c: c["name"]))
 
 	with open(commands_file, "w+") as f:
 		f.write(json.dumps(data, indent="\t"))
@@ -356,7 +370,7 @@ def update_commandinfo():
 		docs += "\n```\n"
 		for cmd in data["commands"]:
 			if cmd["cog"] == cog["name"]:
-				docs += f"?{cmd['name']: <{max_command_len + 1}} | {cmd['short_help']: <{max_short_help_len + 1}}\n"
+				docs += f"{cmd['prefix']}{cmd['name']: <{max_command_len + 1}} | {cmd['short_help']: <{max_short_help_len + 1}}\n"
 		docs += "```\n"
 
 	readme_file = "README.md"

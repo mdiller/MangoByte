@@ -45,7 +45,9 @@ class MangoHelpCommand(DefaultHelpCommand):
 			embed = self.embed_description(f"{self.bot.description}\n\n{text_help_server}\n\n{text_category_help}\n{text_command_help}", self.bot)
 			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar.url, url="https://github.com/mdiller/MangoByte")
 
-			filtered = await self.filter_commands(self.bot.commands, sort=True, key=get_category)
+			commands = list(self.bot.commands)
+			commands.extend(self.bot.slash_commands)
+			filtered = await self.filter_commands(commands, sort=True, key=get_category)
 			to_iterate = itertools.groupby(filtered, key=get_category)
 
 			for category, commands in to_iterate:
@@ -72,19 +74,36 @@ class MangoHelpCommand(DefaultHelpCommand):
 			embed.add_field(name="Aliases", value=", ".join(command.aliases))
 		await self.send_embed(embed)
 
-	async def send_cog_help(self, cog):
+	async def send_cog_help(self, cog : Cog):
 		# ? help <cog>
 		description = inspect.getdoc(cog)
 		description += f"\n\n{text_command_help}"
-		description += "\n\n**Commands:**\n" + self.list_commands(await self.filter_commands(cog.get_commands()))
+		commands = cog.get_commands()
+		commands.extend(cog.get_slash_commands())
+		description += "\n\n**Commands:**\n" + self.list_commands(await self.filter_commands(commands))
 		embed = self.embed_description(description, cog)
 		embed.set_author(name=cog.__class__.__name__)
-		# embed.add_field(name="Commands", value=self.list_commands(await self.filter_commands(cog.get_commands())))
+		# embed.add_field(name="Commands", value=self.list_commands(await self.filter_commands(cog..())))
 		await self.send_embed(embed)
 
 	async def send_embed(self, embed):
 		dest = self.get_destination()
 		await dest.send(embed=embed)
+	
+	# overridden to support slash commands
+	async def filter_commands(self, commands, *, sort=False, key=None):
+		msg_commands = list(filter(lambda c: isinstance(c, Command), commands))
+		slash_commands = list(filter(lambda c: isinstance(c, InvokableSlashCommand), commands))
+		
+		msg_commands = await super().filter_commands(msg_commands)
+
+		msg_commands.extend(slash_commands)
+		if sort:
+			if key:
+				msg_commands.sort(key=key)
+			else:
+				msg_commands.sort(key=lambda c: c.name)
+		return msg_commands
 
 	# Overridden to ignore case for input, and to add the 'all' option
 	async def command_callback(self, ctx, *, command=None):
@@ -112,14 +131,19 @@ class MangoHelpCommand(DefaultHelpCommand):
 		results = []
 		commands = sorted(commands, key=lambda c: c.name) 
 		for command in commands:
-			if command.name in command.aliases:
+			if isinstance(command, Command) and command.name in command.aliases:
 				# skip aliases
 				continue
+			newline = ""
 			if only_name:
-				results.append("`{{cmdpfx}}{0:{1}<30}`".format(command.name, u"\u00A0"))
+				newline = "`{{cmdpfx}}{0:{1}<30}`".format(command.name, u"\u00A0")
 			else:
-				entry = '`{{cmdpfx}}{0:{2}<{width}} | {1}`'.format(command.name, command.short_doc, u"\u00A0", width=self.get_max_size(commands))
-				results.append(self.shorten_text(entry))
+				description = command.short_doc if isinstance(command, Command) else command.description
+				entry = '`{{cmdpfx}}{0:{2}<{width}} | {1}`'.format(command.name, description, u"\u00A0", width=self.get_max_size(commands))
+				newline = self.shorten_text(entry)
+			if isinstance(command, InvokableSlashCommand):
+				newline = newline.replace("{cmdpfx}", "/")
+			results.append(newline)
 		if results:
 			return self.fill_template("\n".join(results))
 		else:

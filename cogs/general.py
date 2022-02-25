@@ -104,22 +104,13 @@ class General(MangoCog):
 			botdata.userinfo(ctx.message.author)[var["key"]] = value
 			await ctx.message.add_reaction("✅")
 
-	@commands.command()
-	async def ping(self, ctx, count : int=1):
-		"""Pongs a number of times(within reason)
-
-		Pongs... a number of times.... within reason. *glares at blanedale*"""
-		if count < 1:
-			await ctx.send("thats not enough pings. stahp trying to break me.😠")
-			return
-		if count > 20:
-			await ctx.send("thats too many pings. stahp trying to break me.😠")
-			return
-
+	@commands.slash_command()
+	async def ping(self, inter : disnake.CommandInteraction, count : commands.Range[1, 20] = 1):
+		"""Pongs a number of times(within reason)"""
 		ping_string = ""
 		for i in range(0, count):
 			ping_string += "pong "
-		await ctx.send(ping_string)
+		await inter.send(ping_string)
 
 	@commands.command()
 	async def echo(self, ctx, *, message : str):
