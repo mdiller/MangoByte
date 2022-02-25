@@ -124,7 +124,7 @@ async def initialize():
 		await channel_connector.wait()
 	except Exception as e:
 		logger.error(traceback.format_exc())
-		seconds_to_wait = 60
+		seconds_to_wait = 60 * 5
 		logger.error(f"errored with {e} during initialization, waiting {seconds_to_wait} seconds before finishing")
 		await asyncio.sleep(seconds_to_wait)
 	finally:
