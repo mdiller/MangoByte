@@ -94,7 +94,7 @@ async def initialize():
 
 		# now do voice channels and the rest!
 		minimum_channels_to_space = 20
-		voice_channels_per_minute_timing = 12
+		voice_channels_per_minute_timing = 8
 		voice_channel_count = 0
 		for guildinfo in botdata.guildinfo_list():
 			if guildinfo.voicechannel is not None:
@@ -124,7 +124,7 @@ async def initialize():
 		await channel_connector.wait()
 	except Exception as e:
 		logger.error(traceback.format_exc())
-		seconds_to_wait = 60 * 5
+		seconds_to_wait = 60 * 10
 		logger.error(f"errored with {e} during initialization, waiting {seconds_to_wait} seconds before finishing")
 		await asyncio.sleep(seconds_to_wait)
 	finally:
