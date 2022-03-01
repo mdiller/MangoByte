@@ -511,7 +511,8 @@ class DotaStats(MangoCog):
 					f"[OpenDota](https://www.opendota.com/matches/{match_id}), or "
 					f"[STRATZ](https://www.stratz.com/match/{match_id})")
 
-		embed = disnake.Embed(description=description, color=self.embed_color, timestamp=datetime.datetime.utcfromtimestamp(match['start_time']))
+		utc_timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
+		embed = disnake.Embed(description=description, color=self.embed_color, timestamp=utc_timestamp)
 
 		embed.set_author(name=player.get('personaname') or "Anonymous", icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
 
@@ -577,8 +578,9 @@ class DotaStats(MangoCog):
 					f"[OpenDota](https://www.opendota.com/matches/{match_id}), or "
 					f"[STRATZ](https://www.stratz.com/match/{match_id})")
 
+		utc_timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
 		embed = disnake.Embed(description=description, 
-							timestamp=datetime.datetime.utcfromtimestamp(match['start_time']), color=self.embed_color)
+							timestamp=utc_timestamp, color=self.embed_color)
 		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
 
 		embed.add_field(name="Game Mode", value=game_mode)

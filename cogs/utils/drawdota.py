@@ -7,7 +7,7 @@ import subprocess
 import os
 import numpy
 import math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from PIL import Image, ImageDraw, ImageFont
 from .tabledraw import Table, ImageCell, TextCell, ColorCell, DoubleCell, SlantedTextCell, get_table_font
 from io import BytesIO
@@ -331,9 +331,14 @@ async def add_player_row(table, player, is_parsed, is_ability_draft, has_talents
 		row.append(ImageCell(img=await get_talents_image(player.get("ability_upgrades_arr"), player["hero_id"]), height=48))
 	row.append(ImageCell(img=await get_item_images(player), height=48))
 	if is_ability_draft:
-		abilities = filter(lambda a: not ability_infos[a]["entity"].is_talent, player.get("ability_upgrades_arr"))
+		def ad_ability_filter(ability_id):
+			ability = ability_infos[ability_id]["entity"]
+			return not (ability.is_talent or ("ad_special_bonus" in ability.name))
+		abilities = filter(ad_ability_filter, player.get("ability_upgrades_arr"))
 		abilities = list(set(abilities))
-		abilities = sorted(abilities, key=lambda a: ability_infos[a]["slot"] if ability_infos[a]["slot"] else 0)
+		abilities = sorted(abilities, key=lambda a: ability_infos[a]["slot"] if ability_infos[a]["slot"] else 20)
+		if len(abilities) > 4:
+			abilities = abilities[:4]
 		row[3:3] = [
 			ImageCell(img=await get_spell_images(abilities), height=48)
 		]
@@ -709,7 +714,7 @@ async def dota_rank_icon(rank_tier, leaderboard_rank):
 	return filename
 
 def get_datetime_cell(match, region_data):
-	match_date = datetime.utcfromtimestamp(match["start_time"])
+	match_date = datetime.fromtimestamp(match["start_time"], tz=timezone.utc)
 	region = str(match.get("region"))
 	if region is None or region == "None":
 		region = "1" # Default to US West

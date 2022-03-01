@@ -147,11 +147,11 @@ class General(MangoCog):
 				recent_date = timestamp
 			description += f"\n[`{small_sha}`]({commit_url}/commit/{full_sha}) {message}"
 
+		embed = disnake.Embed(description=description, color=disnake.Color.green())
+
 		if recent_date != 0:
-			embed = disnake.Embed(description=description, color=disnake.Color.green(), timestamp=datetime.datetime.utcfromtimestamp(recent_date))
+			embed.timestamp = datetime.datetime.fromtimestamp(recent_date, tz=datetime.timezone.utc)
 			embed.set_footer(text="Most recent change at")
-		else:
-			embed = disnake.Embed(description=description, color=disnake.Color.green())
 
 		embed.set_author(name="Changelog", url=f"{commit_url}/commits/master")
 		await ctx.send(embed=embed)
@@ -386,7 +386,7 @@ class General(MangoCog):
 		embed = disnake.Embed()
 
 		embed.description = thought["title"]
-		embed.timestamp = datetime.datetime.utcfromtimestamp(thought["timestamp"])
+		embed.timestamp = datetime.datetime.fromtimestamp(thought["timestamp"], tz=datetime.timezone.utc)
 		embed.set_footer(text=author)
 
 		await ctx.send(embed=embed)
