@@ -23,7 +23,7 @@ def get_config_help(variables, command):
 		f"{examples}")
 
 
-text_help_server = "Feel free to visit the [Mangobyte Help Server/Guild](https://disnake.gg/d6WWHxx) if you have any questions!"
+text_help_server = "Feel free to visit the [Mangobyte Help Server/Guild](https://discord.gg/d6WWHxx) if you have any questions!"
 text_category_help = "To get more information about a specific category, try `{cmdpfx}help <category>`"
 text_command_help = "To get more information about a specific command, try `{cmdpfx}help <command>`"
 

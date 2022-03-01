@@ -229,7 +229,8 @@ class TimeSpanArg(QueryArg):
 				self.min = patch.timestamp
 			else:
 				chunk_kind_value = {
-					"today": 1,
+					"hour": 1 / 24,
+					"today": 16 / 24,
 					"day": 1,
 					"week": 7,
 					"month": 30,
@@ -271,7 +272,7 @@ class TimeSpanArg(QueryArg):
 
 	def regex(self):
 		pattern = "(?:(?:in|over|during) )?"
-		pattern += f"((?P<since>since )?(?:patch )?(?P<patch>{self.dotabase.patches_regex})|(?:the )?(?:(?:this|last|past) )?(?:(?P<count>\\d+\\.?\\d*) )?(?P<kind>(?:to)?day|week|month|year|patch)e?s?)"
+		pattern += f"((?P<since>since )?(?:patch )?(?P<patch>{self.dotabase.patches_regex})|(?:the )?(?:(?:this|last|past) )?(?:(?P<count>\\d{1,5}\\.?\\d{0,5}) )?(?P<kind>(?:to)?day|week|month|year|patch|hour)e?s?)"
 		pattern = f"\\b{pattern}\\b"
 		pattern = re.compile(pattern, re.IGNORECASE)
 		return pattern

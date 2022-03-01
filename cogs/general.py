@@ -171,7 +171,7 @@ class General(MangoCog):
 			"Developed as an open source project, hosted on [GitHub]({}). "
 			"Implemented using {} and a python discord api wrapper [disnake]({})".format(github, python_version, library_url)))
 
-		help_guild_link = "https://disnake.gg/d6WWHxx"
+		help_guild_link = "https://discord.gg/d6WWHxx"
 
 		embed.add_field(name="Help", value=(
 			f"If you want to invite mangobyte to your server/guild, click this [invite link]({invite_link}). "
