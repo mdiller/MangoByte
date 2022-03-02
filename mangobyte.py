@@ -93,7 +93,8 @@ async def initialize():
 		await bot.change_presence(status=disnake.Status.dnd, activity=activity)
 
 		periodic_tasks = []
-		periodic_tasks.append(audio_cog.voice_channel_culler)
+		if not settings.debug:
+			periodic_tasks.append(audio_cog.voice_channel_culler)
 		if settings.topgg:
 			periodic_tasks.append(general_cog.update_topgg)
 		if settings.infodump_path:
