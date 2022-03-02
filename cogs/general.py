@@ -120,6 +120,7 @@ class General(MangoCog):
 
 		I would hurl words into this darkness and wait for an echo, and if an echo sounded, no matter how faintly, I would send other words to tell, to march, to fight, to create a sense of the hunger for life that gnaws in us all"""
 		await ctx.send(message)
+		
 
 	@commands.command()
 	async def changelog(self, ctx):
@@ -684,7 +685,17 @@ class General(MangoCog):
 	async def on_command(self, ctx):
 		msg = await loggingdb.insert_message(ctx.message, ctx.command.name)
 		await loggingdb.insert_command(ctx)
-		logger.info(msg)
+		logger.trace({
+			"type": "command",
+			"command": ctx.command.name,
+			"message_id": ctx.message.id,
+			"author_id": ctx.message.author.id,
+			"server_id": ctx.message.guild.id if ctx.guild else None,
+			"channel_id": ctx.message.channel.id,
+			"timestamp": ctx.message.created_at.isoformat(),
+			"content": ctx.message.content,
+			"clean_content": ctx.message.clean_content
+		})
 
 	@commands.Cog.listener()
 	async def on_command_completion(self, ctx):

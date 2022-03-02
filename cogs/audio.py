@@ -1,5 +1,5 @@
 import disnake
-from disnake.ext import commands
+from disnake.ext import commands, tasks
 from cogs.utils.helpers import *
 from cogs.utils.clip import *
 from __main__ import settings, botdata, report_error, loggingdb
@@ -19,6 +19,7 @@ import logging
 logger = logging.getLogger("mangologger")
 
 intro_outro_length = 4.5
+voice_channel_culling_timeout_hours = 24 * 2 # 24 * 2 means after 2 days of inactivity, mango will disconnect from the voice channel
 
 class TtsChannelError(Exception):
 	def __init__(self, error):
@@ -123,7 +124,7 @@ class AudioPlayer:
 	# try queueing an mp3 to play
 	async def queue_clip(self, clip, ctx):
 		if(self.voice is None):
-			logger.info("tried to talk while not in voice channel")
+			logger.warning("tried to talk while not in voice channel")
 			raise AudioPlayerNotFoundError("not in voice channel m8")
 
 		self.clipqueue.put(clip)
@@ -140,6 +141,8 @@ class Audio(MangoCog):
 
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
+		self.start_time = datetime.datetime.now()
+		self.last_played_audio = {} # dict of the last time audio was played from a given server, used for voice channel culling
 		self.audioplayers = []
 		self.local_clipinfo = self.init_local_clipinfo()
 
@@ -244,6 +247,22 @@ class Audio(MangoCog):
 		audioplayer = await self.audioplayer(guild, False)
 		if audioplayer is not None:
 			self.audioplayers.remove(audioplayer)
+
+	@tasks.loop(hours=12)
+	async def voice_channel_culler(self):
+		logger.info("voice_channel_culler() entered")
+		now = datetime.datetime.now()
+		culling_cutoff = voice_channel_culling_timeout_hours * 60 * 60
+		if (now - self.start_time).total_seconds() < culling_cutoff:
+			return # Nothing to do yet, bot hasnt been up long enough to cull voice channels
+		
+		for guildinfo in botdata.guildinfo_list():
+			if guildinfo.voicechannel is not None:
+				if (guildinfo.id not in self.last_played_audio) or ((now - self.last_played_audio[guildinfo.id]).total_seconds() > culling_cutoff):
+					# cull this voice channel
+					logger.info(f"culling voice from server {guildinfo.id}")
+					await self.disconnect(self.bot.get_guild(guildinfo.id))
+					guildinfo.voicechannel = None
 
 
 	@commands.command()
@@ -527,6 +546,16 @@ class Audio(MangoCog):
 				if message.content.startswith("//") or message.content.startswith("#"):
 					return # commented out stuff should be ignored
 				try:
+					logger.trace({
+						"type": "tts",
+						"message_id": message.id,
+						"author_id": message.author.id,
+						"server_id": message.guild.id,
+						"channel_id": message.channel.id,
+						"timestamp": message.created_at.isoformat(),
+						"content": message.content,
+						"clean_content": message.clean_content
+					})
 					if guildinfo.announcetts:
 						name = message.author.name
 						if guildinfo.usenickname and message.author.nick:

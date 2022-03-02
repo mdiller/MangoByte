@@ -60,7 +60,10 @@ class MangoCog(disnake.ext.commands.Cog):
 			clip = await self.get_clip(clip, ctx)
 
 		audio = self.bot.get_cog("Audio")
-		await (await audio.audioplayer(ctx)).queue_clip(clip, ctx)
+
+		audioplayer = await audio.audioplayer(ctx)
+		audio.last_played_audio[audioplayer.guild_id] = datetime.datetime.now()
+		await audioplayer.queue_clip(clip, ctx)
 
 	def cmdpfx(self, ctx):
 		return botdata.command_prefix(ctx)

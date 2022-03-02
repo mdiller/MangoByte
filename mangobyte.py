@@ -29,6 +29,11 @@ import json
 import sys
 import inspect
 
+logger.trace({
+	"type": "startup",
+	"message": "mangobyte script started"
+})
+
 startupTimer = SimpleTimer()
 
 description = """The juiciest unsigned 8 bit integer you is eva gonna see.
@@ -68,6 +73,10 @@ async def on_ready():
 # the full initialization of the bot
 async def initialize():
 	try:
+		logger.trace({
+			"type": "startup",
+			"message": "initialize started"
+		})
 		logger.info("Logged in as:\n{0} (ID: {0.id})".format(bot.user))
 		logger.info("Connecting to voice channels if specified in botdata.json ...")
 
@@ -84,6 +93,7 @@ async def initialize():
 		await bot.change_presence(status=disnake.Status.dnd, activity=activity)
 
 		periodic_tasks = []
+		periodic_tasks.append(audio_cog.voice_channel_culler)
 		if settings.topgg:
 			periodic_tasks.append(general_cog.update_topgg)
 		if settings.infodump_path:
@@ -147,6 +157,11 @@ async def initialize():
 			type=disnake.ActivityType.playing,
 			start=datetime.datetime.utcnow())
 		await bot.change_presence(status=disnake.Status.online, activity=game)
+		
+		logger.trace({
+			"type": "startup",
+			"message": "initialize finished"
+		})
 
 
 async def get_cmd_signature(ctx):
@@ -258,6 +273,11 @@ async def on_command_error(ctx, error):
 			await print_missing_perms(ctx, error)
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, disnake.errors.HTTPException):
 			await ctx.send("Looks like there was a problem with discord just then. Try again in a bit.")
+			logger.warning(f"discord http exception triggered for message {ctx.message.id}")
+		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, HttpError):
+			await error.original.send_self(ctx, botdata)
+			logger.warning(f"http error {error.original.code} on message {ctx.message.id} for url: {error.original.url}")
+			await loggingdb.command_finished(ctx, "user_errored", error.original.message)
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
 			await error.original.send_self(ctx, botdata)
 			await loggingdb.command_finished(ctx, "user_errored", error.original.message)
@@ -316,7 +336,7 @@ async def report_error(message, error, skip_lines=2):
 
 	await loggingdb.insert_error(message, error, trace_string)
 
-	logger.error(f"\nError on: {message.content}\nAuthor Id: {message.author.id}\n{trace_string}\n")
+	logger.error(f"\nError on: {message.content}\nMessage Id: {message.id}\nAuthor Id: {message.author.id}\n{trace_string}\n")
 	return trace_string
 
 def update_commandinfo():

@@ -207,13 +207,14 @@ class AsyncBundler():
 
 class HttpError(UserError):
 	"""An http error with an error code"""
-	def __init__(self, message, code):
+	def __init__(self, message, url, code):
 		super().__init__(message.format(code))
 		self.code = code
+		self.url = url
 
 
 class Http404Error(HttpError):
 	"""An http error with a 404 error code"""
-	def __init__(self, message):
-		super().__init__(message, 404)
+	def __init__(self, message, url):
+		super().__init__(message, url, 404)
 	

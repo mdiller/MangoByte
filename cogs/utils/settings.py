@@ -80,9 +80,15 @@ class Settings:
 	def test_guilds(self):
 		return self.json_data.get("test_guilds", None)
 
+	# logging information for how to log to a loki endpoint
+	@property
+	def loki(self):
+		return self.json_data.get("loki", None)
+
 	@property
 	def resourcedir(self):
 		return "resource/" # self.json_data["resourcedir"]
+
 
 	def resource(self, dir):
 		return os.path.join(self.resourcedir, dir)

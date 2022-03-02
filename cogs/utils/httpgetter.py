@@ -102,9 +102,9 @@ def raise_error(url, code, errors):
 	logger.error(f"http {code} error on: {url}")
 	template = errors.get(code, errors.get("default", "Http request failed with a {} error"))
 	if code == 404:
-		raise Http404Error(template)
+		raise Http404Error(template, url)
 	else:
-		raise HttpError(template, code)
+		raise HttpError(template, url, code)
 
 class HttpGetter:
 	def __init__(self):
