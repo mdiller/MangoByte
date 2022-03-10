@@ -48,7 +48,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar.url, url="https://github.com/mdiller/MangoByte")
 
 			commands = list(self.bot.commands)
-			commands.extend(self.bot.slash_commands)
+			commands.extend(self.expand_subcommands(self.bot.slash_commands))
 			filtered = await self.filter_commands(commands, sort=True, key=get_category)
 			to_iterate = itertools.groupby(filtered, key=get_category)
 
@@ -81,7 +81,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 		description = inspect.getdoc(cog)
 		description += f"\n\n{text_command_help}"
 		commands = cog.get_commands()
-		commands.extend(cog.get_slash_commands())
+		commands.extend(self.expand_subcommands(cog.get_slash_commands()))
 		description += "\n\n**Commands:**\n" + self.list_commands(await self.filter_commands(commands))
 		embed = self.embed_description(description, cog)
 		embed.set_author(name=cog.__class__.__name__)
@@ -95,16 +95,16 @@ class MangoHelpCommand(DefaultHelpCommand):
 	# overridden to support slash commands
 	async def filter_commands(self, commands, *, sort=False, key=None):
 		msg_commands = list(filter(lambda c: isinstance(c, Command), commands))
-		slash_commands = list(filter(lambda c: isinstance(c, InvokableSlashCommand), commands))
+		app_commands = list(filter(lambda c: isinstance(c, InvokableSlashCommand) or isinstance(c, SubCommand), commands))
 		
 		msg_commands = await super().filter_commands(msg_commands)
 
-		msg_commands.extend(slash_commands)
+		msg_commands.extend(app_commands)
 		if sort:
 			if key:
 				msg_commands.sort(key=key)
 			else:
-				msg_commands.sort(key=lambda c: c.name)
+				msg_commands.sort(key=lambda c: c.qualified_name)
 		return msg_commands
 
 	# Overridden to ignore case for input, and to add the 'all' option
@@ -130,24 +130,47 @@ class MangoHelpCommand(DefaultHelpCommand):
 		await super().command_callback(ctx, command=command)
 
 	def list_commands(self, commands, only_name=False):
-		results = []
-		commands = sorted(commands, key=lambda c: c.name) 
+		cmd_names = []
+		cmd_descriptions = []
+		commands = sorted(commands, key=lambda c: c.qualified_name)
 		for command in commands:
-			if isinstance(command, Command) and command.name in command.aliases:
+			if isinstance(command, Command) and command.qualified_name in command.aliases:
 				# skip aliases
 				continue
 			newline = ""
 			if only_name:
-				newline = "`{{cmdpfx}}{0:{1}<30}`".format(command.name, u"\u00A0")
+				cmd_names.append("`{{cmdpfx}}{0:{1}<30}`".format(command.qualified_name, u"\u00A0"))
+				cmd_descriptions.append("")
 			else:
-				description = command.short_doc if isinstance(command, Command) else command.description
-				entry = '`{{cmdpfx}}{0:{2}<{width}} | {1}`'.format(command.name, description, u"\u00A0", width=self.get_max_size(commands))
-				newline = self.shorten_text(entry)
-			if isinstance(command, InvokableSlashCommand):
-				newline = newline.replace("{cmdpfx}", "/")
-			results.append(newline)
-		if results:
-			return self.fill_template("\n".join(results))
+				if isinstance(command, Command):
+					description = command.short_doc
+				elif isinstance(command, SubCommand):
+					description = command.body.description
+				else:
+					description = command.description
+				cmd_names.append(f"{{cmdpfx}}{command.qualified_name}")
+				cmd_descriptions.append(description)
+			if isinstance(command, InvokableSlashCommand) or isinstance(command, SubCommand):
+				cmd_names[-1] = cmd_names[-1].replace("{cmdpfx}", "/")
+			else:
+				cmd_names[-1] = self.fill_template(cmd_names[-1])
+
+		lines = []
+		line_limit = 64
+		max_cmd_size = max(map(len, cmd_names))
+		for i in range(len(cmd_names)):
+			name = cmd_names[i]
+			desc = cmd_descriptions[i]
+			newline = "`{0:{1}<{2}}".format(cmd_names[i], u"\u00A0", max_cmd_size)
+			newline += " | "
+			if len(newline) + len(desc) > line_limit:
+				desc = desc[:line_limit - (len(newline) + 4)]
+				desc += "..."
+			newline += desc
+			newline += "`"
+			lines.append(newline)
+		if lines:
+			return "\n".join(lines)
 		else:
 			return "`<empty>`"
 	
@@ -163,6 +186,17 @@ class MangoHelpCommand(DefaultHelpCommand):
 
 	def cog_short_doc(self, cog):
 		return self.fill_template(inspect.getdoc(cog).split('\n')[0])
+	
+	def expand_subcommands(self, list_of_commands: list[InvokableSlashCommand]):
+		new_list = []
+		for command in list_of_commands:
+			if isinstance(command, InvokableSlashCommand):
+				if command.children:
+					for child in command.children.values():
+						new_list.append(child)
+				else:
+					new_list.append(command)
+		return new_list
 
 	def embed_description(self, description, helptarget):
 		if not description:

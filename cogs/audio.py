@@ -19,7 +19,7 @@ import logging
 logger = logging.getLogger("mangologger")
 
 intro_outro_length = 4.5
-voice_channel_culling_timeout_hours = 24 * 2 # 24 * 2 means after 2 days of inactivity, mango will disconnect from the voice channel
+voice_channel_culling_timeout_hours = 24 * 4 # 24 * 4 means after 4 days of inactivity, mango will disconnect from the voice channel
 
 class TtsChannelError(Exception):
 	def __init__(self, error):

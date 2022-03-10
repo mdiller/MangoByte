@@ -20,20 +20,36 @@ class Admin(MangoCog):
 	Only admins or people with the correct role can use these commands. To set a role as the 'Bot Admin' role, try `{cmdpfx}config botadmin`"""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
-
-	def bot_check(self, ctx):
+	
+	def bot_check(self, ctx_inter: InterContext):
 		"""Checks to make sure the user has permissions"""
-		guildinfo = botdata.guildinfo(ctx)
-		if not isinstance(ctx.message.channel, disnake.abc.PrivateChannel):
-			if guildinfo.is_banned(ctx.message.author):
+		commandname = ""
+		cog = None
+		guildinfo = botdata.guildinfo(ctx_inter)
+		if isinstance(ctx_inter, disnake.Interaction):
+			if isinstance(ctx_inter, disnake.CommandInter):
+				commandname = ctx_inter.application_command.qualified_name
+			# check cogs
+			cog = ctx_inter.application_command.cog
+			if cog:
+				if not cog.cog_check(ctx_inter):
+					return False
+		else:
+			commandname = ctx_inter.command
+			cog = ctx_inter.cog
+		
+		if not isinstance(ctx_inter.channel, disnake.abc.PrivateChannel):
+			if guildinfo.is_banned(ctx_inter.author):
 				return False
-			if guildinfo.is_disabled(ctx.command):
+			if guildinfo.is_disabled(commandname):
+				return False
+			if guildinfo.is_disabled(cog):
 				return False
 		return True
 
-	def cog_check(self, ctx):
+	def cog_check(self, ctx_inter: InterContext):
 		"""Checks to make sure the user has admin privilages"""
-		return checks.is_admin_check(ctx.message.channel, ctx)
+		return checks.is_admin_check(ctx_inter)
 
 	@commands.command()
 	async def botban(self, ctx, user: disnake.Member):
@@ -41,7 +57,7 @@ class Admin(MangoCog):
 		if checks.is_owner_check(user):
 			await ctx.send("Ya can't ban mah owner, man. 😠")
 			return
-		if checks.is_admin_check(ctx.message.channel, ctx, user):
+		if checks.is_admin_check(ctx, user):
 			if not checks.is_owner_check(ctx.message.author):
 				await ctx.send("Ya can't ban other admins")
 				return
@@ -60,17 +76,20 @@ class Admin(MangoCog):
 		botdata.guildinfo(ctx.message.guild).botunban(user)
 		await ctx.send("{} is free of their restraints and may once again use commands".format(user.mention))
 
-	def get_command_or_cog(self, ctx, text):
-		result = ctx.bot.cogs.get(text)
+	def get_command_or_cog(self, bot: commands.Bot, text):
+		result = bot.cogs.get(text)
 		if result is not None:
 			return result
-		result = ctx.bot.get_command(text)
+		result = bot.get_command(text)
+		if result is not None:
+			return result
+		result = bot.get_slash_command(text)
 		if result is not None:
 			return result
 		text = text.lower()
-		for cog in ctx.bot.cogs:
+		for cog in bot.cogs:
 			if text == cog.lower():
-				return ctx.bot.cogs[cog]
+				return bot.cogs[cog]
 		return None
 
 	@commands.command()
@@ -84,7 +103,7 @@ class Admin(MangoCog):
 		if not guildinfo:
 			raise UserError("This command must be called in a guild")
 
-		cmd = self.get_command_or_cog(ctx, command)
+		cmd = self.get_command_or_cog(ctx.bot, command)
 		if cmd is None:
 			raise UserError("Couldn't find a command or command category by that name")
 
@@ -115,7 +134,7 @@ class Admin(MangoCog):
 		guildinfo = botdata.guildinfo(ctx)
 		if not guildinfo:
 			raise UserError("This command must be called in a guild")
-		cmd = self.get_command_or_cog(ctx, command)
+		cmd = self.get_command_or_cog(ctx.bot, command)
 		if cmd is None:
 			raise UserError("Couldn't find a command or command category by that name")
 		if not guildinfo.is_disabled(cmd.name):

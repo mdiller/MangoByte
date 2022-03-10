@@ -320,11 +320,13 @@ class BotData:
 		write_json(self.path, self.json_data)
 
 	def userinfo(self, userid):
-		if isinstance(userid, disnake.User) or  isinstance(userid, disnake.Member):
+		if isinstance(userid, disnake.User) or isinstance(userid, disnake.Member):
 			userid = userid.id
 		return UserInfo(self, userid)
 
 	def guildinfo(self, guildid):
+		if isinstance(guildid, disnake.Interaction):
+			guildid = guildid.guild
 		if isinstance(guildid, disnake.ext.commands.Context):
 			guildid = guildid.message.guild
 		if isinstance(guildid, disnake.abc.GuildChannel):
@@ -355,8 +357,11 @@ class BotData:
 		return count
 
 	# gets the command prefix
-	def command_prefix(self, ctx):
-		return self.command_prefix_guild(ctx) # will act the same for self.guildinfo
+	def command_prefix(self, inter_ctx: InterContext):
+		if isinstance(inter_ctx, commands.Context):
+			return self.command_prefix_guild(inter_ctx) # will act the same for self.guildinfo
+		else:
+			return "/"
 
 	def command_prefix_botmessage(self, bot, message):
 		return self.command_prefix_guild(message.guild)

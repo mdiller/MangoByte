@@ -636,21 +636,19 @@ class DotaStats(MangoCog):
 		await self.tell_match_story(match, is_radiant, ctx, perspective)
 
 	@commands.command(aliases=["lastgamestory", "lmstory"])
-	async def lastmatchstory(self, ctx, player : DotaPlayer = None):
+	async def lastmatchstory(self, ctx, *, matchfilter : MatchFilter = None):
 		"""Tells the story of the player's last match
 
 		Input must be either a discord user, a steam32 id, or a steam64 id"""
 		await ctx.channel.trigger_typing()
-		if not player:
-			player = await DotaPlayer.from_author(ctx)
+		
+		matchfilter = await MatchFilter.init(matchfilter, ctx)
+		player = matchfilter.player
+
+		match_id = await get_lastmatch_id(matchfilter)
+		game = await get_match(match_id)
 
 		perspective = player.mention
-		try:
-			match_id = (await opendota_query(f"/players/{player.steam_id}/matches?limit=1"))[0]['match_id']
-			game = await get_match(match_id)
-		except UserError:
-			await ctx.send("I can't find the last game this player played")
-			return
 		if player is None:
 			player = ctx.message.author.mention
 

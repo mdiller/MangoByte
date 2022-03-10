@@ -69,6 +69,10 @@ def load_md_as_dict(filename):
 		result[name] = description
 	return result
 
+def get_docs_keys():
+	docs_data = load_md_as_dict(settings.resource("docs.md"))
+	return list(docs_data.keys())
+
 class General(MangoCog):
 	"""Commands that don't really fit into the other categories
 
@@ -83,6 +87,16 @@ class General(MangoCog):
 		self.showerthoughts_data = read_json(settings.resource("json/showerthoughts.json"))
 		self.docs_data = load_md_as_dict(settings.resource("docs.md"))
 		self.words = load_words()
+
+	@commands.slash_command()
+	async def misc(self, inter):
+		"""A bunch of miscellaneous commands i made for fun"""
+		pass # this is just a header for base commands
+	
+	@commands.slash_command()
+	async def bot(self, inter):
+		"""Gets information about mangobyte"""
+		pass # this is just a header for base commands
 
 	@commands.command()
 	async def userconfig(self, ctx, name, *, value = None):
@@ -107,29 +121,29 @@ class General(MangoCog):
 			await ctx.message.add_reaction("✅")
 
 	@commands.slash_command()
-	async def ping(self, inter : disnake.CommandInteraction, count : commands.Range[1, 20] = 1):
+	async def ping(self, inter: disnake.CmdInter, count : commands.Range[1, 20] = 1):
 		"""Pongs a number of times(within reason)"""
 		ping_string = ""
 		for i in range(0, count):
 			ping_string += "pong "
 		await inter.send(ping_string)
 
-	@commands.command()
-	async def echo(self, ctx, *, message : str):
-		"""Echo...
-
-		I would hurl words into this darkness and wait for an echo, and if an echo sounded, no matter how faintly, I would send other words to tell, to march, to fight, to create a sense of the hunger for life that gnaws in us all"""
-		await ctx.send(message)
+	@commands.slash_command()
+	async def echo(self, inter: disnake.CmdInter, message: str):
+		"""Echos the given message
+		
+		Parameters
+		----------
+		message: The message to echo
+		"""
+		await inter.send(message)
 		
 
-	@commands.command()
-	async def changelog(self, ctx):
-		"""Gets a rough changelog for mangobyte
-
-		Note that this is a very rough changelog built from git commit messages and so will sometimes not relate directly to your perspective.
-
-		For more commit versions or better detailed information, check out the source on [GitHub](https://github.com/mdiller/MangoByte/commits/master)
+	@bot.sub_command()
+	async def changelog(self, inter: disnake.CmdInter):
+		"""Gets a rough changelog for mangobyte. Note that this is just the last few commit messages.
 		"""
+		await inter.response.defer()
 		commit_url = "https://github.com/mdiller/MangoByte"
 		description = f"For more information check out the [commit history]({commit_url}/commits/master) on GitHub\n"
 		lines = get_changelog().split("\n")
@@ -155,10 +169,10 @@ class General(MangoCog):
 			embed.set_footer(text="Most recent change at")
 
 		embed.set_author(name="Changelog", url=f"{commit_url}/commits/master")
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
-	@commands.command()
-	async def info(self, ctx):
+	@bot.sub_command()
+	async def info(self, inter: disnake.CmdInter):
 		"""Prints info about mangobyte"""
 		github = "https://github.com/mdiller/MangoByte"
 		python_version = "[Python {}.{}.{}]({})".format(*os.sys.version_info[:3], "https://www.python.org/")
@@ -178,7 +192,7 @@ class General(MangoCog):
 			f"If you want to invite mangobyte to your server/guild, click this [invite link]({invite_link}). "
 			f"If you have a question, suggestion, or just want to try out mah features, check out the [Help Server/Guild]({help_guild_link})."))
 
-		cmdpfx = self.cmdpfx(ctx)
+		cmdpfx = botdata.command_prefix_guild(inter.guild)
 		embed.add_field(name="Features", value=(
 			f"• Answers questions (`{cmdpfx}ask`)\n"
 			f"• Plays audio clips (`{cmdpfx}play`, `{cmdpfx}dota`)\n"
@@ -193,17 +207,17 @@ class General(MangoCog):
 
 		embed.set_footer(text="MangoByte developed by {}".format(owner.name), icon_url=owner.avatar.url)
 
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
-	@commands.command()
-	async def invite(self, ctx):
-		"""Prints the invite link"""
-		await ctx.send(invite_link)
+	@bot.sub_command()
+	async def invite(self, inter: disnake.CmdInter):
+		"""Shows the invite link"""
+		await inter.send(invite_link)
 
-	@commands.command()
-	async def botstats(self, ctx):
+	@bot.sub_command()
+	async def stats(self, inter: disnake.CmdInter):
 		"""Displays some bot statistics"""
-		await ctx.channel.trigger_typing()
+		await inter.response.defer()
 
 		embed = disnake.Embed(color=disnake.Color.green())
 
@@ -224,7 +238,7 @@ class General(MangoCog):
 		# embed.add_field(name="Commands", value=f"{query_results[0][0][0]:,}")
 		embed.add_field(name="Commands (This Week)", value=f"{query_results[1][0][0]:,}")
 
-		cmdpfx = self.cmdpfx(ctx)
+		cmdpfx = botdata.command_prefix_guild(inter.guild)
 		top_commands = query_results[2]
 		# if len(top_commands) >= 3:
 		# 	embed.add_field(name="Top Commands", value=(
@@ -239,13 +253,11 @@ class General(MangoCog):
 				f"`{cmdpfx}{top_commands_weekly[1][0]}`\n"
 				f"`{cmdpfx}{top_commands_weekly[2][0]}`\n"))
 
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
-	@commands.command()
-	async def lasagna(self, ctx):
-		"""A baked Italian dish
-
-		Contains wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce."""
+	@misc.sub_command()
+	async def lasagna(self, inter: disnake.CmdInter):
+		"""Posts an image of a baked italian dish"""
 		lasagna_images = [
 			"images/lasagna1.jpg",
 			"images/lasagna2.jpg",
@@ -257,11 +269,16 @@ class General(MangoCog):
 			"images/lasagna8.jpg",
 			"images/lasagna9.jpg",
 		]
-		await ctx.send(file=disnake.File(settings.resource(random.choice(lasagna_images))))
+		await inter.send(file=disnake.File(settings.resource(random.choice(lasagna_images))))
 
-	@commands.command()
-	async def scramble(self, ctx, *, message : str):
-		"""Scrambles the insides of words"""
+	@misc.sub_command()
+	async def scramble(self, inter: disnake.CmdInter, message: str):
+		"""Scrambles the insides of words
+		
+		Parameters
+		----------
+		message: The message to scramble
+		"""
 
 		def scramble_word(word):
 			if len(word) < 4:
@@ -277,22 +294,17 @@ class General(MangoCog):
 		for word in message.split(" "):
 			results.append(scramble_word(word))
 
-		await ctx.send(" ".join(results))
+		await inter.send(" ".join(results))
 
-	@commands.command(aliases=["define", "lookup", "wikipedia", "whatis"])
-	async def wiki(self, ctx, *, thing : str):
+	@commands.slash_command()
+	async def wiki(self, inter: disnake.CmdInter, thing: str):
 		"""Looks up a thing on wikipedia
 		
-		Uses my own implementation of the [Wikipedia API](https://www.mediawiki.org/wiki/API:Tutorial)
-
-		You can also try `{cmdpfx}wiki random` to get a random wiki page
-		
-		Note that I've had to remove the images from these (unless you're in a NSFW channel) because I have no way of checking if it is an NSFW image, and posting an NSFW image in non-NSFW channels would be against discord's ToS. Sorry about that!
-
-		**Example:**
-		`{cmdpfx}wiki potato`
+		Parameters
+		----------
+		thing: The thing to look up on wikipedia
 		"""
-		await ctx.channel.trigger_typing()
+		await inter.response.defer()
 
 		page = await wikipedia.get_wikipedia_page(thing)
 
@@ -303,43 +315,45 @@ class General(MangoCog):
 		footer_text = "Retrieved from Wikipedia"
 
 		if page.image:
-			if (not isinstance(ctx.channel, disnake.DMChannel)) and ctx.channel.is_nsfw():
+			if (not isinstance(inter.channel, disnake.DMChannel)) and inter.channel.is_nsfw():
 				embed.set_image(url=page.image)
 			else:
 				footer_text += ". (Image omitted because I can't check if it is NSFW) D:"
 
 		embed.set_footer(text=footer_text, icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Wikipedia's_W.svg/2000px-Wikipedia's_W.svg.png")
 		
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
-	@commands.command()
-	async def reddit(self, ctx, url_or_id):
+	@commands.slash_command()
+	async def reddit(self, inter: disnake.CmdInter, post: str):
 		"""Displays a formatted reddit post
 
-		Note that this will only get nsfw posts if you call this in an nsfw channel"""
+		Parameters
+		----------
+		post: The url or id of the post to link"""
 		if settings.reddit is None:
 			raise UserError("This MangoByte has not been configured to get reddit submissions. Gotta add your info to `settings.json`")
 
-		await ctx.channel.trigger_typing()
+		await inter.response.defer()
 
 		reddit = praw.Reddit(client_id=settings.reddit["client_id"],
 			client_secret=settings.reddit["client_secret"],
 			user_agent=settings.reddit["user_agent"])
 
 		try:
-			if re.search(r"(redd\.it|reddit.com)", url_or_id):
-				if not re.search(r"https?://", url_or_id):
-					url_or_id = "http://" + url_or_id
-				submission = reddit.submission(url=url_or_id)
+			if re.search(r"(redd\.it|reddit.com)", post):
+				if not re.search(r"https?://", post):
+					post = "http://" + post
+				submission = reddit.submission(url=post)
 			else:
-				submission = reddit.submission(id=url_or_id)
+				submission = reddit.submission(id=post)
 			description = submission.selftext
 		except:
 			raise UserError("Couldn't properly find that reddit submission")
 
 		
 		if submission.over_18:
-			if (isinstance(ctx.channel, disnake.DMChannel)) or (not ctx.channel.is_nsfw()):
+			if (isinstance(inter.channel, disnake.DMChannel)) or (not inter.channel.is_nsfw()):
 				raise UserError("That is an NSFW post, so I can't link it in this non-nsfw channel.")
 
 
@@ -369,15 +383,12 @@ class General(MangoCog):
 				image_url = image_url.replace(".gifv", ".gif")
 			embed.set_image(url=image_url)
 
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
-	@commands.command(aliases=["quote", "showerthoughts", "thought" ])
-	async def showerthought(self, ctx):
-		"""Gets a top post from r/ShowerThoughts
-		
-		Gets a random post from the [r/ShowerThoughts](https://www.reddit.com/r/Showerthoughts/top/?sort=top&t=all) subreddit. Looks through the list of the all time top posts for the subreddit
-		"""
-		await ctx.channel.trigger_typing()
+	@misc.sub_command()
+	async def showerthought(self, inter: disnake.CmdInter):
+		"""Gets a top post from the r/ShowerThoughts subreddit"""
+		await inter.response.defer()
 
 		thought = random.choice(self.showerthoughts_data)
 
@@ -390,18 +401,7 @@ class General(MangoCog):
 		embed.timestamp = datetime.datetime.fromtimestamp(thought["timestamp"], tz=datetime.timezone.utc)
 		embed.set_footer(text=author)
 
-		await ctx.send(embed=embed)
-
-	@commands.command(hidden=True, aliases=["restapi"])
-	async def restget(self, ctx, url):
-		"""Gets a json response from a rest api and returns it"""
-		await ctx.channel.trigger_typing()
-		data = await httpgetter.get(url)
-
-		filename = settings.resource("temp/response.json")
-		write_json(filename, data)
-		await ctx.send(file=disnake.File(filename))
-		os.remove(filename)
+		await inter.send(embed=embed)
 
 	@commands.command()
 	async def ask(self, ctx, *, question : str=""):
@@ -445,72 +445,46 @@ class General(MangoCog):
 		await ctx.send(start + result)
 		if ctx.guild and ctx.guild.me.voice:
 			await self.play_clip(f"tts:{start_local}{result}", ctx)
-		
 	
-	@commands.command(aliases=["random"])	
-	async def random_number(self, ctx, maximum : int, minimum : int = 0):
-		"""Gets a random number between the minimum and maximum
+	@misc.sub_command()
+	async def random(self, inter: disnake.CmdInter, maximum: int, minimum: int = 0):
+		"""Gets a random number between the minimum and maximum (inclusive)
 
-		The min and max integer bounds are **inclusive**
-
-		The command will be able to figure out which number is the minimum and which is the maximum if they are put in backwards. If one number is entered, it is assumed to be the maximum, and the default minimum is 0
-
-		**Example:**
-		`{cmdpfx}random 5`
-		`{cmdpfx}random 1 10`
-		"""
+		Parameters
+		----------
+		maximum: The highest number the return value can be
+		minimum: The lowest number the return value can be"""
 		result = None
 		if maximum < minimum:
 			result = random.randint(maximum, minimum)
 		else:
 			result = random.randint(minimum, maximum)
-		await ctx.send(result)
+		await inter.send(result)
 	
-	@commands.command(aliases=["pickone"])
-	async def choose(self, ctx, *options):
+	@misc.sub_command()
+	async def choose(self, inter: disnake.CmdInter, options: str):
 		"""Randomly chooses one of the given options
 
-		You must provide at least one option for the bot to choose, and the options should be separated by spaces
-		
-		**Example:**
-		`{cmdpfx}choose Dota2 Fortnite RocketLeague`
-		`{cmdpfx}choose green red blue`
-		"""
-		if not len(options) > 0:
-			raise UserError("You gotta give me a couple different options, separated by spaces")
-		await ctx.send(random.choice(options))
+		Parameters
+		----------
+		options: A space-separated list of options to choose from"""
+		options = options.split(" ")
+		await inter.send(random.choice(options))
 
-	@commands.command(aliases=["documentation"])
-	async def docs(self, ctx, *, topic : str = None):
-		"""Shows the documentation for the given topic
+	@commands.slash_command()
+	async def docs(self, inter: disnake.CommandInteraction, topic: str = commands.Param(choices=get_docs_keys())):
+		"""Shows some documentation about a specific part of the bot
 
-		If no parameters are given, then this shows the available documentation
-		
-		**Example:**
-		`{cmdpfx}docs`
-		`{cmdpfx}docs Match Filter`
-		`{cmdpfx}docs matchfilter`
+		Parameters
+		----------
+		topic: The topic to get documentation for
 		"""
-		if topic is None:
-			embed = disnake.Embed()
-			embed.title = "Available Topics"
-			embed.description = "\n".join(map(lambda name: f"• {name}", list(self.docs_data.keys())))
-			await ctx.send(embed=embed)
-			return
-		clean_topic = topic.lower().replace(" ", "")
-		found_topic = None
-		for name in self.docs_data:
-			simple_name = name.lower().replace(" ", "")
-			if clean_topic in simple_name:
-				found_topic = name
-				break
-		if found_topic is None:
-			raise UserError(f"Couldn't find a topic called '{topic}'")
+		found_topic = topic
 
 		embed = disnake.Embed()
 		embed.title = found_topic
 		embed.description = self.docs_data[found_topic]
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
 	@tasks.loop(hours=12)
 	async def update_topgg(self):
@@ -682,7 +656,7 @@ class General(MangoCog):
 				break
 
 	@commands.Cog.listener()
-	async def on_command(self, ctx):
+	async def on_command(self, ctx: commands.Context):
 		msg = await loggingdb.insert_message(ctx.message, ctx.command.name)
 		await loggingdb.insert_command(ctx)
 		logger.trace({
@@ -698,6 +672,19 @@ class General(MangoCog):
 		})
 
 	@commands.Cog.listener()
+	async def on_slash_command(self, inter: disnake.CommandInteraction):
+		logger.trace({
+			"type": "slash_command",
+			"command": inter.application_command.qualified_name,
+			"inter_id": inter.id,
+			"author_id": inter.author.id,
+			"server_id": inter.guild.id if inter.guild else None,
+			"channel_id": inter.channel.id,
+			"timestamp": inter.created_at.isoformat(),
+			"content": stringify_slash_command(inter)
+		})
+
+	@commands.Cog.listener()
 	async def on_command_completion(self, ctx):
 		await loggingdb.command_finished(ctx, "completed", None)
 
@@ -709,38 +696,33 @@ class General(MangoCog):
 	async def on_guild_remove(self, guild):
 		await loggingdb.update_guilds(self.bot.guilds)
 
-	@commands.command(aliases=[ "tipjar", "donation" ])
-	async def donate(self, ctx):
-		"""Posts the donation information"""
+	@bot.sub_command()
+	async def donate(self, inter: disnake.CmdInter):
+		"""Posts some links with info about how to donate to the developer"""
 		embed = disnake.Embed()
 
 		donate_stuff = "\n".join(map(lambda key: f"• [{key}]({donate_links[key]})", donate_links))
-		embed.description = "I host MangoByte on [DigitalOcean](https://www.digitalocean.com), which costs `$15` per month. "
+		embed.description = "I host MangoByte on [DigitalOcean](https://www.digitalocean.com), which costs ~`$15` per month. "
 		embed.description += "Mango makes 100,000+ api calls to opendota per month, which adds up to a bit over `$10` a month. (the [api calls start costing money](https://www.opendota.com/api-keys) if you do over 50,000 a month). "
 		embed.description += "I have a job, and MangoByte won't be going down anytime soon, but if you want to help with the server costs, or just support me because you feel like it, feel free to donate using any of the links below. "
 		embed.description += "I don't have any paid benefits/features at the moment for people who donate, but the support is definetly appreciated! "
 		embed.description += f"\n\n{donate_stuff}"
 
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
-
-	@commands.command(aliases=[ "kitten", "cats", "kittens", "minnie", "minerva" ])
-	async def cat(self, ctx):
-		"""Gets a picture of my cat
-
-		These are pictures of my (the developer of mangobyte) cat. Shes a bit over a year old now. Her name is Minnie. Short for Minerva. Also known as "Kitten", "Sneakerdoodle", or "Noodle." Shes a good kitten. """
+	@misc.sub_command()
+	async def cat(self, inter: disnake.CmdInter):
+		"""Gets a picture of the developer's cat"""
 		cat_dir = settings.resource("images/cat")
 		imagepath = os.path.join(cat_dir, random.choice(os.listdir(cat_dir)))
-		await ctx.send(file=disnake.File(imagepath))
+		await inter.send(file=disnake.File(imagepath))
 
-	@commands.command(aliases=[ "dogs", "doggos", "doggo", "comet", "fizzgig" ])
-	async def dog(self, ctx):
-		"""Gets a picture of one of my dogs
-
-		These are pictures of my (the developer of mangobyte) dogs. Thier names are Fizzgig and Comet. One is floof. Other is big doggo. Floof older. Both good boys. """
-		cat_dir = settings.resource("images/dog")
-		imagepath = os.path.join(cat_dir, random.choice(os.listdir(cat_dir)))
-		await ctx.send(file=disnake.File(imagepath))
+	@misc.sub_command()
+	async def dog(self, inter: disnake.CmdInter):
+		"""Gets a picture of one of the developer's dogs"""
+		dog_dir = settings.resource("images/dog")
+		imagepath = os.path.join(dog_dir, random.choice(os.listdir(dog_dir)))
+		await inter.send(file=disnake.File(imagepath))
 
 
 

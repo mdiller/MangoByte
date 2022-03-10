@@ -39,7 +39,7 @@
 	"commands": [
 		{
 			"name": "abilities",
-			"signature": "?abilities <hero>",
+			"signature": "/abilities <hero>",
 			"short_help": "Shows all of the abilities/spells for that hero",
 			"help": "Shows all of the abilities/spells for that hero",
 			"aliases": [
@@ -50,9 +50,9 @@
 		},
 		{
 			"name": "ability",
-			"signature": "?ability <ability>",
+			"signature": "/ability <ability>",
 			"short_help": "Gets information about a specific hero ability",
-			"help": "Gets information about a specific hero ability\n\n**Examples:**\n\u200b`?ability rocket flare`\n\u200b`?ability laser`\n\u200b`?ability sprout`",
+			"help": "Gets information about a specific hero ability\n\n**Examples:**\n\u200b`/ability rocket flare`\n\u200b`/ability laser`\n\u200b`/ability sprout`",
 			"aliases": [
 				"spell"
 			],
@@ -61,9 +61,9 @@
 		},
 		{
 			"name": "addemoticon",
-			"signature": "?addemoticon <name>",
+			"signature": "/addemoticon <name>",
 			"short_help": "Adds a dota emoticon as an animated emoji",
-			"help": "Adds a dota emoticon as an animated emoji\n\nThis command will add the dota emoticon as an animated emoji to the server. Because it is an animated emoji, only discord nitro users will be able to use it.\n\nObviously, this command needs the 'Manage Emoji' permission to be able to work.\n\n<a:pup:406270527766790145> <a:stunned:406274986769252353> <a:cocky:406274999951949835>\n\n**Examples:**\n\u200b`?addemoticon pup`\n\u200b`?addemoticon stunned`\n\u200b`?addemoticon naga_song`",
+			"help": "Adds a dota emoticon as an animated emoji\n\nThis command will add the dota emoticon as an animated emoji to the server. Because it is an animated emoji, only discord nitro users will be able to use it.\n\nObviously, this command needs the 'Manage Emoji' permission to be able to work.\n\n<a:pup:406270527766790145> <a:stunned:406274986769252353> <a:cocky:406274999951949835>\n\n**Examples:**\n\u200b`/addemoticon pup`\n\u200b`/addemoticon stunned`\n\u200b`/addemoticon naga_song`",
 			"aliases": [
 				"addemoji"
 			],
@@ -72,9 +72,9 @@
 		},
 		{
 			"name": "aghanim",
-			"signature": "?aghanim <name>",
+			"signature": "/aghanim <name>",
 			"short_help": "Gets the aghs upgrade for the given hero or ability",
-			"help": "Gets the aghs upgrade for the given hero or ability\n\nThis command will get the information about shard upgrades AND scepter upgrades.\nIf you want just shard or just scepter upgrades, try using `?scepter` or `?shard`",
+			"help": "Gets the aghs upgrade for the given hero or ability\n\nThis command will get the information about shard upgrades AND scepter upgrades.\nIf you want just shard or just scepter upgrades, try using `/scepter` or `/shard`",
 			"aliases": [
 				"aghs",
 				"ags",
@@ -87,7 +87,7 @@
 		},
 		{
 			"name": "ask",
-			"signature": "?ask [question]",
+			"signature": "/ask [question]",
 			"short_help": "Answers any question you might have",
 			"help": "Answers any question you might have",
 			"aliases": [],
@@ -96,7 +96,7 @@
 		},
 		{
 			"name": "blog",
-			"signature": "?blog ",
+			"signature": "/blog ",
 			"short_help": "Pulls the newest blog post for Dota 2",
 			"help": "Pulls the newest blog post for Dota 2",
 			"aliases": [
@@ -106,8 +106,53 @@
 			"prefix": "?"
 		},
 		{
+			"name": "bot changelog",
+			"signature": null,
+			"short_help": "Gets a rough changelog for mangobyte. Note that this is just the last few commit messages.",
+			"help": "Gets a rough changelog for mangobyte. Note that this is just the last few commit messages.",
+			"aliases": [],
+			"cog": "General",
+			"prefix": "/"
+		},
+		{
+			"name": "bot donate",
+			"signature": null,
+			"short_help": "Posts some links with info about how to donate to the developer",
+			"help": "Posts some links with info about how to donate to the developer",
+			"aliases": [],
+			"cog": "General",
+			"prefix": "/"
+		},
+		{
+			"name": "bot info",
+			"signature": null,
+			"short_help": "Prints info about mangobyte",
+			"help": "Prints info about mangobyte",
+			"aliases": [],
+			"cog": "General",
+			"prefix": "/"
+		},
+		{
+			"name": "bot invite",
+			"signature": null,
+			"short_help": "Shows the invite link",
+			"help": "Shows the invite link",
+			"aliases": [],
+			"cog": "General",
+			"prefix": "/"
+		},
+		{
+			"name": "bot stats",
+			"signature": null,
+			"short_help": "Displays some bot statistics",
+			"help": "Displays some bot statistics",
+			"aliases": [],
+			"cog": "General",
+			"prefix": "/"
+		},
+		{
 			"name": "botban",
-			"signature": "?botban <user>",
+			"signature": "/botban <user>",
 			"short_help": "Bans the user from using commands",
 			"help": "Bans the user from using commands",
 			"aliases": [],
@@ -115,17 +160,8 @@
 			"prefix": "?"
 		},
 		{
-			"name": "botstats",
-			"signature": "?botstats ",
-			"short_help": "Displays some bot statistics",
-			"help": "Displays some bot statistics",
-			"aliases": [],
-			"cog": "General",
-			"prefix": "?"
-		},
-		{
 			"name": "botunban",
-			"signature": "?botunban <user>",
+			"signature": "/botunban <user>",
 			"short_help": "Unbans the user, allowing them to use commands",
 			"help": "Unbans the user, allowing them to use commands",
 			"aliases": [],
@@ -134,9 +170,9 @@
 		},
 		{
 			"name": "card",
-			"signature": "?card [card_name]",
+			"signature": "/card [card_name]",
 			"short_help": "Displays info about the artifact card",
-			"help": "Displays info about the artifact card\n\nExample:\n\u200b`?artifact Healing Salve`\n\u200b`?artifact Prowler Vanguard`\n\u200b`?artifact keefe`",
+			"help": "Displays info about the artifact card\n\nExample:\n\u200b`/artifact Healing Salve`\n\u200b`/artifact Prowler Vanguard`\n\u200b`/artifact keefe`",
 			"aliases": [
 				"artifact"
 			],
@@ -144,52 +180,17 @@
 			"prefix": "?"
 		},
 		{
-			"name": "cat",
-			"signature": "?cat ",
-			"short_help": "Gets a picture of my cat",
-			"help": "Gets a picture of my cat\n\nThese are pictures of my (the developer of mangobyte) cat. Shes a bit over a year old now. Her name is Minnie. Short for Minerva. Also known as \"Kitten\", \"Sneakerdoodle\", or \"Noodle.\" Shes a good kitten. ",
-			"aliases": [
-				"kitten",
-				"cats",
-				"kittens",
-				"minnie",
-				"minerva"
-			],
-			"cog": "General",
-			"prefix": "?"
-		},
-		{
-			"name": "changelog",
-			"signature": "?changelog ",
-			"short_help": "Gets a rough changelog for mangobyte",
-			"help": "Gets a rough changelog for mangobyte\n\nNote that this is a very rough changelog built from git commit messages and so will sometimes not relate directly to your perspective.\n\nFor more commit versions or better detailed information, check out the source on [GitHub](https://github.com/mdiller/MangoByte/commits/master)",
-			"aliases": [],
-			"cog": "General",
-			"prefix": "?"
-		},
-		{
 			"name": "chatwheel",
-			"signature": "?chatwheel <text>",
+			"signature": "/chatwheel <text>",
 			"short_help": "Plays the given chat wheel sound",
-			"help": "Plays the given chat wheel sound\n\nGive the command a number between 1 and 22 to page through all of the available chat options:\n\u200b`?chatwheel 1`\n\u200b`?chatwheel 3`\n\n**Examples:**\n\u200b`?chatwheel Lakad Matataaaag!`\n\u200b`?chatwheel disastah`\n\u200b`?chatwheel Wan Bu Liao La`\n\u200b`?chatwheel \u73a9\u4e0d\u4e86\u5566`\n\u200b`?chatwheel ehto gg`\n\u200b`?chatwheel \u042d\u0442\u043e \u0413\u0413`",
+			"help": "Plays the given chat wheel sound\n\nGive the command a number between 1 and 22 to page through all of the available chat options:\n\u200b`/chatwheel 1`\n\u200b`/chatwheel 3`\n\n**Examples:**\n\u200b`/chatwheel Lakad Matataaaag!`\n\u200b`/chatwheel disastah`\n\u200b`/chatwheel Wan Bu Liao La`\n\u200b`/chatwheel \u73a9\u4e0d\u4e86\u5566`\n\u200b`/chatwheel ehto gg`\n\u200b`/chatwheel \u042d\u0442\u043e \u0413\u0413`",
 			"aliases": [],
 			"cog": "Dotabase",
 			"prefix": "?"
 		},
 		{
-			"name": "choose",
-			"signature": "?choose [options...]",
-			"short_help": "Randomly chooses one of the given options",
-			"help": "Randomly chooses one of the given options\n\nYou must provide at least one option for the bot to choose, and the options should be separated by spaces\n\n**Example:**\n\u200b`?choose Dota2 Fortnite RocketLeague`\n\u200b`?choose green red blue`",
-			"aliases": [
-				"pickone"
-			],
-			"cog": "General",
-			"prefix": "?"
-		},
-		{
 			"name": "clipinfo",
-			"signature": "?clipinfo [clipid]",
+			"signature": "/clipinfo [clipid]",
 			"short_help": "Gets information and a file for the given clip",
 			"help": "Gets information and a file for the given clip\n\nNot giving a clipid will print info about the last clip played\n\nclipid is specified like this:\n\u200b`local:shitpickle`\n\u200b`dota:shredder_timb_ally_01`",
 			"aliases": [],
@@ -198,9 +199,9 @@
 		},
 		{
 			"name": "clips",
-			"signature": "?clips [tag]",
+			"signature": "/clips [tag]",
 			"short_help": "Lists the local audio clips available for the play command",
-			"help": "Lists the local audio clips available for the play command\n\nCalling this command with no arguments gets you a list of all of the clips\n\nTo get the clips that have a specific tag, do `?clips <tag>`\n\nTo get a list of all of the possible clip tags, try `?clips tags`\n\nYou can also do `?clips new` to get the 10 newest clips",
+			"help": "Lists the local audio clips available for the play command\n\nCalling this command with no arguments gets you a list of all of the clips\n\nTo get the clips that have a specific tag, do `/clips <tag>`\n\nTo get a list of all of the possible clip tags, try `/clips tags`\n\nYou can also do `/clips new` to get the 10 newest clips",
 			"aliases": [
 				"playlist"
 			],
@@ -209,83 +210,54 @@
 		},
 		{
 			"name": "config",
-			"signature": "?config <name> [value]",
+			"signature": "/config <name> [value]",
 			"short_help": "Configures the bot's settings for this server",
-			"help": "Configures the bot's settings for this server\n\nBelow are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `?config <settingname>`, and you can configure a setting by typing `?config <settingname> <value>`\n\n**Settings:**\n\u200b`prefix`\n\u200b`reactions`\n\u200b`ttschannel`\n\u200b`botadmin`\n\u200b`intros`\n\u200b`outros`\n\u200b`ttslang`\n\u200b`usenickname`\n\u200b`simpletts`\n\u200b`announcetts`\n\u200b`dotapatchchannel`\n\u200b`dotablogchannel`\n\u200b`ttschannelwarn`\n\u200b`allowedbots`\n\u200b`allowwebhooks`\n\n**Examples**\n\u200b`?config prefix !`\n\u200b`?config reactions enable`\n\u200b`?config ttschannel #tts`\n\u200b`?config botadmin @BotAdmin`\n\u200b`?config intros disable`\n\u200b`?config outros disable`\n\u200b`?config ttslang Russian`\n\u200b`?config usenickname enable`\n\u200b`?config simpletts enable`\n\u200b`?config announcetts enable`\n\u200b`?config dotapatchchannel #dota`\n\u200b`?config dotablogchannel #dota`\n\u200b`?config ttschannelwarn disable`\n\u200b`?config allowedbots add @Bot123`\n\u200b`?config allowwebhooks enable`",
+			"help": "Configures the bot's settings for this server\n\nBelow are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `/config <settingname>`, and you can configure a setting by typing `/config <settingname> <value>`\n\n**Settings:**\n\u200b`prefix`\n\u200b`reactions`\n\u200b`ttschannel`\n\u200b`botadmin`\n\u200b`intros`\n\u200b`outros`\n\u200b`ttslang`\n\u200b`usenickname`\n\u200b`simpletts`\n\u200b`announcetts`\n\u200b`dotapatchchannel`\n\u200b`dotablogchannel`\n\u200b`ttschannelwarn`\n\u200b`allowedbots`\n\u200b`allowwebhooks`\n\n**Examples**\n\u200b`/config prefix !`\n\u200b`/config reactions enable`\n\u200b`/config ttschannel #tts`\n\u200b`/config botadmin @BotAdmin`\n\u200b`/config intros disable`\n\u200b`/config outros disable`\n\u200b`/config ttslang Russian`\n\u200b`/config usenickname enable`\n\u200b`/config simpletts enable`\n\u200b`/config announcetts enable`\n\u200b`/config dotapatchchannel #dota`\n\u200b`/config dotablogchannel #dota`\n\u200b`/config ttschannelwarn disable`\n\u200b`/config allowedbots add @Bot123`\n\u200b`/config allowwebhooks enable`",
 			"aliases": [],
 			"cog": "Admin",
 			"prefix": "?"
 		},
 		{
 			"name": "courage",
-			"signature": "?courage [hero]",
+			"signature": "/courage [hero]",
 			"short_help": "Generates a challenge build",
-			"help": "Generates a challenge build\n\nCreates a challenge build with a random (or given) hero and a random set of items\n\n**Examples:**\n\u200b`?courage`\n\u200b`?courage shadow fiend`",
+			"help": "Generates a challenge build\n\nCreates a challenge build with a random (or given) hero and a random set of items\n\n**Examples:**\n\u200b`/courage`\n\u200b`/courage shadow fiend`",
 			"aliases": [],
 			"cog": "Dotabase",
 			"prefix": "?"
 		},
 		{
 			"name": "deck",
-			"signature": "?deck <deck_string>",
+			"signature": "/deck <deck_string>",
 			"short_help": "Displays the card list for the given deck",
-			"help": "Displays the card list for the given deck\n\nExample:\n\u200b`?deck ADCJWkTZX05uwGDCRV4XQGy3QGLmqUBg4GQJgGLGgO7AaABR3JlZW4vQmxhY2sgRXhhbXBsZQ__`",
+			"help": "Displays the card list for the given deck\n\nExample:\n\u200b`/deck ADCJWkTZX05uwGDCRV4XQGy3QGLmqUBg4GQJgGLGgO7AaABR3JlZW4vQmxhY2sgRXhhbXBsZQ__`",
 			"aliases": [],
 			"cog": "Artifact",
 			"prefix": "?"
 		},
 		{
 			"name": "disablecommand",
-			"signature": "?disablecommand <command>",
+			"signature": "/disablecommand <command>",
 			"short_help": "Disabled the specified command or command category",
-			"help": "Disabled the specified command or command category\n\n**Examples:**\n\u200b`?disablecommand wiki`\n\u200b`?disablecommand Audio`",
+			"help": "Disabled the specified command or command category\n\n**Examples:**\n\u200b`/disablecommand wiki`\n\u200b`/disablecommand Audio`",
 			"aliases": [],
 			"cog": "Admin",
 			"prefix": "?"
 		},
 		{
 			"name": "docs",
-			"signature": "?docs [topic]",
-			"short_help": "Shows the documentation for the given topic",
-			"help": "Shows the documentation for the given topic\n\nIf no parameters are given, then this shows the available documentation\n\n**Example:**\n\u200b`?docs`\n\u200b`?docs Match Filter`\n\u200b`?docs matchfilter`",
-			"aliases": [
-				"documentation"
-			],
+			"signature": null,
+			"short_help": "Shows some documentation about a specific part of the bot",
+			"help": "Shows some documentation about a specific part of the bot",
+			"aliases": [],
 			"cog": "General",
-			"prefix": "?"
-		},
-		{
-			"name": "dog",
-			"signature": "?dog ",
-			"short_help": "Gets a picture of one of my dogs",
-			"help": "Gets a picture of one of my dogs\n\nThese are pictures of my (the developer of mangobyte) dogs. Thier names are Fizzgig and Comet. One is floof. Other is big doggo. Floof older. Both good boys. ",
-			"aliases": [
-				"dogs",
-				"doggos",
-				"doggo",
-				"comet",
-				"fizzgig"
-			],
-			"cog": "General",
-			"prefix": "?"
-		},
-		{
-			"name": "donate",
-			"signature": "?donate ",
-			"short_help": "Posts the donation information",
-			"help": "Posts the donation information",
-			"aliases": [
-				"tipjar",
-				"donation"
-			],
-			"cog": "General",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "dota",
-			"signature": "?dota [keyphrase]",
+			"signature": "/dota [keyphrase]",
 			"short_help": "Plays a dota response",
-			"help": "Plays a dota response\n\nFirst tries to match the keyphrase with the name of a response\n\nIf there is no response matching the input string, searches for any response that has the input string as part of its text\n\nTo specify a specific hero to search for responses for, use ';' before the hero's name like this:\n\u200b`?dota ;rubick`\n\nTo specify a specific criteria to search for responses for, use ';' before the criteria name like this:\n\u200b`?dota ;rubick ;defeat`\nThere are some aliases for heroes, so the following will work:\n\u200b`?dota sf`\n\u200b`?dota furion`\n\u200b`?dota shredder`\n\nIf failing all of the above, the command will also try to find unlabeled heroes and critera. try:\n\u200b`?dota juggernaut bottling`\nA few critera you can use are: kill, bottling, cooldown, acknowledge, immortality, nomana, and select\n\nTo search for a response without asking mangobyte, try using the [Response Searcher](http://dotabase.dillerm.io/responses/)\nProTip: If you click the discord button next to the response in the above web app, it will copy to your clipboard in the format needed to play using the bot.",
+			"help": "Plays a dota response\n\nFirst tries to match the keyphrase with the name of a response\n\nIf there is no response matching the input string, searches for any response that has the input string as part of its text\n\nTo specify a specific hero to search for responses for, use ';' before the hero's name like this:\n\u200b`/dota ;rubick`\n\nTo specify a specific criteria to search for responses for, use ';' before the criteria name like this:\n\u200b`/dota ;rubick ;defeat`\nThere are some aliases for heroes, so the following will work:\n\u200b`/dota sf`\n\u200b`/dota furion`\n\u200b`/dota shredder`\n\nIf failing all of the above, the command will also try to find unlabeled heroes and critera. try:\n\u200b`/dota juggernaut bottling`\nA few critera you can use are: kill, bottling, cooldown, acknowledge, immortality, nomana, and select\n\nTo search for a response without asking mangobyte, try using the [Response Searcher](http://dotabase.dillerm.io/responses/)\nProTip: If you click the discord button next to the response in the above web app, it will copy to your clipboard in the format needed to play using the bot.",
 			"aliases": [
 				"dotar"
 			],
@@ -294,9 +266,9 @@
 		},
 		{
 			"name": "dotagif",
-			"signature": "?dotagif <match_id> <start> <end> [ms_per_second=100]",
+			"signature": "/dotagif <match_id> <start> <end> [ms_per_second=100]",
 			"short_help": "Creates a gif of a specific part of a dota match",
-			"help": "Creates a gif of a specific part of a dota match\n\nThe part of the match that you specify must be less than 10 minutes long\n\n\u200b`ms_per_second` is how many miliseconds between frames of the gif (each frame is 1 dota second)\n\n**Example:**\n\u200b`?dotagif 3370877768 28:37 30:30`",
+			"help": "Creates a gif of a specific part of a dota match\n\nThe part of the match that you specify must be less than 10 minutes long\n\n\u200b`ms_per_second` is how many miliseconds between frames of the gif (each frame is 1 dota second)\n\n**Example:**\n\u200b`/dotagif 3370877768 28:37 30:30`",
 			"aliases": [
 				"dota_gif"
 			],
@@ -305,18 +277,18 @@
 		},
 		{
 			"name": "echo",
-			"signature": "?echo <message>",
-			"short_help": "Echo...",
-			"help": "Echo...\n\nI would hurl words into this darkness and wait for an echo, and if an echo sounded, no matter how faintly, I would send other words to tell, to march, to fight, to create a sense of the hunger for life that gnaws in us all",
+			"signature": null,
+			"short_help": "Echos the given message",
+			"help": "Echos the given message",
 			"aliases": [],
 			"cog": "General",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "emoticon",
-			"signature": "?emoticon <name>",
+			"signature": "/emoticon <name>",
 			"short_help": "Gets the gif of a dota emoticon",
-			"help": "Gets the gif of a dota emoticon\n\n<a:pup:406270527766790145> <a:stunned:406274986769252353> <a:cocky:406274999951949835>\n\n**Examples:**\n\u200b`?emoticon pup`\n\u200b`?emoticon stunned`\n\u200b`?emoticon naga_song`",
+			"help": "Gets the gif of a dota emoticon\n\n<a:pup:406270527766790145> <a:stunned:406274986769252353> <a:cocky:406274999951949835>\n\n**Examples:**\n\u200b`/emoticon pup`\n\u200b`/emoticon stunned`\n\u200b`/emoticon naga_song`",
 			"aliases": [
 				"emoji"
 			],
@@ -325,18 +297,18 @@
 		},
 		{
 			"name": "enablecommand",
-			"signature": "?enablecommand <command>",
+			"signature": "/enablecommand <command>",
 			"short_help": "Re-enables the specified command or command category",
-			"help": "Re-enables the specified command or command category\n\nOnly works on commands that have already been disabled by the `?disablecommand` command\n\n**Examples:**\n\u200b`?enablecommand wiki`\n\u200b`?enablecommand Audio`",
+			"help": "Re-enables the specified command or command category\n\nOnly works on commands that have already been disabled by the `/disablecommand` command\n\n**Examples:**\n\u200b`/enablecommand wiki`\n\u200b`/enablecommand Audio`",
 			"aliases": [],
 			"cog": "Admin",
 			"prefix": "?"
 		},
 		{
 			"name": "firstmatch",
-			"signature": "?firstmatch [matchfilter]",
+			"signature": "/firstmatch [matchfilter]",
 			"short_help": "Gets info about the player's first dota game",
-			"help": "Gets info about the player's first dota game\n\nTo see how to filter for specific matches, try `?docs matchfilter`",
+			"help": "Gets info about the player's first dota game\n\nTo see how to filter for specific matches, try `/docs matchfilter`",
 			"aliases": [
 				"firstgame",
 				"fm"
@@ -346,9 +318,9 @@
 		},
 		{
 			"name": "fuseheroes",
-			"signature": "?fuseheroes [heroes]",
+			"signature": "/fuseheroes [heroes]",
 			"short_help": "See what would happen if you fused two heroes together",
-			"help": "See what would happen if you fused two heroes together\n\nIf no heroes are given, two will be chosen at random\n\n**Example:**\n\u200b`?fuseheroes axe chen`",
+			"help": "See what would happen if you fused two heroes together\n\nIf no heroes are given, two will be chosen at random\n\n**Example:**\n\u200b`/fuseheroes axe chen`",
 			"aliases": [
 				"fuse",
 				"fuze",
@@ -359,7 +331,7 @@
 		},
 		{
 			"name": "hello",
-			"signature": "?hello ",
+			"signature": "/hello ",
 			"short_help": "Says hello",
 			"help": "Says hello\n\nWHAT MORE DO YOU NEED TO KNOW!?!?!? IS 'Says hello' REALLY NOT CLEAR ENOUGH FOR YOU!?!!11?!!?11!!?!??",
 			"aliases": [
@@ -370,7 +342,7 @@
 		},
 		{
 			"name": "help",
-			"signature": "?help [command]",
+			"signature": "/help [command]",
 			"short_help": "Shows this message",
 			"help": "Shows this message",
 			"aliases": [],
@@ -379,18 +351,18 @@
 		},
 		{
 			"name": "hero",
-			"signature": "?hero <hero>",
+			"signature": "/hero <hero>",
 			"short_help": "Gets information about a specific hero",
-			"help": "Gets information about a specific hero\n\nYou can give this command almost any variant of the hero's name, or the hero's id\n\n**Examples:**\n\u200b`?hero sf`\n\u200b`?hero inker`\n\u200b`?hero furi`",
+			"help": "Gets information about a specific hero\n\nYou can give this command almost any variant of the hero's name, or the hero's id\n\n**Examples:**\n\u200b`/hero sf`\n\u200b`/hero inker`\n\u200b`/hero furi`",
 			"aliases": [],
 			"cog": "Dotabase",
 			"prefix": "?"
 		},
 		{
 			"name": "herotable",
-			"signature": "?herotable <table_args>",
+			"signature": "/herotable <table_args>",
 			"short_help": "Displays a sorted table of heroes and their stats",
-			"help": "Displays a sorted table of heroes and their stats\n\nDisplays a table with computed hero stats showing which heroes have the highest values for the specified stat. To see the list of possible stats, try the `?leveledstats` command\n\n**Examples:**\n\u200b`?herotable dps`\n\u200b`?herotable health lvl 30`\n\u200b`?herotable attack speed level 21 descending`",
+			"help": "Displays a sorted table of heroes and their stats\n\nDisplays a table with computed hero stats showing which heroes have the highest values for the specified stat. To see the list of possible stats, try the `/leveledstats` command\n\n**Examples:**\n\u200b`/herotable dps`\n\u200b`/herotable health lvl 30`\n\u200b`/herotable attack speed level 21 descending`",
 			"aliases": [
 				"statstable",
 				"stattable",
@@ -403,26 +375,17 @@
 			"prefix": "?"
 		},
 		{
-			"name": "info",
-			"signature": "?info ",
-			"short_help": "Prints info about mangobyte",
-			"help": "Prints info about mangobyte",
-			"aliases": [],
-			"cog": "General",
-			"prefix": "?"
-		},
-		{
 			"name": "insult",
-			"signature": "?insult ",
+			"signature": "/insult ",
 			"short_help": "Gets a nice insult for ya",
-			"help": "Gets a nice insult for ya\n\nMention someone in discord and I'll insult them instead of you\n\n**Example:**\n\u200b`?insult`\n\u200b`?insult @InnocentMan`",
+			"help": "Gets a nice insult for ya\n\nMention someone in discord and I'll insult them instead of you\n\n**Example:**\n\u200b`/insult`\n\u200b`/insult @InnocentMan`",
 			"aliases": [],
 			"cog": "General",
 			"prefix": "?"
 		},
 		{
 			"name": "inthebag",
-			"signature": "?inthebag [hero]",
+			"signature": "/inthebag [hero]",
 			"short_help": "Proclaims that 'IT' (whatever it is) is in the bag",
 			"help": "Proclaims that 'IT' (whatever it is) is in the bag",
 			"aliases": [],
@@ -430,26 +393,17 @@
 			"prefix": "?"
 		},
 		{
-			"name": "invite",
-			"signature": "?invite ",
-			"short_help": "Prints the invite link",
-			"help": "Prints the invite link",
-			"aliases": [],
-			"cog": "General",
-			"prefix": "?"
-		},
-		{
 			"name": "item",
-			"signature": "?item <item>",
+			"signature": "/item <item>",
 			"short_help": "Gets information about a specific item",
-			"help": "Gets information about a specific item\n\n**Examples:**\n\u200b`?item shadow blade`\n\u200b`?item tango`",
+			"help": "Gets information about a specific item\n\n**Examples:**\n\u200b`/item shadow blade`\n\u200b`/item tango`",
 			"aliases": [],
 			"cog": "Dotabase",
 			"prefix": "?"
 		},
 		{
 			"name": "laning",
-			"signature": "?laning [match_id]",
+			"signature": "/laning [match_id]",
 			"short_help": "Creates gif of the laning stage with a caption",
 			"help": "Creates gif of the laning stage with a caption\n\nIf no match id is given and the user has a steam account connected, uses the player's most recently played match",
 			"aliases": [
@@ -459,19 +413,10 @@
 			"prefix": "?"
 		},
 		{
-			"name": "lasagna",
-			"signature": "?lasagna ",
-			"short_help": "A baked Italian dish",
-			"help": "A baked Italian dish\n\nContains wide strips of pasta cooked and layered with meat or vegetables, cheese, and tomato sauce.",
-			"aliases": [],
-			"cog": "General",
-			"prefix": "?"
-		},
-		{
 			"name": "lastmatch",
-			"signature": "?lastmatch [matchfilter]",
+			"signature": "/lastmatch [matchfilter]",
 			"short_help": "Gets info about the player's last dota game",
-			"help": "Gets info about the player's last dota game\n\nTo see how to filter for specific matches, try `?docs matchfilter`",
+			"help": "Gets info about the player's last dota game\n\nTo see how to filter for specific matches, try `/docs matchfilter`",
 			"aliases": [
 				"lastgame",
 				"lm"
@@ -481,7 +426,7 @@
 		},
 		{
 			"name": "lastmatchstory",
-			"signature": "?lastmatchstory [player]",
+			"signature": "/lastmatchstory [matchfilter]",
 			"short_help": "Tells the story of the player's last match",
 			"help": "Tells the story of the player's last match\n\nInput must be either a discord user, a steam32 id, or a steam64 id",
 			"aliases": [
@@ -493,7 +438,7 @@
 		},
 		{
 			"name": "later",
-			"signature": "?later ",
+			"signature": "/later ",
 			"short_help": "Tells you how much later it is",
 			"help": "Tells you how much later it is\n\nTheres 19 different ones",
 			"aliases": [],
@@ -502,9 +447,9 @@
 		},
 		{
 			"name": "leveledstats",
-			"signature": "?leveledstats <hero>",
+			"signature": "/leveledstats <hero>",
 			"short_help": "Gets the stats for a hero at the specified level",
-			"help": "Gets the stats for a hero at the specified level\n\nIf no level is specified, get the stats for the hero at level 1\n\n**Examples:**\n\u200b`?leveledstats tinker`\n\u200b`?leveledstats shaker lvl 2`\n\u200b`?leveledstats level 28 shaman`",
+			"help": "Gets the stats for a hero at the specified level\n\nIf no level is specified, get the stats for the hero at level 1\n\n**Examples:**\n\u200b`/leveledstats tinker`\n\u200b`/leveledstats shaker lvl 2`\n\u200b`/leveledstats level 28 shaman`",
 			"aliases": [
 				"startingstats",
 				"tradingstats",
@@ -516,7 +461,7 @@
 		},
 		{
 			"name": "lol",
-			"signature": "?lol [hero]",
+			"signature": "/lol [hero]",
 			"short_help": "WOW I WONDER WAT THIS DOES",
 			"help": "WOW I WONDER WAT THIS DOES\n\nLaughs using dota. Thats what it does.",
 			"aliases": [
@@ -529,16 +474,16 @@
 		},
 		{
 			"name": "lore",
-			"signature": "?lore [name]",
+			"signature": "/lore [name]",
 			"short_help": "Gets the lore of a hero, ability, or item",
-			"help": "Gets the lore of a hero, ability, or item\n\nReturns a random piece of lore if no name is specified\n\n**Examples:**\n\u200b`?lore bristleback`\n\u200b`?lore shadow blade`\n\u200b`?lore venomous gale`",
+			"help": "Gets the lore of a hero, ability, or item\n\nReturns a random piece of lore if no name is specified\n\n**Examples:**\n\u200b`/lore bristleback`\n\u200b`/lore shadow blade`\n\u200b`/lore venomous gale`",
 			"aliases": [],
 			"cog": "Dotabase",
 			"prefix": "?"
 		},
 		{
 			"name": "match",
-			"signature": "?match <match_id>",
+			"signature": "/match <match_id>",
 			"short_help": "Gets a summary of the dota match with the given id",
 			"help": "Gets a summary of the dota match with the given id",
 			"aliases": [
@@ -549,9 +494,9 @@
 		},
 		{
 			"name": "matches",
-			"signature": "?matches [matchfilter]",
+			"signature": "/matches [matchfilter]",
 			"short_help": "Gets a list of your matches",
-			"help": "Gets a list of your matches\n\nThe date/time is localized based off of the server that the game was played on, which means it may not match your timezone.\n\nTo see how to filter for specific matches, try `?docs matchfilter`\n\nNote that you can have this show up to 100 matches, but will by default only show 10, unless a timespan is given\n\n**Example:**\n\u200b`?matches @PlayerPerson mid witch doctor ranked`\n\u200b`?matches natures prophet`\n\u200b`?matches @PlayerPerson riki`",
+			"help": "Gets a list of your matches\n\nThe date/time is localized based off of the server that the game was played on, which means it may not match your timezone.\n\nTo see how to filter for specific matches, try `/docs matchfilter`\n\nNote that you can have this show up to 100 matches, but will by default only show 10, unless a timespan is given\n\n**Example:**\n\u200b`/matches @PlayerPerson mid witch doctor ranked`\n\u200b`/matches natures prophet`\n\u200b`/matches @PlayerPerson riki`",
 			"aliases": [
 				"recentmatches",
 				"recent"
@@ -561,7 +506,7 @@
 		},
 		{
 			"name": "matchgraph",
-			"signature": "?matchgraph [options]",
+			"signature": "/matchgraph [options]",
 			"short_help": "Creates a graph for a dota match",
 			"help": "Creates a graph for a dota match\n\nGive this match a match_id or it will try to use your last played game\n\ndifferent types of graphs:\nteamdiff: creates a graph of the networth/xp differences between the teams\nplayergold: creates a graph of the networths of the players throughout the match\n(ill probably add more in the futre but thats it for now)",
 			"aliases": [
@@ -573,16 +518,16 @@
 		},
 		{
 			"name": "matchids",
-			"signature": "?matchids [matchfilter]",
+			"signature": "/matchids [matchfilter]",
 			"short_help": "Gets a list of matchids that match the given filter",
-			"help": "Gets a list of matchids that match the given filter\n\nTo see how to filter for specific matches, try `?docs matchfilter`\n\n**Example:**\n\u200b`?matchids @PlayerPerson mid witch doctor ranked`\n\u200b`?matchids natures prophet`\n\u200b`?matchids @PlayerPerson riki`",
+			"help": "Gets a list of matchids that match the given filter\n\nTo see how to filter for specific matches, try `/docs matchfilter`\n\n**Example:**\n\u200b`/matchids @PlayerPerson mid witch doctor ranked`\n\u200b`/matchids natures prophet`\n\u200b`/matchids @PlayerPerson riki`",
 			"aliases": [],
 			"cog": "DotaStats",
 			"prefix": "?"
 		},
 		{
 			"name": "matchstory",
-			"signature": "?matchstory <match_id> [perspective]",
+			"signature": "/matchstory <match_id> [perspective]",
 			"short_help": "Tells the story of the match",
 			"help": "Tells the story of the match\n\nThe story is based on the given perspective, or the player's perspective if they were in the match.",
 			"aliases": [],
@@ -591,7 +536,7 @@
 		},
 		{
 			"name": "meta",
-			"signature": "?meta [count=10]",
+			"signature": "/meta [count=10]",
 			"short_help": "prints the top meta heroes from https://opendota.com/heroes",
 			"help": "prints the top meta heroes from https://opendota.com/heroes",
 			"aliases": [],
@@ -599,10 +544,73 @@
 			"prefix": "?"
 		},
 		{
+			"name": "misc cat",
+			"signature": null,
+			"short_help": "Gets a picture of the developer's cat",
+			"help": "Gets a picture of the developer's cat",
+			"aliases": [],
+			"cog": "General",
+			"prefix": "/"
+		},
+		{
+			"name": "misc choose",
+			"signature": null,
+			"short_help": "Randomly chooses one of the given options",
+			"help": "Randomly chooses one of the given options",
+			"aliases": [],
+			"cog": "General",
+			"prefix": "/"
+		},
+		{
+			"name": "misc dog",
+			"signature": null,
+			"short_help": "Gets a picture of one of the developer's dogs",
+			"help": "Gets a picture of one of the developer's dogs",
+			"aliases": [],
+			"cog": "General",
+			"prefix": "/"
+		},
+		{
+			"name": "misc lasagna",
+			"signature": null,
+			"short_help": "Posts an image of a baked italian dish",
+			"help": "Posts an image of a baked italian dish",
+			"aliases": [],
+			"cog": "General",
+			"prefix": "/"
+		},
+		{
+			"name": "misc random",
+			"signature": null,
+			"short_help": "Gets a random number between the minimum and maximum (inclusive)",
+			"help": "Gets a random number between the minimum and maximum (inclusive)",
+			"aliases": [],
+			"cog": "General",
+			"prefix": "/"
+		},
+		{
+			"name": "misc scramble",
+			"signature": null,
+			"short_help": "Scrambles the insides of words",
+			"help": "Scrambles the insides of words",
+			"aliases": [],
+			"cog": "General",
+			"prefix": "/"
+		},
+		{
+			"name": "misc showerthought",
+			"signature": null,
+			"short_help": "Gets a top post from the r/ShowerThoughts subreddit",
+			"help": "Gets a top post from the r/ShowerThoughts subreddit",
+			"aliases": [],
+			"cog": "General",
+			"prefix": "/"
+		},
+		{
 			"name": "neutralitems",
-			"signature": "?neutralitems [tier]",
+			"signature": "/neutralitems [tier]",
 			"short_help": "Displays all of the neutral items",
-			"help": "Displays all of the neutral items\n\nIf a tier is specified, display the items in that tier, along with their names\n\n\u200b`?neutralitems`\n\u200b`?neutralitems tier 5`\n\u200b`?neutralitems 3`",
+			"help": "Displays all of the neutral items\n\nIf a tier is specified, display the items in that tier, along with their names\n\n\u200b`/neutralitems`\n\u200b`/neutralitems tier 5`\n\u200b`/neutralitems 3`",
 			"aliases": [
 				"neutrals",
 				"neutraltier"
@@ -612,7 +620,7 @@
 		},
 		{
 			"name": "no",
-			"signature": "?no [hero]",
+			"signature": "/no [hero]",
 			"short_help": "Nopes.",
 			"help": "Nopes.",
 			"aliases": [
@@ -623,16 +631,16 @@
 		},
 		{
 			"name": "opendota",
-			"signature": "?opendota <query>",
+			"signature": "/opendota <query>",
 			"short_help": "Queries the opendota api",
-			"help": "Queries the opendota api\n\nYou can use this to get a json file with details about players or matches etc.\nExamples:\n\u200b`?opendota /players/{steamid}`\n\u200b`?opendota /matches/{match_id}`\n\nNote that this is just a little tool showcasing how you can use the api. You can also put urls like these in your browser to get the same results, which I'd recommend if you're doing this a lot.\n\nFor more options and a better explanation, check out their [documentation](https://docs.opendota.com)",
+			"help": "Queries the opendota api\n\nYou can use this to get a json file with details about players or matches etc.\nExamples:\n\u200b`/opendota /players/{steamid}`\n\u200b`/opendota /matches/{match_id}`\n\nNote that this is just a little tool showcasing how you can use the api. You can also put urls like these in your browser to get the same results, which I'd recommend if you're doing this a lot.\n\nFor more options and a better explanation, check out their [documentation](https://docs.opendota.com)",
 			"aliases": [],
 			"cog": "DotaStats",
 			"prefix": "?"
 		},
 		{
 			"name": "parse",
-			"signature": "?parse [match_id]",
+			"signature": "/parse [match_id]",
 			"short_help": "Requests that OpenDota parses a match",
 			"help": "Requests that OpenDota parses a match\n\nThe input should be the match_id of the match\n\nNote that matches from more than a couple days ago may not be able to be parsed because replay files are not saved that long\n\nNot giving a matchid will make mangobyte attempt to use your last played match",
 			"aliases": [
@@ -653,18 +661,18 @@
 		},
 		{
 			"name": "play",
-			"signature": "?play <clip>",
+			"signature": "/play <clip>",
 			"short_help": "Plays an audio clip",
-			"help": "Plays an audio clip\n\nExample:\n\u200b`?play hello`\n\nFor a complete list of the available clips, try `?playlist`\n\nThis can also play other clip types via their ClipID\nExample:\n\u200b`?play tts:hello there`",
+			"help": "Plays an audio clip\n\nExample:\n\u200b`/play hello`\n\nFor a complete list of the available clips, try `/playlist`\n\nThis can also play other clip types via their ClipID\nExample:\n\u200b`/play tts:hello there`",
 			"aliases": [],
 			"cog": "Audio",
 			"prefix": "?"
 		},
 		{
 			"name": "playerstats",
-			"signature": "?playerstats [matchfilter]",
+			"signature": "/playerstats [matchfilter]",
 			"short_help": "Gets player match statistics",
-			"help": "Gets player match statistics\n\nBy default this will target all the matches a player has played.\n\n**Note:** If you're wondering why some data is now missing, check out `?twenty`. I've revamped this command to work for all matches, and `?twenty` is the old version of what this command used to be.\n\nTo see how to filter for specific matches, try `?docs matchfilter`",
+			"help": "Gets player match statistics\n\nBy default this will target all the matches a player has played.\n\n**Note:** If you're wondering why some data is now missing, check out `/twenty`. I've revamped this command to work for all matches, and `/twenty` is the old version of what this command used to be.\n\nTo see how to filter for specific matches, try `/docs matchfilter`",
 			"aliases": [
 				"pstats",
 				"herostats"
@@ -674,7 +682,7 @@
 		},
 		{
 			"name": "playurl",
-			"signature": "?playurl <mp3url>",
+			"signature": "/playurl <mp3url>",
 			"short_help": "Plays an mp3 file at a url",
 			"help": "Plays an mp3 file at a url\n\nMake sure to use http, not https",
 			"aliases": [],
@@ -683,9 +691,9 @@
 		},
 		{
 			"name": "pokecry",
-			"signature": "?pokecry <pokemon>",
+			"signature": "/pokecry <pokemon>",
 			"short_help": "Plays the pokemon's sound effect",
-			"help": "Plays the pokemon's sound effect\n\nAudio files for these pokemon cries were gotten from [Veekun](https://veekun.com/dex/downloads). Veekun does not have the cries for Generation VII yet, so I won't be able to play those.\n\nMost pokemon have a new cry and an old cry. To get the old cry instead of the new one, add 'old' to the end of your command (see example below.)\n\n**Example:**\n\u200b`?pokecry pikachu`\n\u200b`?pokecry bulbasaur old`",
+			"help": "Plays the pokemon's sound effect\n\nAudio files for these pokemon cries were gotten from [Veekun](https://veekun.com/dex/downloads). Veekun does not have the cries for Generation VII yet, so I won't be able to play those.\n\nMost pokemon have a new cry and an old cry. To get the old cry instead of the new one, add 'old' to the end of your command (see example below.)\n\n**Example:**\n\u200b`/pokecry pikachu`\n\u200b`/pokecry bulbasaur old`",
 			"aliases": [
 				"cry"
 			],
@@ -694,9 +702,9 @@
 		},
 		{
 			"name": "pokedex",
-			"signature": "?pokedex <pokemon>",
+			"signature": "/pokedex <pokemon>",
 			"short_help": "Looks up information about the indicated pokemon",
-			"help": "Looks up information about the indicated pokemon\n\nPokemon should be specified using either their name or id number\n\nClicking on the pokemon's name will bring you to their wiki page\n\nExample:\n\u200b`?pokedex charizard`",
+			"help": "Looks up information about the indicated pokemon\n\nPokemon should be specified using either their name or id number\n\nClicking on the pokemon's name will bring you to their wiki page\n\nExample:\n\u200b`/pokedex charizard`",
 			"aliases": [
 				"pokemon"
 			],
@@ -705,7 +713,7 @@
 		},
 		{
 			"name": "profile",
-			"signature": "?profile [player]",
+			"signature": "/profile [player]",
 			"short_help": "Displays information about the player's dota profile",
 			"help": "Displays information about the player's dota profile\n\nThe argument for this command can be either a steam32 id, a steam64 id, or an @mention of a discord user who has a steamid set",
 			"aliases": [
@@ -715,19 +723,8 @@
 			"prefix": "?"
 		},
 		{
-			"name": "random_number",
-			"signature": "?random_number <maximum> [minimum=0]",
-			"short_help": "Gets a random number between the minimum and maximum",
-			"help": "Gets a random number between the minimum and maximum\n\nThe min and max integer bounds are **inclusive**\n\nThe command will be able to figure out which number is the minimum and which is the maximum if they are put in backwards. If one number is entered, it is assumed to be the maximum, and the default minimum is 0\n\n**Example:**\n\u200b`?random 5`\n\u200b`?random 1 10`",
-			"aliases": [
-				"random"
-			],
-			"cog": "General",
-			"prefix": "?"
-		},
-		{
 			"name": "recipe",
-			"signature": "?recipe <item>",
+			"signature": "/recipe <item>",
 			"short_help": "Shows the recipes involving this item",
 			"help": "Shows the recipes involving this item",
 			"aliases": [
@@ -740,16 +737,16 @@
 		},
 		{
 			"name": "reddit",
-			"signature": "?reddit <url_or_id>",
+			"signature": null,
 			"short_help": "Displays a formatted reddit post",
-			"help": "Displays a formatted reddit post\n\nNote that this will only get nsfw posts if you call this in an nsfw channel",
+			"help": "Displays a formatted reddit post",
 			"aliases": [],
 			"cog": "General",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "replay",
-			"signature": "?replay ",
+			"signature": "/replay ",
 			"short_help": "Replays the last played clip",
 			"help": "Replays the last played clip\n                ",
 			"aliases": [],
@@ -757,19 +754,8 @@
 			"prefix": "?"
 		},
 		{
-			"name": "restget",
-			"signature": "?restget <url>",
-			"short_help": "Gets a json response from a rest api and returns it",
-			"help": "Gets a json response from a rest api and returns it",
-			"aliases": [
-				"restapi"
-			],
-			"cog": "General",
-			"prefix": "?"
-		},
-		{
 			"name": "resummon",
-			"signature": "?resummon ",
+			"signature": "/resummon ",
 			"short_help": "Re-summons the bot to the voice channel",
 			"help": "Re-summons the bot to the voice channel\n\nThis command is useful if you are having issues with mangobyte not being responsive",
 			"aliases": [],
@@ -778,7 +764,7 @@
 		},
 		{
 			"name": "rolesgraph",
-			"signature": "?rolesgraph [player]",
+			"signature": "/rolesgraph [player]",
 			"short_help": "Gets a graph displaying the player's hero roles",
 			"help": "Gets a graph displaying the player's hero roles\n\nThe graph is based on the player's last 30 games",
 			"aliases": [],
@@ -786,39 +772,17 @@
 			"prefix": "?"
 		},
 		{
-			"name": "scramble",
-			"signature": "?scramble <message>",
-			"short_help": "Scrambles the insides of words",
-			"help": "Scrambles the insides of words",
-			"aliases": [],
-			"cog": "General",
-			"prefix": "?"
-		},
-		{
 			"name": "shiny",
-			"signature": "?shiny <pokemon>",
+			"signature": "/shiny <pokemon>",
 			"short_help": "Gets the shiny version of this pokemon",
-			"help": "Gets the shiny version of this pokemon\n\npokemon should be specified using either their name or id number\n\nExample:\n\u200b`?shiny charizard`",
+			"help": "Gets the shiny version of this pokemon\n\npokemon should be specified using either their name or id number\n\nExample:\n\u200b`/shiny charizard`",
 			"aliases": [],
 			"cog": "Pokemon",
 			"prefix": "?"
 		},
 		{
-			"name": "showerthought",
-			"signature": "?showerthought ",
-			"short_help": "Gets a top post from r/ShowerThoughts",
-			"help": "Gets a top post from r/ShowerThoughts\n\nGets a random post from the [r/ShowerThoughts](https://www.reddit.com/r/Showerthoughts/top/?sort=top&t=all) subreddit. Looks through the list of the all time top posts for the subreddit",
-			"aliases": [
-				"quote",
-				"showerthoughts",
-				"thought"
-			],
-			"cog": "General",
-			"prefix": "?"
-		},
-		{
 			"name": "skillbuild",
-			"signature": "?skillbuild <match_id>",
+			"signature": "/skillbuild <match_id>",
 			"short_help": "Gets the ability upgrades for a match",
 			"help": "Gets the ability upgrades for a match\n\nShows all the ability upgrade orders for all heroes in the match",
 			"aliases": [
@@ -831,9 +795,9 @@
 		},
 		{
 			"name": "smarttts",
-			"signature": "?smarttts <message>",
+			"signature": "/smarttts <message>",
 			"short_help": "Automatically find the best fit for the tts given",
-			"help": "Automatically find the best fit for the tts given\n\nFirst checks local clips (like `?play`), then checks to see if it is an audio url, then checks if it's a dota chatwheel message, then checks if there is an exact match for a dota response clip, and if none of the above is found, does a simple tts clip",
+			"help": "Automatically find the best fit for the tts given\n\nFirst checks local clips (like `/play`), then checks to see if it is an audio url, then checks if it's a dota chatwheel message, then checks if there is an exact match for a dota response clip, and if none of the above is found, does a simple tts clip",
 			"aliases": [
 				"stts"
 			],
@@ -842,7 +806,7 @@
 		},
 		{
 			"name": "stop",
-			"signature": "?stop ",
+			"signature": "/stop ",
 			"short_help": "Stops the currently playing audio",
 			"help": "Stops the currently playing audio\n\nAlso empties the clip queue",
 			"aliases": [],
@@ -851,25 +815,25 @@
 		},
 		{
 			"name": "summon",
-			"signature": "?summon [channel]",
+			"signature": "/summon [channel]",
 			"short_help": "Summons the bot to the voice channel",
-			"help": "Summons the bot to the voice channel\n\nYou can specify the specific voice channel that you would like to connect to. If no channel is specified, it will connect to whatever channel you are currently in.\n**Examples:**\n\u200b`?summon`\n\u200b`?summon General`",
+			"help": "Summons the bot to the voice channel\n\nYou can specify the specific voice channel that you would like to connect to. If no channel is specified, it will connect to whatever channel you are currently in.\n**Examples:**\n\u200b`/summon`\n\u200b`/summon General`",
 			"aliases": [],
 			"cog": "Admin",
 			"prefix": "?"
 		},
 		{
 			"name": "talents",
-			"signature": "?talents <hero>",
+			"signature": "/talents <hero>",
 			"short_help": "Gets the talents of a specific hero",
-			"help": "Gets the talents of a specific hero\n\nYou can give this command almost any variant of the hero's name, or the hero's id, in the same format as `?hero`\n\n**Examples:**\n\u200b`?talents shadow fiend`",
+			"help": "Gets the talents of a specific hero\n\nYou can give this command almost any variant of the hero's name, or the hero's id, in the same format as `/hero`\n\n**Examples:**\n\u200b`/talents shadow fiend`",
 			"aliases": [],
 			"cog": "Dotabase",
 			"prefix": "?"
 		},
 		{
 			"name": "thanks",
-			"signature": "?thanks [hero]",
+			"signature": "/thanks [hero]",
 			"short_help": "Gives thanks",
 			"help": "Gives thanks\n\nThanks are given by a random dota hero in their own special way",
 			"aliases": [
@@ -880,27 +844,27 @@
 		},
 		{
 			"name": "tts",
-			"signature": "?tts <message>",
+			"signature": "/tts <message>",
 			"short_help": "Like echo but for people who can't read",
-			"help": "Like echo but for people who can't read\n\nTalks in whatever voice channel mangobyte is currently in\n\nExample:\n\u200b`?tts Hello I'm a bot`",
+			"help": "Like echo but for people who can't read\n\nTalks in whatever voice channel mangobyte is currently in\n\nExample:\n\u200b`/tts Hello I'm a bot`",
 			"aliases": [],
 			"cog": "Audio",
 			"prefix": "?"
 		},
 		{
 			"name": "ttsclip",
-			"signature": "?ttsclip <clip>",
+			"signature": "/ttsclip <clip>",
 			"short_help": "Tries to text-to-speech the given clip",
-			"help": "Tries to text-to-speech the given clip\n\nOnly works on clips that have text specified\n\nExample:\n\u200b`?ttsclip yodel`",
+			"help": "Tries to text-to-speech the given clip\n\nOnly works on clips that have text specified\n\nExample:\n\u200b`/ttsclip yodel`",
 			"aliases": [],
 			"cog": "Audio",
 			"prefix": "?"
 		},
 		{
 			"name": "twenty",
-			"signature": "?twenty [matchfilter]",
+			"signature": "/twenty [matchfilter]",
 			"short_help": "Gets stats from the player's last 20 parsed games",
-			"help": "Gets stats from the player's last 20 parsed games\n\nNote that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available\n\nTo see how to filter for specific matches, try `?docs matchfilter`",
+			"help": "Gets stats from the player's last 20 parsed games\n\nNote that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available\n\nTo see how to filter for specific matches, try `/docs matchfilter`",
 			"aliases": [
 				"chatstats"
 			],
@@ -909,7 +873,7 @@
 		},
 		{
 			"name": "unsummon",
-			"signature": "?unsummon ",
+			"signature": "/unsummon ",
 			"short_help": "Removes the bot from the voice channel",
 			"help": "Removes the bot from the voice channel",
 			"aliases": [],
@@ -918,7 +882,7 @@
 		},
 		{
 			"name": "updateartifact",
-			"signature": "?updateartifact ",
+			"signature": "/updateartifact ",
 			"short_help": "Updates all the artifact card data",
 			"help": "Updates all the artifact card data",
 			"aliases": [],
@@ -927,16 +891,16 @@
 		},
 		{
 			"name": "userconfig",
-			"signature": "?userconfig <name> [value]",
+			"signature": "/userconfig <name> [value]",
 			"short_help": "Configures the bot's user-specific settings",
-			"help": "Configures the bot's user-specific settings\n\nBelow are the different user-specific settings that you can tweak to customize mangobyte. You can get more information about a setting by typing `?userconfig <settingname>`, and you can configure a setting by typing `?userconfig <settingname> <value>`\n\n**Settings:**\n\u200b`steam`\n\u200b`intro`\n\u200b`outro`\n\u200b`introtts`\n\u200b`outrotts`\n\u200b`dmdotapatch`\n\u200b`dmdotablog`\n\n**Examples**\n\u200b`?userconfig steam 70388657`\n\u200b`?userconfig intro local:math`\n\u200b`?userconfig outro dota:troll_warlord_troll_lose_03`\n\u200b`?userconfig introtts it's the magnificent`\n\u200b`?userconfig outrotts dun gone left`\n\u200b`?userconfig dmdotapatch enable`\n\u200b`?userconfig dmdotablog enable`",
+			"help": "Configures the bot's user-specific settings\n\nBelow are the different user-specific settings that you can tweak to customize mangobyte. You can get more information about a setting by typing `/userconfig <settingname>`, and you can configure a setting by typing `/userconfig <settingname> <value>`\n\n**Settings:**\n\u200b`steam`\n\u200b`intro`\n\u200b`outro`\n\u200b`introtts`\n\u200b`outrotts`\n\u200b`dmdotapatch`\n\u200b`dmdotablog`\n\n**Examples**\n\u200b`/userconfig steam 70388657`\n\u200b`/userconfig intro local:math`\n\u200b`/userconfig outro dota:troll_warlord_troll_lose_03`\n\u200b`/userconfig introtts it's the magnificent`\n\u200b`/userconfig outrotts dun gone left`\n\u200b`/userconfig dmdotapatch enable`\n\u200b`/userconfig dmdotablog enable`",
 			"aliases": [],
 			"cog": "General",
 			"prefix": "?"
 		},
 		{
 			"name": "whoishere",
-			"signature": "?whoishere [mentions_or_rank]",
+			"signature": "/whoishere [mentions_or_rank]",
 			"short_help": "Shows what discord users are which steam users",
 			"help": "Shows what discord users are which steam users\n\nThis command will take the users that are currently in the channel mangobyte is in, and create an embed that shows who they are in steam. If you are in a voice channel, it will use the channel that you are in\n\nYou can also mention the users you want to show and it will show those ones too\n\nIf you use the word `rank` somewhere in the command, it will also show the ranks of the players",
 			"aliases": [
@@ -947,21 +911,16 @@
 		},
 		{
 			"name": "wiki",
-			"signature": "?wiki <thing>",
+			"signature": null,
 			"short_help": "Looks up a thing on wikipedia",
-			"help": "Looks up a thing on wikipedia\n\nUses my own implementation of the [Wikipedia API](https://www.mediawiki.org/wiki/API:Tutorial)\n\nYou can also try `?wiki random` to get a random wiki page\n\nNote that I've had to remove the images from these (unless you're in a NSFW channel) because I have no way of checking if it is an NSFW image, and posting an NSFW image in non-NSFW channels would be against discord's ToS. Sorry about that!\n\n**Example:**\n\u200b`?wiki potato`",
-			"aliases": [
-				"define",
-				"lookup",
-				"wikipedia",
-				"whatis"
-			],
+			"help": "Looks up a thing on wikipedia",
+			"aliases": [],
 			"cog": "General",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "yes",
-			"signature": "?yes [hero]",
+			"signature": "/yes [hero]",
 			"short_help": "Oooooh ya.",
 			"help": "Oooooh ya.",
 			"aliases": [],

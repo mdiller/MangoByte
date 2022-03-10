@@ -45,3 +45,7 @@ __Examples:__
 `?firstmatch turbo with a group`
 `?playerstats radiance puck`
 `?playerstats puck since 7.28`
+
+# Slash Commands
+
+If youre wondering if I'll be moving to slash commands, yes, that process is under way and all of the commands will eventually be moved. Like this one for example! Any commands that are still a prefix command will eventually be moved to a slash command.

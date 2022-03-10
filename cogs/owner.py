@@ -35,9 +35,9 @@ class Owner(MangoCog):
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 
-	def cog_check(self, ctx):
+	def cog_check(self, ctx_inter: InterContext):
 		"""Checks to make sure the user is the bot owner"""
-		return checks.is_owner_check(ctx.message.author)
+		return checks.is_owner_check(ctx_inter.author)
 
 	async def youtube_download(self, youtube_id, video_file):
 		return await self.bot.loop.run_in_executor(ThreadPoolExecutor(max_workers=1), youtube_download_func, youtube_id, video_file)

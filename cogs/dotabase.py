@@ -1537,7 +1537,7 @@ class Dotabase(MangoCog):
 		abilities = []
 		for ability in list(filter(lambda a: a.slot is not None, hero.abilities)):
 			if not hero.id == 74: # invoker
-				if "hidden" in ability.behavior and not (ability.shard_grants or ability.scepter_grants):
+				if "hidden" in (ability.behavior or "") and not (ability.shard_grants or ability.scepter_grants):
 					continue
 			abilities.append(ability)
 

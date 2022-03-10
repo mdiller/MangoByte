@@ -9,5 +9,18 @@
 	"setoutro": "userconfig outro",
 	"setsteam": "userconfig steam",
 	"register": "userconfig steam",
-	"friendstats": "playerstats with @Player"
+	"friendstats": "playerstats with @Player",
+	"restget": "_Try using your browser or an app like Postman",
+	"dog": "misc dog",
+	"cat": "misc cat",
+	"donate": "bot donate",
+	"choose": "misc choose",
+	"random_number": "misc random",
+	"showerthought": "misc showerthought",
+	"lasagna": "misc lasagna",
+	"scramble": "misc scramble",
+	"botstats": "bot stats",
+	"invite": "bot invite",
+	"info": "bot info",
+	"changelog": "bot changelog"
 }

@@ -1,6 +1,8 @@
 
 # The following have to be imported and initialized in the correct order
 from argparse import ArgumentError
+
+from numpy import isin
 from cogs.utils.settings import Settings
 settings = Settings()
 
@@ -28,6 +30,7 @@ from cogs.utils.commandargs import *
 import json
 import sys
 import inspect
+import typing
 
 logger.trace({
 	"type": "startup",
@@ -70,6 +73,10 @@ async def on_ready():
 	else:
 		logger.info("on_ready called again")
 
+@bot.application_command_check()
+def check_app_commands(inter: disnake.Interaction):
+	return bot.get_cog("Admin").bot_check(inter)
+
 # the full initialization of the bot
 async def initialize():
 	try:
@@ -104,7 +111,7 @@ async def initialize():
 				task.start()
 
 		# now do voice channels and the rest!
-		minimum_channels_to_space = 20
+		minimum_channels_to_space = 50
 		voice_channels_per_minute_timing = 6
 		voice_channel_count = 0
 		for guildinfo in botdata.guildinfo_list():
@@ -216,7 +223,7 @@ with open(settings.resource("json/deprecated_commands.json"), "r") as f:
 	deprecated_commands = json.loads(f.read())
 
 @bot.event
-async def on_command_error(ctx, error):
+async def on_command_error(ctx: commands.Context, error: commands.CommandError):
 	if ctx.message.id in thinker.messages:
 		await thinker.stop_thinking(ctx.message)
 
@@ -228,6 +235,7 @@ async def on_command_error(ctx, error):
 	try:
 		if isinstance(error, commands.CommandNotFound):
 			cmd = ctx.message.content[1:].split(" ")[0]
+			test = bot.all_slash_commands
 			slash_command_names = list(map(lambda c: c.name, bot.slash_commands))
 			if cmd in deprecated_commands:
 				logger.info(f"deprecated command '{cmd}' attempted")
@@ -251,60 +259,98 @@ async def on_command_error(ctx, error):
 				await bot.process_commands(new_message)
 			elif await invalid_command_reporting(ctx):
 				await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `{cmdpfx}help` fer a list of things that ARE commands.")
-		elif isinstance(error, commands.CheckFailure):
-			emoji_dict = read_json(settings.resource("json/emoji.json"))
-			if botdata.guildinfo(ctx).is_disabled(ctx.command):
-				await ctx.message.add_reaction(bot.get_emoji(emoji_dict["command_disabled"]))
-			else:
-				await ctx.message.add_reaction(bot.get_emoji(emoji_dict["unauthorized"]))
-			return # The user does not have permissions
-		elif isinstance(error, commands.MissingRequiredArgument):
-			help_command = bot.help_command.copy()
-			help_command.context = ctx
-			await help_command.command_callback(ctx, command=ctx.command.name)
-		elif isinstance(error, CustomBadArgument):
-			await error.user_error.send_self(ctx, botdata)
 		elif isinstance(error, commands.BadArgument):
 			signature = await get_cmd_signature(ctx)
 			await ctx.send((
 				"Thats the wrong type of argument for that command.\n\n"
 				f"Ya gotta do it like this:\n`{signature}`\n\n"
 				f"Try `{cmdpfx}help {ctx.command}` for a more detailed description of the command"))
-		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, disnake.errors.Forbidden):
-			await print_missing_perms(ctx, error)
-		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, disnake.errors.HTTPException):
-			await ctx.send("Looks like there was a problem with discord just then. Try again in a bit.")
-			logger.warning(f"discord http exception triggered for message {ctx.message.id}")
-		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, HttpError):
-			await error.original.send_self(ctx, botdata)
-			logger.warning(f"http error {error.original.code} on message {ctx.message.id} for url: {error.original.url}")
-			await loggingdb.command_finished(ctx, "user_errored", error.original.message)
-		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
-			await error.original.send_self(ctx, botdata)
-			await loggingdb.command_finished(ctx, "user_errored", error.original.message)
-		elif isinstance(error, commands.ConversionError) and isinstance(error.original, UserError):
-			await error.original.send_self(ctx, botdata)
-			await loggingdb.command_finished(ctx, "user_errored", error.original.message)
+		elif isinstance(error, commands.MissingRequiredArgument):
+			help_command = bot.help_command.copy()
+			help_command.context = ctx
+			await help_command.command_callback(ctx, command=ctx.command.name)
 		else:
-			await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
-			trace_string = await report_error(ctx.message, error, skip_lines=4)
-			if settings.debug:
-				if len(trace_string) > 1950:
-					trace_string = "TRACETOOBIG:" + trace_string[len(trace_string) - 1950:]
-				await ctx.send(f"```{trace_string}```")
+			await command_error_handler(ctx, error)
 	except disnake.errors.Forbidden:
 		try:
 			await ctx.author.send("Looks like I don't have permission to talk in that channel, sorry")
 		except disnake.errors.Forbidden:
+			logger.error(f"double forbidden for message {ctx.message.id}")
+
+@bot.event
+async def on_slash_command_error(inter: disnake.Interaction, error: commands.CommandError):
+	await command_error_handler(inter, error)
+
+
+async def command_error_handler(ctx_inter: InterContext, error: commands.CommandError):
+	if isinstance(ctx_inter, commands.Context):
+		identifier = f"[prefix_command: {ctx_inter.message.id}]"
+	else:
+		identifier = f"[interaction: {ctx_inter.id}]"
+
+	try:
+		if isinstance(error, commands.CheckFailure):
+			emoji_dict = read_json(settings.resource("json/emoji.json"))
+			command = None
+			if isinstance(ctx_inter, disnake.ApplicationCommandInteraction):
+				command = ctx_inter.application_command.qualified_name
+			elif isinstance(ctx_inter, commands.Context):
+				command = ctx_inter.command
+
+			emoji = None
+			message = None
+			if command and botdata.guildinfo(ctx_inter).is_disabled(command):
+				emoji = bot.get_emoji(emoji_dict["command_disabled"])
+				message = "This command is disabled for this guild"
+			else:
+				emoji = bot.get_emoji(emoji_dict["unauthorized"])
+				message = "You're not authorized to run this command"
+			
+			if isinstance(ctx_inter, commands.Context):
+				await ctx_inter.message.add_reaction(emoji)
+			else:
+				await ctx_inter.send(f"{emoji} {message}")
+			return # The user does not have permissions
+		elif isinstance(error, CustomBadArgument):
+			await error.user_error.send_self(ctx_inter, botdata)
+		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, disnake.errors.Forbidden):
+			await print_missing_perms(ctx_inter, error)
+		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, disnake.errors.HTTPException):
+			await ctx_inter.send("Looks like there was a problem with discord just then. Try again in a bit.")
+			logger.warning(f"discord http exception triggered {identifier}")
+		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, HttpError):
+			await error.original.send_self(ctx_inter, botdata)
+			logger.warning(f"http error {error.original.code} on {identifier} for url: {error.original.url}")
+			await loggingdb.command_finished(ctx_inter, "user_errored", error.original.message)
+		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
+			await error.original.send_self(ctx_inter, botdata)
+			await loggingdb.command_finished(ctx_inter, "user_errored", error.original.message)
+		elif isinstance(error, commands.ConversionError) and isinstance(error.original, UserError):
+			await error.original.send_self(ctx_inter, botdata)
+			await loggingdb.command_finished(ctx_inter, "user_errored", error.original.message)
+		else:
+			await ctx_inter.send("Uh-oh, sumthin dun gone wrong 😱")
+			trace_string = await report_error(ctx_inter, error, skip_lines=4)
+			if settings.debug:
+				if len(trace_string) > 1950:
+					trace_string = "TRACETOOBIG:" + trace_string[len(trace_string) - 1950:]
+				await ctx_inter.send(f"```{trace_string}```")
+	except disnake.errors.Forbidden:
+		try:
+			await ctx_inter.author.send("Looks like I don't have permission to talk in that channel, sorry")
+		except disnake.errors.Forbidden:
 			pass
+	except Exception as e:
+		logging.error(f"uncaught error {e} when processing CommandError")
+		await report_error(ctx_inter, e, skip_lines=0)
 
 error_file = "errors.json"
 
-async def print_missing_perms(ctx, error):
-	if not (ctx.guild):
-		await ctx.send("Uh-oh, sumthin dun gone wrong 😱")
-		trace_string = await report_error(ctx.message, error, skip_lines=0)
-	my_perms = ctx.channel.permissions_for(ctx.guild.me)
+async def print_missing_perms(ctx_inter: InterContext, error):
+	if not (ctx_inter.guild):
+		await ctx_inter.send("Uh-oh, sumthin dun gone wrong 😱")
+		trace_string = await report_error(ctx_inter, error, skip_lines=0)
+	my_perms = ctx_inter.channel.permissions_for(ctx_inter.guild.me)
 	perms_strings = read_json(settings.resource("json/permissions.json"))
 	perms = []
 	for i in range(0, 32):
@@ -314,19 +360,17 @@ async def print_missing_perms(ctx, error):
 				words[i] = f"**{words[i][0] + words[i][1:].lower()}**"
 			perms.append(" ".join(words))
 	if perms:
-		await ctx.send("Looks like I'm missin' these permissions 😢:\n" + "\n".join(perms))
+		await ctx_inter.send("Looks like I'm missin' these permissions 😢:\n" + "\n".join(perms))
 	else:
-		await ctx.send(f"Looks like I'm missing permissions 😢. Have an admin giff me back my permissions, or re-invite me to the server using this invite link: {invite_link}")
+		await ctx_inter.send(f"Looks like I'm missing permissions 😢. Have an admin giff me back my permissions, or re-invite me to the server using this invite link: {invite_link}")
 
 
-async def report_error(message, error, skip_lines=2):
-	if os.path.isfile(error_file):
-		error_list = read_json(error_file)
-	else:
-		error_list = []
-
+async def report_error(ctx_inter_msg: typing.Union[InterContext, disnake.Message], error, skip_lines=2):
 	try:
-		raise error.original
+		if isinstance(error, disnake.errors.InteractionTimedOut):
+			trace = [ "InteractionTimedOut: took longer than 3 seconds" ]
+		else:
+			raise error.original
 	except:
 		trace = traceback.format_exc().replace("\"", "'").split("\n")
 		if skip_lines > 0 and len(trace) >= (2 + skip_lines):
@@ -335,9 +379,16 @@ async def report_error(message, error, skip_lines=2):
 
 	trace_string = "\n".join(trace)
 
-	await loggingdb.insert_error(message, error, trace_string)
-
-	logger.error(f"\nError on: {message.content}\nMessage Id: {message.id}\nAuthor Id: {message.author.id}\n{trace_string}\n")
+	if isinstance(ctx_inter_msg, commands.Context):
+		message = ctx_inter_msg.message
+		await loggingdb.insert_error(message, error, trace_string)
+		logger.error(f"Error on: {message.content}\nMessage Id: {message.id}\nAuthor Id: {message.author.id}\n{trace_string}\n")
+	elif isinstance(ctx_inter_msg, disnake.Interaction):
+		logger.error(f"Error on: {stringify_slash_command(ctx_inter_msg)}\nInteraction Id: {ctx_inter_msg.id}\nAuthor Id: {ctx_inter_msg.author.id}\n{trace_string}\n")
+	else: # is a message
+		message = ctx_inter_msg
+		await loggingdb.insert_error(message, error, trace_string)
+		logger.error(f"Error on: {message.content}\nMessage Id: {message.id}\nAuthor Id: {message.author.id}\n{trace_string}\n")
 	return trace_string
 
 def update_commandinfo():
@@ -358,12 +409,16 @@ def update_commandinfo():
 			"cog": cmd.cog.name if cmd.cog else "General",
 			"prefix": "?"
 		})
-	for cmd in bot.slash_commands:
+	for cmd in bot.help_command.expand_subcommands(bot.slash_commands):
+		if isinstance(cmd, commands.SubCommand):
+			description = cmd.body.description
+		else:
+			description = cmd.description
 		data["commands"].append({
-			"name": cmd.name,
+			"name": cmd.qualified_name,
 			"signature": None,
-			"short_help": cmd.description,
-			"help": cmd.description,
+			"short_help": description,
+			"help": description,
 			"aliases": [],
 			"cog": cmd.cog.name if cmd.cog else "General",
 			"prefix": "/"

@@ -1,4 +1,5 @@
 from __main__ import settings
+from numpy import isin
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Table, DateTime
 from sqlalchemy.orm import sessionmaker, relationship
@@ -6,10 +7,13 @@ import sqlalchemy
 from databases import Database, DatabaseURL
 import asyncio
 import disnake
+from disnake.ext import commands
 import datetime
 import os
 import re
 import logging
+
+from cogs.utils.helpers import InterContext
 logger = logging.getLogger("mangologger")
 
 Base = declarative_base()
@@ -217,7 +221,9 @@ class LoggingDb():
 			print_debug(f"insert_command(): {total_time * 1000:.2f}ms")
 			return command
 
-	async def command_finished(self, ctx, status, error):
+	async def command_finished(self, ctx: InterContext, status, error):
+		if not isinstance(ctx, commands.Context):
+			return # just skip this if its not a context
 		await asyncio.sleep(1)
 		async with self.lock, Database(self.database_url) as database:
 			start_time = datetime.datetime.now()
@@ -252,6 +258,8 @@ class LoggingDb():
 			# await database.execute(query=query)
 
 	async def insert_error(self, message, the_error, trace):
+		if not isinstance(message, disnake.Message):
+			return # just skip this if its not a message
 		start_time = datetime.datetime.now()
 		async with self.lock, Database(self.database_url) as database:
 			error = Error()

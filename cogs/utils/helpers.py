@@ -7,6 +7,12 @@ import asyncio
 import datetime
 from collections import OrderedDict
 import logging
+import typing
+import disnake
+from disnake.ext import commands
+
+InterContext = typing.Union[disnake.Interaction, commands.Context]
+
 logger = logging.getLogger("mangologger")
 
 MENTION_TRANSFORMS = {
@@ -19,6 +25,14 @@ MENTION_TRANSFORMS = {
 MENTION_PATTERN = re.compile('|'.join(MENTION_TRANSFORMS.keys()))
 
 audio_extensions = "mp3|wav|ogg"
+
+def stringify_slash_command(inter: disnake.CommandInteraction):
+	result = "/"
+	result += inter.application_command.qualified_name
+	if inter.filled_options:
+		for key,value in inter.filled_options.items():
+			result += f" {key}: {value}"
+	return result
 
 def findfile(name, path):
 	for root, dirs, files in os.walk(path):
@@ -107,15 +121,15 @@ class UserError(Exception):
 		self.message = message
 		self.embed = embed
 		self.file = file
-	async def send_self(self, ctx, botdata):
+	async def send_self(self, ctx_inter: InterContext, botdata):
 		kwargs = {}
 		if self.embed:
 			kwargs["embed"] = self.embed
 		if self.file:
 			kwargs["file"] = self.file
 
-		message = re.sub("\{cmdpfx\}", botdata.command_prefix(ctx), self.message)
-		await ctx.send(message, **kwargs)
+		message = re.sub("\{cmdpfx\}", botdata.command_prefix(ctx_inter), self.message)
+		await ctx_inter.send(message, **kwargs)
 
 
 # thinks about messages
