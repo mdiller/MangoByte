@@ -1,32 +1,14 @@
+from utils.tools.globals import settings, botdata, logger, loggingdb, httpgetter
 
-# The following have to be imported and initialized in the correct order
-from argparse import ArgumentError
-
-from numpy import isin
-from cogs.utils.settings import Settings
-settings = Settings()
-
-from cogs.utils.logger import setup_logger
-logger = setup_logger()
-
-from cogs.utils.botdata import BotData
-botdata = BotData()
-
-from cogs.utils.loggingdb import LoggingDb
-loggingdb = LoggingDb(settings.resource("loggingdb.db"))
-
-from cogs.utils.httpgetter import HttpGetter
-httpgetter = HttpGetter()
-
-from cogs.utils.helpers import *
+from utils.tools.helpers import *
 import disnake
 import traceback
 import asyncio
 from disnake.ext import commands
 import datetime
-from cogs.utils.helpcommand import MangoHelpCommand
-from cogs.utils.clip import *
-from cogs.utils.commandargs import *
+from utils.command.helpcommand import MangoHelpCommand
+from utils.command.clip import *
+from utils.command.commandargs import *
 import json
 import sys
 import inspect
@@ -53,7 +35,6 @@ bot = commands.AutoShardedBot(
 	test_guilds=settings.test_guilds,
 	reload=False)
 
-thinker = Thinker(bot)
 invite_link = f"https://discordapp.com/oauth2/authorize?permissions={permissions}&scope=bot%20applications.commands&client_id=213476188037971968"
 
 initialize_started = False
@@ -224,9 +205,6 @@ with open(settings.resource("json/deprecated_commands.json"), "r") as f:
 
 @bot.event
 async def on_command_error(ctx: commands.Context, error: commands.CommandError):
-	if ctx.message.id in thinker.messages:
-		await thinker.stop_thinking(ctx.message)
-
 	cmdpfx = botdata.command_prefix(ctx)
 
 	if not (isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError)):
@@ -467,7 +445,6 @@ from cogs.audio import Audio
 from cogs.dotabase import Dotabase
 from cogs.dotastats import DotaStats
 from cogs.pokemon import Pokemon
-from cogs.artifact import Artifact
 from cogs.admin import Admin
 from cogs.owner import Owner
 
@@ -477,7 +454,6 @@ if __name__ == '__main__':
 	bot.add_cog(Dotabase(bot))
 	bot.add_cog(DotaStats(bot))
 	bot.add_cog(Pokemon(bot))
-	bot.add_cog(Artifact(bot))
 	bot.add_cog(Admin(bot))
 	bot.add_cog(Owner(bot))
 

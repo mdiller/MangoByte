@@ -1,9 +1,7 @@
-from __main__ import settings, botdata, loggingdb
-from cogs.utils.helpers import *
-from cogs.utils.clip import *
 import disnake
-import logging
-logger = logging.getLogger("mangologger")
+from utils.command.clip import *
+from utils.tools.globals import botdata, logger, settings
+from utils.tools.helpers import *
 
 emoji_dict = read_json(settings.resource("json/emoji.json"))
 

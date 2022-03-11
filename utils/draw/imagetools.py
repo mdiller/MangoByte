@@ -1,9 +1,9 @@
-import re
-import numpy
-from PIL import Image
-import colorgram
 import colorsys
+import re
 from collections import OrderedDict
+
+import colorgram
+from PIL import Image
 
 
 def rgb_to_hsv(rgb):

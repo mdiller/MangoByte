@@ -1,11 +1,10 @@
-from __main__ import settings
+import json
 import logging
 import logging.handlers
-import datetime
-import json
-import os
-import logging_loki
 from multiprocessing import Queue
+
+import logging_loki
+from utils.tools.settings import settings
 
 # if we wanna log disnake stuff https://docs.disnake.dev/en/latest/logging.html?highlight=logger
 # we can also get the root logger, which will give us a ton of info for all the libraries we have
@@ -57,3 +56,5 @@ def setup_loki_handler(loki_config):
 	# add some checking here to see if its setup or something in future
 
 	return handler_loki
+
+logger = setup_logger()

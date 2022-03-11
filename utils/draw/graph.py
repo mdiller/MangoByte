@@ -1,7 +1,8 @@
-from PIL import Image, ImageDraw, ImageFont
 import math
 from io import BytesIO
-from .tabledraw import Table, ImageCell, TextCell, ColorCell, DoubleCell, SlantedTextCell, get_table_font
+
+from PIL import Image, ImageDraw, ImageFont
+from utils.drawing.table import get_table_font
 
 
 # draws a graph with the given data points

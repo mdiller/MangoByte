@@ -1,8 +1,8 @@
 import disnake
 from disnake.ext import commands
-from __main__ import settings, botdata, httpgetter
+from utils.tools.globals import settings, botdata, httpgetter
 from cogs.utils.deck_decoder import ParseDeck
-from cogs.utils.helpers import *
+from utils.tools.helpers import *
 from cogs.utils.clip import *
 from cogs.utils.card import *
 from cogs.utils import checks
@@ -12,8 +12,8 @@ import random
 import os
 import re
 import json
-import logging
-logger = logging.getLogger("mangologger")
+
+from utils.tools.globals import logger
 
 class Artifact(MangoCog):
 	"""Artifact related commands

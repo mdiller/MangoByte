@@ -1,25 +1,26 @@
-import disnake
-from disnake.ext import commands, tasks
-from __main__ import settings, botdata, invite_link, httpgetter, loggingdb
-from cogs.utils.helpers import *
-from cogs.utils.botdata import UserInfo
-from cogs.utils import checks, botdatatypes, wikipedia
-from cogs.audio import AudioPlayerNotFoundError
-from sqlalchemy import func
-from collections import OrderedDict
-import json
-import string
-import random
 import datetime
 import html
-from bs4 import BeautifulSoup, Tag
-from io import BytesIO
-import re
-import praw
+import json
 import os
-from .mangocog import *
-import logging
-logger = logging.getLogger("mangologger")
+import random
+import re
+import string
+from collections import OrderedDict
+from io import BytesIO
+
+import disnake
+import praw
+from __main__ import invite_link
+from bs4 import BeautifulSoup, Tag
+from disnake.ext import commands, tasks
+from utils.command import botdatatypes, checks
+from utils.other import wikipedia
+from utils.tools.botdata import UserInfo
+from utils.tools.globals import (botdata, httpgetter, logger, loggingdb, settings)
+from utils.tools.helpers import *
+
+from cogs.audio import AudioPlayerNotFoundError
+from cogs.mangocog import *
 
 donate_links = {
 	"Patreon": "https://www.patreon.com/dillerm",

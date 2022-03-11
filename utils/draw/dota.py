@@ -1,22 +1,17 @@
-from __main__ import settings, botdata, httpgetter
-import aiohttp
-import asyncio
-import async_timeout
-import sys
-import subprocess
-import os
-import numpy
 import math
-from datetime import datetime, timedelta, timezone
-from PIL import Image, ImageDraw, ImageFont
-from .tabledraw import Table, ImageCell, TextCell, ColorCell, DoubleCell, SlantedTextCell, get_table_font
-from io import BytesIO
-from .helpers import run_command, get_pretty_time, read_json, UserError, format_duration_simple
-from .imagetools import *
+import os
+import subprocess
 from concurrent.futures import ThreadPoolExecutor
-from .metastats import get_hero_winrate, get_hero_pickban_percent
-import logging
-logger = logging.getLogger("mangologger")
+from datetime import datetime, timedelta, timezone
+from io import BytesIO
+
+from PIL import Image, ImageDraw, ImageFont
+from utils.tools.globals import httpgetter, logger, settings
+from utils.tools.helpers import (UserError, format_duration_simple, get_pretty_time, read_json, run_command)
+
+from .imagetools import *
+from utils.other.metastats import get_hero_pickban_percent, get_hero_winrate
+from utils.drawing.table import (ColorCell, DoubleCell, ImageCell, SlantedTextCell, Table, TextCell, get_table_font)
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")

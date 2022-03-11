@@ -1,10 +1,12 @@
 """ A collection of functions for RSS feed parsing"""
 
-import disnake
-from dateutil import parser
 import re
-from __main__ import botdata
+
+import disnake
 from bs4 import BeautifulSoup
+from dateutil import parser
+from utils.tools.globals import botdata
+
 
 def is_new_blog(entry):
 	"""Takes the newest dota blog entry, and checks data against record

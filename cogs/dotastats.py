@@ -1,31 +1,24 @@
-from cogs.utils.metastats import get_total_pro_games
-import disnake
-from disnake.ext import commands
-from __main__ import settings, botdata, thinker, httpgetter
-from cogs.utils import checks
-from cogs.utils.helpers import *
-from cogs.utils.commandargs import *
-from cogs.utils import drawdota
-from cogs.utils import drawgraph
 import asyncio
-import async_timeout
-import string
 import datetime
-import json
-import re
-import os
-import urllib
-import functools
-import time
-import statistics
-import random
-import aiohttp
-import typing
 import math
+import os
+import re
+import statistics
+import time
 from types import *
-from .mangocog import *
-import logging
-logger = logging.getLogger("mangologger")
+
+import aiohttp
+import disnake
+import utils.drawing.dota as drawdota
+import utils.drawing.dota as drawgraph
+from disnake.ext import commands
+from utils.command.commandargs import *
+from utils.other.metastats import get_total_pro_games
+from utils.tools.globals import botdata, httpgetter, logger, settings
+from utils.tools.helpers import *
+
+from cogs.mangocog import *
+
 
 class MatchNotParsedError(UserError):
 	def __init__(self, match_id, action=None):
@@ -932,7 +925,7 @@ class DotaStats(MangoCog):
 		# STEP 1: download all match data
 		# 
 		with ctx.channel.typing():
-			await thinker.think(ctx.message)
+			# await thinker.think(ctx.message)
 			playerinfo = await opendota_query(f"/players/{steam32}")
 			matches_info = await opendota_query_filter(matchfilter)
 			matches_info = sorted(matches_info, key=lambda m: m["start_time"])
@@ -953,7 +946,7 @@ class DotaStats(MangoCog):
 				player_matches = matches_info
 
 
-		await thinker.stop_thinking(ctx.message)
+		# await thinker.stop_thinking(ctx.message)
 		if len(player_matches) == 0:
 			if do_downloaded:
 				await ctx.send("Not enough parsed matches!")
@@ -1224,12 +1217,13 @@ class DotaStats(MangoCog):
 		# "https://stratz.com/en-us/match/{match_id}/playback?pb_time={seconds}"
 
 		async with ctx.channel.typing():
-			await thinker.think(ctx.message)
+			# await thinker.think(ctx.message)
 			try:
 				image = disnake.File(await self.create_dota_gif(match, stratz_match, start, end, ms_per_second), "map.gif")
 				await ctx.send(file=image)
 			finally:
-				await thinker.stop_thinking(ctx.message)
+				pass
+				# await thinker.stop_thinking(ctx.message)
 
 	@commands.command(aliases=["lanes"])
 	async def laning(self, ctx, match_id : int = None):
@@ -1270,13 +1264,14 @@ class DotaStats(MangoCog):
 
 
 		async with ctx.channel.typing():
-			await thinker.think(ctx.message)
+			# await thinker.think(ctx.message)
 			try:
 				image = disnake.File(await self.create_dota_gif(match, stratz_match, -89, 600, 100), "map.gif")
 				embed.set_image(url=f"attachment://{image.filename}")
 				await ctx.send(embed=embed, file=image)
 			finally:
-				await thinker.stop_thinking(ctx.message)
+				pass
+				# await thinker.stop_thinking(ctx.message)
 
 
 	@commands.command(aliases=["analyze", "studymatch"])
@@ -1602,9 +1597,9 @@ class DotaStats(MangoCog):
 		wrapped_url = f"https://gameishard.gg/dotawrapped/?id={player.steam_id}"
 		wrapped_image_url = f"https://gameishard.gg/dotawrapped/assets/images/players/{player.steam_id}.png"
 
-		await thinker.think(ctx.message)
+		# await thinker.think(ctx.message)
 		await httpgetter.get(wrapped_url, return_type="text")
-		await thinker.stop_thinking(ctx.message)
+		# await thinker.stop_thinking(ctx.message)
 
 		embed = disnake.Embed()
 

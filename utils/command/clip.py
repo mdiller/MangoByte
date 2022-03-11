@@ -1,18 +1,14 @@
-from abc import ABCMeta, abstractmethod
-from __main__ import settings, botdata, httpgetter
-from .helpers import *
-from gtts import gTTS
-import urllib.request
-import disnake
-import re
-import os
-import random
-import html
-import requests
 import functools
+import re
+from abc import ABCMeta, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-import logging
-logger = logging.getLogger("mangologger")
+
+import disnake
+import requests
+from gtts import gTTS
+from utils.tools.globals import botdata, httpgetter, logger, settings
+from utils.tools.helpers import *
+
 
 def tts_save(filename, text, lang):
 	# run_command(["pico2wave", "--wave", filename, "-l", "en-GB", text])

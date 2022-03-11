@@ -1,7 +1,7 @@
 import disnake
 from disnake.ext import commands
-from __main__ import botdata
-from cogs.utils.helpers import InterContext
+from utils.tools.globals import botdata
+from utils.tools.helpers import InterContext
 
 #
 # This is a "heavily" modified version of checks.py, originally made by Rapptz

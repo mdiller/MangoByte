@@ -1,9 +1,10 @@
-from __main__ import settings
+import re
+from abc import abstractmethod
+
 import disnake
 from disnake.ext import commands
-from abc import abstractmethod
-from .helpers import *
-import re
+from utils.tools.helpers import *
+from utils.tools.settings import settings
 
 
 class InvalidInputError(UserError):

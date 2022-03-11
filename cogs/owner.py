@@ -1,19 +1,20 @@
-import disnake
-import youtube_dl
 import asyncio
 import shutil
-from dotabase import Hero
-from sqlalchemy import desc
-from disnake.ext import commands
-from __main__ import settings, botdata, httpgetter, loggingdb
-from cogs.utils.helpers import *
-from cogs.utils.botdata import GuildInfo
-from cogs.utils.clip import GttsLang
-from cogs.utils import checks
-from cogs.utils import loggingdb as loggingdb_spec
-from cogs.utils import botdatatypes
-from .mangocog import *
 from concurrent.futures import ThreadPoolExecutor
+
+import disnake
+import utils.tools.loggingdb as loggingdb_spec
+import youtube_dl
+from disnake.ext import commands
+from sqlalchemy import desc
+from utils.command import checks
+from utils.tools.globals import botdata, httpgetter, loggingdb, settings, logger
+from utils.tools.helpers import *
+
+from dotabase import Hero
+
+from .mangocog import *
+
 
 def youtube_download_func(youtube_id, video_file):
 	ytdl_options = {

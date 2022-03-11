@@ -1,7 +1,8 @@
-from __main__ import settings, botdata
-from PIL import Image, ImageDraw, ImageFont
-from .imagetools import *
 import math
+
+from PIL import Image, ImageDraw, ImageFont
+from utils.tools.globals import settings
+from utils.drawing.imagetools import *
 
 table_font = settings.resource("images/arial_unicode_bold.ttf")
 

@@ -1,15 +1,14 @@
+import re
+
 import disnake
 from disnake.ext import commands
-from __main__ import settings, botdata, httpgetter
-from cogs.utils.helpers import *
-from cogs.utils.clip import *
-from cogs.utils import checks
-from .mangocog import *
+from utils.command.clip import *
+from utils.tools.globals import httpgetter, logger
+from utils.tools.helpers import *
+
 from cogs.audio import AudioPlayerNotFoundError
-import os
-import re
-import logging
-logger = logging.getLogger("mangologger")
+from cogs.mangocog import *
+
 
 async def pokeapi_query(url, fullurl=False):
 	if not fullurl:

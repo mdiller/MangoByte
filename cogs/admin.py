@@ -1,16 +1,14 @@
-import disnake
 import asyncio
-import shutil
+
+import disnake
 from disnake.ext import commands
-from __main__ import settings, botdata, httpgetter, loggingdb
-from cogs.utils.helpers import *
-from cogs.utils.botdata import GuildInfo
-from cogs.utils.clip import GttsLang
-from cogs.utils import checks
-from cogs.utils import botdatatypes
+from utils.command import botdatatypes, checks
+from utils.tools.botdata import GuildInfo
+from utils.tools.globals import botdata, logger
+from utils.tools.helpers import *
+
 from .mangocog import *
-import logging
-logger = logging.getLogger("mangologger")
+
 
 class Admin(MangoCog):
 	"""Commands to help manage mangobyte on your server/guild

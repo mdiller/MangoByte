@@ -1,20 +1,17 @@
-from __main__ import settings
-from numpy import isin
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Table, DateTime
-from sqlalchemy.orm import sessionmaker, relationship
+import asyncio
+import datetime
+import re
+
+import disnake
 import sqlalchemy
 from databases import Database, DatabaseURL
-import asyncio
-import disnake
 from disnake.ext import commands
-import datetime
-import os
-import re
-import logging
-
-from cogs.utils.helpers import InterContext
-logger = logging.getLogger("mangologger")
+from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Table)
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, sessionmaker
+from utils.tools.helpers import InterContext
+from utils.tools.settings import settings
+from utils.tools.logger import logger
 
 Base = declarative_base()
 
@@ -366,3 +363,5 @@ class LoggingDb():
 				guild_log.leave_time = guilds[guild_id]["last"]
 				self.session.add(guild_log)
 		self.session.commit()
+		
+loggingdb = LoggingDb(settings.resource("loggingdb.db"))

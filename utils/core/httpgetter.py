@@ -1,10 +1,11 @@
-from __main__ import settings, loggingdb
-from .helpers import *
 import re
-import aiohttp
 from io import BytesIO
-import logging
-logger = logging.getLogger("mangologger")
+
+import aiohttp
+from utils.tools.helpers import *
+from utils.tools.logger import logger
+from utils.tools.loggingdb import loggingdb
+from utils.tools.settings import settings
 
 default_cache = { "count": 0, "files": {} }
 
@@ -150,6 +151,6 @@ class HttpGetter:
 			else:
 				raise_error(url, r.status, errors)
 
-
+httpgetter = HttpGetter()
 
 

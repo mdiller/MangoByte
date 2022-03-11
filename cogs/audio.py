@@ -1,22 +1,19 @@
-import disnake
-from disnake.ext import commands, tasks
-from cogs.utils.helpers import *
-from cogs.utils.clip import *
-from __main__ import settings, botdata, report_error, loggingdb
-from cogs.utils import checks
-import cogs.utils.botdatatypes as botdatatypes
 import asyncio
 import os
-import string
 import queue
-import random
 import re
 import urllib.request
-from random import randint
-from .mangocog import *
 from ctypes.util import find_library
-import logging
-logger = logging.getLogger("mangologger")
+from random import randint
+
+import disnake
+from disnake.ext import commands, tasks
+from utils.command import botdatatypes
+from utils.command.clip import *
+from utils.tools.globals import botdata, logger, loggingdb, settings
+from utils.tools.helpers import *
+
+from cogs.mangocog import *
 
 intro_outro_length = 4.5
 voice_channel_culling_timeout_hours = 24 * 4 # 24 * 4 means after 4 days of inactivity, mango will disconnect from the voice channel

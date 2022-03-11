@@ -1,14 +1,14 @@
-from __main__ import settings, botdata, httpgetter
-import re
-import disnake
-from disnake.ext import commands
-from .helpers import *
-from collections import OrderedDict
 import datetime
 import math
+import re
+from collections import OrderedDict
 from functools import lru_cache
-import logging
-logger = logging.getLogger("mangologger")
+
+import disnake
+from disnake.ext import commands
+from utils.tools.globals import botdata, httpgetter, logger, settings
+from utils.tools.helpers import *
+
 
 @lru_cache(maxsize=None)
 def get_cache_hero_pattern(dotabase, prefix):

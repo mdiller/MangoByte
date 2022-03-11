@@ -1,11 +1,12 @@
-from .helpers import *
 import os
 from collections import OrderedDict
+
+from utils.tools.helpers import *
 
 #
 # loosely based off of the red discord bot's settings
 # to import from mangobyte.py, use:
-# from __main__ import settings
+# from utils.tools.globals import settings
 #
 
 class Settings:
@@ -93,3 +94,4 @@ class Settings:
 	def resource(self, dir):
 		return os.path.join(self.resourcedir, dir)
 
+settings = Settings()

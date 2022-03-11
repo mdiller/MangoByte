@@ -1,10 +1,11 @@
-from .helpers import *
 import os
-import disnake
-import cogs.utils.botdatatypes as types
 from collections import OrderedDict
-import logging
-logger = logging.getLogger("mangologger")
+
+import disnake
+import utils.command.botdatatypes as types
+from utils.tools.helpers import *
+from utils.tools.logger import logger
+
 
 class ListVar:
 	def __init__(self, t):
@@ -373,4 +374,4 @@ class BotData:
 		else:
 			return "?"
 
-
+botdata = BotData()

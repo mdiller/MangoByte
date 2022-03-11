@@ -1,11 +1,13 @@
-from __main__ import botdata, settings
-import disnake, itertools, inspect, re
-from disnake.ext.commands import *
-from .botdata import GuildInfo, UserInfo
-from .helpers import read_json, MENTION_PATTERN
+import inspect
+import itertools
+import re
+
+import disnake
 from cogs.mangocog import simple_get_emoji
-import logging
-logger = logging.getLogger("mangologger")
+from disnake.ext.commands import *
+from utils.tools.globals import botdata, logger, settings
+from utils.tools.helpers import MENTION_PATTERN, read_json
+from utils.tools.botdata import GuildInfo, UserInfo
 
 
 def get_config_help(variables, command):

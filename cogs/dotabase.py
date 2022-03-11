@@ -1,25 +1,24 @@
-import disnake
-from disnake.ext import commands, tasks
-from sqlalchemy.sql.expression import func
-from sqlalchemy import and_, or_, desc
-from __main__ import settings, httpgetter
-from cogs.utils.helpers import *
-from cogs.utils.clip import *
-from cogs.utils.commandargs import *
-from cogs.utils import drawdota, imagetools
-from cogs.utils import rsstools
-import feedparser
-import random
-import os
-import asyncio
-import string
-import re
 import json
-from .mangocog import *
-from dotabase import *
+import random
+import re
+
+import disnake
+import feedparser
+import utils.drawing.dota as drawdota
+import utils.drawing.imagetools as imagetools
+import utils.other.rsstools as rsstools
+from disnake.ext import commands, tasks
+from sqlalchemy import and_, desc, or_
+from sqlalchemy.sql.expression import func
+from utils.command.clip import *
+from utils.command.commandargs import *
+from utils.tools.globals import httpgetter, logger, settings
+from utils.tools.helpers import *
+
 from cogs.audio import AudioPlayerNotFoundError
-import logging
-logger = logging.getLogger("mangologger")
+from dotabase import *
+
+from cogs.mangocog import *
 
 session = dotabase_session()
 
