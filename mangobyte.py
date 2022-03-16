@@ -237,6 +237,8 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError):
 				await bot.process_commands(new_message)
 			elif await invalid_command_reporting(ctx):
 				await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `{cmdpfx}help` fer a list of things that ARE commands.")
+		elif isinstance(error, CustomBadArgument):
+			await error.user_error.send_self(ctx, botdata)
 		elif isinstance(error, commands.BadArgument):
 			signature = await get_cmd_signature(ctx)
 			await ctx.send((
