@@ -557,8 +557,8 @@ class Dotabase(MangoCog):
 
 	async def get_laugh_response(self, hero=None):
 		query = session.query(Response)
+		hero = self.lookup_hero(hero)
 		if hero is not None:
-			hero = self.lookup_hero(hero)
 			query = query.filter(Response.hero_id == hero.id)
 		query = query.filter(Response.criteria.like(f"%|HeroChatWheel%"))
 		query = query.filter(Response.criteria.like(f"%IsEmoteLaugh%"))
