@@ -36,7 +36,7 @@ class Admin(MangoCog):
 			commandname = ctx_inter.command
 			cog = ctx_inter.cog
 		
-		if not isinstance(ctx_inter.channel, disnake.abc.PrivateChannel):
+		if guildinfo and ctx_inter.channel.type != disnake.ChannelType.private:
 			if guildinfo.is_banned(ctx_inter.author):
 				return False
 			if guildinfo.is_disabled(commandname):

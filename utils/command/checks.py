@@ -22,7 +22,7 @@ def is_admin_check(ctx_inter: InterContext, user=None):
 		user = ctx_inter.author
 	if is_owner_check(user):
 		return True
-	if isinstance(channel, disnake.abc.PrivateChannel):
+	if ctx_inter.channel.type == disnake.ChannelType.private:
 		return False # All admin commands should be guild specific and not work on PM channels
 	admin_role_id = botdata.guildinfo(ctx_inter.guild).botadmin
 	if admin_role_id:
@@ -37,4 +37,4 @@ def is_admin():
 	return commands.check(lambda ctx_inter: is_admin_check(ctx_inter))
 
 def is_not_PM():
-	return commands.check(lambda ctx_inter: not isinstance(ctx_inter.channel, disnake.abc.PrivateChannel))
+	return commands.check(lambda ctx_inter: ctx_inter.channel.type != disnake.ChannelType.private)
