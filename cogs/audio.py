@@ -119,7 +119,7 @@ class AudioPlayer:
 		self.last_clip = clip
 
 	# try queueing an mp3 to play
-	async def queue_clip(self, clip, ctx):
+	async def queue_clip(self, clip, ctx_inter: InterContext):
 		if(self.voice is None):
 			logger.warning("tried to talk while not in voice channel")
 			raise AudioPlayerNotFoundError("not in voice channel m8")
@@ -178,16 +178,21 @@ class Audio(MangoCog):
 
 
 	# gets the audioplayer for the current guild/channel/context
-	async def audioplayer(self, ctx, error_on_none=True):
-		# TODO: ACCOUNT FOR WHEN THIS MESSAGE IS A PM
-		if isinstance(ctx, disnake.ext.commands.Context):
-			if ctx.message.guild is None: # This is a private channel, so give it user
-				ctx = ctx.message.author
+	async def audioplayer(self, ctx_inter: InterContext, error_on_none=True):
+		target = ctx_inter
+		if isinstance(ctx_inter, disnake.ext.commands.Context):
+			if ctx_inter.message.guild is None: # This is a private channel, so give it user
+				target = ctx_inter.message.author
 			else:
-				ctx = ctx.message.guild
+				target = ctx_inter.message.guild
+		elif isinstance(ctx_inter, disnake.Interaction):
+			if ctx_inter.guild is None: # This is a private channel, so give it user
+				target = ctx_inter.author
+			else:
+				target = ctx_inter.guild
 
-		if isinstance(ctx, disnake.User):
-			author = ctx
+		if isinstance(target, disnake.User):
+			author = target
 			for audioplayer in self.audioplayers:
 				member = audioplayer.guild.get_member(author.id)
 				if member and member.voice and audioplayer.voice and audioplayer.voice.channel.id == member.voice.channel.id:
@@ -198,19 +203,19 @@ class Audio(MangoCog):
 				raise AudioPlayerNotFoundError("You're not in any voice channels that I'm in")
 			else:
 				return None
-		elif isinstance(ctx, disnake.Guild):
-			guild = ctx
-		elif isinstance(ctx, disnake.abc.GuildChannel):
-			guild = ctx.guild
+		elif isinstance(target, disnake.Guild):
+			guild = target
+		elif isinstance(target, disnake.abc.GuildChannel):
+			guild = target.guild
 		else:
-			raise ValueError(f"Incorrect type '{type(ctx)}' given to audioplayer function")
+			raise ValueError(f"Incorrect type '{type(target)}' given to audioplayer function")
 
 		for audioplayer in self.audioplayers:
 			if audioplayer.guild == guild:
 				return audioplayer
 
 		if error_on_none:
-			raise AudioPlayerNotFoundError(f"I'm not in a voice channel on this server/guild. Have an admin do `{botdata.command_prefix(ctx)}summon` to put me in one.")
+			raise AudioPlayerNotFoundError(f"I'm not in a voice channel on this server/guild. Have an admin do `{botdata.command_prefix(ctx_inter)}summon` to put me in one.")
 		else:
 			return None
 

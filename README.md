@@ -22,13 +22,12 @@ Want to try out mangobyte on your server? [Click Here](https://discordapp.com/oa
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 88 commands, separated into 7 categories
+Mangobyte currently has 85 commands, separated into 6 categories
 
 #### General
 Commands that don't really fit into the other categories
 
 ```
-?ask                 | Answers any question you might have                                                        
 /bot changelog       | Gets a rough changelog for mangobyte. Note that this is just the last few commit messages. 
 /bot donate          | Posts some links with info about how to donate to the developer                            
 /bot info            | Prints info about mangobyte                                                                
@@ -37,17 +36,18 @@ Commands that don't really fit into the other categories
 /docs                | Shows some documentation about a specific part of the bot                                  
 /echo                | Echos the given message                                                                    
 ?help                | Shows this message                                                                         
-?insult              | Gets a nice insult for ya                                                                  
+/misc ask            | A magic 8-ball style question answerer                                                     
 /misc cat            | Gets a picture of the developer's cat                                                      
 /misc choose         | Randomly chooses one of the given options                                                  
 /misc dog            | Gets a picture of one of the developer's dogs                                              
+/misc insult         | Insults the given victim, or you if you dont target anyone                                 
 /misc lasagna        | Posts an image of a baked italian dish                                                     
 /misc random         | Gets a random number between the minimum and maximum (inclusive)                           
 /misc scramble       | Scrambles the insides of words                                                             
 /misc showerthought  | Gets a top post from the r/ShowerThoughts subreddit                                        
 /ping                | Pongs a number of times(within reason)                                                     
 /reddit              | Displays a formatted reddit post                                                           
-?userconfig          | Configures the bot's user-specific settings                                                
+/userconfig          | Configures the bot's user-specific settings                                                
 /wiki                | Looks up a thing on wikipedia                                                              
 ```
 
@@ -131,22 +131,13 @@ Pokemon related commands
 ?shiny               | Gets the shiny version of this pokemon                                                     
 ```
 
-#### Artifact
-Artifact related commands
-
-```
-?card                | Displays info about the artifact card                                                      
-?deck                | Displays the card list for the given deck                                                  
-?updateartifact      | Updates all the artifact card data                                                         
-```
-
 #### Admin
 Commands to help manage mangobyte on your server/guild
 
 ```
 ?botban              | Bans the user from using commands                                                          
 ?botunban            | Unbans the user, allowing them to use commands                                             
-?config              | Configures the bot's settings for this server                                              
+/config              | Configures the bot's settings for this server/guild                                        
 ?disablecommand      | Disabled the specified command or command category                                         
 ?enablecommand       | Re-enables the specified command or command category                                       
 ?resummon            | Re-summons the bot to the voice channel                                                    

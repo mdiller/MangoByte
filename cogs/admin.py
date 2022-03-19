@@ -237,27 +237,26 @@ class Admin(MangoCog):
 
 		await ctx.message.add_reaction("✅")
 
-	@commands.command()
-	async def config(self, ctx, name, *, value = None):
-		"""Configures the bot's settings for this server
+	@commands.slash_command()
+	async def config(self, inter: disnake.CmdInter, setting: commands.option_enum(GuildInfo.keys_list()), value: str):
+		"""Configures the bot's settings for this server/guild
 
-		Below are the different settings that you can tweak to customize mangobyte for this server. You can get more information about a setting by typing `{cmdpfx}config <settingname>`, and you can configure a setting by typing `{cmdpfx}config <settingname> <value>`
-
-		{config_help}
+		Parameters
+		----------
+		setting: The setting you'd like to show/change
+		value: The value you'd like to set for this setting, or 'show' to see the current value and more info
 		"""
-		var = next((v for v in GuildInfo.variables if v["key"] == name), None)
-		if not var:
-			vars_list = "\n".join(map(lambda v: f"`{v['key']}`", GuildInfo.variables))
-			await ctx.send(f"There is no config setting called '{name}'. Try one of these:\n{vars_list}")
-			return
+		if value == "show":
+			value = None
+		var = next((v for v in GuildInfo.variables if v["key"] == setting), None)
 		
-		currentvalue = botdata.guildinfo(ctx.guild)[var["key"]]
+		currentvalue = botdata.guildinfo(inter.guild)[var["key"]]
 		if not value: # We are just getting a value
-			await ctx.send(embed=await botdatatypes.localize_embed(ctx, var, currentvalue, f"{self.cmdpfx(ctx)}config"))
+			await inter.send(embed=await botdatatypes.localize_embed(inter, var, currentvalue, f"/config"))
 		else: # We are setting a value
-			value = await botdatatypes.parse(ctx, var, value, currentvalue)
-			botdata.guildinfo(ctx.guild)[var["key"]] = value
-			await ctx.message.add_reaction("✅")
+			value = await botdatatypes.parse(inter, var, value, currentvalue)
+			botdata.guildinfo(inter.guild)[var["key"]] = value
+			await inter.send(f"✅ {setting} has been set!")
 
 
 def setup(bot):

@@ -22,5 +22,7 @@
 	"botstats": "bot stats",
 	"invite": "bot invite",
 	"info": "bot info",
-	"changelog": "bot changelog"
+	"changelog": "bot changelog",
+	"ask": "misc ask",
+	"insult": "_Try using `/misc insult`, or right click on someone and select insult from Apps >"
 }

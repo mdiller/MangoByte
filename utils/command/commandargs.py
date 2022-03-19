@@ -73,9 +73,9 @@ class SteamNotLinkedError(UserError):
 		self.is_author = user is None
 		self.user = user
 		if not self.is_author:
-			super().__init__(f"{user.name} doesn't have a steam account linked to mangobyte. They should try `{{cmdpfx}}userconfig steam` to see how to link their steam account to mangobyte.")
+			super().__init__(f"{user.name} doesn't have a steam account linked to mangobyte. They should try `/userconfig steam show` to see how to link their steam account to mangobyte.")
 		else:
-			super().__init__("Ya haven't told me what yer steam account is.\nTry doin' `{cmdpfx}userconfig steam` to see how to link a steam account to mangobyte.")
+			super().__init__("Ya haven't told me what yer steam account is.\nTry doin' `/userconfig steam show` to see how to link a steam account to mangobyte.")
 
 class NoMatchHistoryError(UserError):
 	def __init__(self, steam_id):
@@ -130,10 +130,10 @@ class DotaPlayer():
 		return await cls.convert(ctx, None)
 
 	@classmethod
-	async def convert(cls, ctx, player):
+	async def convert(cls, ctx_inter: InterContext, player):
 		is_author = player is None
 		if is_author:
-			player = ctx.message.author
+			player = ctx_inter.author
 
 		try:
 			player = int(player)
@@ -152,7 +152,7 @@ class DotaPlayer():
 
 		if not isinstance(player, disnake.abc.User):
 			try:
-				player = await commands.MemberConverter().convert(ctx, str(player))
+				player = await commands.MemberConverter().convert(ctx_inter, str(player))
 			except commands.BadArgument:
 				raise CustomBadArgument(UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me their steam id"))
 

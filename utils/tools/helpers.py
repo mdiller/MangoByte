@@ -32,6 +32,8 @@ def stringify_slash_command(inter: disnake.CommandInteraction):
 	result += inter.application_command.qualified_name
 	if inter.filled_options:
 		for key,value in inter.filled_options.items():
+			if isinstance(value, disnake.User) or isinstance(value, disnake.Member):
+				value = value.mention
 			result += f" {key}: {value}"
 	return result
 

@@ -75,71 +75,191 @@ class BotDataItem:
 			new_list.remove(item)
 			self[key] = new_list
 
+userinfo_variables = [
+	{
+		"key": "steam",
+		"default": None,
+		"type": types.SteamId,
+		"description": "This links your steam account to your discord account for mangobyte. You have to give this either your steam32 or steam64 id. An easy way to find this is to open dota and find your 'Friend ID', or look at the end of your dotabuff/opendota profile url.\n\nIf you open up dota and go to your profile, your 'Friend ID' will be just under your name, and will look like this:\n<:steam:414724031380586496> **FRIEND ID:** `<number>`\n\nIn which case you should do `/userconfig steam <number>`\n\nTo un-register, try setting this to `clear` or `reset`",
+		"example": "70388657"
+	},
+	{
+		"key": "intro",
+		"default": "local:helloits",
+		"type": types.ShortClip,
+		"description": "This sets the clip that will play whenever you join a voice channel that mangobyte is in. Note that this clip cannot be longer than 4.5 seconds\n\nTo make it so no clip plays when you join the channel, try setting this to `none`, `silent`, `off`, or `disable`",
+		"example": "local:math"
+	},
+	{
+		"key": "outro",
+		"default": "local:farewell",
+		"type": types.ShortClip,
+		"description": "This sets the clip that will play whenever you leave a voice channel that mangobyte is in. Note that this clip cannot be longer than 4.5 seconds\n\nTo make it so no clip plays when you join the channel, try setting this to `none`, `silent`, `off`, or `disable`",
+		"example": "dota:troll_warlord_troll_lose_03"
+	},
+	{
+		"key": "introtts",
+		"default": "it's",
+		"type": types.ShortText,
+		"description": "This is what is said before saying your name when announcing that you have joined the channel. To set your tts to be nothing, try setting this to `nothing` or `none`\n\nNote that this clip can be no longer than 32 characters.",
+		"example": "it's the magnificent"
+	},
+	{
+		"key": "outrotts",
+		"default": "has left!",
+		"type": types.ShortText,
+		"description": "This is what is said after saying your name when announcing that you have left the channel. To set your tts to be nothing, try setting this to `nothing` or `none`\n\nNote that this clip can be no longer than 32 characters.",
+		"example": "dun gone left"
+	},
+	{
+		"key": "dmdotapatch",
+		"default": None,
+		"disabled": True,
+		"type": types.Boolean,
+		"description": "If enabled, mango will private message you when a new dota patch gets released",
+		"example": "enable"
+	},
+	{
+		"key": "dmdotablog",
+		"default": None,
+		"disabled": True,
+		"type": types.Boolean,
+		"description": "Enabling this will let mangobyte dm you about Dota blog updates",
+		"example": "enable"
+	}
+]
+
 class UserInfo(BotDataItem):
+	variables = userinfo_variables
 	def __init__(self, botdata, discord):
 		defaults = OrderedDict([])
 		for var in self.variables:
 			defaults[var["key"]] = var["default"]
 		BotDataItem.__init__(self, botdata, "userinfo", { "discord": discord }, defaults)
 
-	variables = [
-		{
-			"key": "steam",
-			"default": None,
-			"type": types.SteamId,
-			"description": "This links your steam account to your discord account for mangobyte. You have to give this either your steam32 or steam64 id. An easy way to find this is to open dota and find your 'Friend ID', or look at the end of your dotabuff/opendota profile url.\n\nIf you open up dota and go to your profile, your 'Friend ID' will be just under your name, and will look like this:\n<:steam:414724031380586496> **FRIEND ID:** `<number>`\n\nIn which case you should do `?userconfig steam <number>`\n\nTo un-register, try setting this to `clear` or `reset`",
-			"example": "70388657"
-		},
-		{
-			"key": "intro",
-			"default": "local:helloits",
-			"type": types.ShortClip,
-			"description": "This sets the clip that will play whenever you join a voice channel that mangobyte is in. Note that this clip cannot be longer than 4.5 seconds\n\nTo make it so no clip plays when you join the channel, try setting this to `none`, `silent`, `off`, or `disable`",
-			"example": "local:math"
-		},
-		{
-			"key": "outro",
-			"default": "local:farewell",
-			"type": types.ShortClip,
-			"description": "This sets the clip that will play whenever you leave a voice channel that mangobyte is in. Note that this clip cannot be longer than 4.5 seconds\n\nTo make it so no clip plays when you join the channel, try setting this to `none`, `silent`, `off`, or `disable`",
-			"example": "dota:troll_warlord_troll_lose_03"
-		},
-		{
-			"key": "introtts",
-			"default": "it's",
-			"type": types.ShortText,
-			"description": "This is what is said before saying your name when announcing that you have joined the channel. To set your tts to be nothing, try setting this to `nothing` or `none`\n\nNote that this clip can be no longer than 32 characters.",
-			"example": "it's the magnificent"
-		},
-		{
-			"key": "outrotts",
-			"default": "has left!",
-			"type": types.ShortText,
-			"description": "This is what is said after saying your name when announcing that you have left the channel. To set your tts to be nothing, try setting this to `nothing` or `none`\n\nNote that this clip can be no longer than 32 characters.",
-			"example": "dun gone left"
-		},
-		{
-			"key": "dmdotapatch",
-			"default": None,
-			"type": types.Boolean,
-			"description": "If enabled, mango will private message you when a new dota patch gets released",
-			"example": "enable"
-		},
-		{
-			"key": "dmdotablog",
-			"default": None,
-			"type": types.Boolean,
-			"description": "Enabling this will let mangobyte dm you about Dota blog updates",
-			"example": "enable"
-		}
-	]
+	@staticmethod
+	def keys_list():
+		return list(map(lambda v: v["key"], filter(lambda v: not v.get("disabled"), userinfo_variables)))
+
 
 	def set_default(self, ctx, key):
 		var = next((v for v in self.variables if v["key"] == key), None)
 		if var:
 			self[key] = var["default"]
 
+guildinfo_variables = [
+	{
+		"key": "prefix",
+		"default": "?",
+		"type": types.CommandPrefix,
+		"description": "Configures the character to use to prefix your commands for this server",
+		"example": "!"
+	},
+	{
+		"key": "reactions",
+		"default": False,
+		"type": types.Boolean,
+		"description": "Allows mangobyte to react to users messages depending on what they are saying",
+		"example": "enable"
+	},
+	{
+		"key": "ttschannel",
+		"default": None,
+		"type": types.TextChannel,
+		"description": "If someone types in the given channel, mangobyte will automatically interpret it as a `?smarttts` command, and say it in the voicechannel that they are in. To say something in this channel without doing a tts, try adding a `//` or `#` to the front of your message",
+		"example": "#tts"
+	},
+	{
+		"key": "botadmin",
+		"default": None,
+		"type": types.Role,
+		"description": "Users who have the specified role will be able to use commands from the admin section. To set this role, do `/config botadmin <role>` where <role> is an @mention of a role in the server. You can also use @everyone to give everyone permissions to use admin commands.",
+		"example": "@BotAdmin"
+	},
+	{
+		"key": "intros",
+		"default": True,
+		"type": types.Boolean,
+		"description": "Allows mangobyte to announce users when they enter the voice channel that mangobyte is currently in",
+		"example": "disable"
+	},
+	{
+		"key": "outros",
+		"default": True,
+		"type": types.Boolean,
+		"description": "Allows mangobyte to announce when users leave the voice channel that mangobyte is currently in",
+		"example": "disable"
+	},
+	{
+		"key": "ttslang",
+		"default": "en",
+		"type": types.GttsLang,
+		"description": "Sets the language/voice that mangobyte will use to speak using the `?tts` command. To see a list of all of the possible languages, check out [this file](https://github.com/mdiller/MangoByte/blob/master/resource/json/gtts_languages.json) in the github repo",
+		"example": "Russian"
+	},
+	{
+		"key": "usenickname",
+		"default": False,
+		"type": types.Boolean,
+		"description": "Sets whether mangobyte will use the user's name or nickname when announcing that they have joined or left a channel",
+		"example": "enable"
+	},
+	{
+		"key": "simpletts",
+		"default": False,
+		"type": types.Boolean,
+		"description": "If enabled, the configured ttschannel will use the `?tts` command, instead of the `?smarttts` command.",
+		"example": "enable"
+	},
+	{
+		"key": "announcetts",
+		"default": False,
+		"type": types.Boolean,
+		"description": "Sets whether mangobyte announce the user's name before playing the clip when they the user plays a clip by typing something in the tts channel",
+		"example": "enable"
+	},
+	{
+		"key": "dotapatchchannel",
+		"default": None,
+		"disabled": True,
+		"type": types.TextChannel,
+		"description": "The channel in which mangobyte will post to notify about new dota patches when it detects them",
+		"example": "#dota"
+	},
+	{
+		"key": "dotablogchannel",
+		"default": None,
+		"disabled": True,
+		"type": types.TextChannel,
+		"description": "The channel to which mangobyte will post blog notifications",
+		"example": "#dota"
+	},
+	{
+		"key": "ttschannelwarn",
+		"default": True,
+		"type": types.Boolean,
+		"description": "Disable this to prevent mangobyte from saying \"I'm not in a voice channel on this server/guild\" when you type in a tts channel and mangobyte isn't summoned",
+		"example": "disable"
+	},
+	{
+		"key": "allowedbots",
+		"default": [],
+		"list": True,
+		"type": types.UserBot,
+		"description": "A list of bots that mangobyte will not ignore when processing commands or tts",
+		"example": "add @Bot123"
+	},
+	{
+		"key": "allowwebhooks",
+		"default": False,
+		"type": types.Boolean,
+		"description": "Whether or not the bot should pay attention to webhooks when processing commands or tts",
+		"example": "enable"
+	}
+]
+
 class GuildInfo(BotDataItem):
+	variables = guildinfo_variables
 	def __init__(self, botdata, guildid):
 		defaults = OrderedDict([
 			("voicechannel", None),
@@ -150,115 +270,11 @@ class GuildInfo(BotDataItem):
 		for var in self.variables:
 			defaults[var["key"]] = var["default"]
 		BotDataItem.__init__(self, botdata, "guildinfo", { "id": guildid }, defaults)
+	
 
-	variables = [
-		{
-			"key": "prefix",
-			"default": "?",
-			"type": types.CommandPrefix,
-			"description": "Configures the character to use to prefix your commands for this server",
-			"example": "!"
-		},
-		{
-			"key": "reactions",
-			"default": False,
-			"type": types.Boolean,
-			"description": "Allows mangobyte to react to users messages depending on what they are saying",
-			"example": "enable"
-		},
-		{
-			"key": "ttschannel",
-			"default": None,
-			"type": types.TextChannel,
-			"description": "If someone types in the given channel, mangobyte will automatically interpret it as a `?smarttts` command, and say it in the voicechannel that they are in. To say something in this channel without doing a tts, try adding a `//` or `#` to the front of your message",
-			"example": "#tts"
-		},
-		{
-			"key": "botadmin",
-			"default": None,
-			"type": types.Role,
-			"description": "Users who have the specified role will be able to use commands from the admin section. To set this role, do `?config botadmin <role>` where <role> is an @mention of a role in the server. You can also use @everyone to give everyone permissions to use admin commands.",
-			"example": "@BotAdmin"
-		},
-		{
-			"key": "intros",
-			"default": True,
-			"type": types.Boolean,
-			"description": "Allows mangobyte to announce users when they enter the voice channel that mangobyte is currently in",
-			"example": "disable"
-		},
-		{
-			"key": "outros",
-			"default": True,
-			"type": types.Boolean,
-			"description": "Allows mangobyte to announce when users leave the voice channel that mangobyte is currently in",
-			"example": "disable"
-		},
-		{
-			"key": "ttslang",
-			"default": "en",
-			"type": types.GttsLang,
-			"description": "Sets the language/voice that mangobyte will use to speak using the `?tts` command. To see a list of all of the possible languages, check out [this file](https://github.com/mdiller/MangoByte/blob/master/resource/json/gtts_languages.json) in the github repo",
-			"example": "Russian"
-		},
-		{
-			"key": "usenickname",
-			"default": False,
-			"type": types.Boolean,
-			"description": "Sets whether mangobyte will use the user's name or nickname when announcing that they have joined or left a channel",
-			"example": "enable"
-		},
-		{
-			"key": "simpletts",
-			"default": False,
-			"type": types.Boolean,
-			"description": "If enabled, the configured ttschannel will use the `?tts` command, instead of the `?smarttts` command.",
-			"example": "enable"
-		},
-		{
-			"key": "announcetts",
-			"default": False,
-			"type": types.Boolean,
-			"description": "Sets whether mangobyte announce the user's name before playing the clip when they the user plays a clip by typing something in the tts channel",
-			"example": "enable"
-		},
-		{
-			"key": "dotapatchchannel",
-			"default": None,
-			"type": types.TextChannel,
-			"description": "The channel in which mangobyte will post to notify about new dota patches when it detects them",
-			"example": "#dota"
-		},
-		{
-			"key": "dotablogchannel",
-			"default": None,
-			"type": types.TextChannel,
-			"description": "The channel to which mangobyte will post blog notifications",
-			"example": "#dota"
-		},
-		{
-			"key": "ttschannelwarn",
-			"default": True,
-			"type": types.Boolean,
-			"description": "Disable this to prevent mangobyte from saying \"I'm not in a voice channel on this server/guild\" when you type in a tts channel and mangobyte isn't summoned",
-			"example": "disable"
-		},
-		{
-			"key": "allowedbots",
-			"default": [],
-			"list": True,
-			"type": types.UserBot,
-			"description": "A list of bots that mangobyte will not ignore when processing commands or tts",
-			"example": "add @Bot123"
-		},
-		{
-			"key": "allowwebhooks",
-			"default": False,
-			"type": types.Boolean,
-			"description": "Whether or not the bot should pay attention to webhooks when processing commands or tts",
-			"example": "enable"
-		}
-	]
+	@staticmethod
+	def keys_list():
+		return list(map(lambda v: v["key"], filter(lambda v: not v.get("disabled"), guildinfo_variables)))
 
 	def is_banned(self, user):
 		return user.id in self.banned_users
@@ -359,10 +375,7 @@ class BotData:
 
 	# gets the command prefix
 	def command_prefix(self, inter_ctx: InterContext):
-		if isinstance(inter_ctx, commands.Context):
-			return self.command_prefix_guild(inter_ctx) # will act the same for self.guildinfo
-		else:
-			return "/"
+		return self.command_prefix_guild(inter_ctx) # will act the same for self.guildinfo
 
 	def command_prefix_botmessage(self, bot, message):
 		return self.command_prefix_guild(message.guild)

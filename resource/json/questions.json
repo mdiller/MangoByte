@@ -1,5 +1,11 @@
 [
 	{
+		"regex": "^$",
+		"responses": [
+			"dota:keep_move_16"
+		]
+	},
+	{
 		"regex": "where do i know mcneg from\\?",
 		"responses": [
 			"tts:mcneg is from pro rampage compilation because he doesnt give a hoot"

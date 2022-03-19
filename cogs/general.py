@@ -99,27 +99,25 @@ class General(MangoCog):
 		"""Gets information about mangobyte"""
 		pass # this is just a header for base commands
 
-	@commands.command()
-	async def userconfig(self, ctx, name, *, value = None):
+	@commands.slash_command()
+	async def userconfig(self, inter: disnake.CmdInter, setting: commands.option_enum(UserInfo.keys_list()), value: str):
 		"""Configures the bot's user-specific settings
 
-		Below are the different user-specific settings that you can tweak to customize mangobyte. You can get more information about a setting by typing `{cmdpfx}userconfig <settingname>`, and you can configure a setting by typing `{cmdpfx}userconfig <settingname> <value>`
+		Parameters
+		----------
+		setting: The setting you'd like to show/change
+		value: The value you'd like to set for this setting, or 'show' to see the current value and more info"""
+		if value == "show":
+			value = None
+		var = next((v for v in UserInfo.variables if v["key"] == setting), None)
 
-		{userconfig_help}
-		"""
-		var = next((v for v in UserInfo.variables if v["key"] == name), None)
-		if not var:
-			vars_list = "\n".join(map(lambda v: f"`{v['key']}`", UserInfo.variables))
-			await ctx.send(f"There is no userconfig setting called '{name}'. Try one of these:\n{vars_list}")
-			return
-
-		currentvalue = botdata.userinfo(ctx.message.author)[var["key"]]
+		currentvalue = botdata.userinfo(inter.author)[var["key"]]
 		if not value: # We are just getting a value
-			await ctx.send(embed=await botdatatypes.localize_embed(ctx, var, currentvalue, f"{self.cmdpfx(ctx)}userconfig"))
+			await inter.send(embed=await botdatatypes.localize_embed(inter, var, currentvalue, f"/userconfig"))
 		else: # We are setting a value
-			value = await botdatatypes.parse(ctx, var, value, currentvalue)
-			botdata.userinfo(ctx.message.author)[var["key"]] = value
-			await ctx.message.add_reaction("✅")
+			value = await botdatatypes.parse(inter, var, value, currentvalue)
+			botdata.userinfo(inter.author)[var["key"]] = value
+			await inter.send(f"✅ {setting} has been set!")
 
 	@commands.slash_command()
 	async def ping(self, inter: disnake.CmdInter, count : commands.Range[1, 20] = 1):
@@ -404,48 +402,57 @@ class General(MangoCog):
 
 		await inter.send(embed=embed)
 
-	@commands.command()
-	async def ask(self, ctx, *, question : str=""):
-		"""Answers any question you might have"""
+	@misc.sub_command()
+	async def ask(self, inter: disnake.CmdInter, question : str=""):
+		"""A magic 8-ball style question answerer
+
+		Parameters
+		----------
+		question: The question you want answered"""
 		random.seed(question)
 		for check in self.questions:
 			if re.search(check["regex"], question):
-				clip = await self.get_clip(random.choice(check['responses']), ctx)
-				await ctx.send(clip.text)
+				clip = await self.get_clip(random.choice(check['responses']), inter)
+				await inter.send(clip.text)
 				try:
-					await self.play_clip(clip, ctx)
+					await self.play_clip(clip, inter)
 				except AudioPlayerNotFoundError:
 					pass # Not needed for this 
 				return
-		logger.info("didnt match anything for ask")
 
-	@commands.command()
-	async def insult(self, ctx):
-		"""Gets a nice insult for ya
+	@commands.user_command(name="insult")
+	async def insult_user(self, inter: disnake.CmdInter, victim: disnake.User=None):
+		"""Insults the victim"""
+		await self._insult_impl(inter, victim)
 
-		Mention someone in discord and I'll insult them instead of you
+	@misc.sub_command(name="insult")
+	async def insult_slash(self, inter: disnake.CmdInter, victim: disnake.User=None):
+		"""Insults the given victim, or you if you dont target anyone
 
-		**Example:**
-		`{cmdpfx}insult`
-		`{cmdpfx}insult @InnocentMan`
-		"""
+		Parameters
+		----------
+		victim: The target of your insult"""
+		await self._insult_impl(inter, victim)
+
+	async def _insult_impl(self, inter: disnake.CmdInter, victim: disnake.User=None):
+		if victim is None:
+			victim = inter.author
+
 		start = "You "
 		start_local = start
 
 		template = "{animal|food|furniture|instrument:NOSPACE}-{body_part_ed} {relation} of a {animal|furniture}"
 
-		if ctx.message.mentions:
-			user = ctx.message.mentions[0]
-			if user.id == ctx.guild.me.id:
-				template = "lovely fellow"
-			start = f"{user.mention}, you're a "
-			start_local = f"{user.name}, you're a "
+		if victim.id == self.bot.user.id:
+			template = "lovely fellow"
+		start = f"{victim.mention}, you're a "
+		start_local = f"{victim.name}, you're a "
 
 		result = fill_word_template(template, self.words)
 
-		await ctx.send(start + result)
-		if ctx.guild and ctx.guild.me.voice:
-			await self.play_clip(f"tts:{start_local}{result}", ctx)
+		await inter.send(start + result)
+		if inter.guild and inter.guild.me.voice:
+			await self.play_clip(f"tts:{start_local}{result}", inter)
 	
 	@misc.sub_command()
 	async def random(self, inter: disnake.CmdInter, maximum: int, minimum: int = 0):
@@ -683,6 +690,19 @@ class General(MangoCog):
 			"channel_id": inter.channel.id,
 			"timestamp": inter.created_at.isoformat(),
 			"content": stringify_slash_command(inter)
+		})
+		
+	@commands.Cog.listener()
+	async def on_user_command(self, inter: disnake.CommandInteraction):
+		logger.trace({
+			"type": "user_command",
+			"command": inter.application_command.qualified_name,
+			"inter_id": inter.id,
+			"author_id": inter.author.id,
+			"server_id": inter.guild.id if inter.guild else None,
+			"channel_id": inter.channel.id,
+			"timestamp": inter.created_at.isoformat(),
+			"content": "@" + inter.application_command.qualified_name + " " + inter.target.mention
 		})
 
 	@commands.Cog.listener()

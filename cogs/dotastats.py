@@ -10,7 +10,7 @@ from types import *
 import aiohttp
 import disnake
 import utils.drawing.dota as drawdota
-import utils.drawing.dota as drawgraph
+import utils.drawing.graph as drawgraph
 from disnake.ext import commands
 from utils.command.commandargs import *
 from utils.other.metastats import get_total_pro_games
@@ -321,9 +321,9 @@ class DotaStats(MangoCog):
 
 		return rank_string
 
-	async def get_player_mention(self, steamid, ctx):
+	async def get_player_mention(self, steamid, ctx_inter: InterContext):
 		# expects that steamid is a valid int
-		player = await DotaPlayer.convert(ctx, steamid)
+		player = await DotaPlayer.convert(ctx_inter, steamid)
 		return player.mention
 
 	async def create_dota_gif(self, match, stratz_match, start_time, end_time, ms_per_second=100):
@@ -964,7 +964,7 @@ class DotaStats(MangoCog):
 			embed.description = f"*The following are averages and percentages based on the last {len(player_matches)} parsed matches*"
 		else:
 			embed.description = ""
-		embed.set_footer(text=f"To see the filtering options for this command, try \"{self.cmdpfx(ctx)}docs matchfilter\"")
+		embed.set_footer(text=f"To see the filtering options for this command, try \"/docs matchfilter\"")
 
 		matches_url = f"https://www.opendota.com/players/{steam32}/matches?{matchfilter.to_query_args(for_web_url=True)}"
 		author_name = playerinfo["profile"]["personaname"] or "Anonymous"
@@ -1546,7 +1546,7 @@ class DotaStats(MangoCog):
 
 		embed.title = f"Match {match_id}"
 		embed.url = f"https://opendota.com/matches/{match_id}"
-		embed.set_footer(text=f"This is a rough draft, im planning on making this much better soon")
+		embed.set_footer(text=f"This is a rough draft, im planning on making this much better at some point")
 
 		embed.description = graphtypes[graphtype]["name"]
 
