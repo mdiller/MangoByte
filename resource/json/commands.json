@@ -94,8 +94,8 @@
 		{
 			"name": "bot changelog",
 			"signature": null,
-			"short_help": "Gets a rough changelog for mangobyte. Note that this is just the last few commit messages.",
-			"help": "Gets a rough changelog for mangobyte. Note that this is just the last few commit messages.",
+			"short_help": "Gets a rough changelog for mangobyte",
+			"help": "Gets a rough changelog for mangobyte",
 			"aliases": [],
 			"cog": "General",
 			"prefix": "/"
