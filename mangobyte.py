@@ -304,7 +304,8 @@ async def command_error_handler(ctx_inter: InterContext, error: commands.Command
 			await loggingdb.command_finished(ctx_inter, "user_errored", error.original.message)
 		elif isinstance(error, commands.ConversionError) and isinstance(error.original, UserError):
 			await error.original.send_self(ctx_inter, botdata)
-			await loggingdb.command_finished(ctx_inter, "user_errored", error.original.message)
+		elif isinstance(error, commands.ConversionError) and isinstance(error.original, CustomBadArgument):
+			await error.original.user_error.send_self(ctx_inter, botdata)
 		else:
 			await ctx_inter.send("Uh-oh, sumthin dun gone wrong 😱")
 			trace_string = await report_error(ctx_inter, error, skip_lines=4)
