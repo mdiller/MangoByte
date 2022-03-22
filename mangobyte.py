@@ -93,7 +93,7 @@ async def initialize():
 
 		# now do voice channels and the rest!
 		minimum_channels_to_space = 50
-		voice_channels_per_minute_timing = 6
+		voice_channels_per_minute_timing = 4
 		voice_channel_count = 0
 		for guildinfo in botdata.guildinfo_list():
 			if guildinfo.voicechannel is not None:

@@ -564,7 +564,13 @@ class Dotabase(MangoCog):
 		query = query.filter(Response.criteria.like(f"%IsEmoteLaugh%"))
 		query = query.order_by(func.random())
 
-		return query.first()
+		response = query.first()
+		if response is None:
+			query = session.query(Response)
+			query = query.filter(Response.hero_id == hero.id)
+			query = query.filter(Response.criteria.like(f"%IsEmoteLaugh%"))
+			response = query.first()
+		return response
 
 	@commands.command(aliases=["hi"])
 	async def hello(self, ctx):
