@@ -24,5 +24,21 @@
 	"info": "bot info",
 	"changelog": "bot changelog",
 	"ask": "misc ask",
-	"insult": "_Try using `/misc insult`, or right click on someone and select insult from Apps >"
+	"insult": "_Try using `/misc insult`, or right click on someone and select insult from Apps >",
+	"match": "match info",
+	"dotagraph": "match graph",
+	"laning": "match laning",
+	"skillbuild": "match skillbuild",
+	"matchstory": "match story",
+	"lastmatchstory": "match story lm",
+	"lmstory": "match story lm",
+	"graph": "match graph",
+	"opendota": "_Try using the opendota api via a rest explorer like postman etc.",
+	"lastmatch": "lm",
+	"fm": "firstmatch",
+	"herostats": "playerstats",
+	"pstats": "playerstats",
+	"matches": "recent",
+	"recentmatches": "recent",
+	"chatstats": "twenty"
 }

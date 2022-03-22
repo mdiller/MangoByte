@@ -126,14 +126,14 @@ class DotaPlayer():
 		self.is_author = is_author
 
 	@classmethod
-	async def from_author(cls, ctx):
-		return await cls.convert(ctx, None)
+	async def from_author(cls, inter):
+		return await cls.convert(inter, None)
 
-	@classmethod
-	async def convert(cls, ctx_inter: InterContext, player):
-		is_author = player is None
+	@commands.converter_method
+	async def convert(cls, inter: disnake.CmdInter, player: str):
+		is_author = player is None or player == ""
 		if is_author:
-			player = ctx_inter.author
+			player = inter.author
 
 		try:
 			player = int(player)
@@ -150,19 +150,19 @@ class DotaPlayer():
 				raise CustomBadArgument(NoMatchHistoryError(player))
 			return cls(player, f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{player})", is_author)
 
-		if not isinstance(player, disnake.abc.User):
-			try:
-				player = await commands.MemberConverter().convert(ctx_inter, str(player))
-			except commands.BadArgument:
-				raise CustomBadArgument(UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me their steam id"))
+		if isinstance(player, disnake.abc.User):
+			player = player.mention
 
-		userinfo = botdata.userinfo(player.id)
+		# assume its a user at this point
+		match = re.match(r"<@!?(\d+)>", player)
+		if not match:
+			raise CustomBadArgument(UserError("Ya gotta @mention a user who has been linked to a steam id, or just give me their steam id"))
+		user_id = match.group(1)
+
+		userinfo = botdata.userinfo(int(user_id))
 		if userinfo.steam is None:
-			if is_author:
-				raise CustomBadArgument(SteamNotLinkedError())
-			else:
-				raise CustomBadArgument(SteamNotLinkedError(player))
-		return cls(userinfo.steam, player.mention, is_author)
+			raise CustomBadArgument(SteamNotLinkedError())
+		return cls(userinfo.steam, f"<@!{user_id}>", is_author)
 
 class QueryArg():
 	def __init__(self, name, args_dict=None, post_filter=None, parse_levels=1):
@@ -206,11 +206,11 @@ class SimpleQueryArg(QueryArg):
 
 # a span of time to look in
 class TimeSpanArg(QueryArg):
-	def __init__(self, ctx):
+	def __init__(self, inter):
 		kwargs = {}
 		kwargs["post_filter"] = PostFilter("start_time", self.post_filter_checker)
 		super().__init__("date", **kwargs)
-		self.dotabase = ctx.bot.get_cog("Dotabase")
+		self.dotabase = inter.bot.get_cog("Dotabase")
 		self.min = None
 		self.max = None
 		self.value = None
@@ -279,11 +279,11 @@ class TimeSpanArg(QueryArg):
 
 all_item_slots = [ "item_0", "item_1", "item_2", "item_3", "item_4", "item_5", "item_neutral" ]
 class ItemArg(QueryArg):
-	def __init__(self, ctx, name, **kwargs):
+	def __init__(self, inter, name, **kwargs):
 		kwargs["post_filter"] = PostFilter(all_item_slots, self.post_filter_checker)
 		kwargs["parse_levels"] = 2
 		super().__init__(name, **kwargs)
-		self.dotabase = ctx.bot.get_cog("Dotabase")
+		self.dotabase = inter.bot.get_cog("Dotabase")
 		self.item = None
 
 	def post_filter_checker(self, p):
@@ -300,10 +300,10 @@ class ItemArg(QueryArg):
 		self.value = self.item.id
 
 class HeroArg(QueryArg):
-	def __init__(self, ctx, name, prefix, **kwargs):
+	def __init__(self, inter, name, prefix, **kwargs):
 		super().__init__(name, **kwargs)
 		self.prefix = prefix
-		self.dotabase = ctx.bot.get_cog("Dotabase")
+		self.dotabase = inter.bot.get_cog("Dotabase")
 		self.hero = None
 
 	def regex(self):
@@ -315,9 +315,9 @@ class HeroArg(QueryArg):
 		self.value = self.hero.id
 
 class PlayerArg(QueryArg):
-	def __init__(self, ctx, name, prefix, **kwargs):
+	def __init__(self, inter, name, prefix, **kwargs):
 		super().__init__(name, **kwargs)
-		self.ctx = ctx
+		self.inter = inter
 		self.prefix = prefix
 		self.player = None
 
@@ -333,7 +333,7 @@ class PlayerArg(QueryArg):
 
 	async def parse(self, text):
 		text = re.sub(self.prefix, "", text, flags=re.IGNORECASE)
-		self.set_player(await DotaPlayer.convert(self.ctx, text))
+		self.set_player(await DotaPlayer.convert(self.inter, text))
 
 # a filter to be applied to the match after retrieval
 class PostFilter():
@@ -347,13 +347,13 @@ class MatchFilter():
 		self.projections = []
 
 	@classmethod
-	async def init(cls, matchfilter, ctx):
+	async def init(cls, matchfilter, inter):
 		if matchfilter is None:
-			matchfilter = await MatchFilter.convert(ctx, "")
+			matchfilter = await MatchFilter.convert(inter, "")
 		return matchfilter
 
-	@classmethod
-	async def convert(cls, ctx, argument):
+	@commands.converter_method
+	async def convert(cls, inter: disnake.CmdInter, argument: str):
 		parser = InputParser(argument)
 		args = [
 			QueryArg("win", {
@@ -373,7 +373,7 @@ class MatchFilter():
 				r"(not|non|in|un)(-| )?(significant|standard)": 0
 			}),
 			QueryArg("game_mode", get_cache_game_mode_patterns()),
-			TimeSpanArg(ctx),
+			TimeSpanArg(inter),
 			QueryArg("limit", {
 				r"(?:limit|count|show)? ?(\d{1,3})": lambda m: int(m.group(1))
 			}),
@@ -395,13 +395,13 @@ class MatchFilter():
 			QueryArg("_parsed", {
 				r"(is)?( |_)?parsed": True
 			}, PostFilter("version", lambda p: p.get("version") is not None)),
-			PlayerArg(ctx, "included_account_id", "with "),
-			PlayerArg(ctx, "excluded_account_id", "without "),
-			ItemArg(ctx, "_item"),
-			HeroArg(ctx, "against_hero_id", "(?:against|vs) "),
-			HeroArg(ctx, "with_hero_id", "with "),
-			HeroArg(ctx, "hero_id", "(?:as )?"),
-			PlayerArg(ctx, "_player", "")
+			PlayerArg(inter, "included_account_id", "with "),
+			PlayerArg(inter, "excluded_account_id", "without "),
+			ItemArg(inter, "_item"),
+			HeroArg(inter, "against_hero_id", "(?:against|vs) "),
+			HeroArg(inter, "with_hero_id", "with "),
+			HeroArg(inter, "hero_id", "(?:as )?"),
+			PlayerArg(inter, "_player", "")
 		]
 		for arg in args:
 			value = parser.take_regex(arg.regex())
@@ -416,7 +416,7 @@ class MatchFilter():
 
 		playerarg = MatchFilter._get_arg(args, "_player")
 		if playerarg.player is None:
-			playerarg.set_player(await DotaPlayer.from_author(ctx))
+			playerarg.set_player(await DotaPlayer.from_author(inter))
 		if (MatchFilter._get_arg(args, "game_mode").has_value()): # custom thing to make sure to not hide unsignificant things
 			MatchFilter._get_arg(args, "significant").value = 0
 		if parser.text:
@@ -509,9 +509,9 @@ class MatchFilter():
 
 
 class HeroStatArg(QueryArg):
-	def __init__(self, ctx, name):
+	def __init__(self, inter, name):
 		super().__init__(name)
-		dotabase = ctx.bot.get_cog("Dotabase")
+		dotabase = inter.bot.get_cog("Dotabase")
 		self.patterns = get_cache_hero_stats_patterns(dotabase)
 
 	def regex(self):
@@ -532,7 +532,7 @@ class HeroStatsTableArgs():
 		self.reverse = kwargs.get("reverse", False)
 
 	@classmethod
-	async def convert(cls, ctx, argument):
+	async def convert(cls, inter, argument):
 		parser = InputParser(argument)
 		args = [
 			QueryArg("hero_count", {
@@ -544,7 +544,7 @@ class HeroStatsTableArgs():
 			QueryArg("reverse", {
 				r"rev(erse)?|desc(ending)?|least-?(most)?": True
 			}),
-			HeroStatArg(ctx, "stat")
+			HeroStatArg(inter, "stat")
 		]
 		kwargs = {}
 		for arg in args:

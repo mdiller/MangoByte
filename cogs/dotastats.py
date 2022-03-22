@@ -6,6 +6,8 @@ import re
 import statistics
 import time
 from types import *
+from enum import Enum
+from collections import OrderedDict
 
 import aiohttp
 import disnake
@@ -40,7 +42,43 @@ opendota_html_errors = {
 	"default": "OpenDota said we did things wrong 😢. http status code: {}"
 }
 
+graphtypes = {
+	"Team Gold/Experience Difference": "teamdiff",
+	"Player Gold": "playergold"
+}
+
 default_steam_icon = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/fe/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg"
+
+# converter for a single dota match
+class DotaMatch():
+	def __init__(self, match, steamid):
+		self.match = match
+		self.steamid = steamid
+	
+	@commands.converter_method
+	async def convert(cls, inter: disnake.CmdInter, match_string: str):
+		steamid = None
+
+		if match_string.isnumeric():
+			try:
+				match = await get_match(match_string)
+				return cls(match, steamid)
+			except InvalidMatchIdError as e:
+				pass # ignore this and continue, they probably passed in a steam id
+
+		if match_string in [ "lm", "lastmatch", "last", "me" ]:
+			match_string = "" # this way the converter will look at the author
+		
+		try:
+			matchfilter = await MatchFilter.convert(inter, str(match_string))
+			if matchfilter.player:
+				steamid = matchfilter.player.steam_id
+			match_id = await get_lastmatch_id(matchfilter)
+			match = await get_match(match_id)
+			return cls(match, steamid)
+		except CustomBadArgument as e:
+			raise UserError(f"Couldn't find a match_id or a player when given '{match_string}'")
+		
 
 def opendota_query_get_url(querystring):
 	if settings.odota:
@@ -272,16 +310,6 @@ class DotaStats(MangoCog):
 			return sorted_json[:num]
 		return sorted_json
 
-	async def print_meta(self, ctx, num_to_list): 
-		"""prints the meta table"""
-		json = await self.get_meta_json()
-		sorted_json = self.sort_meta(json, num_to_list)
-		description = (f"Top {num_to_list} meta hero(s) in professional matches")
-		embed = disnake.Embed(description = description, color=self.embed_color)
-		meta_table = disnake.File(await drawdota.draw_meta_table(sorted_json, json), "meta.png")
-		embed.set_image(url=f"attachment://{meta_table.filename}")
-		await ctx.send(embed=embed, file=meta_table)
-
 	def get_pretty_hero(self, player, use_icons=False):
 		dotabase = self.bot.get_cog("Dotabase")
 		if player["hero_id"] not in self.hero_info:
@@ -445,48 +473,16 @@ class DotaStats(MangoCog):
 			story += f"• {pretty_list(roamers)} roamed\n"
 		return story
 
-	async def tell_match_story(self, game, is_radiant, ctx, perspective=None):
-		if not is_parsed(game):
-			raise MatchNotParsedError(game["match_id"], "create a story")
-
-		if not perspective:
-			perspective = "The Radiant" if is_radiant else "The Dire"
-			end_perspective = perspective
-		else:
-			end_perspective = f"{perspective} and their friends"
-
-		story = (f"*Told from the perspective of {perspective}*\n"
-				f"To see a more extensive story, try the [story tab](https://www.opendota.com/matches/{game['match_id']}/story) on opendota\n\n")
-
-		story += await self.get_firstblood_story(game, is_radiant)
-
-		story += await self.get_lane_stories(game, is_radiant)
-
-		teamfights = await self.get_teamfight_stories(game, is_radiant)
-
-		game_ending_state = "won" if (is_radiant == game['radiant_win']) else "lost"
-		story_end = f"\n{end_perspective} {game_ending_state} the game at { get_pretty_duration(game['duration']) }"
-
-		i = 0
-		while i < len(teamfights) and (len(story) + len(teamfights[i]) + len(story_end)) < 2000:
-			story += f"\n\n{teamfights[i]}"
-			i += 1
-
-		embed = disnake.Embed(description=story, color=self.embed_color)
-		embed.title = f"Story of Match {game['match_id']}"
-		embed.url = f"https://www.opendota.com/matches/{game['match_id']}/story"
-		embed.set_footer(text=f"For more information, try {self.cmdpfx(ctx)}match {game['match_id']}")
-		await ctx.send(embed=embed)
-
 
 	# prints the stats for the given player's latest game
-	async def player_match_stats(self, steamid, match_id, ctx):
-		match = await get_match(match_id)
-
+	async def player_match_stats(self, steamid, match, inter):
 		# Finds the player in the game which has our matching steam32 id
-		player = next((p for p in match['players'] if p['account_id'] == steamid), None)
+		match_id = match["match_id"]
+		player = None
+		if steamid:
+			player = next((p for p in match['players'] if p['account_id'] == steamid), None)
 		if player is None:
-			await self.print_match_stats(ctx, match_id)
+			await self.print_match_stats(inter, match)
 			return
 
 		dotabase = self.bot.get_cog("Dotabase")
@@ -530,90 +526,102 @@ class DotaStats(MangoCog):
 		embed.set_image(url=f"attachment://{match_image.filename}")
 		embed.set_footer(text=str(match_id))
 
-		await ctx.send(embed=embed, file=match_image)
+		await inter.send(embed=embed, file=match_image)
 
-	@commands.command(aliases=["lastgame", "lm"])
-	async def lastmatch(self, ctx, *, matchfilter : MatchFilter = None):
+	@commands.slash_command()
+	async def lm(self, inter: disnake.CmdInter, matchfilter: MatchFilter = None):
 		"""Gets info about the player's last dota game
 
-		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`"""
-		await ctx.channel.trigger_typing()
+		Parameters
+		----------
+		matchfilter: Specify how to filter these matches. To learn more, try '/docs Match Filter'
+		"""
+		await inter.response.defer()
 		
-		matchfilter = await MatchFilter.init(matchfilter, ctx)
+		matchfilter = await MatchFilter.init(matchfilter, inter)
 		player = matchfilter.player
 
 		match_id = await get_lastmatch_id(matchfilter)
-		await self.player_match_stats(player.steam_id, match_id, ctx)
+		match = await get_match(match_id)
+		await self.player_match_stats(player.steam_id, match, inter)
 
-	@commands.command(aliases=["firstgame", "fm"])
-	async def firstmatch(self, ctx, *, matchfilter : MatchFilter = None):
+	@commands.slash_command()
+	async def firstmatch(self, inter: disnake.CmdInter, matchfilter: MatchFilter = None):
 		"""Gets info about the player's first dota game
 
-		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`"""
-		await ctx.channel.trigger_typing()
+		Parameters
+		----------
+		matchfilter: Specify how to filter these matches. To learn more, try '/docs Match Filter'
+		"""
+		await inter.response.defer()
 		
-		matchfilter = await MatchFilter.init(matchfilter, ctx)
+		matchfilter = await MatchFilter.init(matchfilter, inter)
 		player = matchfilter.player
 
 		match_id = await get_lastmatch_id(matchfilter, reverse=True)
-		await self.player_match_stats(player.steam_id, match_id, ctx)
-
-	async def print_match_stats(self, ctx, match_id):
 		match = await get_match(match_id)
+		await self.player_match_stats(player.steam_id, match, inter)
+
+	async def print_match_stats(self, inter, match):
+		match_id = match["match_id"]
 		duration = get_pretty_duration(match['duration'], postfix=False)
 		game_mode = self.dota_game_strings.get(f"game_mode_{match.get('game_mode')}", "Unknown")
 		lobby_type = self.dota_game_strings.get(f"lobby_type_{match.get('lobby_type')}", "Unknown") + " "
 		if lobby_type == "Normal ":
 			lobby_type = ""
 
-		description = (f"This {lobby_type}**{game_mode}** match ended in {duration} \n"
+		embed = disnake.Embed(color=self.embed_color)
+		embed.description = (f"This {lobby_type}**{game_mode}** match ended in {duration} \n"
 					f"More info at [DotaBuff](https://www.dotabuff.com/matches/{match_id}), "
 					f"[OpenDota](https://www.opendota.com/matches/{match_id}), or "
 					f"[STRATZ](https://www.stratz.com/match/{match_id})")
 
-		utc_timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
-		embed = disnake.Embed(description=description, 
-							timestamp=utc_timestamp, color=self.embed_color)
 		embed.set_author(name="Match {}".format(match_id), url="https://www.opendota.com/matches/{}".format(match_id))
 
 		embed.add_field(name="Game Mode", value=game_mode)
 		embed.add_field(name="Lobby Type", value=game_mode)
 
 		match_image = disnake.File(await drawdota.create_match_image(match), filename="matchimage.png")
-
 		embed.set_image(url=f"attachment://{match_image.filename}")
+
 		embed.set_footer(text=str(match_id))
-		await ctx.send(embed=embed, file=match_image)
+		embed.timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
 
+		await inter.send(embed=embed, file=match_image)
 
-	@commands.command(aliases=["matchdetails"])
-	async def match(self, ctx, match_id : int):
-		"""Gets a summary of the dota match with the given id"""
-		await ctx.channel.trigger_typing()
-		await self.print_match_stats(ctx, match_id)
+	# a header to be used for sub commands
+	@commands.slash_command()
+	async def match(self, inter: disnake.CmdInter):
+		await inter.response.defer()
+		pass
+	
+	@match.sub_command()
+	async def info(self, inter: disnake.CmdInter, match: DotaMatch):
+		"""Creates a table with some basic stats and information about the dota match
 
+		Parameters
+		----------
+		match: The ID of the match, a reference to a player, or 'lm'. See '/docs Match Argument` for more info
+		"""
+		await self.player_match_stats(match.steamid, match.match, inter)
 
-	@commands.command()
-	async def matchstory(self, ctx, match_id : int, perspective=None):
+	@match.sub_command()
+	async def story(self, inter: disnake.CmdInter, match: DotaMatch, perspective: commands.option_enum(OrderedDict({"Radiant": "radiant", "Dire": "dire"})) = "radiant"):
 		"""Tells the story of the match
 
-		The story is based on the given perspective, or the player's perspective if they were in the match."""
-		await ctx.channel.trigger_typing()
+		Parameters
+		----------
+		match: The ID of the match, a reference to a player, or 'lm'. See '/docs Match Argument` for more info
+		perspective: The team who's perspective we should tell the match from
+		"""
+		steamid = match.steamid
+		match = match.match
 
-		steamid = None
-		try:
-			player = await DotaPlayer.from_author(ctx)
-			steamid = player.steam_id
-		except Exception as e:
-			pass
-
-		match = await get_match(match_id)
-
-		if perspective is None:
+		if steamid is not None:
 			player_data = next((p for p in match['players'] if p['account_id'] == steamid), None)
 			if steamid is not None and player_data is not None:
 				is_radiant = player_data['isRadiant']
-				perspective = "{2}({0}, {1})".format(self.get_pretty_hero(player_data), "Radiant" if is_radiant else "Dire", ctx.message.author.mention)
+				perspective = "{2}({0}, {1})".format(self.get_pretty_hero(player_data), "Radiant" if is_radiant else "Dire", player_data.get("personaname"))
 			else:
 				is_radiant = True
 		elif perspective.lower() == "radiant":
@@ -625,48 +633,52 @@ class DotaStats(MangoCog):
 		else:
 			raise UserError("Perspective must be either radiant or dire")
 		
+		if not is_parsed(match):
+			raise MatchNotParsedError(match["match_id"], "create a story")
 
-		await self.tell_match_story(match, is_radiant, ctx, perspective)
+		if not perspective:
+			perspective = "The Radiant" if is_radiant else "The Dire"
+			end_perspective = perspective
+		else:
+			end_perspective = f"{perspective} and their friends"
 
-	@commands.command(aliases=["lastgamestory", "lmstory"])
-	async def lastmatchstory(self, ctx, *, matchfilter : MatchFilter = None):
-		"""Tells the story of the player's last match
+		story = (f"*Told from the perspective of {perspective}*\n"
+				f"To see a more extensive story, try the [story tab](https://www.opendota.com/matches/{match['match_id']}/story) on opendota\n\n")
 
-		Input must be either a discord user, a steam32 id, or a steam64 id"""
-		await ctx.channel.trigger_typing()
-		
-		matchfilter = await MatchFilter.init(matchfilter, ctx)
-		player = matchfilter.player
+		story += await self.get_firstblood_story(match, is_radiant)
 
-		match_id = await get_lastmatch_id(matchfilter)
-		game = await get_match(match_id)
+		story += await self.get_lane_stories(match, is_radiant)
 
-		perspective = player.mention
-		if player is None:
-			player = ctx.message.author.mention
+		teamfights = await self.get_teamfight_stories(match, is_radiant)
 
-		player_data = next((p for p in game['players'] if p['account_id'] == player.steam_id), None)
-		perspective += "({0}, {1})".format(self.get_pretty_hero(player_data), "Radiant" if player_data['isRadiant'] else "Dire")
+		match_ending_state = "won" if (is_radiant == match['radiant_win']) else "lost"
+		story_end = f"\n{end_perspective} {match_ending_state} the match at { get_pretty_duration(match['duration']) }"
 
-		await self.tell_match_story(game, player_data['isRadiant'], ctx, perspective)
+		i = 0
+		while i < len(teamfights) and (len(story) + len(teamfights[i]) + len(story_end)) < 2000:
+			story += f"\n\n{teamfights[i]}"
+			i += 1
 
-	@commands.command(aliases=["recentmatches", "recent"])
-	async def matches(self, ctx, *, matchfilter : MatchFilter = None):
-		"""Gets a list of your matches
+		embed = disnake.Embed(description=story, color=self.embed_color)
+		embed.title = f"Story of Match {match['match_id']}"
+		embed.url = f"https://www.opendota.com/matches/{match['match_id']}/story"
 
-		The date/time is localized based off of the server that the game was played on, which means it may not match your timezone.
+		embed.set_footer(text=str(match["match_id"]))
+		embed.timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
 
-		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`
+		await inter.send(embed=embed)
 
-		Note that you can have this show up to 100 matches, but will by default only show 10, unless a timespan is given
+	@commands.slash_command()
+	async def recent(self, inter: disnake.CmdInter, matchfilter: MatchFilter = None):
+		"""Gets a list of your recent dota matches
+    
+		Parameters
+		----------
+		matchfilter: Specify how to filter these matches. To learn more, try '/docs Match Filter'
+		"""
+		await inter.response.defer()
 
-		**Example:**
-		`{cmdpfx}matches @PlayerPerson mid witch doctor ranked`
-		`{cmdpfx}matches natures prophet`
-		`{cmdpfx}matches @PlayerPerson riki`"""
-		await ctx.channel.trigger_typing()
-
-		matchfilter = await MatchFilter.init(matchfilter, ctx)
+		matchfilter = await MatchFilter.init(matchfilter, inter)
 
 		steam32 = matchfilter.player.steam_id
 
@@ -704,23 +716,20 @@ class DotaStats(MangoCog):
 		matches_image = await drawdota.draw_matches_table(matches, self.dota_game_strings)
 		matches_image = disnake.File(matches_image, "matches.png")
 		embed.set_image(url=f"attachment://{matches_image.filename}")
-		embed.set_footer(text=f"Try {self.cmdpfx(ctx)}matchids to get copy-pastable match ids")
+		embed.set_footer(text=f"Try /matchids to get copy-pastable match ids")
 
-		await ctx.send(embed=embed, file=matches_image)
+		await inter.send(embed=embed, file=matches_image)
 
-	@commands.command()
-	async def matchids(self, ctx, *, matchfilter : MatchFilter = None):
-		"""Gets a list of matchids that match the given filter
+	@commands.slash_command()
+	async def matchids(self, inter: disnake.CmdInter, matchfilter: MatchFilter = None):
+		"""Gets a list of recent matchids that match the given filter
+    
+		Parameters
+		----------
+		matchfilter: Specify how to filter these matches. To learn more, try '/docs Match Filter'"""
+		await inter.response.defer()
 
-		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`
-
-		**Example:**
-		`{cmdpfx}matchids @PlayerPerson mid witch doctor ranked`
-		`{cmdpfx}matchids natures prophet`
-		`{cmdpfx}matchids @PlayerPerson riki`"""
-		await ctx.channel.trigger_typing()
-
-		matchfilter = await MatchFilter.init(matchfilter, ctx)
+		matchfilter = await MatchFilter.init(matchfilter, inter)
 
 		steam32 = matchfilter.player.steam_id
 
@@ -752,30 +761,40 @@ class DotaStats(MangoCog):
 		embed.description += "\n".join(list(map(lambda m: str(m["match_id"]), matches)))
 		embed.description += "\n```"
 
-		embed.set_footer(text=f"Try {self.cmdpfx(ctx)}matches to get more details about these matches")
+		embed.set_footer(text=f"Try /recent to get more details about these matches")
 
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
-	@commands.command()
-	async def meta(self, ctx, *, count : int = 10): 
-		"""prints the top meta heroes from https://opendota.com/heroes"""
-		await ctx.channel.trigger_typing()
-		if count > 119:
-			raise UserError("Limit of matches can't be more than the number of heroes")
-		if count < 1: 
-			raise UserError("Limit of matches can't be less than 1")
-		await self.print_meta(ctx, count)
+	@commands.slash_command()
+	async def meta(self, inter: disnake.CmdInter, count: commands.Range[1, 120] = 10): 
+		"""Prints the top meta heroes from https://opendota.com/heroes
+		
+		Parameters
+		----------
+		count: The number of heroes to show
+		"""
+		await inter.response.defer()
+		json = await self.get_meta_json()
+		sorted_json = self.sort_meta(json, count)
+		description = (f"Top {count} meta hero(s) in professional matches")
+		embed = disnake.Embed(description = description, color=self.embed_color)
+		meta_table = disnake.File(await drawdota.draw_meta_table(sorted_json, json), "meta.png")
+		embed.set_image(url=f"attachment://{meta_table.filename}")
+		await inter.send(embed=embed, file=meta_table)
 
-	@commands.command(aliases=["whois"])
-	async def profile(self, ctx, player : DotaPlayer = None):
+	@commands.slash_command()
+	async def profile(self, inter: disnake.CmdInter, player: DotaPlayer = None):
 		"""Displays information about the player's dota profile
 
-		The argument for this command can be either a steam32 id, a steam64 id, or an @mention of a discord user who has a steamid set"""
+		Parameters
+		----------
+		player: Either a steam32 id, a steam64 id, or an @mention of a discord user who has a steamid set
+		"""
 		if not player:
-			player = await DotaPlayer.from_author(ctx)
+			player = await DotaPlayer.from_author(inter)
 		steam32 = player.steam_id
 
-		await ctx.channel.trigger_typing()
+		await inter.response.defer()
 
 		playerinfo = await opendota_query(f"/players/{steam32}")
 		matches = await opendota_query(f"/players/{steam32}/matches")
@@ -888,70 +907,67 @@ class DotaStats(MangoCog):
 
 		embed.set_footer(text=f"Steam ID: {steam32}")
 
-		await ctx.send(embed=embed, file=rank_icon)
+		await inter.send(embed=embed, file=rank_icon)
 
-	@commands.command(aliases=["chatstats"])
-	async def twenty(self, ctx, *, matchfilter : MatchFilter = None):
+	@commands.slash_command()
+	async def twenty(self, inter: disnake.CmdInter, matchfilter: MatchFilter = None):
 		"""Gets stats from the player's last 20 parsed games
 
-		Note that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available
-
-		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`"""
-		matchfilter = await MatchFilter.init(matchfilter, ctx)
+		Parameters
+		----------
+		matchfilter: Specify how to filter these matches. To learn more, try '/docs Match Filter'
+		"""
+		matchfilter = await MatchFilter.init(matchfilter, inter)
 		matchfilter.set_arg("limit", 20, True)
 		matchfilter.set_arg("_parsed", True)
 
-		await self.do_playerstats(ctx, matchfilter, do_downloaded=True)
+		await self.do_playerstats(inter, matchfilter, do_downloaded=True)
 
-	@commands.command(aliases=["pstats", "herostats"])
-	async def playerstats(self, ctx, *, matchfilter : MatchFilter = None):
-		"""Gets player match statistics
+	@commands.slash_command()
+	async def playerstats(self, inter: disnake.CmdInter, matchfilter: MatchFilter = None):
+		"""Gets stats about the player's dota matches
 
-		By default this will target all the matches a player has played.
+		Parameters
+		----------
+		matchfilter: Specify how to filter these matches. To learn more, try '/docs Match Filter'
+		"""
+		matchfilter = await MatchFilter.init(matchfilter, inter)
 
-		**Note:** If you're wondering why some data is now missing, check out `{cmdpfx}twenty`. I've revamped this command to work for all matches, and `{cmdpfx}twenty` is the old version of what this command used to be.
-		
-		To see how to filter for specific matches, try `{cmdpfx}docs matchfilter`"""
-		matchfilter = await MatchFilter.init(matchfilter, ctx)
-
-		await self.do_playerstats(ctx, matchfilter)
+		await self.do_playerstats(inter, matchfilter)
 
 	# the main internal logic for the playerstats and twenty commands
-	async def do_playerstats(self, ctx, matchfilter, do_downloaded=False):
+	async def do_playerstats(self, inter: disnake.CmdInter, matchfilter: MatchFilter, do_downloaded=False):
 		matchfilter.add_projections([ "kills", "deaths", "assists", "party_size", "version", "hero_id", "lane_role", "is_roaming", "lobby_type", "start_time", "duration" ])
 		steam32 = matchfilter.player.steam_id
 
+		await inter.response.defer()
 		# 
 		# STEP 1: download all match data
 		# 
-		with ctx.channel.typing():
-			# await thinker.think(ctx.message)
-			playerinfo = await opendota_query(f"/players/{steam32}")
-			matches_info = await opendota_query_filter(matchfilter)
-			matches_info = sorted(matches_info, key=lambda m: m["start_time"])
-			player_matches = []
+		playerinfo = await opendota_query(f"/players/{steam32}")
+		matches_info = await opendota_query_filter(matchfilter)
+		matches_info = sorted(matches_info, key=lambda m: m["start_time"])
+		player_matches = []
 
-			if do_downloaded:
-				matches = []
-				i = 0
-				while i < len(matches_info) and len(matches) < 20:
-					if matches_info[i].get('version', None) is not None:
-						match = await get_match(matches_info[i]['match_id'])
-						player_match = next((p for p in match['players'] if p['account_id'] == steam32), None)
-						if player_match is not None:
-							player_matches.append(player_match)
-							matches.append(match)
-					i += 1
-			else:
-				player_matches = matches_info
+		if do_downloaded:
+			matches = []
+			i = 0
+			while i < len(matches_info) and len(matches) < 20:
+				if matches_info[i].get('version', None) is not None:
+					match = await get_match(matches_info[i]['match_id'])
+					player_match = next((p for p in match['players'] if p['account_id'] == steam32), None)
+					if player_match is not None:
+						player_matches.append(player_match)
+						matches.append(match)
+				i += 1
+		else:
+			player_matches = matches_info
 
-
-		# await thinker.stop_thinking(ctx.message)
 		if len(player_matches) == 0:
 			if do_downloaded:
-				await ctx.send("Not enough parsed matches!")
+				await inter.send("Not enough parsed matches!")
 			else:
-				await ctx.send("Not enough matches found!")
+				await inter.send("Not enough matches found!")
 			return
 
 		# 
@@ -1176,23 +1192,26 @@ class DotaStats(MangoCog):
 			embed.add_field(name=category.get("caption"), value=value, inline=category.get("inline", True))
 
 		if embed_attachment:
-			await ctx.send(embed=embed, file=image)
+			await inter.send(embed=embed, file=image)
 		else:
-			await ctx.send(embed=embed)
+			await inter.send(embed=embed)
 
-	@commands.command(aliases=["dota_gif"])
-	async def dotagif(self, ctx, match_id : int, start, end, ms_per_second : int = 100):
+	@commands.slash_command()
+	async def dotagif(self, inter: disnake.CmdInter, match: DotaMatch, start: str, end: str, ms_per_second : int = 100):
 		"""Creates a gif of a specific part of a dota match
+		
 
-		The part of the match that you specify must be less than 10 minutes long
+		Parameters
+		----------
+		match: The ID of the match, a reference to a player, or 'lm'. See '/docs Match Argument` for more info
+		start: How many minutes into the match to start the gif. ex: 28:37
+		end: How many minutes into the match to end the gif. ex: 30:30
+		ms_per_second: How many miliseconds between each frame of the gif (each frame is 1 dota second)
+		"""
+		await inter.response.defer()
 
-		`ms_per_second` is how many miliseconds between frames of the gif (each frame is 1 dota second)
-
-		**Example:**
-		`{cmdpfx}dotagif 3370877768 28:37 30:30`"""
-		await ctx.channel.trigger_typing()
-
-		match = await get_match(match_id)
+		match = match.match
+		match_id = match["match_id"]
 		if not is_parsed(match):
 			raise MatchNotParsedError(match_id, "get laning info")
 
@@ -1216,35 +1235,22 @@ class DotaStats(MangoCog):
 
 		# "https://stratz.com/en-us/match/{match_id}/playback?pb_time={seconds}"
 
-		async with ctx.channel.typing():
-			# await thinker.think(ctx.message)
-			try:
-				image = disnake.File(await self.create_dota_gif(match, stratz_match, start, end, ms_per_second), "map.gif")
-				await ctx.send(file=image)
-			finally:
-				pass
-				# await thinker.stop_thinking(ctx.message)
+		image = disnake.File(await self.create_dota_gif(match, stratz_match, start, end, ms_per_second), "map.gif")
+		await inter.send(file=image)
 
-	@commands.command(aliases=["lanes"])
-	async def laning(self, ctx, match_id : int = None):
+
+	@match.sub_command()
+	async def laning(self, inter: disnake.CmdInter, match: DotaMatch):
 		"""Creates gif of the laning stage with a caption
 
-		If no match id is given and the user has a steam account connected, uses the player's most recently played match"""
-		await ctx.channel.trigger_typing()
-		try:
-			player = await DotaPlayer.from_author(ctx)
-			steamid = player.steam_id
-		except CustomBadArgument:
-			steamid = None
-			pass
-		if match_id is None:
-			if steamid is None:
-				raise SteamNotLinkedError()
-			matchfilter = await MatchFilter.init(None, ctx)
-			match_id = await get_lastmatch_id(matchfilter)
-		
+		Parameters
+		----------
+		match: The ID of the match, a reference to a player, or 'lm'. See '/docs Match Argument` for more info
+		"""
+		steamid = match.steamid
+		match = match.match
+		match_id = match["match_id"]
 
-		match = await get_match(match_id)
 		if not is_parsed(match):
 			raise MatchNotParsedError(match_id, "get laning info")
 
@@ -1262,16 +1268,13 @@ class DotaStats(MangoCog):
 		embed.title = f"Laning"
 		embed.url = f"https://stratz.com/en-us/match/{match_id}/playback"
 
+		image = disnake.File(await self.create_dota_gif(match, stratz_match, -89, 600, 100), "map.gif")
+		embed.set_image(url=f"attachment://{image.filename}")
 
-		async with ctx.channel.typing():
-			# await thinker.think(ctx.message)
-			try:
-				image = disnake.File(await self.create_dota_gif(match, stratz_match, -89, 600, 100), "map.gif")
-				embed.set_image(url=f"attachment://{image.filename}")
-				await ctx.send(embed=embed, file=image)
-			finally:
-				pass
-				# await thinker.stop_thinking(ctx.message)
+		embed.set_footer(text=str(match_id))
+		embed.timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
+
+		await inter.send(embed=embed, file=image)
 
 
 	@commands.command(aliases=["analyze", "studymatch"])
@@ -1327,48 +1330,54 @@ class DotaStats(MangoCog):
 		await ctx.send(f"❌ Parsing of match {match_id} timed out. Try again later or on the opendota site.", delete_after=10)
 
 
-	@commands.command(aliases=["profiles"])
-	async def whoishere(self, ctx, *, mentions_or_rank = None):
-		"""Shows what discord users are which steam users
-
-		This command will take the users that are currently in the channel mangobyte is in, and create an embed that shows who they are in steam. If you are in a voice channel, it will use the channel that you are in
-
-		You can also mention the users you want to show and it will show those ones too
-
-		If you use the word `rank` somewhere in the command, it will also show the ranks of the players"""
-		if ctx.message.guild is None:
+	@commands.slash_command()
+	async def whoishere(self, inter: disnake.CmdInter, users: str = None, show_ranks: bool = False):
+		"""Shows the linked steam accounts of anyone who is in voice chat with mango
+		
+		Parameters
+		----------
+		users: Any additional users to show the linked accounts of
+		show_ranks: Whether or not to show the ranks of the players when showing their steam accounts
+		"""
+		if inter.guild is None:
 			raise UserError("You have to use that command in a server")
 
+		logger.info(users)
+
+		additional_user_ids = []
+		if users:
+			matches = re.findall(r"<@!?(\d+)>", users)
+			for match in matches:
+				additional_user_ids.append(int(match))
+
 		voice_channel = None
-		if ctx.author.voice and ctx.author.voice.channel:
-			voice_channel = ctx.author.voice.channel
+		if inter.author.voice and inter.author.voice.channel:
+			voice_channel = inter.author.voice.channel
 		else:
 			audio = self.bot.get_cog("Audio")
-			audioplayer = await audio.audioplayer(ctx, False)
+			audioplayer = await audio.audioplayer(inter, False)
 			if audioplayer is None or audioplayer.voice_channel is None:
-				if len(ctx.message.mentions) == 0:
+				if len(additional_user_ids) == 0:
 					raise UserError("One of us needs to be in a voice channel for that to work")
 			else:
 				voice_channel = audioplayer.voice_channel
 
-		show_ranks = "rank" in (mentions_or_rank if mentions_or_rank else "")
-
 		members = []
 		if voice_channel:
-			members.extend(voice_channel.members)
-		if ctx.message.mentions:
-			members.extend(ctx.message.mentions)
+			members.extend(map(lambda u: u.id, voice_channel.members))
+		if additional_user_ids:
+			members.extend(additional_user_ids)
 
 		mentions = []
 		links = []
 		ranks = []
 
-		for member in members:
+		for user_id in members:
 			if voice_channel:
-				if member.id == voice_channel.guild.me.id:
+				if user_id == voice_channel.guild.me.id:
 					continue
-			mentions.append(member.mention)
-			userinfo = botdata.userinfo(member.id)
+			mentions.append(f"<@!{user_id}>")
+			userinfo = botdata.userinfo(user_id)
 			if userinfo.steam is None:
 				links.append("Unknown")
 				ranks.append("Unknown")
@@ -1388,45 +1397,18 @@ class DotaStats(MangoCog):
 		if show_ranks:
 			embed.add_field(name="Rank", value="\n".join(ranks))
 
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
-	@commands.command()
-	async def opendota(self, ctx, *, query):
-		"""Queries the opendota api
+	@commands.slash_command()
+	async def rolesgraph(self, inter: disnake.CmdInter, player: DotaPlayer = None):
+		"""Gets a graph displaying the dota player's hero roles
 
-		You can use this to get a json file with details about players or matches etc.
-		Examples:
-		`{cmdpfx}opendota /players/{steamid}`
-		`{cmdpfx}opendota /matches/{match_id}`
-
-		Note that this is just a little tool showcasing how you can use the api. You can also put urls like these in your browser to get the same results, which I'd recommend if you're doing this a lot.
-
-		For more options and a better explanation, check out their [documentation](https://docs.opendota.com)"""
-		query = query.replace("/", " ")
-		query = query.strip()
-		query = "/" + "/".join(query.split(" "))
-		query = re.sub("[^/0-9a-zA-Z?=&_]", "", query)
-
-		with ctx.channel.typing():
-			data = await opendota_query(query)
-
-		tempdir = settings.resource("temp")
-		if not os.path.exists(tempdir):
-			os.makedirs(tempdir)
-		filename = re.search("/([/0-9a-zA-Z]+)", query).group(1).replace("/", "_")
-		filename = tempdir + f"/{filename}.json"
-		write_json(filename, data)
-		await ctx.send(file=disnake.File(filename))
-		os.remove(filename)
-
-	@commands.command()
-	async def rolesgraph(self, ctx, player : DotaPlayer = None):
-		"""Gets a graph displaying the player's hero roles
-
-		The graph is based on the player's last 30 games
+		Parameters
+		----------
+		player: Either a steam32 id, a steam64 id, or an @mention of a discord user who has a steamid set
 		"""
 		if not player:
-			player = await DotaPlayer.from_author(ctx)
+			player = await DotaPlayer.from_author(inter)
 
 		playerinfo = await opendota_query(f"/players/{player.steam_id}")
 		matches = await opendota_query(f"/players/{player.steam_id}/matches?limit=30")
@@ -1471,73 +1453,45 @@ class DotaStats(MangoCog):
 
 		image = disnake.File(drawdota.draw_polygraph(role_scores, roles), "rolesgraph.png")
 		embed.set_image(url=f"attachment://{image.filename}")
-		await ctx.send(embed=embed, file=image)
+		await inter.send(embed=embed, file=image)
 
-	@commands.command(aliases=["abilitybuild", "skillbuilds", "matchbuilds"])
-	async def skillbuild(self, ctx, match_id : int):
+	@match.sub_command()
+	async def skillbuild(self, inter: disnake.CmdInter, match: DotaMatch):
 		"""Gets the ability upgrades for a match
 
-		Shows all the ability upgrade orders for all heroes in the match"""
-		match = await get_match(match_id)
+		Parameters
+		----------
+		match: The ID of the match, a reference to a player, or 'lm'. See '/docs Match Argument` for more info
+		"""
+		match = match.match
+		match_id = match["match_id"]
 
 		embed = disnake.Embed()
 
 		embed.title = f"Match {match_id}"
 		embed.url = f"https://opendota.com/matches/{match_id}"
 
-		async with ctx.channel.typing():
-			image = disnake.File(await drawdota.draw_match_ability_upgrades(match), "upgrades.png")
-			embed.set_image(url=f"attachment://{image.filename}")
-			await ctx.send(embed=embed, file=image)
+		embed.description = "Skill Builds"
 
-	@commands.command(aliases=["graph", "dotagraph"])
-	async def matchgraph(self, ctx, *, options = ""):
+		image = disnake.File(await drawdota.draw_match_ability_upgrades(match), "upgrades.png")
+		embed.set_image(url=f"attachment://{image.filename}")
+
+		embed.set_footer(text=str(match_id))
+		embed.timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
+
+		await inter.send(embed=embed, file=image)
+
+	@match.sub_command()
+	async def graph(self, inter: disnake.CmdInter, match: DotaMatch, graphtype: commands.option_enum(OrderedDict(graphtypes)) = "teamdiff"):
 		"""Creates a graph for a dota match
 
-		Give this match a match_id or it will try to use your last played game
-
-		different types of graphs:
-		teamdiff: creates a graph of the networth/xp differences between the teams
-		playergold: creates a graph of the networths of the players throughout the match
-		(ill probably add more in the futre but thats it for now)
+		Parameters
+		----------
+		match: The ID of the match, a reference to a player, or 'lm'. See '/docs Match Argument` for more info
+		graphtype: The type of graph to create
 		"""
-		graphtypes = {
-			"teamdiff": {
-				"pattern": "(team)? ?(diff|networth)",
-				"name": "Team Gold/Experience Difference"
-			},
-			"playergold": {
-				"pattern": "(players? ?(gold)?)",
-				"name": "Player Gold"
-			}
-		}
-
-		graphtype = "teamdiff"
-
-		for key in graphtypes:
-			pattern = graphtypes[key]["pattern"]
-			if re.match(pattern, options):
-				options = re.sub(pattern, "", options)
-				graphtype = key
-				break
-
-		options = options.strip()
-
-		if options.isnumeric():
-			match_id = int(options)
-		elif options == "":
-			try:
-				player = await DotaPlayer.from_author(ctx)
-				steamid = player.steam_id
-			except CustomBadArgument:
-				steamid = None
-				raise SteamNotLinkedError()
-			matchfilter = await MatchFilter.init(None, ctx)
-			match_id = await get_lastmatch_id(matchfilter)
-		else:
-			raise UserError(f"I'm not sure what \"{options}\" means")
-
-		match = await get_match(match_id)
+		match = match.match
+		match_id = match["match_id"]
 
 		if not is_parsed(match):
 			raise MatchNotParsedError(match["match_id"], "create a graph")
@@ -1546,9 +1500,8 @@ class DotaStats(MangoCog):
 
 		embed.title = f"Match {match_id}"
 		embed.url = f"https://opendota.com/matches/{match_id}"
-		embed.set_footer(text=f"This is a rough draft, im planning on making this much better at some point")
 
-		embed.description = graphtypes[graphtype]["name"]
+		embed.description = next(key for key, value in graphtypes.items() if value == graphtype)
 
 		if graphtype == "teamdiff":
 			lines = [ match["radiant_gold_adv"], match["radiant_xp_adv"] ]
@@ -1577,10 +1530,13 @@ class DotaStats(MangoCog):
 		else:
 			raise UserError("oops, look like thats not implemented yet")
 
-		async with ctx.channel.typing():
-			image = disnake.File(drawgraph.drawgraph(lines, colors, labels), "graph.png")
-			embed.set_image(url=f"attachment://{image.filename}")
-			await ctx.send(embed=embed, file=image)
+		image = disnake.File(drawgraph.drawgraph(lines, colors, labels), "graph.png")
+		embed.set_image(url=f"attachment://{image.filename}")
+
+		embed.set_footer(text=str(match_id))
+		embed.timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
+
+		await inter.send(embed=embed, file=image)
 
 
 

@@ -336,12 +336,12 @@ class BotData:
 	def save_data(self):
 		write_json(self.path, self.json_data)
 
-	def userinfo(self, userid):
+	def userinfo(self, userid) -> UserInfo:
 		if isinstance(userid, disnake.User) or isinstance(userid, disnake.Member):
 			userid = userid.id
 		return UserInfo(self, userid)
 
-	def guildinfo(self, guildid):
+	def guildinfo(self, guildid) -> GuildInfo:
 		if isinstance(guildid, disnake.Interaction):
 			guildid = guildid.guild
 		if isinstance(guildid, disnake.ext.commands.Context):

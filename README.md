@@ -22,7 +22,7 @@ Want to try out mangobyte on your server? [Click Here](https://discordapp.com/oa
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 85 commands, separated into 6 categories
+Mangobyte currently has 83 commands, separated into 6 categories
 
 #### General
 Commands that don't really fit into the other categories
@@ -101,25 +101,23 @@ For information about Dota 2, and playing hero responses
 Commands for displaying information about Dota 2 players and matches
 
 ```
-?dotagif             | Creates a gif of a specific part of a dota match                                           
-?firstmatch          | Gets info about the player's first dota game                                               
-?laning              | Creates gif of the laning stage with a caption                                             
-?lastmatch           | Gets info about the player's last dota game                                                
-?lastmatchstory      | Tells the story of the player's last match                                                 
-?match               | Gets a summary of the dota match with the given id                                         
-?matches             | Gets a list of your matches                                                                
-?matchgraph          | Creates a graph for a dota match                                                           
-?matchids            | Gets a list of matchids that match the given filter                                        
-?matchstory          | Tells the story of the match                                                               
-?meta                | prints the top meta heroes from https://opendota.com/heroes                                
-?opendota            | Queries the opendota api                                                                   
+/dotagif             | Creates a gif of a specific part of a dota match                                           
+/firstmatch          | Gets info about the player's first dota game                                               
+/lm                  | Gets info about the player's last dota game                                                
+/match graph         | Creates a graph for a dota match                                                           
+/match info          | Creates a table with some basic stats and information about the dota match                 
+/match laning        | Creates gif of the laning stage with a caption                                             
+/match skillbuild    | Gets the ability upgrades for a match                                                      
+/match story         | Tells the story of the match                                                               
+/matchids            | Gets a list of recent matchids that match the given filter                                 
+/meta                | Prints the top meta heroes from https://opendota.com/heroes                                
 ?parse               | Requests that OpenDota parses a match                                                      
-?playerstats         | Gets player match statistics                                                               
-?profile             | Displays information about the player's dota profile                                       
-?rolesgraph          | Gets a graph displaying the player's hero roles                                            
-?skillbuild          | Gets the ability upgrades for a match                                                      
-?twenty              | Gets stats from the player's last 20 parsed games                                          
-?whoishere           | Shows what discord users are which steam users                                             
+/playerstats         | Gets stats about the player's dota matches                                                 
+/profile             | Displays information about the player's dota profile                                       
+/recent              | Gets a list of your recent dota matches                                                    
+/rolesgraph          | Gets a graph displaying the dota player's hero roles                                       
+/twenty              | Gets stats from the player's last 20 parsed games                                          
+/whoishere           | Shows the linked steam accounts of anyone who is in voice chat with mango                  
 ```
 
 #### Pokemon

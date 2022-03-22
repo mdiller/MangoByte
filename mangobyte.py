@@ -213,16 +213,13 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError):
 	try:
 		if isinstance(error, commands.CommandNotFound):
 			cmd = ctx.message.content[1:].split(" ")[0]
-			test = bot.all_slash_commands
-			slash_command_names = list(map(lambda c: c.name, bot.slash_commands))
+			slash_command_names = list(map(lambda c: c.name, bot.help_command.expand_subcommands(bot.slash_commands)))
 			if cmd in deprecated_commands:
 				logger.info(f"deprecated command '{cmd}' attempted")
 				if deprecated_commands[cmd].startswith("_"):
 					await ctx.send(f"{cmdpfx}{cmd}` has been deprecated. {deprecated_commands[cmd][1:]}")
 					return
-				is_slash_command = deprecated_commands[cmd] in slash_command_names
-				altprefix = "/" if is_slash_command else cmdpfx
-				await ctx.send(f"`{cmdpfx}{cmd}` has been deprecated. Try `{altprefix}{deprecated_commands[cmd]}` instead.")
+				await ctx.send(f"`{cmdpfx}{cmd}` has been deprecated. Try `/{deprecated_commands[cmd]}` instead.")
 				return
 			elif cmd in slash_command_names:
 				logger.info(f"deprecated command '{cmd}' attempted")

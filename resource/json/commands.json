@@ -232,14 +232,12 @@
 		},
 		{
 			"name": "dotagif",
-			"signature": "?dotagif <match_id> <start> <end> [ms_per_second=100]",
+			"signature": null,
 			"short_help": "Creates a gif of a specific part of a dota match",
-			"help": "Creates a gif of a specific part of a dota match\n\nThe part of the match that you specify must be less than 10 minutes long\n\n\u200b`ms_per_second` is how many miliseconds between frames of the gif (each frame is 1 dota second)\n\n**Example:**\n\u200b`?dotagif 3370877768 28:37 30:30`",
-			"aliases": [
-				"dota_gif"
-			],
+			"help": "Creates a gif of a specific part of a dota match",
+			"aliases": [],
 			"cog": "DotaStats",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "echo",
@@ -272,15 +270,12 @@
 		},
 		{
 			"name": "firstmatch",
-			"signature": "?firstmatch [matchfilter]",
+			"signature": null,
 			"short_help": "Gets info about the player's first dota game",
-			"help": "Gets info about the player's first dota game\n\nTo see how to filter for specific matches, try `?docs matchfilter`",
-			"aliases": [
-				"firstgame",
-				"fm"
-			],
+			"help": "Gets info about the player's first dota game",
+			"aliases": [],
 			"cog": "DotaStats",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "fuseheroes",
@@ -359,41 +354,6 @@
 			"prefix": "?"
 		},
 		{
-			"name": "laning",
-			"signature": "?laning [match_id]",
-			"short_help": "Creates gif of the laning stage with a caption",
-			"help": "Creates gif of the laning stage with a caption\n\nIf no match id is given and the user has a steam account connected, uses the player's most recently played match",
-			"aliases": [
-				"lanes"
-			],
-			"cog": "DotaStats",
-			"prefix": "?"
-		},
-		{
-			"name": "lastmatch",
-			"signature": "?lastmatch [matchfilter]",
-			"short_help": "Gets info about the player's last dota game",
-			"help": "Gets info about the player's last dota game\n\nTo see how to filter for specific matches, try `?docs matchfilter`",
-			"aliases": [
-				"lastgame",
-				"lm"
-			],
-			"cog": "DotaStats",
-			"prefix": "?"
-		},
-		{
-			"name": "lastmatchstory",
-			"signature": "?lastmatchstory [matchfilter]",
-			"short_help": "Tells the story of the player's last match",
-			"help": "Tells the story of the player's last match\n\nInput must be either a discord user, a steam32 id, or a steam64 id",
-			"aliases": [
-				"lastgamestory",
-				"lmstory"
-			],
-			"cog": "DotaStats",
-			"prefix": "?"
-		},
-		{
 			"name": "later",
 			"signature": "?later ",
 			"short_help": "Tells you how much later it is",
@@ -415,6 +375,15 @@
 			],
 			"cog": "Dotabase",
 			"prefix": "?"
+		},
+		{
+			"name": "lm",
+			"signature": null,
+			"short_help": "Gets info about the player's last dota game",
+			"help": "Gets info about the player's last dota game",
+			"aliases": [],
+			"cog": "DotaStats",
+			"prefix": "/"
 		},
 		{
 			"name": "lol",
@@ -439,66 +408,67 @@
 			"prefix": "?"
 		},
 		{
-			"name": "match",
-			"signature": "?match <match_id>",
-			"short_help": "Gets a summary of the dota match with the given id",
-			"help": "Gets a summary of the dota match with the given id",
-			"aliases": [
-				"matchdetails"
-			],
-			"cog": "DotaStats",
-			"prefix": "?"
-		},
-		{
-			"name": "matches",
-			"signature": "?matches [matchfilter]",
-			"short_help": "Gets a list of your matches",
-			"help": "Gets a list of your matches\n\nThe date/time is localized based off of the server that the game was played on, which means it may not match your timezone.\n\nTo see how to filter for specific matches, try `?docs matchfilter`\n\nNote that you can have this show up to 100 matches, but will by default only show 10, unless a timespan is given\n\n**Example:**\n\u200b`?matches @PlayerPerson mid witch doctor ranked`\n\u200b`?matches natures prophet`\n\u200b`?matches @PlayerPerson riki`",
-			"aliases": [
-				"recentmatches",
-				"recent"
-			],
-			"cog": "DotaStats",
-			"prefix": "?"
-		},
-		{
-			"name": "matchgraph",
-			"signature": "?matchgraph [options]",
+			"name": "match graph",
+			"signature": null,
 			"short_help": "Creates a graph for a dota match",
-			"help": "Creates a graph for a dota match\n\nGive this match a match_id or it will try to use your last played game\n\ndifferent types of graphs:\nteamdiff: creates a graph of the networth/xp differences between the teams\nplayergold: creates a graph of the networths of the players throughout the match\n(ill probably add more in the futre but thats it for now)",
-			"aliases": [
-				"graph",
-				"dotagraph"
-			],
+			"help": "Creates a graph for a dota match",
+			"aliases": [],
 			"cog": "DotaStats",
-			"prefix": "?"
+			"prefix": "/"
+		},
+		{
+			"name": "match info",
+			"signature": null,
+			"short_help": "Creates a table with some basic stats and information about the dota match",
+			"help": "Creates a table with some basic stats and information about the dota match",
+			"aliases": [],
+			"cog": "DotaStats",
+			"prefix": "/"
+		},
+		{
+			"name": "match laning",
+			"signature": null,
+			"short_help": "Creates gif of the laning stage with a caption",
+			"help": "Creates gif of the laning stage with a caption",
+			"aliases": [],
+			"cog": "DotaStats",
+			"prefix": "/"
+		},
+		{
+			"name": "match skillbuild",
+			"signature": null,
+			"short_help": "Gets the ability upgrades for a match",
+			"help": "Gets the ability upgrades for a match",
+			"aliases": [],
+			"cog": "DotaStats",
+			"prefix": "/"
+		},
+		{
+			"name": "match story",
+			"signature": null,
+			"short_help": "Tells the story of the match",
+			"help": "Tells the story of the match",
+			"aliases": [],
+			"cog": "DotaStats",
+			"prefix": "/"
 		},
 		{
 			"name": "matchids",
-			"signature": "?matchids [matchfilter]",
-			"short_help": "Gets a list of matchids that match the given filter",
-			"help": "Gets a list of matchids that match the given filter\n\nTo see how to filter for specific matches, try `?docs matchfilter`\n\n**Example:**\n\u200b`?matchids @PlayerPerson mid witch doctor ranked`\n\u200b`?matchids natures prophet`\n\u200b`?matchids @PlayerPerson riki`",
+			"signature": null,
+			"short_help": "Gets a list of recent matchids that match the given filter",
+			"help": "Gets a list of recent matchids that match the given filter",
 			"aliases": [],
 			"cog": "DotaStats",
-			"prefix": "?"
-		},
-		{
-			"name": "matchstory",
-			"signature": "?matchstory <match_id> [perspective]",
-			"short_help": "Tells the story of the match",
-			"help": "Tells the story of the match\n\nThe story is based on the given perspective, or the player's perspective if they were in the match.",
-			"aliases": [],
-			"cog": "DotaStats",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "meta",
-			"signature": "?meta [count=10]",
-			"short_help": "prints the top meta heroes from https://opendota.com/heroes",
-			"help": "prints the top meta heroes from https://opendota.com/heroes",
+			"signature": null,
+			"short_help": "Prints the top meta heroes from https://opendota.com/heroes",
+			"help": "Prints the top meta heroes from https://opendota.com/heroes",
 			"aliases": [],
 			"cog": "DotaStats",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "misc ask",
@@ -605,15 +575,6 @@
 			"prefix": "?"
 		},
 		{
-			"name": "opendota",
-			"signature": "?opendota <query>",
-			"short_help": "Queries the opendota api",
-			"help": "Queries the opendota api\n\nYou can use this to get a json file with details about players or matches etc.\nExamples:\n\u200b`?opendota /players/{steamid}`\n\u200b`?opendota /matches/{match_id}`\n\nNote that this is just a little tool showcasing how you can use the api. You can also put urls like these in your browser to get the same results, which I'd recommend if you're doing this a lot.\n\nFor more options and a better explanation, check out their [documentation](https://docs.opendota.com)",
-			"aliases": [],
-			"cog": "DotaStats",
-			"prefix": "?"
-		},
-		{
 			"name": "parse",
 			"signature": "?parse [match_id]",
 			"short_help": "Requests that OpenDota parses a match",
@@ -645,15 +606,12 @@
 		},
 		{
 			"name": "playerstats",
-			"signature": "?playerstats [matchfilter]",
-			"short_help": "Gets player match statistics",
-			"help": "Gets player match statistics\n\nBy default this will target all the matches a player has played.\n\n**Note:** If you're wondering why some data is now missing, check out `?twenty`. I've revamped this command to work for all matches, and `?twenty` is the old version of what this command used to be.\n\nTo see how to filter for specific matches, try `?docs matchfilter`",
-			"aliases": [
-				"pstats",
-				"herostats"
-			],
+			"signature": null,
+			"short_help": "Gets stats about the player's dota matches",
+			"help": "Gets stats about the player's dota matches",
+			"aliases": [],
 			"cog": "DotaStats",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "playurl",
@@ -688,14 +646,21 @@
 		},
 		{
 			"name": "profile",
-			"signature": "?profile [player]",
+			"signature": null,
 			"short_help": "Displays information about the player's dota profile",
-			"help": "Displays information about the player's dota profile\n\nThe argument for this command can be either a steam32 id, a steam64 id, or an @mention of a discord user who has a steamid set",
-			"aliases": [
-				"whois"
-			],
+			"help": "Displays information about the player's dota profile",
+			"aliases": [],
 			"cog": "DotaStats",
-			"prefix": "?"
+			"prefix": "/"
+		},
+		{
+			"name": "recent",
+			"signature": null,
+			"short_help": "Gets a list of your recent dota matches",
+			"help": "Gets a list of your recent dota matches",
+			"aliases": [],
+			"cog": "DotaStats",
+			"prefix": "/"
 		},
 		{
 			"name": "recipe",
@@ -739,12 +704,12 @@
 		},
 		{
 			"name": "rolesgraph",
-			"signature": "?rolesgraph [player]",
-			"short_help": "Gets a graph displaying the player's hero roles",
-			"help": "Gets a graph displaying the player's hero roles\n\nThe graph is based on the player's last 30 games",
+			"signature": null,
+			"short_help": "Gets a graph displaying the dota player's hero roles",
+			"help": "Gets a graph displaying the dota player's hero roles",
 			"aliases": [],
 			"cog": "DotaStats",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "shiny",
@@ -753,19 +718,6 @@
 			"help": "Gets the shiny version of this pokemon\n\npokemon should be specified using either their name or id number\n\nExample:\n\u200b`?shiny charizard`",
 			"aliases": [],
 			"cog": "Pokemon",
-			"prefix": "?"
-		},
-		{
-			"name": "skillbuild",
-			"signature": "?skillbuild <match_id>",
-			"short_help": "Gets the ability upgrades for a match",
-			"help": "Gets the ability upgrades for a match\n\nShows all the ability upgrade orders for all heroes in the match",
-			"aliases": [
-				"abilitybuild",
-				"skillbuilds",
-				"matchbuilds"
-			],
-			"cog": "DotaStats",
 			"prefix": "?"
 		},
 		{
@@ -837,14 +789,12 @@
 		},
 		{
 			"name": "twenty",
-			"signature": "?twenty [matchfilter]",
+			"signature": null,
 			"short_help": "Gets stats from the player's last 20 parsed games",
-			"help": "Gets stats from the player's last 20 parsed games\n\nNote that this only cares about **parsed** games, and unparsed games will be ignored. If the player has less than 20 parsed matches, we'll use all the parsed matches available\n\nTo see how to filter for specific matches, try `?docs matchfilter`",
-			"aliases": [
-				"chatstats"
-			],
+			"help": "Gets stats from the player's last 20 parsed games",
+			"aliases": [],
 			"cog": "DotaStats",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "unsummon",
@@ -866,14 +816,12 @@
 		},
 		{
 			"name": "whoishere",
-			"signature": "?whoishere [mentions_or_rank]",
-			"short_help": "Shows what discord users are which steam users",
-			"help": "Shows what discord users are which steam users\n\nThis command will take the users that are currently in the channel mangobyte is in, and create an embed that shows who they are in steam. If you are in a voice channel, it will use the channel that you are in\n\nYou can also mention the users you want to show and it will show those ones too\n\nIf you use the word `rank` somewhere in the command, it will also show the ranks of the players",
-			"aliases": [
-				"profiles"
-			],
+			"signature": null,
+			"short_help": "Shows the linked steam accounts of anyone who is in voice chat with mango",
+			"help": "Shows the linked steam accounts of anyone who is in voice chat with mango",
+			"aliases": [],
 			"cog": "DotaStats",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "wiki",

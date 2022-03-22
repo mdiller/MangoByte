@@ -251,6 +251,8 @@ class General(MangoCog):
 				f"`{cmdpfx}{top_commands_weekly[0][0]}`\n"
 				f"`{cmdpfx}{top_commands_weekly[1][0]}`\n"
 				f"`{cmdpfx}{top_commands_weekly[2][0]}`\n"))
+		
+		embed.set_footer(text="Note that this info does not include slash commands yet. I've gotta update and rework this.")
 
 		await inter.send(embed=embed)
 
