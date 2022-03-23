@@ -10,7 +10,6 @@ from io import BytesIO
 
 import disnake
 import praw
-from __main__ import invite_link
 from bs4 import BeautifulSoup, Tag
 from disnake.ext import commands, tasks
 from utils.command import botdatatypes, checks
@@ -39,7 +38,6 @@ def load_words():
 			words[key] = text.split("\n")
 	return words
 
-
 # fills a template with the words of the type asked for
 def fill_word_template(template, words):
 	def replace(match):
@@ -61,6 +59,8 @@ def fill_word_template(template, words):
 def load_md_as_dict(filename):
 	with open(filename, "r") as f:
 		text = f.read()
+	text = re.sub(r"<!--.*?-->\n?", "", text)
+	text = "\n" + text
 	result = {}
 	pattern = re.compile(r"\n# ([^\n]+)\n([\s\S]*?)(?=\n# |$)")
 	for match in pattern.finditer(text):
@@ -188,12 +188,12 @@ class General(MangoCog):
 		help_guild_link = "https://discord.gg/d6WWHxx"
 
 		embed.add_field(name="Help", value=(
-			f"If you want to invite mangobyte to your server/guild, click this [invite link]({invite_link}). "
+			f"If you want to invite mangobyte to your server/guild, click this [invite link]({settings.invite_link}). "
 			f"If you have a question, suggestion, or just want to try out mah features, check out the [Help Server/Guild]({help_guild_link})."))
 
 		cmdpfx = botdata.command_prefix_guild(inter.guild)
 		embed.add_field(name="Features", value=(
-			f"• Answers questions (`{cmdpfx}ask`)\n"
+			f"• Answers questions (`/ask`)\n"
 			f"• Plays audio clips (`{cmdpfx}play`, `{cmdpfx}dota`)\n"
 			f"• Greets users joining a voice channel\n"
 			f"• For a list of command categories, try `{cmdpfx}help`"), inline=False)
@@ -211,7 +211,7 @@ class General(MangoCog):
 	@bot.sub_command()
 	async def invite(self, inter: disnake.CmdInter):
 		"""Shows the invite link"""
-		await inter.send(invite_link)
+		await inter.send(settings.invite_link)
 
 	@bot.sub_command()
 	async def stats(self, inter: disnake.CmdInter):

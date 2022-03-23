@@ -100,11 +100,11 @@ class Cache:
 					os.remove(filename)
 
 def raise_error(url, code, errors):
-	logger.error(f"http {code} error on: {url}")
 	template = errors.get(code, errors.get("default", "Http request failed with a {} error"))
 	if code == 404:
 		raise Http404Error(template, url)
 	else:
+		logger.error(f"http {code} error on: {url}")
 		raise HttpError(template, url, code)
 
 class HttpGetter:

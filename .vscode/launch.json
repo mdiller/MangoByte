@@ -12,12 +12,12 @@
 			"console": "integratedTerminal"
 		},
 		{
-			"name": "Refresh mango commands",
+			"name": "Update Static Files",
 			"type": "python",
 			"request": "launch",
 			"program": "mangobyte.py",
 			"console": "integratedTerminal",
-			"args": [ "commands" ]
+			"args": [ "update" ]
 		},
 		{
 			"name": "Run Current File",

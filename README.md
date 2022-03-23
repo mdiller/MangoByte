@@ -1,10 +1,10 @@
 <h1 align="center">MangoByte</h1>
 
 <p align="center">
-	<a href="https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968">
+	<a href="https://discord.gg/d6WWHxx">
 		<img alt="Servers" src="https://img.shields.io/badge/dynamic/json.svg?style=for-the-badge&label=servers&url=http%3A%2F%2Fdillerm.io%2Fdata%2Fmangobyte%2Fshieldstats.json&query=%24.servers&colorB=#4c1">
 	</a>
-	<a href="https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968">
+	<a href="https://discord.gg/d6WWHxx">
 		<img alt="Registered Users" src="https://img.shields.io/badge/dynamic/json.svg?style=for-the-badge&label=registered%20users&url=http%3A%2F%2Fdillerm.io%2Fdata%2Fmangobyte%2Fshieldstats.json&query=%24.registered_users&colorB=#4c1">
 	</a>
 	<br>
@@ -13,11 +13,19 @@
 	</a>
 </p>
 
+<!-- Note that parts of this file are auto-generated, which is why theres some html comment placeholders below -->
+
 Mangobyte is a discord bot primarily focused on providing information about the game Dota 2, and doing text-to-speech in a voice channel. The text-to-speech has many different forms, including playing clips, playing voice lines from dota, and doing tts from user input. The Dota 2 information is both information about the players and their recent matches, as well as information extracted from the game itself about the stats of various heroes. It can also play an intro for users when they join the voice channel it is in. It is highly configurable, allowing server/guild owners to configure various options for their servers, as well as users to configure various options for themselves. I'm using the [disnake](https://github.com/DisnakeDev/disnake) python wrapper for the [Discord API](https://discordapp.com/developers). I'm also making use of [dotabase](https://github.com/mdiller/dotabase), which is an open source repository (created by yours truly) containing data about the game [Dota 2](http://www.dota2.com).
 
 ## Inviting Mangobyte
 
-Want to try out mangobyte on your server? [Click Here](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968)
+Want to try out mangobyte on your server? <!-- INVITE_LINK_START -->[Invite Link](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot%20applications.commands&client_id=213476188037971968)<!-- INVITE_LINK_END -->
+
+## Slash Command Migration
+
+Mangobyte is currently in the process of migrating over to slash commands. If you are having issues getting slash commands working properly in your server, try taking a look at [Slash Command Common Issues](docs/slash_command_common_issues.md). If you use mangobyte already and want to know why we're switching to slash commands or just want more information on it, run the command `/docs Slash Commands`.
+
+**Current Migration Progress:** <!-- SLASH_PROGRESS_PERCENT_START -->45%<!-- SLASH_PROGRESS_PERCENT_END -->
 
 ## Commands
 
@@ -202,7 +210,7 @@ Commands to help manage mangobyte on your server/guild
 
 ## Installation
 
-I would recommend simply inviting mangobyte to your server via the [Invite Link](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot&client_id=213476188037971968), but if you want to contribute to mangobyte or just like running things, the following is how you can install and run your own instance of mangobyte.
+I would recommend simply inviting mangobyte to your server via the <!-- INVITE_LINK_START -->[Invite Link](https://discordapp.com/oauth2/authorize?permissions=314432&scope=bot%20applications.commands&client_id=213476188037971968)<!-- INVITE_LINK_END -->, but if you want to contribute to mangobyte or just like running code, the following is how you can install and run your own instance of mangobyte.
 
 Before installing and running your own instance of mangobyte, you will first need to install the following:
 
@@ -212,9 +220,9 @@ Before installing and running your own instance of mangobyte, you will first nee
 * [ffmpeg](https://ffmpeg.org) (the tool used for playing audio)
 * [gifsicle](https://www.lcdf.org/gifsicle/) (the tool used for creating gifs)
 
-If you run `python3.6 mangobyte.py`, you will probably get an error message because the bot token isn't set. You'll have to [create a bot account](https://twentysix26.github.io/Red-Docs/red_guide_bot_accounts/) through discord in order to get one of these tokens. Note that the above link is for a different discord bot, and so the "Logging in with a token" section does not apply here. Now that you have a bot account, set the `token` field in the `settings.json` file to your new bot's token. After you have done this, and have invited your bot to your server, don't forget to add the ID of the voice channel you want to connect it to in the `defaultvoice` field in the `settings.json` file.
+If you run `python3.9 mangobyte.py`, you will probably get an error message because the bot token isn't set. You'll have to [create a bot account](https://twentysix26.github.io/Red-Docs/red_guide_bot_accounts/) through discord in order to get one of these tokens. Note that the above link is for a different discord bot, and so the "Logging in with a token" section does not apply here. Now that you have a bot account, set the `token` field in the `settings.json` file to your new bot's token. After you have done this, and have invited your bot to your server, don't forget to add the ID of the voice channel you want to connect it to in the `defaultvoice` field in the `settings.json` file.
 
-You should now be done! You can run mangobyte by calling `python3.6 mangobyte.py`, and you should probably set up a virtual environment so that nothing bad has a chance of happening.
+You should now be done! You can run mangobyte by calling `python3.9 mangobyte.py`, and you should probably set up a virtual environment so that nothing bad has a chance of happening.
 
 ### Example settings.json file
 

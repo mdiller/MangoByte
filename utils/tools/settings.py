@@ -86,9 +86,27 @@ class Settings:
 	def loki(self):
 		return self.json_data.get("loki", None)
 
+	# BELOW ARE SOME STATICS NOT DEFINED IN THE SETTINGS.JSON FILE
+
+	# permissions settings for the bot
+	@property
+	def permissions(self): # see https://discord.com/developers/applications/213476188037971968/oauth2/url-generator
+		return 314432
+	
+	# the client_id of the bot
+	@property
+	def client_id(self):
+		return 213476188037971968
+	
+	# an invite link for inviting the bot
+	@property
+	def invite_link(self): # see https://discord.com/developers/applications/213476188037971968/oauth2/url-generator
+		return f"https://discordapp.com/oauth2/authorize?permissions={self.permissions}&scope=bot%20applications.commands&client_id={self.client_id}"
+
+	# directory used for retrieving file resources for mango
 	@property
 	def resourcedir(self):
-		return "resource/" # self.json_data["resourcedir"]
+		return "resource/"
 
 
 	def resource(self, dir):
