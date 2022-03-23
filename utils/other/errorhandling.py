@@ -176,7 +176,10 @@ async def report_error(ctx_inter_msg: typing.Union[InterContext, disnake.Message
 		if isinstance(error, disnake.errors.InteractionTimedOut):
 			trace = [ "InteractionTimedOut: took longer than 3 seconds" ]
 		else:
-			raise error.original
+			if hasattr(error, "original"):
+				raise error.original
+			else:
+				raise error
 	except:
 		trace = traceback.format_exc().replace("\"", "'").split("\n")
 		if skip_lines > 0 and len(trace) >= (2 + skip_lines):
