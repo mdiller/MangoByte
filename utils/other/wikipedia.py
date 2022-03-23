@@ -101,7 +101,8 @@ class WikipediaPage():
 					has_content = True
 			return tag.name == "p" and not tag.attrs and has_content
 
-		summary_html = page_html.find("div").find(findSummaryParagraph, recursive=False).contents
+		summary_html = page_html.find("div").find(findSummaryParagraph, recursive=False)
+		summary_html = summary_html.contents if summary_html is not None else ""
 
 		summary = tagsToMarkdown(summary_html)
 		def markdownLength(text):
