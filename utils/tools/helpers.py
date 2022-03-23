@@ -175,6 +175,12 @@ class SimpleTimer():
 		if self.end is None:
 			self.stop()
 		return int((self.end - self.start).total_seconds())
+	
+	@property
+	def miliseconds(self):
+		if self.end is None:
+			self.stop()
+		return int((self.end - self.start).total_seconds() * 1000.0)
 
 	def __str__(self):
 		s = self.seconds % 60

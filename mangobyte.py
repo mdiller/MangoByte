@@ -14,7 +14,7 @@ from utils.tools.helpers import *
 startupTimer = SimpleTimer()
 
 description = """The juiciest unsigned 8 bit integer you is eva gonna see.
-				For more information about me, try `/info`"""
+				For more information about me, try `/bot info`"""
 
 bot = commands.AutoShardedBot(
 	command_prefix=botdata.command_prefix_botmessage, 
@@ -79,8 +79,7 @@ if __name__ == '__main__':
 		logger.info("running update script...")
 		update_script.update(bot)
 	else:
-		logger.trace({
-			"type": "startup",
+		logger.event("startup", {
 			"message": "mangobyte script started"
 		})
 		logger.info(f"Starting mango at {datetime.datetime.today().strftime('%d-%b-%Y %I:%M %p')}")

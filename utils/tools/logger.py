@@ -2,6 +2,7 @@ import json
 import logging
 import logging.handlers
 from multiprocessing import Queue
+from typing import OrderedDict
 
 import logging_loki
 from utils.tools.settings import settings
@@ -16,10 +17,19 @@ logging.addLevelName(trace_level, "TRACE")
 # this log level captures json events that happen during mangobyte
 def trace(self, message, *args, **kws):
 	if self.isEnabledFor(trace_level):
-		# Yes, logger takes its '*args' as 'args'.
 		message = json.dumps(message)
 		self._log(trace_level, message, args, **kws)
 logging.Logger.trace = trace
+
+def event(self, type, data = {}):
+	if self.isEnabledFor(trace_level):
+		data = OrderedDict(data)
+		data["type"] = type
+		data.move_to_end("type", last=False)
+		message = json.dumps(data)
+		self._log(trace_level, message, [])
+logging.Logger.event = event
+
 
 def setup_logger():
 	logger = logging.getLogger("mangologger")

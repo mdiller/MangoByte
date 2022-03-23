@@ -15,8 +15,7 @@ from utils.tools.helpers import *
 
 async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 	try:
-		logger.trace({
-			"type": "startup",
+		logger.event("startup", {
 			"message": "initialize started"
 		})
 		logger.info("Logged in as:\n{0} (ID: {0.id})".format(bot.user))
@@ -101,8 +100,7 @@ async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 			start=datetime.datetime.utcnow())
 		await bot.change_presence(status=disnake.Status.online, activity=game)
 		
-		logger.trace({
-			"type": "startup",
+		logger.event("startup", {
 			"message": "initialize finished"
 		})
 

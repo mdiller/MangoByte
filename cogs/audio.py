@@ -548,8 +548,7 @@ class Audio(MangoCog):
 				if message.content.startswith("//") or message.content.startswith("#"):
 					return # commented out stuff should be ignored
 				try:
-					logger.trace({
-						"type": "tts",
+					logger.event("tts", {
 						"message_id": message.id,
 						"author_id": message.author.id,
 						"server_id": message.guild.id,

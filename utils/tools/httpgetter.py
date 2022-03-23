@@ -117,8 +117,13 @@ class HttpGetter:
 		if cache and self.cache.get_filename(url):
 			return self.cache.get(url, return_type)
 
+		timer = SimpleTimer()
 		async with self.session.get(url, headers=headers, timeout=60) as r:
-			await loggingdb.insert_http_request(url, r.status, cache)
+			logger.event("httprequest", {
+				"url": url,
+				"status": r.status,
+				"time": timer.miliseconds
+			})
 			if r.status == 200:
 				if cache:
 					await self.cache.save(url, return_type, r)
@@ -137,8 +142,14 @@ class HttpGetter:
 				raise_error(url, r.status, errors)
 
 	async def post(self, url, return_type="json", errors={}, body={}, headers={}):
+		timer = SimpleTimer()
 		async with self.session.post(url, json=body, headers=headers) as r:
-			await loggingdb.insert_http_request(url, r.status, False)
+			logger.event("httprequest", {
+				"url": url,
+				"status": r.status,
+				"time": timer.miliseconds,
+				"method": "POST"
+			})
 			if r.status == 200:
 				if return_type == "json":
 					return json.loads(await r.text(), object_pairs_hook=OrderedDict)

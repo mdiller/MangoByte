@@ -31,9 +31,6 @@ async def on_prefix_command_error(ctx: commands.Context, error: commands.Command
 	bot = ctx.bot
 	cmdpfx = botdata.command_prefix(ctx)
 
-	if not (isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError)):
-		await loggingdb.command_finished(ctx, "errored", type(error).__name__)
-
 	try:
 		if isinstance(error, commands.CommandNotFound):
 			cmd = ctx.message.content[1:].split(" ")[0]
@@ -84,10 +81,16 @@ async def on_app_command_error(inter: disnake.Interaction, error: commands.Comma
 async def command_error_handler(ctx_inter: InterContext, error: commands.CommandError):
 	bot: commands.AutoShardedBot
 	bot = ctx_inter.bot
+
+	cmd_log_data = {}
 	if isinstance(ctx_inter, commands.Context):
+		cmd_log_data["message_id"] = ctx_inter.message.id
 		identifier = f"[prefix_command: {ctx_inter.message.id}]"
 	else:
+		cmd_log_data["inter_id"] = ctx_inter.id
 		identifier = f"[interaction: {ctx_inter.id}]"
+		
+	logger.event("command_finished", cmd_log_data)
 
 	try:
 		if isinstance(error, commands.CheckFailure):

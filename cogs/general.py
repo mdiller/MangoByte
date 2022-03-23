@@ -669,8 +669,7 @@ class General(MangoCog):
 	async def on_command(self, ctx: commands.Context):
 		msg = await loggingdb.insert_message(ctx.message, ctx.command.name)
 		await loggingdb.insert_command(ctx)
-		logger.trace({
-			"type": "command",
+		logger.event("prefix_command", {
 			"command": ctx.command.name,
 			"message_id": ctx.message.id,
 			"author_id": ctx.message.author.id,
@@ -683,8 +682,7 @@ class General(MangoCog):
 
 	@commands.Cog.listener()
 	async def on_slash_command(self, inter: disnake.CommandInteraction):
-		logger.trace({
-			"type": "slash_command",
+		logger.event("slash_command", {
 			"command": inter.application_command.qualified_name,
 			"inter_id": inter.id,
 			"author_id": inter.author.id,
@@ -695,9 +693,8 @@ class General(MangoCog):
 		})
 		
 	@commands.Cog.listener()
-	async def on_user_command(self, inter: disnake.CommandInteraction):
-		logger.trace({
-			"type": "user_command",
+	async def on_user_command(self, inter: disnake.CmdInter):
+		logger.event("user_command", {
 			"command": inter.application_command.qualified_name,
 			"inter_id": inter.id,
 			"author_id": inter.author.id,
@@ -708,8 +705,22 @@ class General(MangoCog):
 		})
 
 	@commands.Cog.listener()
-	async def on_command_completion(self, ctx):
-		await loggingdb.command_finished(ctx, "completed", None)
+	async def on_command_completion(self, ctx: commands.Context):
+		logger.event("command_finished", {
+			"message_id": ctx.message.id
+		})
+	
+	@commands.Cog.listener()
+	async def on_slash_command_completion(self, inter: disnake.CmdInter):
+		logger.event("command_finished", {
+			"inter_id": inter.id
+		})
+	
+	@commands.Cog.listener()
+	async def on_user_command_completion(self, inter: disnake.CmdInter):
+		logger.event("command_finished", {
+			"inter_id": inter.id
+		})
 
 	@commands.Cog.listener()
 	async def on_guild_join(self, guild):
