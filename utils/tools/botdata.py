@@ -166,7 +166,7 @@ guildinfo_variables = [
 		"key": "ttschannel",
 		"default": None,
 		"type": types.TextChannel,
-		"description": "If someone types in the given channel, mangobyte will automatically interpret it as a `?smarttts` command, and say it in the voicechannel that they are in. To say something in this channel without doing a tts, try adding a `//` or `#` to the front of your message",
+		"description": "If someone types in the given channel, mangobyte will automatically interpret it as a `/say` command, and say it in the voicechannel that they are in. To say something in this channel without doing a tts, try adding a `//` or `#` to the front of your message",
 		"example": "#tts"
 	},
 	{
@@ -194,7 +194,7 @@ guildinfo_variables = [
 		"key": "ttslang",
 		"default": "en",
 		"type": types.GttsLang,
-		"description": "Sets the language/voice that mangobyte will use to speak using the `?tts` command. To see a list of all of the possible languages, check out [this file](https://github.com/mdiller/MangoByte/blob/master/resource/json/gtts_languages.json) in the github repo",
+		"description": "Sets the language/voice that mangobyte will use to speak when playing TTS clips. To see a list of all of the possible languages, check out [this file](https://github.com/mdiller/MangoByte/blob/master/resource/json/gtts_languages.json) in the github repo",
 		"example": "Russian"
 	},
 	{
@@ -208,7 +208,7 @@ guildinfo_variables = [
 		"key": "simpletts",
 		"default": False,
 		"type": types.Boolean,
-		"description": "If enabled, the configured ttschannel will use the `?tts` command, instead of the `?smarttts` command.",
+		"description": "If enabled, the configured ttschannel will use the `/play tts` command, instead of the `/say` command.",
 		"example": "enable"
 	},
 	{

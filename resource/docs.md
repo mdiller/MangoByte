@@ -92,9 +92,35 @@ A lot of people have been reporting issues with slash commands not working on th
 __Migration Status__
 Note that as of now, not all commands have been migrated over to slash commands. All will eventually be moved, but I'm doing it in chunks, so don't be surprised if you see some prefix commands and some slash commands for now.
 
-**Current Migration Progress:** <!-- SLASH_PROGRESS_PERCENT_START -->45%<!-- SLASH_PROGRESS_PERCENT_END -->
+**Current Migration Progress:** <!-- SLASH_PROGRESS_PERCENT_START -->64%<!-- SLASH_PROGRESS_PERCENT_END -->
 
 # Slash Command Issues
 
 A lot of people have been reporting issues with slash commands not working on thier server, or just not working for them at all. I've written a document with all the things I've learned helping people to get slash commands working for them. Feel free to check it out if you have issues.
 [Slash Command Common Issues](https://github.com/mdiller/MangoByte/blob/master/docs/slash_command_common_issues.md)
+
+
+# Clips
+
+Mangobyte's audio system is based around things called 'clips'. A clip is an audio clip that mangobyte knows about, and clips can be referred to by their "clip id". A clip id will look something like "local:wow" or "tts:testing 123", where the left side of the colon is the clip type.
+
+__/say and #tts__
+2 super-useful features of mangobyte's audio system is the `/say` command, and the #tts channel. The `/say` command wraps a bunch of the clip types together and tries to find the best fitting clip for the input you give it. The #tts channel allows mangobyte to sit and watch a text channel in your discord, and then automatically run the `/say` command on every message that is said in that channel. For more info on that, try `/config ttschannel show`
+
+**__Clip Types__:**
+There are 4 different types of clips currently
+
+__Type: Local [local]:__
+Custom clips that have been selected from various sources. You can get a list of these by doing `/clips local`, and can play them by name by doing `/play local`
+
+__Type: TTS [tts]:__
+A text-to-speech clip based on what the user types. You can play text to speech by doing `/play tts`. Note: when moving this to a slash command, I tried making a command called `/tts` but discord wouldn't let me (it would interfere with their built-in `/tts` command)
+
+__Type: Dota Response [dota]:__
+A dota hero voice line. You can search for a list of these by doing `/clips dota`, and can play some while searching via `/play dota`. Note that you can also search for these types of clips by visiting [this website](http://dotabase.dillerm.io/responses) i made a long time ago.
+
+__Type: Dota Chatwheel [dotachatwheel]:__
+A dota chatwheel sound clip. You can get a list of these by doing `/clips chatwheel`, and can play them from `/play chatwheel`
+
+__Type: (WIP) Custom [custom]:__
+This clip type doesnt exist yet. In the past I've allowed a clip type called "url", and that has been removed in the latest rework. I'm planning on adding a new type of clip called "custom" that will be more powerful than url clips, and be easier to use. This hasn't been implemented yet, but I'll let you know (through the updates channel on the [Mangobyte Help Server](https://discord.gg/d6WWHxx)) once I get around to implementing it.

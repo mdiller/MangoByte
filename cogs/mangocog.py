@@ -54,16 +54,29 @@ class MangoCog(disnake.ext.commands.Cog):
 
 		return await cliptypes[match.group(1)]().init(match.group(2), self.bot, ctx_inter)
 
-
-	async def play_clip(self, clip, ctx_inter: InterContext):
+	async def play_clip(self, clip, ctx_inter: InterContext, print=False):
 		if isinstance(clip, str):
 			clip = await self.get_clip(clip, ctx_inter)
+		
+		if clip.type == "url":
+			clip = await self.get_clip("tts:U R L clips have been deprecated", ctx_inter)
 
 		audio = self.bot.get_cog("Audio")
 
 		audioplayer = await audio.audioplayer(ctx_inter)
 		audio.last_played_audio[audioplayer.guild_id] = datetime.datetime.now()
 		await audioplayer.queue_clip(clip, ctx_inter)
+		if print:
+			await self.print_clip(ctx_inter, clip)
+		return clip
+	
+	async def print_clip(self, inter: disnake.Interaction, clip):
+		if clip is None:
+			await inter.send("You gotta give me something to say!")
+			return
+		if isinstance(clip, str):
+			clip = await self.get_clip(clip, inter)
+		await inter.send(f"{self.get_emoji('chat_wheel_sound')} {clip.clipid}")
 
 	def cmdpfx(self, ctx):
 		return botdata.command_prefix(ctx)

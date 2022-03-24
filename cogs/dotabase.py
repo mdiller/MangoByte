@@ -1,6 +1,7 @@
 import json
 import random
 import re
+from textwrap import indent
 
 import disnake
 import feedparser
@@ -15,10 +16,12 @@ from utils.command.commandargs import *
 from utils.tools.globals import httpgetter, logger, settings
 from utils.tools.helpers import *
 
-from cogs.audio import AudioPlayerNotFoundError
+from cogs.audio import AudioPlayerNotFoundError, Audio
 from dotabase import *
 
 from cogs.mangocog import *
+
+CRITERIA_ALIASES = read_json(settings.resource("json/criteria_aliases.json"))
 
 session = dotabase_session()
 
@@ -32,6 +35,21 @@ ABILITY_KEY_MAP = {
 }
 for i in range(1, 20):
 	ABILITY_KEY_MAP[str(i)] = i
+	
+# registers the method as the custom converter for that class
+def register_custom_converter(cls, method):
+	commands.ParamInfo._registered_converters[cls] = method
+	cls.__discord_converter__ = method
+
+async def convert_hero(inter: disnake.CmdInter, text: str) -> Hero:
+	dota_cog: Dotabase
+	dota_cog = inter.bot.get_cog("Dotabase")
+	hero = dota_cog.lookup_hero(text)
+	if hero is None:
+		raise CustomBadArgument(UserError(f"Couldn't find a hero called '{text}'"))
+	return hero
+register_custom_converter(Hero, convert_hero)
+
 
 # A variable that can specify a filter on a query
 class QueryVariable():
@@ -51,36 +69,6 @@ class QueryVariable():
 	def apply_filter(self, query):
 		return self.query_filter(query, self.value)
 
-# extracts variables from the given words, removing them when extracted
-# extracts all words with the prefix, throwing a UserError if finding too many of a given variable or an invalid one
-def extract_var_prefix(words, variables):
-	for i in range(0, len(words)):
-		word = words[i]
-		prefix = None
-		for var in variables:
-			if word.startswith(var.prefix):
-				prefix = var.prefix
-				if word[len(prefix):] in var.aliases:
-					if var.value is not None:
-						raise UserError("Ya can't specify more than one " + var.name + ", ya doofus")
-					var.value = var.aliases[word[len(prefix):]]
-					words.remove(word)
-					extract_var_prefix(words, variables)
-					return
-		if prefix is not None: # The word has a prefix valid for one or more variables
-			raise UserError("No idea what a '" + word[len(prefix):] + "' is")
-
-# extracts the first word that matches any variable
-# returns true if a variable was found
-def extract_var(words, variables):
-	for i in range(0, len(words)):
-		word = words[i]
-		for var in variables:
-			if (var.value is None) and (word in var.aliases):
-				var.value = var.aliases[word]
-				words.remove(word)
-				return True
-	return False
 
 # Filters a query for rows containing a column that contains the value in a | separated list
 def query_filter_list(query, column, value, separator="|"):
@@ -94,7 +82,6 @@ class Dotabase(MangoCog):
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 		self.session = session
-		self.criteria_aliases = read_json(settings.resource("json/criteria_aliases.json"))
 		self.hero_stat_categories = read_json(settings.resource("json/hero_stats.json"))
 		self.hero_aliases = {}
 		self.item_aliases = {}
@@ -138,9 +125,6 @@ class Dotabase(MangoCog):
 		self.item_regex_1 = f"(?:{'|'.join(item_patterns)})"
 		item_patterns.extend(secondary_item_patterns)
 		self.item_regex_2 = f"(?:{'|'.join(item_patterns)})"
-
-		for crit in session.query(Criterion).filter(Criterion.matchkey == "Concept"):
-			self.criteria_aliases[crit.name.lower()] = crit.name
 
 		pattern_parts = {}
 		for alias in self.hero_aliases:
@@ -434,6 +418,8 @@ class Dotabase(MangoCog):
 		text = simplify(text)
 		if text == "":
 			return None
+		if text.startswith("dotachatwheel:"):
+			text = text.replace("dotachatwheel:", "")
 		if text.isdigit():
 			query = session.query(ChatWheelMessage).filter_by(id=int(text))
 			if query.count() > 0:
@@ -453,8 +439,8 @@ class Dotabase(MangoCog):
 							return message
 		return None
 
-	async def play_response(self, response, ctx):
-		await self.play_clip(f"dota:{response.fullname}", ctx)
+	async def play_response(self, response, ctx_inter: InterContext):
+		return await self.play_clip(f"dota:{response.fullname}", ctx_inter)
 
 	# used for getting the right response for dota clips
 	def get_response(self, responsename):
@@ -465,70 +451,68 @@ class Dotabase(MangoCog):
 		return session.query(Response).filter(Response.name == responsename).first()
 
 	# Plays a random response from a query
-	async def play_response_query(self, query, ctx):
-		await self.play_response(query.order_by(func.random()).first(), ctx)
+	async def play_response_query(self, query, ctx_inter: InterContext):
+		return await self.play_response(query.order_by(func.random()).first(), ctx_inter)
 
-	@commands.command(aliases=["dotar"])
-	async def dota(self, ctx, *, keyphrase : str=None):
-		"""Plays a dota response
+	@Audio.play.sub_command(name="dota")
+	async def play_dota(self, inter: disnake.CmdInter, text: str = None, hero: Hero = None, criteria: commands.option_enum(CRITERIA_ALIASES) = None):
+		"""Plays a dota response. Try '/clips dota' for a similar command that returns a list
 
-		First tries to match the keyphrase with the name of a response
-
-		If there is no response matching the input string, searches for any response that has the input string as part of its text
-
-		To specify a specific hero to search for responses for, use ';' before the hero's name like this:
-		`{cmdpfx}dota ;rubick`
-
-		To specify a specific criteria to search for responses for, use ';' before the criteria name like this:
-		`{cmdpfx}dota ;rubick ;defeat`
-		There are some aliases for heroes, so the following will work:
-		`{cmdpfx}dota sf`
-		`{cmdpfx}dota furion`
-		`{cmdpfx}dota shredder`
-
-		If failing all of the above, the command will also try to find unlabeled heroes and critera. try:
-		`{cmdpfx}dota juggernaut bottling`
-		A few critera you can use are: kill, bottling, cooldown, acknowledge, immortality, nomana, and select
-
-		To search for a response without asking mangobyte, try using the [Response Searcher](http://dotabase.dillerm.io/responses/)
-		ProTip: If you click the discord button next to the response in the above web app, it will copy to your clipboard in the format needed to play using the bot."""
-		query = await self.dota_keyphrase_query(keyphrase)
+		Parameters
+		----------
+		text: Some text contained within the response you're searching for
+		hero: A dota hero that says this clip
+		criteria: An action or situation that causes the hero to say this clip
+		"""
+		query = await self.smart_dota_query(text, hero=hero, criteria=criteria)
 
 		if query is None:
-			await ctx.send("No responses found! 😱")
+			await inter.send("No responses found! 😱")
 		else:
-			await self.play_response_query(query, ctx)
+			clip = await self.play_response_query(query, inter)
+			await self.print_clip(inter, clip)
+	
+	@Audio.clips.sub_command(name="dota")
+	async def clips_dota(self, inter: disnake.CmdInter, text: str = None, hero: Hero = None, criteria: commands.option_enum(CRITERIA_ALIASES) = None, page: commands.Range[1, 10] = 1):
+		"""Plays a dota response
 
+		Parameters
+		----------
+		text: Some text contained within the response you're searching for
+		hero: A dota hero that says this clip
+		criteria: An action or situation that causes the hero to say this clip
+		page: Which page of clips to view
+		"""
+		query = await self.smart_dota_query(text, hero=hero, criteria=criteria)
 
-	async def dota_keyphrase_query(self, keyphrase):
-		variables = [
-			QueryVariable("hero", self.hero_aliases, lambda query, value: query.filter(Response.hero_id == value)),
-			QueryVariable("criteria", self.criteria_aliases, lambda query, value: query.filter(or_(Response.criteria.like(value + "%"), Response.criteria.like("%|" + value + "%")))),
-		]
+		clipids = []
+		cliptext = []
+		response_limit = 200
+		if query is not None:
+			query = query.limit(response_limit)
+			for response in query.all():
+				clipids.append(f"dota:{response.fullname}")
+				text = response.text
+				sizelimit = 45
+				if len(text) > sizelimit:
+					text = text[:sizelimit - 3] + "..."
+				cliptext.append(text)
+		audio_cog = self.bot.get_cog("Audio")
+		await audio_cog.clips_pager(inter, "Dota Hero Responses", clipids, cliptext, page=page, morepages=len(clipids) == response_limit)
 
+	async def smart_dota_query(self, keyphrase, hero: Hero = None, criteria: str = None, exact = False):
 		if keyphrase is None:
-			words = []
-		else:
-			keyphrase = keyphrase.lower()
-			words = keyphrase.split(" ")
+			keyphrase = ""
+		keyphrase = keyphrase.lower()
+		keyphrase = " ".join(keyphrase.split(" "))
 
-		extract_var_prefix(words, variables)
-
-		query = await self.smart_dota_query(words, variables)
-
-		while query is None and extract_var(words, variables):
-			query = await self.smart_dota_query(words, variables)
-
-		return query
-
-
-	async def smart_dota_query(self, words, variables, exact=False):
 		basequery = session.query(Response)
-		for var in variables:
-			if var.value is not None:
-				basequery = var.apply_filter(basequery)
 
-		keyphrase = " ".join(words)
+		if hero:
+			basequery = basequery.filter(Response.hero_id == hero.id)
+		if criteria:
+			basequery = basequery.filter(or_(Response.criteria.like(criteria + "%"), Response.criteria.like("%|" + criteria + "%")))
+
 
 		if keyphrase == None or keyphrase == "" or keyphrase == " ":
 			if basequery.count() > 0:
@@ -595,115 +579,53 @@ class Dotabase(MangoCog):
 		logger.info("hello: " + response.name)
 		await self.play_response(response, ctx)
 
-	# Plays the correct command for the given keyphrase and hero, if a valid one is given
-	async def hero_keyphrase_command(self, keyphrase, hero, ctx):
-		query = await self.dota_keyphrase_query(keyphrase)
-		if hero is None:
-			await self.play_response_query(query, ctx)
-			return
+	@Audio.play.sub_command(name="chatwheel")
+	async def play_chatwheel(self, inter: disnake.CmdInter, text: str):
+		"""Plays the given chat wheel sound. Try '/clips chatwheel' to get a list of clips.
 
-		hero = self.lookup_hero(hero)
-		if hero is None:
-			raise UserError("Don't know what hero yer talkin about")
-		else:
-			query = query.filter(Response.hero_id == hero.id)
-			if query.count() > 0:
-				await self.play_response_query(query, ctx)
-			else:
-				raise UserError(f"No responses found for {hero.localized_name}! 😱")
-
-	@commands.command(aliases=["nope"])
-	async def no(self, ctx, *, hero=None):
-		"""Nopes."""
-		await self.hero_keyphrase_command("no", hero, ctx)
-
-	@commands.command()
-	async def yes(self, ctx, *, hero=None):
-		"""Oooooh ya."""
-		await self.hero_keyphrase_command("yes", hero, ctx)
-
-	@commands.command(aliases=["laugh", "haha", "lerl"])
-	async def lol(self, ctx, *, hero=None):
-		"""WOW I WONDER WAT THIS DOES
-
-		Laughs using dota. Thats what it does."""
-		response = await self.get_laugh_response(hero)
-		await self.play_response(response, ctx)
-
-	@commands.command(aliases=["ty"])
-	async def thanks(self, ctx, *, hero=None):
-		"""Gives thanks
-
-		Thanks are given by a random dota hero in their own special way"""
-		await self.hero_keyphrase_command(";thanks", hero, ctx)
-
-	@commands.command()
-	async def inthebag(self, ctx, *, hero=None):
-		"""Proclaims that 'IT' (whatever it is) is in the bag"""
-		query = await self.dota_keyphrase_query(";inthebag")
-		if hero is None:
-				await self.play_response_query(query.filter(Response.text_simple != " its in the bag "), ctx)
-		else:
-			hero = self.lookup_hero(hero)
-			if hero is None:
-				raise UserError("Don't know what hero yer talkin about")
-			query = query.filter(Response.hero_id == hero.id)
-			newquery = query.filter(Response.text_simple != " its in the bag ")
-			if newquery.count() > 0:
-				await self.play_response_query(newquery, ctx)
-			else:
-				await self.play_response_query(query, ctx)
-
-	@commands.command()
-	async def chatwheel(self, ctx, *, text):
-		"""Plays the given chat wheel sound
-
-		Give the command a number between 1 and 22 to page through all of the available chat options:
-		`{cmdpfx}chatwheel 1`
-		`{cmdpfx}chatwheel 3`
-
-		**Examples:**
-		`{cmdpfx}chatwheel Lakad Matataaaag!`
-		`{cmdpfx}chatwheel disastah`
-		`{cmdpfx}chatwheel Wan Bu Liao La`
-		`{cmdpfx}chatwheel 玩不了啦`
-		`{cmdpfx}chatwheel ehto gg`
-		`{cmdpfx}chatwheel Это ГГ`"""
-		page_size = 10
-		query = session.query(ChatWheelMessage).filter(ChatWheelMessage.sound.like("/%"))
-		if text.isdigit():
-			page = int(text)
-			max_pages = int((query.count() / page_size) + 1)
-			if page < 1 or page > max_pages:
-				raise UserError(f"Gotta give me a number between 1 and {max_pages}")
-			sounds = []
-			for message in query.offset((page - 1) * page_size).limit(page_size):
-				if message.sound:
-					sounds.append(f"{self.get_emoji('chat_wheel_sound')} {message.message}")
-			embed = disnake.Embed(description="\n".join(sounds))
-			embed.set_author(name=f"Chat Wheel Sounds ({page}/{max_pages})")
-			await ctx.send(embed=embed)
-			return
-
+		Parameters
+		----------
+		text: The text shown when the chatwheel is played
+		"""
 		message = self.get_chatwheel_sound(text, True)
 		if message is None:
 			raise UserError(f"Couldn't find chat wheel sound '{text}'")
 
-		await self.play_clip(f"dotachatwheel:{message.id}", ctx)
+		await self.play_clip(f"dotachatwheel:{message.id}", inter, print=True)
+	
+	@Audio.clips.sub_command(name="chatwheel")
+	async def clips_chatwheel(self, inter: disnake.CmdInter, text: str, page: commands.Range[1, 50] = 1):
+		"""Shows a list of chatwheel lines
+		
+		Parameters
+		----------
+		text: Part of the text shown when the chatwheel is played. Say "all" to get all chatwheel messages.
+		page: Which page of clips to view
+		"""
+		query = session.query(ChatWheelMessage).filter(ChatWheelMessage.sound.like("/%"))
+		if text != "all":
+			query = query.filter(ChatWheelMessage.message.ilike(f"%{text}%"))
+		clipids = []
+		cliptext = []
+		for message in query.all():
+			clipids.append(f"dotachatwheel:{message.id}")
+			text = message.message
+			sizelimit = 45
+			if len(text) > sizelimit:
+				text = text[:sizelimit - 3] + "..."
+			cliptext.append(text)
+		audio_cog = self.bot.get_cog("Audio")
+		await audio_cog.clips_pager(inter, "Dota Chatwheel Lines", clipids, cliptext, page=page)
 
-	@commands.command()
-	async def hero(self, ctx, *, hero : str):
+	@commands.slash_command()
+	async def hero(self, inter: disnake.CmdInter, hero: Hero):
 		"""Gets information about a specific hero
-
-		You can give this command almost any variant of the hero's name, or the hero's id
-
-		**Examples:**
-		`{cmdpfx}hero sf`
-		`{cmdpfx}hero inker`
-		`{cmdpfx}hero furi`"""
-		hero = self.lookup_hero(hero)
-		if not hero:
-			raise UserError("That doesn't look like a hero")
+		
+		Parameters
+		----------
+		hero: The name or id of the hero
+		"""
+		await inter.response.defer()
 
 		description = ""
 		def add_attr(name, base_func, gain_func):
@@ -758,12 +680,12 @@ class Dotabase(MangoCog):
 		roles = hero.roles.split("|")
 		embed.add_field(name=f"Role{'s' if len(roles) > 1 else ''}", value=', '.join(roles))
 
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
 		query = session.query(Response).filter(Response.hero_id == hero.id).filter(or_(Response.criteria.like("Spawn %"), Response.criteria.like("Spawn%")))
 		if query.count() > 0:
 			try:
-				await self.play_response_query(query, ctx)
+				await self.play_response_query(query, inter)
 			except AudioPlayerNotFoundError:
 				pass
 

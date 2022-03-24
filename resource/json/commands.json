@@ -8,7 +8,7 @@
 		{
 			"name": "Audio",
 			"short_help": "For playing audio in a voice channel",
-			"help": "For playing audio in a voice channel\n\nFor dota-related audio commands, try `{cmdpfx}help dotabase`"
+			"help": "For playing audio in a voice channel\n\nThe mangobyte audio system uses things called 'clips'. For more info on these, check out `/docs Clips`"
 		},
 		{
 			"name": "Dotabase",
@@ -155,33 +155,40 @@
 			"prefix": "?"
 		},
 		{
-			"name": "chatwheel",
-			"signature": "?chatwheel <text>",
-			"short_help": "Plays the given chat wheel sound",
-			"help": "Plays the given chat wheel sound\n\nGive the command a number between 1 and 22 to page through all of the available chat options:\n\u200b`?chatwheel 1`\n\u200b`?chatwheel 3`\n\n**Examples:**\n\u200b`?chatwheel Lakad Matataaaag!`\n\u200b`?chatwheel disastah`\n\u200b`?chatwheel Wan Bu Liao La`\n\u200b`?chatwheel \u73a9\u4e0d\u4e86\u5566`\n\u200b`?chatwheel ehto gg`\n\u200b`?chatwheel \u042d\u0442\u043e \u0413\u0413`",
+			"name": "clipinfo",
+			"signature": null,
+			"short_help": "Gets information and a file for the given clip",
+			"help": "Gets information and a file for the given clip",
+			"aliases": [],
+			"cog": "Audio",
+			"prefix": "/"
+		},
+		{
+			"name": "clips chatwheel",
+			"signature": null,
+			"short_help": "Shows a list of chatwheel lines",
+			"help": "Shows a list of chatwheel lines",
 			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
-			"name": "clipinfo",
-			"signature": "?clipinfo [clipid]",
-			"short_help": "Gets information and a file for the given clip",
-			"help": "Gets information and a file for the given clip\n\nNot giving a clipid will print info about the last clip played\n\nclipid is specified like this:\n\u200b`local:shitpickle`\n\u200b`dota:shredder_timb_ally_01`",
+			"name": "clips dota",
+			"signature": null,
+			"short_help": "Plays a dota response",
+			"help": "Plays a dota response",
+			"aliases": [],
+			"cog": "Dotabase",
+			"prefix": "/"
+		},
+		{
+			"name": "clips local",
+			"signature": null,
+			"short_help": "Lists the names of local audio clips. For more info on clips, see '/docs Clips'",
+			"help": "Lists the names of local audio clips. For more info on clips, see '/docs Clips'",
 			"aliases": [],
 			"cog": "Audio",
-			"prefix": "?"
-		},
-		{
-			"name": "clips",
-			"signature": "?clips [tag]",
-			"short_help": "Lists the local audio clips available for the play command",
-			"help": "Lists the local audio clips available for the play command\n\nCalling this command with no arguments gets you a list of all of the clips\n\nTo get the clips that have a specific tag, do `?clips <tag>`\n\nTo get a list of all of the possible clip tags, try `?clips tags`\n\nYou can also do `?clips new` to get the 10 newest clips",
-			"aliases": [
-				"playlist"
-			],
-			"cog": "Audio",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "config",
@@ -218,17 +225,6 @@
 			"aliases": [],
 			"cog": "General",
 			"prefix": "/"
-		},
-		{
-			"name": "dota",
-			"signature": "?dota [keyphrase]",
-			"short_help": "Plays a dota response",
-			"help": "Plays a dota response\n\nFirst tries to match the keyphrase with the name of a response\n\nIf there is no response matching the input string, searches for any response that has the input string as part of its text\n\nTo specify a specific hero to search for responses for, use ';' before the hero's name like this:\n\u200b`?dota ;rubick`\n\nTo specify a specific criteria to search for responses for, use ';' before the criteria name like this:\n\u200b`?dota ;rubick ;defeat`\nThere are some aliases for heroes, so the following will work:\n\u200b`?dota sf`\n\u200b`?dota furion`\n\u200b`?dota shredder`\n\nIf failing all of the above, the command will also try to find unlabeled heroes and critera. try:\n\u200b`?dota juggernaut bottling`\nA few critera you can use are: kill, bottling, cooldown, acknowledge, immortality, nomana, and select\n\nTo search for a response without asking mangobyte, try using the [Response Searcher](http://dotabase.dillerm.io/responses/)\nProTip: If you click the discord button next to the response in the above web app, it will copy to your clipboard in the format needed to play using the bot.",
-			"aliases": [
-				"dotar"
-			],
-			"cog": "Dotabase",
-			"prefix": "?"
 		},
 		{
 			"name": "dotagif",
@@ -312,12 +308,12 @@
 		},
 		{
 			"name": "hero",
-			"signature": "?hero <hero>",
+			"signature": null,
 			"short_help": "Gets information about a specific hero",
-			"help": "Gets information about a specific hero\n\nYou can give this command almost any variant of the hero's name, or the hero's id\n\n**Examples:**\n\u200b`?hero sf`\n\u200b`?hero inker`\n\u200b`?hero furi`",
+			"help": "Gets information about a specific hero",
 			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "herotable",
@@ -336,30 +332,12 @@
 			"prefix": "?"
 		},
 		{
-			"name": "inthebag",
-			"signature": "?inthebag [hero]",
-			"short_help": "Proclaims that 'IT' (whatever it is) is in the bag",
-			"help": "Proclaims that 'IT' (whatever it is) is in the bag",
-			"aliases": [],
-			"cog": "Dotabase",
-			"prefix": "?"
-		},
-		{
 			"name": "item",
 			"signature": "?item <item>",
 			"short_help": "Gets information about a specific item",
 			"help": "Gets information about a specific item\n\n**Examples:**\n\u200b`?item shadow blade`\n\u200b`?item tango`",
 			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
-		},
-		{
-			"name": "later",
-			"signature": "?later ",
-			"short_help": "Tells you how much later it is",
-			"help": "Tells you how much later it is\n\nTheres 19 different ones",
-			"aliases": [],
-			"cog": "Audio",
 			"prefix": "?"
 		},
 		{
@@ -384,19 +362,6 @@
 			"aliases": [],
 			"cog": "DotaStats",
 			"prefix": "/"
-		},
-		{
-			"name": "lol",
-			"signature": "?lol [hero]",
-			"short_help": "WOW I WONDER WAT THIS DOES",
-			"help": "WOW I WONDER WAT THIS DOES\n\nLaughs using dota. Thats what it does.",
-			"aliases": [
-				"laugh",
-				"haha",
-				"lerl"
-			],
-			"cog": "Dotabase",
-			"prefix": "?"
 		},
 		{
 			"name": "lore",
@@ -564,17 +529,6 @@
 			"prefix": "?"
 		},
 		{
-			"name": "no",
-			"signature": "?no [hero]",
-			"short_help": "Nopes.",
-			"help": "Nopes.",
-			"aliases": [
-				"nope"
-			],
-			"cog": "Dotabase",
-			"prefix": "?"
-		},
-		{
 			"name": "parse",
 			"signature": "?parse [match_id]",
 			"short_help": "Requests that OpenDota parses a match",
@@ -596,13 +550,40 @@
 			"prefix": "/"
 		},
 		{
-			"name": "play",
-			"signature": "?play <clip>",
-			"short_help": "Plays an audio clip",
-			"help": "Plays an audio clip\n\nExample:\n\u200b`?play hello`\n\nFor a complete list of the available clips, try `?playlist`\n\nThis can also play other clip types via their ClipID\nExample:\n\u200b`?play tts:hello there`",
+			"name": "play chatwheel",
+			"signature": null,
+			"short_help": "Plays the given chat wheel sound. Try '/clips chatwheel' to get a list of clips.",
+			"help": "Plays the given chat wheel sound. Try '/clips chatwheel' to get a list of clips.",
+			"aliases": [],
+			"cog": "Dotabase",
+			"prefix": "/"
+		},
+		{
+			"name": "play dota",
+			"signature": null,
+			"short_help": "Plays a dota response. Try '/clips dota' for a similar command that returns a list",
+			"help": "Plays a dota response. Try '/clips dota' for a similar command that returns a list",
+			"aliases": [],
+			"cog": "Dotabase",
+			"prefix": "/"
+		},
+		{
+			"name": "play local",
+			"signature": null,
+			"short_help": "Plays a local audio clip. For more information on clips, see `/docs Clips`",
+			"help": "Plays a local audio clip. For more information on clips, see `/docs Clips`",
 			"aliases": [],
 			"cog": "Audio",
-			"prefix": "?"
+			"prefix": "/"
+		},
+		{
+			"name": "play tts",
+			"signature": null,
+			"short_help": "Converts the given message to speech and plays the tts clip",
+			"help": "Converts the given message to speech and plays the tts clip",
+			"aliases": [],
+			"cog": "Audio",
+			"prefix": "/"
 		},
 		{
 			"name": "playerstats",
@@ -612,15 +593,6 @@
 			"aliases": [],
 			"cog": "DotaStats",
 			"prefix": "/"
-		},
-		{
-			"name": "playurl",
-			"signature": "?playurl <mp3url>",
-			"short_help": "Plays an mp3 file at a url",
-			"help": "Plays an mp3 file at a url\n\nMake sure to use http, not https",
-			"aliases": [],
-			"cog": "Audio",
-			"prefix": "?"
 		},
 		{
 			"name": "pokecry",
@@ -686,12 +658,12 @@
 		},
 		{
 			"name": "replay",
-			"signature": "?replay ",
+			"signature": null,
 			"short_help": "Replays the last played clip",
-			"help": "Replays the last played clip\n                ",
+			"help": "Replays the last played clip",
 			"aliases": [],
 			"cog": "Audio",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "resummon",
@@ -712,6 +684,15 @@
 			"prefix": "/"
 		},
 		{
+			"name": "say",
+			"signature": null,
+			"short_help": "Plays a sound clip based on the message given, drawing from multiple clip types",
+			"help": "Plays a sound clip based on the message given, drawing from multiple clip types",
+			"aliases": [],
+			"cog": "Audio",
+			"prefix": "/"
+		},
+		{
 			"name": "shiny",
 			"signature": "?shiny <pokemon>",
 			"short_help": "Gets the shiny version of this pokemon",
@@ -721,24 +702,13 @@
 			"prefix": "?"
 		},
 		{
-			"name": "smarttts",
-			"signature": "?smarttts <message>",
-			"short_help": "Automatically find the best fit for the tts given",
-			"help": "Automatically find the best fit for the tts given\n\nFirst checks local clips (like `?play`), then checks to see if it is an audio url, then checks if it's a dota chatwheel message, then checks if there is an exact match for a dota response clip, and if none of the above is found, does a simple tts clip",
-			"aliases": [
-				"stts"
-			],
-			"cog": "Audio",
-			"prefix": "?"
-		},
-		{
 			"name": "stop",
-			"signature": "?stop ",
-			"short_help": "Stops the currently playing audio",
-			"help": "Stops the currently playing audio\n\nAlso empties the clip queue",
+			"signature": null,
+			"short_help": "Stops the currently playing clip",
+			"help": "Stops the currently playing clip",
 			"aliases": [],
 			"cog": "Audio",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "summon",
@@ -756,35 +726,6 @@
 			"help": "Gets the talents of a specific hero\n\nYou can give this command almost any variant of the hero's name, or the hero's id, in the same format as `?hero`\n\n**Examples:**\n\u200b`?talents shadow fiend`",
 			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
-		},
-		{
-			"name": "thanks",
-			"signature": "?thanks [hero]",
-			"short_help": "Gives thanks",
-			"help": "Gives thanks\n\nThanks are given by a random dota hero in their own special way",
-			"aliases": [
-				"ty"
-			],
-			"cog": "Dotabase",
-			"prefix": "?"
-		},
-		{
-			"name": "tts",
-			"signature": "?tts <message>",
-			"short_help": "Like echo but for people who can't read",
-			"help": "Like echo but for people who can't read\n\nTalks in whatever voice channel mangobyte is currently in\n\nExample:\n\u200b`?tts Hello I'm a bot`",
-			"aliases": [],
-			"cog": "Audio",
-			"prefix": "?"
-		},
-		{
-			"name": "ttsclip",
-			"signature": "?ttsclip <clip>",
-			"short_help": "Tries to text-to-speech the given clip",
-			"help": "Tries to text-to-speech the given clip\n\nOnly works on clips that have text specified\n\nExample:\n\u200b`?ttsclip yodel`",
-			"aliases": [],
-			"cog": "Audio",
 			"prefix": "?"
 		},
 		{
@@ -831,15 +772,6 @@
 			"aliases": [],
 			"cog": "General",
 			"prefix": "/"
-		},
-		{
-			"name": "yes",
-			"signature": "?yes [hero]",
-			"short_help": "Oooooh ya.",
-			"help": "Oooooh ya.",
-			"aliases": [],
-			"cog": "Dotabase",
-			"prefix": "?"
 		}
 	]
 }

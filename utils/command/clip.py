@@ -90,6 +90,8 @@ class Clip(object):
 		embed.set_author(name=self.clipid)
 		embed.add_field(name="Length", value=f"{self.audiolength} seconds")
 
+	def __repr__(self) -> str:
+		return self.clipid
 
 class LocalClip(Clip):
 	async def init(self, clipname, bot, ctx_inter: InterContext):
@@ -230,6 +232,9 @@ class DotaChatWheel(Clip):
 		self.add_info_embed_parts(embed)
 		return embed
 
+alltypes = list(Clip.types_dict().keys())
+alltypes.remove("url")
+Clip.id_pattern = f"^({'|'.join(alltypes)}):.*$"
 
 gtts_langs = read_json(settings.resource("json/gtts_languages.json"))
 

@@ -38,7 +38,7 @@ async def on_prefix_command_error(ctx: commands.Context, error: commands.Command
 			if cmd in deprecated_commands:
 				logger.info(f"deprecated command '{cmd}' attempted")
 				if deprecated_commands[cmd].startswith("_"):
-					await ctx.send(f"{cmdpfx}{cmd}` has been deprecated. {deprecated_commands[cmd][1:]}")
+					await ctx.send(f"`{cmdpfx}{cmd}` has been deprecated. {deprecated_commands[cmd][1:]}")
 					return
 				await ctx.send(f"`{cmdpfx}{cmd}` has been deprecated. Try `/{deprecated_commands[cmd]}` instead.")
 				return
@@ -121,7 +121,7 @@ async def command_error_handler(ctx_inter: InterContext, error: commands.Command
 			await print_missing_perms(ctx_inter, error)
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, disnake.errors.HTTPException):
 			await ctx_inter.send("Looks like there was a problem with discord just then. Try again in a bit.")
-			logger.warning(f"discord http exception triggered {identifier}")
+			logger.error(f"discord http exception triggered {identifier}")
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, HttpError):
 			await error.original.send_self(ctx_inter, botdata)
 			if error.original.code != 404: # 404 errors are not worth reporting

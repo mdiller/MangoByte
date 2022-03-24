@@ -1,7 +1,9 @@
 import asyncio
+import math
 import os
 import queue
 import re
+from typing import List
 import urllib.request
 from ctypes.util import find_library
 from random import randint
@@ -12,8 +14,11 @@ from utils.command import botdatatypes
 from utils.command.clip import *
 from utils.tools.globals import botdata, logger, loggingdb, settings
 from utils.tools.helpers import *
+from utils.other.errorhandling import report_error
 
 from cogs.mangocog import *
+
+URL_CLIP_ERROR_MESSAGE = "Unfortunatley I'm removing the url clip feature for now. I've got plans to eventually implement some custom clips that will be even more flexible than this, but I'm not sure when that feature will arrive."
 
 intro_outro_length = 4.5
 voice_channel_culling_timeout_hours = 24 * 4 # 24 * 4 means after 4 days of inactivity, mango will disconnect from the voice channel
@@ -134,7 +139,7 @@ class AudioPlayer:
 class Audio(MangoCog):
 	"""For playing audio in a voice channel
 
-	For dota-related audio commands, try `{cmdpfx}help dotabase`"""
+	The mangobyte audio system uses things called 'clips'. For more info on these, check out `/docs Clips`"""
 
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
@@ -152,10 +157,11 @@ class Audio(MangoCog):
 		clipsdir = settings.resource("clips/")
 		for root, dirs, files in os.walk(clipsdir):
 			for file in files:
-				match = re.search(f"clips[/\\\\]((?:.*[/\\\\])?([^/\\\\]+)\.(?:{audio_extensions}))", os.path.join(root, file))
+				path = os.path.join(root, file)
+				match = re.search(f".*(?:{audio_extensions})$", os.path.join(root, file))
 				if match:
-					path = match.group(1)
-					name = match.group(2)
+					name, _ = os.path.splitext(file)
+					path = os.path.relpath(path, clipsdir)
 					if name not in clipinfos:
 						found = False
 						for clipname in clipinfos:
@@ -266,52 +272,83 @@ class Audio(MangoCog):
 					await self.disconnect(self.bot.get_guild(guildinfo.id))
 					guildinfo.voicechannel = None
 
+	
+	@commands.slash_command()
+	async def play(self, inter: disnake.CmdInter):
+		"""Root command for clip-controlling commands"""
+		await inter.response.defer()
 
-	@commands.command()
-	async def play(self, ctx, *, clip : str):
-		"""Plays an audio clip
-
-		Example:
-		`{cmdpfx}play hello`
-
-		For a complete list of the available clips, try `{cmdpfx}playlist`
-
-		This can also play other clip types via their ClipID
-		Example:
-		`{cmdpfx}play tts:hello there`"""
-		if ":" not in clip:
+	@play.sub_command(name="local")
+	async def play_local(self, inter: disnake.CmdInter, clipname: str):
+		"""Plays a local audio clip. For more information on clips, see `/docs Clips`
+		
+		Parameters
+		----------
+		clipname: The name of a local audio clip, or a clipid
+		"""
+		if ":" not in clipname:
 			try:
-				await self.play_clip(f"local:{clip}", ctx)
+				await self.play_clip(f"local:{clipname}", inter, print=True)
 			except ClipNotFound:
 				dotabase = self.bot.get_cog("Dotabase")
 				if dotabase:
-					chat_clip = dotabase.get_chatwheel_sound_clip(clip)
+					chat_clip = dotabase.get_chatwheel_sound_clip(clipname)
 					if chat_clip:
-						await self.play_clip(chat_clip, ctx)
+						await self.play_clip(chat_clip, inter)
 						return
-				await ctx.send(f"'{clip}' is not a valid clip. 🤦 Try {self.cmdpfx(ctx)}playlist.")
+				await inter.send(f"'{clipname}' is not a valid clip. 🤦 Try `/clip list`.")
 		else:
-			await self.play_clip(clip, ctx)
+			await self.play_clip(clipname, inter, print=True)
 
-			
 
-	@commands.command(aliases=["playlist"])
-	async def clips(self, ctx, tag : str=None):
-		"""Lists the local audio clips available for the play command
+	@commands.slash_command()
+	async def clips(self, inter: disnake.CmdInter):
+		"""Root command for listing different kinds of clips"""
+		await inter.response.defer()
+	
+	async def clips_pager(self, inter: disnake.CmdInter, title: str, clipids: List[str], cliptext: List[str] = None, page: int = 1, morepages: bool = False):
+		"""A helper method for dumping a bunch of clips in one place. helps with the clips command."""
+		if not clipids:
+			await inter.send("No clips found!")
+			return
 
-		Calling this command with no arguments gets you a list of all of the clips
+		items_per_page = 20
+		total_pages = math.ceil(len(clipids) / items_per_page)
+		if page > total_pages:
+			page = total_pages
 
-		To get the clips that have a specific tag, do `{cmdpfx}clips <tag>`
+		embed = disnake.Embed()
+		embed.title = title
 
-		To get a list of all of the possible clip tags, try `{cmdpfx}clips tags`
+		page_clipids = clipids[(page - 1) * items_per_page:page * items_per_page]
 
-		You can also do `{cmdpfx}clips new` to get the 10 newest clips"""
-		message = ""
+		if cliptext:
+			page_cliptext = cliptext[(page - 1) * items_per_page:page * items_per_page]
+			embed.add_field(name="Clip IDs", value="\n".join(page_clipids))
+			embed.add_field(name="Clip Message", value="\n".join(page_cliptext))
+		else:
+			embed.description = "\n".join(page_clipids)
+		
+		if morepages:
+			total_pages = f"{total_pages}*"
+		embed.set_footer(text=f"Page {page}/{total_pages}. I'm gonna add some buttons for navigating pages soon, but haven't done that yet")
+
+		await inter.send(embed=embed)
+
+	@clips.sub_command(name="local")
+	async def clips_local(self, inter: disnake.CmdInter, tag: str, page: commands.Range[1, 99] = 1):
+		"""Lists the names of local audio clips. For more info on clips, see '/docs Clips'
+
+		Parameters
+		----------
+		tag: A way to filter for specific clips. Type "tags" to see possible tags, or "all" to show all clips
+		page: Which page of clips to view
+		"""
+		header = "Local Audio Clips"
 		clips = []
 		sort = True
 
-		if tag is None:
-			message += "\n**Clips:**\n"
+		if tag == "all":
 			for clipname in self.local_clipinfo:
 				clips.append(clipname)
 		elif tag in [ "recent", "latest", "new" ]:
@@ -321,8 +358,8 @@ class Audio(MangoCog):
 			clips = list(map(lambda x: x[0], sorted(clips.items(), key=lambda x: x[1], reverse=True)))
 			clips = clips[:10]
 			sort = False
-		elif tag in [ "tags", "sections" ]:
-			message += "\n**Tags:**\n"
+		elif tag == "tags":
+			header = "Local Audio Clip Tags"
 			for clipname in self.local_clipinfo:
 				tags = self.local_clipinfo[clipname].get("tags")
 				if tags:
@@ -331,6 +368,7 @@ class Audio(MangoCog):
 						if t not in clips:
 							clips.append(t)
 		else:
+			header += f" [{tag}]"
 			for clipname in self.local_clipinfo:
 				info = self.local_clipinfo[clipname]
 				tags = info.get("tags")
@@ -341,33 +379,19 @@ class Audio(MangoCog):
 						continue
 				if len(tag) > 3 and tag.lower() in info.get("author", "").lower():
 					clips.append(clipname)
-			if not clips:
-				raise UserError("No clips not found for that tag")
 
-		if len(clips) > 0:
-			if sort:
-				clips.sort()
-			clip_format = "`{}` "
-			if len(clips) <= 10:
-				clip_format = "`{}`\n"
-			for clip in clips:
-				message += clip_format.format(clip)
-		await ctx.send(message)
+		if tag != "tags":
+			clips = list(map(lambda c: f"local:{c}", clips))
+		if len(clips) > 0 and sort:
+			clips.sort()
+			
+		await self.clips_pager(inter, header, clips, page=page)
 
-	@commands.command()
-	async def playurl(self, ctx, mp3url : str):
-		"""Plays an mp3 file at a url
-
-		Make sure to use http, not https"""
-		await self.play_clip("url:" + mp3url, ctx)
-
-	@commands.command()
-	async def stop(self, ctx):
-		"""Stops the currently playing audio
-
-		Also empties the clip queue
-		"""
-		audioplayer = await self.audioplayer(ctx)
+	@commands.slash_command()
+	async def stop(self, inter: disnake.CmdInter):
+		"""Stops the currently playing clip"""
+		await inter.response.defer()
+		audioplayer = await self.audioplayer(inter)
 		while not audioplayer.clipqueue.empty():
 			try:
 				audioplayer.clipqueue.get()
@@ -375,45 +399,43 @@ class Audio(MangoCog):
 				continue
 		if audioplayer.voice is not None:
 			audioplayer.voice.stop()
+		await inter.send("✅ stopped!")
 
-	@commands.command()
-	async def replay(self, ctx):
-		"""Replays the last played clip
-		"""
-		last_clip = (await self.audioplayer(ctx)).last_clip
+	@commands.slash_command()
+	async def replay(self, inter: disnake.CmdInter):
+		"""Replays the last played clip"""
+		await inter.response.defer()
+		last_clip = (await self.audioplayer(inter)).last_clip
 		if last_clip == None:
-			await ctx.send("Nobody said anythin' yet")
+			await inter.send("Nobody said anythin' yet")
 			return
 
 		# If its not a temp file
-		await ctx.send("Replaying " + last_clip.clipid)
-		await self.play_clip(last_clip, ctx)
+		await self.play_clip(last_clip, inter, print=True)
 
-	@commands.command()
-	async def clipinfo(self, ctx, clipid=None):
+	@commands.slash_command()
+	async def clipinfo(self, inter: disnake.CmdInter, clipid: str = None):
 		"""Gets information and a file for the given clip
 
-		Not giving a clipid will print info about the last clip played
-
-		clipid is specified like this:
-		`local:shitpickle`
-		`dota:shredder_timb_ally_01`
+		Parameters
+		----------
+		clipid: A clipid (see '/docs Clips' for more info) or leave this blank, which will get the last played clip
 		"""
+		await inter.response.defer()
 		if clipid is None:
-			if (await self.audioplayer(ctx)).last_clip == None:
-				await ctx.send("Nobody said anythin' yet")
+			if (await self.audioplayer(inter)).last_clip == None:
+				await inter.send("Nobody said anythin' yet")
 				return
-			clipid = (await self.audioplayer(ctx)).last_clip.clipid
+			clipid = (await self.audioplayer(inter)).last_clip.clipid
 
 		try:
-			clip = await self.get_clip(f"local:{clipid}", ctx)
+			clip = await self.get_clip(f"local:{clipid}", inter)
 		except ClipNotFound:
-			clip = await self.get_clip(clipid, ctx)
-
-		await ctx.channel.trigger_typing()
+			clip = await self.get_clip(clipid, inter)
 
 		if clip.type() == "url":
-			filename = clip.name.split("/")[-1]
+			await inter.send(URL_CLIP_ERROR_MESSAGE)
+			return
 		else:
 			filename = clip.name
 
@@ -429,95 +451,63 @@ class Audio(MangoCog):
 		# if clip_info != "":
 		# 	content += f"\n\n{clip_info}"
 
-		await ctx.send(embed=clip_info_embed)
+		await inter.send(embed=clip_info_embed, file=disnake.File(clip.audiopath, filename=filename))
 
-		try:
-			await ctx.send(file=disnake.File(clip.audiopath, filename=filename))
-		except FileNotFoundError as e:
-			# The file is probably actually a url
-			fp = urllib.request.urlopen(clip.audiopath)
-			await ctx.send(file=disnake.File(fp, filename=filename))
-			fp.close()
+	@play.sub_command(name="tts")
+	async def play_tts(self, inter: disnake.CmdInter, message: str):
+		"""Converts the given message to speech and plays the tts clip
 
-	@commands.command()
-	async def tts(self, ctx, *, message : str):
-		"""Like echo but for people who can't read
-
-		Talks in whatever voice channel mangobyte is currently in
-		
-		Example:
-		`{cmdpfx}tts Hello I'm a bot`
+		Parameters
+		----------
+		message: A message to convert to speech
 		"""
-		await self.do_tts(ctx.message.clean_content[5:], ctx)
+		clip = await self.do_tts(message, inter)
+		await self.print_clip(inter, clip)
 
-
-	async def do_tts(self, text, ctx):
+	async def do_tts(self, text, ctx_inter: InterContext):
 		gtts_fixes = read_json(settings.resource("json/gtts_fixes.json"))
 		text = text.replace("\n", " ")
 		for key in gtts_fixes:
 			pattern = f"\\b({key})\\b" if not key.startswith("regex:") else re.sub("^regex:", "", key)
 			text = re.sub(pattern, gtts_fixes[key], text, re.IGNORECASE)
-		await self.play_clip("tts:" + text, ctx)
+		return await self.play_clip("tts:" + text, ctx_inter)
 
+	@commands.slash_command()
+	async def say(self, inter: disnake.CmdInter, message: str):
+		"""Plays a sound clip based on the message given, drawing from multiple clip types
 
-	@commands.command()
-	async def ttsclip(self, ctx, *, clip : str):
-		"""Tries to text-to-speech the given clip
-
-		Only works on clips that have text specified
-
-		Example:
-		`{cmdpfx}ttsclip yodel`
+		Parameters
+		----------
+		message: A message to say
 		"""
-		if ":" not in clip:
-			try:
-				clip = await self.get_clip(f"local:{clip}", ctx)
-			except ClipNotFound:
-				await ctx.send(f"'{clip}' is not a valid clip. 🤦 Try `{self.cmdpfx(ctx)}playlist`")
-				return
-		else:
-			clip = await self.get_clip(clip, ctx)
-		text = clip.text.lower()
-		if text == "":
-			await ctx.send(f"I can't read this clip for tts 😕. Try a different one.")
-			return
+		await inter.response.defer()
+		clip = await self.do_smarttts(message, inter)
+		await self.print_clip(inter, clip)
 
-		await self.play_clip(f"tts:{text}", ctx)
-
-	@commands.command(aliases= [ "stts" ])
-	async def smarttts(self, ctx, *, message : str):
-		"""Automatically find the best fit for the tts given
-
-		First checks local clips (like `{cmdpfx}play`), then checks to see if it is an audio url, then checks if it's a dota chatwheel message, then checks if there is an exact match for a dota response clip, and if none of the above is found, does a simple tts clip"""
-		await self.do_smarttts(message, ctx)
-
-	async def do_smarttts(self, message, ctx):
+	async def do_smarttts(self, message, ctx_inter: InterContext):
 		if message == "" or not message:
-			return # dont say anything if theres nothin to be said
+			return None # dont say anything if theres nothin to be said
+		if re.match(Clip.id_pattern, message):
+			try: # try to play it if it looks like a full clipid
+				return await self.play_clip(message, ctx_inter)
+			except ClipNotFound:
+				pass
 		simple_message = re.sub(r'[^a-z0-9\s_]', r'', message.lower())
-		try:
-			await self.play_clip(f"local:{simple_message}", ctx)
-			return # Clip played successfully so we're done
-		except ClipNotFound:
-			pass
-		if re.match(f'^https?://.*\.({audio_extensions})$', message):
-			await self.play_clip(f"url:{message}", ctx)
-			return
 		dotabase = self.bot.get_cog("Dotabase")
 		if dotabase:
-			if simple_message in [ "haha", "lol" ]:
+			if simple_message in [ "haha", "lol", "laugh" ]:
 				response = await dotabase.get_laugh_response()
-				await dotabase.play_response(response, ctx)
-				return
+				return await dotabase.play_response(response, ctx_inter)
 
 			clip = dotabase.get_chatwheel_sound_clip(message)
 			if clip:
-				await self.play_clip(clip, ctx)
-				return
-			query = await dotabase.smart_dota_query(message.split(" "), [], exact=True)
+				return await self.play_clip(clip, ctx_inter)
+			query = await dotabase.smart_dota_query(message, exact=True)
 			if query:
-				await dotabase.play_response_query(query, ctx)
-				return
+				return await dotabase.play_response_query(query, ctx_inter)
+
+		if simple_message in self.local_clipinfo:
+			return await self.play_clip(f"local:{simple_message}", ctx_inter)
 
 		for clipname in self.local_clipinfo:
 			clip = self.local_clipinfo[clipname]
@@ -525,10 +515,9 @@ class Audio(MangoCog):
 			if simple_text == "":
 				continue
 			if simple_message == simple_text:
-				await self.play_clip(f"local:{clipname}", ctx)
-				return
+				return await self.play_clip(f"local:{clipname}", ctx_inter)
 
-		await self.do_tts(message, ctx)
+		return await self.do_tts(message, ctx_inter)
 
 	@commands.Cog.listener()
 	async def on_message(self, message):
@@ -590,14 +579,6 @@ class Audio(MangoCog):
 						logger.info("on_message usererror blocked because permissions")
 						pass
 					await report_error(message, TtsChannelError(e))
-
-
-	@commands.command()
-	async def later(self, ctx):
-		"""Tells you how much later it is
-
-		Theres 19 different ones"""
-		await self.play_clip("local:later{}".format(randint(1,19)), ctx)
 
 	# fixes discord user names which either are in all caps or have a number serving as a letter
 	async def fix_name(self, name):
