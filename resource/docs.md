@@ -96,9 +96,8 @@ Note that as of now, not all commands have been migrated over to slash commands.
 
 # Slash Command Issues
 
-A lot of people have been reporting issues with slash commands not working on thier server, or just not working for them at all. I've written a document with all the things I've learned helping people to get slash commands working for them. Feel free to check it out if you have issues.
+If you're having issues with slash commands, take a look at this:
 [Slash Command Common Issues](https://github.com/mdiller/MangoByte/blob/master/docs/slash_command_common_issues.md)
-
 
 # Clips
 
