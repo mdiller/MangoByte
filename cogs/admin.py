@@ -26,7 +26,7 @@ class Admin(MangoCog):
 		guildinfo = botdata.guildinfo(ctx_inter)
 		if isinstance(ctx_inter, disnake.Interaction):
 			if isinstance(ctx_inter, disnake.CommandInter):
-				commandname = ctx_inter.application_command.qualified_name
+				commandname = slash_command_name(ctx_inter)
 			# check cogs
 			cog = ctx_inter.application_command.cog
 			if cog:
@@ -246,6 +246,9 @@ class Admin(MangoCog):
 		setting: The setting you'd like to show/change
 		value: The value you'd like to set for this setting, or 'show' to see the current value and more info
 		"""
+		if inter.guild is None:
+			await inter.send("You must be in a server/guild to use this command")
+			return
 		if value == "show":
 			value = None
 		var = next((v for v in GuildInfo.variables if v["key"] == setting), None)

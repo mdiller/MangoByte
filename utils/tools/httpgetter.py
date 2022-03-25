@@ -4,7 +4,6 @@ from io import BytesIO
 import aiohttp
 from utils.tools.helpers import *
 from utils.tools.logger import logger
-from utils.tools.loggingdb import loggingdb
 from utils.tools.settings import settings
 
 default_cache = { "count": 0, "files": {} }

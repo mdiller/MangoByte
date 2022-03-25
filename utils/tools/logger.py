@@ -55,9 +55,11 @@ def setup_loki_handler(loki_config):
 	if loki_config is None:
 		return None
 
+	baseurl = loki_config["base_url"]
+	url = f"{baseurl}/loki/api/v1/push"
 	handler_loki = logging_loki.LokiQueueHandler(
 		Queue(-1),
-		url=loki_config["url"],
+		url=url,
 		tags={"application": loki_config["application"]},
 		auth=(loki_config["username"], loki_config["password"]),
 		version="1",

@@ -15,6 +15,7 @@ from disnake.ext import commands
 logger = logging.getLogger("mangologger")
 
 InterContext = typing.Union[disnake.Interaction, commands.Context]
+ClipContext = typing.Union[disnake.Interaction, commands.Context, disnake.Guild]
 
 MENTION_TRANSFORMS = {
 	'@everyone': '@\u200beveryone',
@@ -27,9 +28,17 @@ MENTION_PATTERN = re.compile('|'.join(MENTION_TRANSFORMS.keys()))
 
 audio_extensions = "mp3|wav|ogg"
 
-def stringify_slash_command(inter: disnake.CommandInteraction):
+def slash_command_name(inter: disnake.CmdInter):
+	result = inter.application_command.qualified_name
+	for option in inter.data.options:
+		if option.type == disnake.OptionType.sub_command:
+			result += " " + option.name
+	return result
+
+
+def stringify_slash_command(inter: disnake.CmdInter):
 	result = "/"
-	result += inter.application_command.qualified_name
+	result += slash_command_name(inter)
 	if inter.filled_options:
 		for key,value in inter.filled_options.items():
 			if isinstance(value, disnake.User) or isinstance(value, disnake.Member):

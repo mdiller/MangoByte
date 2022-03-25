@@ -7,6 +7,8 @@ import re
 import string
 from collections import OrderedDict
 from io import BytesIO
+import urllib.parse
+import base64
 
 import disnake
 import praw
@@ -15,13 +17,18 @@ from disnake.ext import commands, tasks
 from utils.command import botdatatypes, checks
 from utils.other import wikipedia
 from utils.tools.botdata import UserInfo
-from utils.tools.globals import (botdata, httpgetter, logger, loggingdb, settings)
+from utils.tools.globals import (botdata, httpgetter, logger, settings)
 from utils.tools.helpers import *
+from utils.other.errorhandling import report_error
 
 from cogs.audio import AudioPlayerNotFoundError
+from cogs.dotabase import CURRENT_DOTA_PATCH_NUMBER
 from cogs.mangocog import *
 
-donate_links = {
+
+HELP_GUILD_LINK = "https://discord.gg/d6WWHxx"
+
+DONATE_LINKS = {
 	"Patreon": "https://www.patreon.com/dillerm",
 	"BuyMeACoffee": "https://www.buymeacoffee.com/dillerm",
 	"Ko-fi": "https://ko-fi.com/dillerm",
@@ -74,6 +81,56 @@ def get_docs_keys():
 	docs_data = load_md_as_dict(settings.resource("docs.md"))
 	return list(docs_data.keys())
 
+LOKI_APPLICATION_NAME = settings.loki["application"]
+class BotStats():
+	server_count: int
+	user_count: int
+	command_count: int
+	top_commands: typing.List[str]
+	def __init__(self, timeframe):
+		self.timeframe = timeframe
+		
+	async def query_loki(self, query):
+		baseurl = settings.loki["base_url"]
+		url = f"{baseurl}/loki/api/v1/query"
+		args = { "query": query }
+		query_args = []
+		for key,value in args.items():
+			value = urllib.parse.quote(value.encode("utf-8"))
+			query_args.append(f"{key}={value}")
+		url += "?" + "&".join(query_args)
+
+		userpass = f"{settings.loki['username']}:{settings.loki['password']}"
+		headers = { "Authorization": f"Basic {base64.b64encode(userpass.encode()).decode()}" }
+
+		data = await httpgetter.get(url, headers=headers)
+		return data
+
+	async def query_single_result(self, query):
+		data = await self.query_loki(query)
+		return int(data["data"]["result"][0]["value"][1])
+	
+	async def query_user_count(self, timeframe):
+		return await self.query_single_result(f'count(sum (count_over_time({{application="{LOKI_APPLICATION_NAME}", level="trace"}} | json | author_id != "" [{timeframe}])) by (author_id))')
+	
+	async def query_command_count(self, timeframe):
+		return await self.query_single_result(f'sum(count_over_time({{application="{LOKI_APPLICATION_NAME}", level="trace"}} | json | type = "slash_command" or type = "prefix_command" [{timeframe}]))')
+
+	async def query_top_commands(self, count, timeframe):
+		data = await self.query_loki(f'topk({count}, sum(count_over_time({{application="{LOKI_APPLICATION_NAME}", level="trace"}} | json | type = "slash_command" [{timeframe}])) by (command))')
+		cmds = []
+		for item in data["data"]["result"]:
+			cmds.append((item["metric"]["command"], int(item["value"][1])))
+		cmds.sort(key=lambda c: c[1], reverse=True)
+		return list(map(lambda c: c[0], cmds))
+
+	async def update(self, bot: commands.Bot):
+		self.server_count = len(bot.guilds)
+		self.user_count = await self.query_user_count(self.timeframe)
+		self.command_count = await self.query_command_count(self.timeframe)
+		self.top_commands = await self.query_top_commands(5, self.timeframe)
+
+
 class General(MangoCog):
 	"""Commands that don't really fit into the other categories
 
@@ -88,6 +145,7 @@ class General(MangoCog):
 		self.showerthoughts_data = read_json(settings.resource("json/showerthoughts.json"))
 		self.docs_data = load_md_as_dict(settings.resource("docs.md"))
 		self.words = load_words()
+		self.botstats_weekly = BotStats("7d")
 
 	@commands.slash_command()
 	async def misc(self, inter):
@@ -138,13 +196,13 @@ class General(MangoCog):
 		await inter.send(message)
 		
 
-	@bot.sub_command()
+	@bot.sub_command(name="changelog")
 	async def changelog(self, inter: disnake.CmdInter):
 		"""Gets a rough changelog for mangobyte
 		"""
 		await inter.response.defer()
 		commit_url = "https://github.com/mdiller/MangoByte"
-		description = f"For more information check out the [commit history]({commit_url}/commits/master) on GitHub\n"
+		description = f"For more information check out the [commit history]({commit_url}/commits/master) on GitHub, or visit the [Mangobyte Info Server]({HELP_GUILD_LINK}), and subscribe/follow the #updates channel.\n"
 		lines = get_changelog().split("\n")
 
 		recent_date = 0
@@ -170,37 +228,31 @@ class General(MangoCog):
 		embed.set_author(name="Changelog", url=f"{commit_url}/commits/master")
 		await inter.send(embed=embed)
 
-	@bot.sub_command()
+	@bot.sub_command(name="info")
 	async def info(self, inter: disnake.CmdInter):
 		"""Prints info about mangobyte"""
 		github = "https://github.com/mdiller/MangoByte"
 		python_version = "[Python {}.{}.{}]({})".format(*os.sys.version_info[:3], "https://www.python.org/")
 		library_url = "https://github.com/DisnakeDev/disnake"
 
-		embed = disnake.Embed(description="The juiciest unsigned 8 bit integer you eva gonna see", color=disnake.Color.green())
+		embed = disnake.Embed(description="A bot for playing audio clips and Dota 2 related commands", color=disnake.Color.green())
 
 		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar.url, url=github)
 
 		embed.add_field(name="Development Info", value=(
 			"Developed as an open source project, hosted on [GitHub]({}). "
-			"Implemented using {} and a python discord api wrapper [disnake]({})".format(github, python_version, library_url)))
-
-		help_guild_link = "https://discord.gg/d6WWHxx"
+			"Implemented using {} and a python discord api wrapper called [disnake]({})".format(github, python_version, library_url)))
 
 		embed.add_field(name="Help", value=(
 			f"If you want to invite mangobyte to your server/guild, click this [invite link]({settings.invite_link}). "
-			f"If you have a question, suggestion, or just want to try out mah features, check out the [Help Server/Guild]({help_guild_link})."))
+			f"If you have a question or suggestion, check out the [Help Server/Guild]({HELP_GUILD_LINK})."))
 
 		cmdpfx = botdata.command_prefix_guild(inter.guild)
-		embed.add_field(name="Features", value=(
-			f"• Answers questions (`/ask`)\n"
-			f"• Plays audio clips (`{cmdpfx}play`, `{cmdpfx}dota`)\n"
-			f"• Greets users joining a voice channel\n"
-			f"• For a list of command categories, try `{cmdpfx}help`"), inline=False)
-
-		donate_stuff = "\n".join(map(lambda key: f"• [{key}]({donate_links[key]})", donate_links))
-		embed.add_field(name="Donating", value=(
-			f"If you want to donate money to support MangoByte's server costs, click one of the links below. If you want to learn more about how much I spend on MangoByte per month try `{cmdpfx}donate`.\n{donate_stuff}"))
+		embed.add_field(name="Find Out More", value=(
+			f"• Browse commands and command categories via the `{cmdpfx}help` command\n"
+			f"• Learn more about mangobyte's core features with the `/docs` command\n"
+			f"• Per-user configuration is available via `/userconfig`\n"
+			f"• Configure settings for your server via `/config`"), inline=False)
 
 		owner = (await self.bot.application_info()).owner
 
@@ -208,56 +260,37 @@ class General(MangoCog):
 
 		await inter.send(embed=embed)
 
-	@bot.sub_command()
+	@bot.sub_command(name="invite")
 	async def invite(self, inter: disnake.CmdInter):
 		"""Shows the invite link"""
 		await inter.send(settings.invite_link)
 
-	@bot.sub_command()
+	@bot.sub_command(name="stats")
 	async def stats(self, inter: disnake.CmdInter):
 		"""Displays some bot statistics"""
 		await inter.response.defer()
 
+		if not settings.loki:
+			await inter.send("Stats not available for this bot. Whoever's running it hasnt set up loki")
+			return
+
 		embed = disnake.Embed(color=disnake.Color.green())
+		embed.description = "Note: The data for these stats began on March 22nd."
 
-		embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar.url)
+		embed.set_author(name=self.bot.user.name + " Stats (Last 7 Days)", icon_url=self.bot.user.avatar.url)
 
-		embed.add_field(name="Servers/Guilds", value="{:,}".format(len(self.bot.guilds)))
-		embed.add_field(name="Registered Users", value="{:,}".format(botdata.count_users_with_key("steam")))
-
-		thisweek = "timestamp between datetime('now', '-7 days') AND datetime('now', 'localtime')"
-		query_results = await loggingdb.query_multiple([
-			f"select count(*) from messages where command is not null",
-			f"select count(*) from messages where command is not null and {thisweek}",
-			f"select command from messages where command is not null group by command order by count(command) desc limit 3",
-			f"select command from messages where command is not null and {thisweek} group by command order by count(command) desc limit 3"
-		])
-
-
-		# embed.add_field(name="Commands", value=f"{query_results[0][0][0]:,}")
-		embed.add_field(name="Commands (This Week)", value=f"{query_results[1][0][0]:,}")
-
-		cmdpfx = botdata.command_prefix_guild(inter.guild)
-		top_commands = query_results[2]
-		# if len(top_commands) >= 3:
-		# 	embed.add_field(name="Top Commands", value=(
-		# 		f"`{cmdpfx}{top_commands[0][0]}`\n"
-		# 		f"`{cmdpfx}{top_commands[1][0]}`\n"
-		# 		f"`{cmdpfx}{top_commands[2][0]}`\n"))
-
-		top_commands_weekly = query_results[3]
-		if len(top_commands_weekly) >= 3:
-			embed.add_field(name="Top Commands (This Week)", value=(
-				f"`{cmdpfx}{top_commands_weekly[0][0]}`\n"
-				f"`{cmdpfx}{top_commands_weekly[1][0]}`\n"
-				f"`{cmdpfx}{top_commands_weekly[2][0]}`\n"))
+		botstats = self.botstats_weekly
+		embed.add_field(name="Servers/Guilds", value=f"{botstats.server_count:,}")
+		embed.add_field(name="Unique Users", value=f"{botstats.user_count:,}")
+		embed.add_field(name="Total Commands", value=f"{botstats.command_count:,}")
+		embed.add_field(name="Top Commands", value="\n".join(map(lambda c: f"`/{c}`", botstats.top_commands)))
 		
-		embed.set_footer(text="Note that this info does not include slash commands yet. I've gotta update and rework this.")
+		embed.set_footer(text="stats refreshes every hour")
 
 		await inter.send(embed=embed)
 
-	@misc.sub_command()
-	async def lasagna(self, inter: disnake.CmdInter):
+	@misc.sub_command(name="lasagna")
+	async def misc_lasagna(self, inter: disnake.CmdInter):
 		"""Posts an image of a baked italian dish"""
 		lasagna_images = [
 			"images/lasagna1.jpg",
@@ -272,8 +305,8 @@ class General(MangoCog):
 		]
 		await inter.send(file=disnake.File(settings.resource(random.choice(lasagna_images))))
 
-	@misc.sub_command()
-	async def scramble(self, inter: disnake.CmdInter, message: str):
+	@misc.sub_command(name="scramble")
+	async def misc_scramble(self, inter: disnake.CmdInter, message: str):
 		"""Scrambles the insides of words
 		
 		Parameters
@@ -386,8 +419,8 @@ class General(MangoCog):
 
 		await inter.send(embed=embed)
 
-	@misc.sub_command()
-	async def showerthought(self, inter: disnake.CmdInter):
+	@misc.sub_command(name="showerthought")
+	async def misc_showerthought(self, inter: disnake.CmdInter):
 		"""Gets a top post from the r/ShowerThoughts subreddit"""
 		await inter.response.defer()
 
@@ -404,8 +437,8 @@ class General(MangoCog):
 
 		await inter.send(embed=embed)
 
-	@misc.sub_command()
-	async def ask(self, inter: disnake.CmdInter, question : str=""):
+	@misc.sub_command(name="ask")
+	async def misc_ask(self, inter: disnake.CmdInter, question : str=""):
 		"""A magic 8-ball style question answerer
 
 		Parameters
@@ -456,8 +489,8 @@ class General(MangoCog):
 		if inter.guild and inter.guild.me.voice:
 			await self.play_clip(f"tts:{start_local}{result}", inter)
 	
-	@misc.sub_command()
-	async def random(self, inter: disnake.CmdInter, maximum: int, minimum: int = 0):
+	@misc.sub_command(name="random")
+	async def misc_random(self, inter: disnake.CmdInter, maximum: int, minimum: int = 0):
 		"""Gets a random number between the minimum and maximum (inclusive)
 
 		Parameters
@@ -471,8 +504,8 @@ class General(MangoCog):
 			result = random.randint(minimum, maximum)
 		await inter.send(result)
 	
-	@misc.sub_command()
-	async def choose(self, inter: disnake.CmdInter, options: str):
+	@misc.sub_command(name="choose")
+	async def misc_choose(self, inter: disnake.CmdInter, options: str):
 		"""Randomly chooses one of the given options
 
 		Parameters
@@ -495,10 +528,18 @@ class General(MangoCog):
 		embed.title = found_topic
 		embed.description = self.docs_data[found_topic]
 		await inter.send(embed=embed)
+	
+	@tasks.loop(hours=1)
+	async def update_botstats(self):
+		logger.info("task_triggered: update_botstats()")
+		try:
+			await self.botstats_weekly.update(self.bot)
+		except Exception as e:
+			await report_error("update_botstats()", e)
 
 	@tasks.loop(hours=12)
 	async def update_topgg(self):
-		logger.info("update_topgg() entered")
+		logger.info("task_triggered: update_topgg()")
 		if settings.debug or (settings.topgg is None):
 			return # nothing to do here
 
@@ -515,31 +556,32 @@ class General(MangoCog):
 				"Authorization": topgg_token
 			}
 			response = await httpgetter.post(url, body=body, headers=headers)
-		except HttpError as e:
-			await self.send_owner(f"Updating top.gg failed with {e.code} error")
+		except Exception as e: # HttpError
+			await report_error("update_topgg()", e)
 
 	@tasks.loop(hours=12)
 	async def do_infodump(self):
-		logger.info("do_infodump() entered")
+		logger.info("task_triggered: do_infodump()")
 		if not settings.infodump_path:
 			return # nothing to do here
 
-		guilds_count = len(self.bot.guilds)
-		member_count = botdata.count_users_with_key("steam")
-
-		data = {
-			"servers": guilds_count,
-			"registered_users": member_count
-		}
 		try:
+			guilds_count = len(self.bot.guilds)
+			member_count = botdata.count_users_with_key("steam")
+
+			data = {
+				"servers": guilds_count,
+				"registered_users": member_count
+			}
 			with open(settings.infodump_path, "w+") as f:
 				f.write(json.dumps(data))
 		except Exception as e:
-			await self.send_owner(f"do_infodump failed w/ exception: {e}")
+			await report_error("do_infodump()", e)
+		logger.event("infodump", data)
 
 	@tasks.loop(minutes=5)
 	async def check_dota_patch(self):
-		logger.info("check_dota_patch() entered")
+		logger.info("task_triggered: check_dota_patch()")
 		url = "https://www.dota2.com/patches/"
 		try:
 			text = await httpgetter.get(url, return_type="text")
@@ -667,8 +709,6 @@ class General(MangoCog):
 
 	@commands.Cog.listener()
 	async def on_command(self, ctx: commands.Context):
-		msg = await loggingdb.insert_message(ctx.message, ctx.command.name)
-		await loggingdb.insert_command(ctx)
 		logger.event("prefix_command", {
 			"command": ctx.command.name,
 			"message_id": ctx.message.id,
@@ -683,7 +723,7 @@ class General(MangoCog):
 	@commands.Cog.listener()
 	async def on_slash_command(self, inter: disnake.CommandInteraction):
 		logger.event("slash_command", {
-			"command": inter.application_command.qualified_name,
+			"command": slash_command_name(inter),
 			"inter_id": inter.id,
 			"author_id": inter.author.id,
 			"server_id": inter.guild.id if inter.guild else None,
@@ -722,20 +762,12 @@ class General(MangoCog):
 			"inter_id": inter.id
 		})
 
-	@commands.Cog.listener()
-	async def on_guild_join(self, guild):
-		await loggingdb.update_guilds(self.bot.guilds)
-
-	@commands.Cog.listener()
-	async def on_guild_remove(self, guild):
-		await loggingdb.update_guilds(self.bot.guilds)
-
-	@bot.sub_command()
+	@bot.sub_command(name="donate")
 	async def donate(self, inter: disnake.CmdInter):
 		"""Posts some links with info about how to donate to the developer"""
 		embed = disnake.Embed()
 
-		donate_stuff = "\n".join(map(lambda key: f"• [{key}]({donate_links[key]})", donate_links))
+		donate_stuff = "\n".join(map(lambda key: f"• [{key}]({DONATE_LINKS[key]})", DONATE_LINKS))
 		embed.description = "I host MangoByte on [DigitalOcean](https://www.digitalocean.com), which costs ~`$15` per month. "
 		embed.description += "Mango makes 100,000+ api calls to opendota per month, which adds up to a bit over `$10` a month. (the [api calls start costing money](https://www.opendota.com/api-keys) if you do over 50,000 a month). "
 		embed.description += "I have a job, and MangoByte won't be going down anytime soon, but if you want to help with the server costs, or just support me because you feel like it, feel free to donate using any of the links below. "
@@ -744,15 +776,15 @@ class General(MangoCog):
 
 		await inter.send(embed=embed)
 
-	@misc.sub_command()
-	async def cat(self, inter: disnake.CmdInter):
+	@misc.sub_command(name="cat")
+	async def misc_cat(self, inter: disnake.CmdInter):
 		"""Gets a picture of the developer's cat"""
 		cat_dir = settings.resource("images/cat")
 		imagepath = os.path.join(cat_dir, random.choice(os.listdir(cat_dir)))
 		await inter.send(file=disnake.File(imagepath))
 
-	@misc.sub_command()
-	async def dog(self, inter: disnake.CmdInter):
+	@misc.sub_command(name="dog")
+	async def misc_dog(self, inter: disnake.CmdInter):
 		"""Gets a picture of one of the developer's dogs"""
 		dog_dir = settings.resource("images/dog")
 		imagepath = os.path.join(dog_dir, random.choice(os.listdir(dog_dir)))

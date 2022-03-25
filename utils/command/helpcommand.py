@@ -4,6 +4,7 @@ import re
 
 import disnake
 from cogs.mangocog import simple_get_emoji
+from cogs.dotabase import CURRENT_DOTA_PATCH_NUMBER
 from disnake.ext.commands import *
 from utils.tools.globals import botdata, logger, settings
 from utils.tools.helpers import MENTION_PATTERN, read_json
@@ -26,6 +27,7 @@ def get_config_help(variables, command):
 
 
 text_help_server = "Feel free to visit the [Mangobyte Help Server/Guild](https://discord.gg/d6WWHxx) if you have any questions! To see more in-depth descriptions for some of the features, try `/docs`"
+text_readme_reference = "To get a nicer view of all of the commands you see below, visit the [github page](https://github.com/mdiller/mangobyte#commands)"
 text_category_help = "To get more information about a specific category, try `{cmdpfx}help <category>`"
 text_command_help = "To get more information about a specific command, try `{cmdpfx}help <command>`"
 
@@ -41,12 +43,14 @@ class MangoHelpCommand(DefaultHelpCommand):
 	async def send_bot_help(self, mapping):
 		no_category = '\u200b{0.no_category}:'.format(self)
 		def get_category(command, *, no_category=no_category):
+			if isinstance(command, SubCommand):
+				return command.help_cog_name
 			cog = command.cog
 			return cog.qualified_name + ':' if cog is not None else no_category
 
 		if self.show_all:
 			# ?help all
-			embed = self.embed_description(f"{self.bot.description}\n\n{text_help_server}\n\n{text_category_help}\n{text_command_help}", self.bot)
+			embed = self.embed_description(f"{self.bot.description}\n\n{text_readme_reference}\n\n{text_help_server}\n\n{text_category_help}\n{text_command_help}", self.bot)
 			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar.url, url="https://github.com/mdiller/MangoByte")
 
 			commands = list(self.bot.commands)
@@ -62,7 +66,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 					embed.add_field(name=category, value=self.list_commands(commands, only_name=True), inline=False)
 		else:
 			# ?help
-			embed = self.embed_description(f"{self.bot.description}\n\n{text_help_server}\n\n{text_category_help}\nTo show all commands, try `{{cmdpfx}}help all`", self.bot)
+			embed = self.embed_description(f"{self.bot.description}\n\n**__Command Categories:__**\n{text_category_help}", self.bot)
 			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar.url, url="https://github.com/mdiller/MangoByte")
 			for cog in self.bot.cogs:
 				if cog == "Owner":
@@ -141,7 +145,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 				continue
 			newline = ""
 			if only_name:
-				cmd_names.append("`{{cmdpfx}}{0:{1}<30}`".format(command.qualified_name, u"\u00A0"))
+				cmd_names.append(f"{{cmdpfx}}{command.qualified_name}")
 				cmd_descriptions.append("")
 			else:
 				if isinstance(command, Command):
@@ -163,14 +167,17 @@ class MangoHelpCommand(DefaultHelpCommand):
 		for i in range(len(cmd_names)):
 			name = cmd_names[i]
 			desc = cmd_descriptions[i]
-			newline = "`{0:{1}<{2}}".format(cmd_names[i], u"\u00A0", max_cmd_size)
-			newline += " | "
-			if len(newline) + len(desc) > line_limit:
-				desc = desc[:line_limit - (len(newline) + 4)]
-				desc += "..."
-			newline += desc
-			newline += "`"
-			lines.append(newline)
+			if desc == "":
+				lines.append(f"`{name}`")
+			else:
+				newline = "`{0:{1}<{2}}".format(name, u"\u00A0", max_cmd_size)
+				newline += " | "
+				if len(newline) + len(desc) > line_limit:
+					desc = desc[:line_limit - (len(newline) + 4)]
+					desc += "..."
+				newline += desc
+				newline += "`"
+				lines.append(newline)
 		if lines:
 			return "\n".join(lines)
 		else:
@@ -183,6 +190,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 		text = re.sub("\{config_help\}", get_config_help(GuildInfo.variables, "config"), text)
 		text = re.sub("\{userconfig_help\}", get_config_help(UserInfo.variables, "userconfig"), text)
 		text = re.sub("\{cmdpfx\}", botdata.command_prefix(self.context), text)
+		text = re.sub("\{CURRENT_DOTA_PATCH_NUMBER\}", CURRENT_DOTA_PATCH_NUMBER, text)
 		text = re.sub("\n`", u"\n\u200b`", text)
 		return text
 
@@ -195,8 +203,10 @@ class MangoHelpCommand(DefaultHelpCommand):
 			if isinstance(command, InvokableSlashCommand):
 				if command.children:
 					for child in command.children.values():
+						child.help_cog_name = command.cog_name
 						new_list.append(child)
 				else:
+					command.help_cog_name = command.cog_name
 					new_list.append(command)
 		return new_list
 

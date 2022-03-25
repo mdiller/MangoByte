@@ -6,7 +6,7 @@ import disnake
 from disnake.ext import commands
 from utils.command.clip import *
 from utils.command.commandargs import *
-from utils.tools.globals import botdata, logger, loggingdb, settings
+from utils.tools.globals import botdata, logger, settings
 from utils.tools.helpers import *
 
 # Note: This code used to be in mangobyte.py so look there for more history
@@ -97,7 +97,7 @@ async def command_error_handler(ctx_inter: InterContext, error: commands.Command
 			emoji_dict = read_json(settings.resource("json/emoji.json"))
 			command = None
 			if isinstance(ctx_inter, disnake.ApplicationCommandInteraction):
-				command = ctx_inter.application_command.qualified_name
+				command = slash_command_name(ctx_inter)
 			elif isinstance(ctx_inter, commands.Context):
 				command = ctx_inter.command
 
@@ -126,10 +126,8 @@ async def command_error_handler(ctx_inter: InterContext, error: commands.Command
 			await error.original.send_self(ctx_inter, botdata)
 			if error.original.code != 404: # 404 errors are not worth reporting
 				logger.warning(f"http error {error.original.code} on {identifier} for url: {error.original.url}")
-			await loggingdb.command_finished(ctx_inter, "user_errored", error.original.message)
 		elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, UserError):
 			await error.original.send_self(ctx_inter, botdata)
-			await loggingdb.command_finished(ctx_inter, "user_errored", error.original.message)
 		elif isinstance(error, commands.ConversionError) and isinstance(error.original, UserError):
 			await error.original.send_self(ctx_inter, botdata)
 		elif isinstance(error, commands.ConversionError) and isinstance(error.original, CustomBadArgument):
@@ -171,7 +169,7 @@ async def print_missing_perms(ctx_inter: InterContext, error):
 		await ctx_inter.send(f"Looks like I'm missing permissions 😢. Have an admin giff me back my permissions, or re-invite me to the server using this invite link: {settings.invite_link}")
 
 
-async def report_error(ctx_inter_msg: typing.Union[InterContext, disnake.Message], error, skip_lines=2):
+async def report_error(ctx_inter_msg: typing.Union[InterContext, disnake.Message, str], error, skip_lines=2):
 	try:
 		if isinstance(error, disnake.errors.InteractionTimedOut):
 			trace = [ "InteractionTimedOut: took longer than 3 seconds" ]
@@ -188,14 +186,25 @@ async def report_error(ctx_inter_msg: typing.Union[InterContext, disnake.Message
 
 	trace_string = "\n".join(trace)
 
+	err_info = {}
 	if isinstance(ctx_inter_msg, commands.Context):
 		message = ctx_inter_msg.message
-		await loggingdb.insert_error(message, error, trace_string)
-		logger.error(f"Error on: {message.content}\nMessage Id: {message.id}\nAuthor Id: {message.author.id}\n{trace_string}\n")
+		err_info["source"] = message.content
+		err_info["message_id"] = message.id
+		err_info["author_id"] = message.author.id
 	elif isinstance(ctx_inter_msg, disnake.Interaction):
-		logger.error(f"Error on: {stringify_slash_command(ctx_inter_msg)}\ninter_id: {ctx_inter_msg.id}\nauthor_id: {ctx_inter_msg.author.id}\n{trace_string}\n")
-	else: # is a message
+		err_info["source"] = stringify_slash_command(ctx_inter_msg)
+		err_info["inter_id"] = ctx_inter_msg.id
+		err_info["author_id"] = ctx_inter_msg.author.id
+	elif isinstance(ctx_inter_msg, disnake.Message): # is a message
 		message = ctx_inter_msg
-		await loggingdb.insert_error(message, error, trace_string)
-		logger.error(f"Error on: {message.content}\nmessage_id: {message.id}\nauthor_id: {message.author.id}\n{trace_string}\n")
+		err_info["source"] = message.content
+		err_info["message_id"] = message.id
+		err_info["author_id"] = message.author.id
+	else: # Is a string
+		err_info["source"] = ctx_inter_msg
+	err_info = "\n".join(map(lambda kv: f"{kv[0]}: {kv[1]}", err_info.items()))
+	
+	logger.error(f"{err_info}\n{trace_string}\n")
+
 	return trace_string

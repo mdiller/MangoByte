@@ -8,7 +8,7 @@ from disnake.ext import commands
 from utils.command.clip import *
 from utils.command.commandargs import *
 from utils.tools.botdata import GuildInfo
-from utils.tools.globals import botdata, logger, loggingdb, settings
+from utils.tools.globals import botdata, logger, settings
 from utils.tools.helpers import *
 
 # Note: This code used to be in mangobyte.py so look there for more history
@@ -33,17 +33,6 @@ async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 			start=datetime.datetime.utcnow())
 		await bot.change_presence(status=disnake.Status.dnd, activity=activity)
 
-		periodic_tasks = []
-		if not settings.debug:
-			periodic_tasks.append(audio_cog.voice_channel_culler)
-		if settings.topgg:
-			periodic_tasks.append(general_cog.update_topgg)
-		if settings.infodump_path:
-			periodic_tasks.append(general_cog.do_infodump)
-		for task in periodic_tasks:
-			if (not task.is_running()):
-				task.start()
-
 		# now do voice channels and the rest!
 		minimum_channels_to_space = 50
 		voice_channels_per_minute_timing = 4
@@ -62,6 +51,22 @@ async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 		logger.info(message)
 		if not settings.debug:
 			await appinfo.owner.send(message)
+		
+		# start periodic tasts
+		periodic_tasks = []
+		if not settings.debug:
+			periodic_tasks.append(audio_cog.voice_channel_culler)
+		if settings.topgg:
+			periodic_tasks.append(general_cog.update_topgg)
+		if settings.infodump_path:
+			periodic_tasks.append(general_cog.do_infodump)
+		if settings.loki:
+			periodic_tasks.append(general_cog.update_botstats)
+		for task in periodic_tasks:
+			if (not task.is_running()):
+				if not settings.debug:
+					await asyncio.sleep(5) # wait just a little bit before starting each. (so they dont all run at once on their schedules)
+				task.start()
 
 		# trigger the actual voice channel reconnecting
 		audio_cog = bot.get_cog("Audio")
@@ -81,9 +86,6 @@ async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 			seconds_to_wait = 60 * 10
 			logger.error(f"there was a timeout error during initialization, waiting {seconds_to_wait} seconds before finishing")
 			await asyncio.sleep(seconds_to_wait)
-
-		logger.info("updating guilds")
-		await loggingdb.update_guilds(bot.guilds)
 
 		message = "__**Initialization Complete:**__\n"
 		message += channel_connector.status_as_string("voice channels connected") + "\n\n"

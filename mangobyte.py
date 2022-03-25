@@ -8,12 +8,12 @@ import utils.other.errorhandling as errorhandling
 import utils.other.initialization as initialization
 import utils.other.update_script as update_script
 from utils.command.helpcommand import MangoHelpCommand
-from utils.tools.globals import botdata, logger, settings
+from utils.tools.globals import botdata, logger, settings, httpgetter
 from utils.tools.helpers import *
 
 startupTimer = SimpleTimer()
 
-description = """The juiciest unsigned 8 bit integer you is eva gonna see.
+description = """A discord bot built primarily around playing audio clips and dota related commands.
 				For more information about me, try `/bot info`"""
 
 bot = commands.AutoShardedBot(
@@ -78,6 +78,7 @@ if __name__ == '__main__':
 		# instead of running the bot, run our script to update static files
 		logger.info("running update script...")
 		update_script.update(bot)
+		logger.info("done!")
 	else:
 		logger.event("startup", {
 			"message": "mangobyte script started"

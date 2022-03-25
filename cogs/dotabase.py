@@ -25,6 +25,8 @@ CRITERIA_ALIASES = read_json(settings.resource("json/criteria_aliases.json"))
 
 session = dotabase_session()
 
+CURRENT_DOTA_PATCH_NUMBER = session.query(Patch).order_by(desc(Patch.timestamp)).first().number
+
 ABILITY_KEY_MAP = {
 	"q": 1,
 	"w": 2,
@@ -76,9 +78,9 @@ def query_filter_list(query, column, value, separator="|"):
 
 
 class Dotabase(MangoCog):
-	"""For information about Dota 2, and playing hero responses
+	"""For information about the game Dota 2 [Patch **{CURRENT_DOTA_PATCH_NUMBER}**]
 
-	Interfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see a website that interfaces with dotabase."""
+	Interfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see an old website I built that interfaces with dotabase."""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 		self.session = session
@@ -182,6 +184,18 @@ class Dotabase(MangoCog):
 
 		wikiurl = wikiurl.replace(" ", "_").replace("'", "%27")
 		return f"http://dota2.gamepedia.com/{wikiurl}"
+	
+	# gets the patch a match took place in, else None
+	def get_match_patch(self, match):
+		query = session.query(Patch)
+		timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
+		query = query.filter(Patch.timestamp <= timestamp)
+		query = query.order_by(desc(Patch.timestamp))
+		query = query.limit(1)
+		if query.count() > 0:
+			return query.first().number
+		else:
+			return None
 
 	def lookup_hero(self, hero):
 		if not hero:
@@ -439,8 +453,8 @@ class Dotabase(MangoCog):
 							return message
 		return None
 
-	async def play_response(self, response, ctx_inter: InterContext):
-		return await self.play_clip(f"dota:{response.fullname}", ctx_inter)
+	async def play_response(self, response, clip_ctx: ClipContext):
+		return await self.play_clip(f"dota:{response.fullname}", clip_ctx)
 
 	# used for getting the right response for dota clips
 	def get_response(self, responsename):
@@ -451,8 +465,8 @@ class Dotabase(MangoCog):
 		return session.query(Response).filter(Response.name == responsename).first()
 
 	# Plays a random response from a query
-	async def play_response_query(self, query, ctx_inter: InterContext):
-		return await self.play_response(query.order_by(func.random()).first(), ctx_inter)
+	async def play_response_query(self, query, clip_ctx: ClipContext):
+		return await self.play_response(query.order_by(func.random()).first(), clip_ctx)
 
 	@Audio.play.sub_command(name="dota")
 	async def play_dota(self, inter: disnake.CmdInter, text: str = None, hero: Hero = None, criteria: commands.option_enum(CRITERIA_ALIASES) = None):

@@ -12,7 +12,7 @@ import disnake
 from disnake.ext import commands, tasks
 from utils.command import botdatatypes
 from utils.command.clip import *
-from utils.tools.globals import botdata, logger, loggingdb, settings
+from utils.tools.globals import botdata, logger, settings
 from utils.tools.helpers import *
 from utils.other.errorhandling import report_error
 
@@ -59,6 +59,13 @@ class AudioPlayer:
 			return None
 		else:
 			return self.voice.channel
+	
+	@property
+	def voice_channel_id(self):
+		if self.voice is None:
+			return None
+		else:
+			return self.voice.channel.id
 
 	async def update_guild(self):
 		self.guild = await self.bot.fetch_guild(self.guild.id)
@@ -258,7 +265,7 @@ class Audio(MangoCog):
 
 	@tasks.loop(hours=12)
 	async def voice_channel_culler(self):
-		logger.info("voice_channel_culler() entered")
+		logger.info("task_triggered: voice_channel_culler()")
 		now = datetime.datetime.now()
 		culling_cutoff = voice_channel_culling_timeout_hours * 60 * 60
 		if (now - self.start_time).total_seconds() < culling_cutoff:
@@ -464,13 +471,13 @@ class Audio(MangoCog):
 		clip = await self.do_tts(message, inter)
 		await self.print_clip(inter, clip)
 
-	async def do_tts(self, text, ctx_inter: InterContext):
+	async def do_tts(self, text, clip_ctx: ClipContext):
 		gtts_fixes = read_json(settings.resource("json/gtts_fixes.json"))
 		text = text.replace("\n", " ")
 		for key in gtts_fixes:
 			pattern = f"\\b({key})\\b" if not key.startswith("regex:") else re.sub("^regex:", "", key)
 			text = re.sub(pattern, gtts_fixes[key], text, re.IGNORECASE)
-		return await self.play_clip("tts:" + text, ctx_inter)
+		return await self.play_clip("tts:" + text, clip_ctx)
 
 	@commands.slash_command()
 	async def say(self, inter: disnake.CmdInter, message: str):
@@ -484,30 +491,32 @@ class Audio(MangoCog):
 		clip = await self.do_smarttts(message, inter)
 		await self.print_clip(inter, clip)
 
-	async def do_smarttts(self, message, ctx_inter: InterContext):
+	async def do_smarttts(self, message, clip_ctx: ClipContext):
 		if message == "" or not message:
 			return None # dont say anything if theres nothin to be said
 		if re.match(Clip.id_pattern, message):
 			try: # try to play it if it looks like a full clipid
-				return await self.play_clip(message, ctx_inter)
+				return await self.play_clip(message, clip_ctx)
 			except ClipNotFound:
 				pass
+		if re.match(r"^[\.0-9\-]+$", message): # if its just a number, do normal tts
+			return await self.do_tts(message, clip_ctx)
 		simple_message = re.sub(r'[^a-z0-9\s_]', r'', message.lower())
 		dotabase = self.bot.get_cog("Dotabase")
 		if dotabase:
 			if simple_message in [ "haha", "lol", "laugh" ]:
 				response = await dotabase.get_laugh_response()
-				return await dotabase.play_response(response, ctx_inter)
+				return await dotabase.play_response(response, clip_ctx)
 
 			clip = dotabase.get_chatwheel_sound_clip(message)
 			if clip:
-				return await self.play_clip(clip, ctx_inter)
+				return await self.play_clip(clip, clip_ctx)
 			query = await dotabase.smart_dota_query(message, exact=True)
 			if query:
-				return await dotabase.play_response_query(query, ctx_inter)
+				return await dotabase.play_response_query(query, clip_ctx)
 
 		if simple_message in self.local_clipinfo:
-			return await self.play_clip(f"local:{simple_message}", ctx_inter)
+			return await self.play_clip(f"local:{simple_message}", clip_ctx)
 
 		for clipname in self.local_clipinfo:
 			clip = self.local_clipinfo[clipname]
@@ -515,9 +524,9 @@ class Audio(MangoCog):
 			if simple_text == "":
 				continue
 			if simple_message == simple_text:
-				return await self.play_clip(f"local:{clipname}", ctx_inter)
+				return await self.play_clip(f"local:{clipname}", clip_ctx)
 
-		return await self.do_tts(message, ctx_inter)
+		return await self.do_tts(message, clip_ctx)
 
 	@commands.Cog.listener()
 	async def on_message(self, message):
@@ -553,10 +562,8 @@ class Audio(MangoCog):
 						name = await self.fix_name(name)
 						await self.do_tts(f"{name} says", message.guild)
 					if guildinfo.simpletts:
-						await loggingdb.insert_message(message, "tts")
 						await self.do_tts(message.clean_content, message.guild)
 					else:
-						await loggingdb.insert_message(message, "smarttts")
 						await self.do_smarttts(message.clean_content, message.guild)
 				except AudioPlayerNotFoundError as e:
 					if not guildinfo.ttschannelwarn:

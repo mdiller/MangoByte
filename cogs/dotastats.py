@@ -473,6 +473,14 @@ class DotaStats(MangoCog):
 			story += f"• {pretty_list(roamers)} roamed\n"
 		return story
 
+	def set_match_footer(self, match, embed):
+		dotabase = self.bot.get_cog("Dotabase")
+		footer_text = str(match["match_id"])
+		patch = dotabase.get_match_patch(match)
+		if patch:
+			footer_text += " • " + patch
+		embed.set_footer(text=footer_text)
+		embed.timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
 
 	# prints the stats for the given player's latest game
 	async def player_match_stats(self, steamid, match, inter):
@@ -485,7 +493,6 @@ class DotaStats(MangoCog):
 			await self.print_match_stats(inter, match)
 			return
 
-		dotabase = self.bot.get_cog("Dotabase")
 		hero_name = self.hero_info[player['hero_id']]['name']
 
 		duration = get_pretty_duration(match['duration'], postfix=False)
@@ -500,8 +507,7 @@ class DotaStats(MangoCog):
 					f"[OpenDota](https://www.opendota.com/matches/{match_id}), or "
 					f"[STRATZ](https://www.stratz.com/match/{match_id})")
 
-		utc_timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
-		embed = disnake.Embed(description=description, color=self.embed_color, timestamp=utc_timestamp)
+		embed = disnake.Embed(description=description, color=self.embed_color)
 
 		embed.set_author(name=player.get('personaname') or "Anonymous", icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
 
@@ -524,7 +530,8 @@ class DotaStats(MangoCog):
 
 		match_image = disnake.File(await drawdota.create_match_image(match), "match.png")
 		embed.set_image(url=f"attachment://{match_image.filename}")
-		embed.set_footer(text=str(match_id))
+
+		self.set_match_footer(match, embed)
 
 		await inter.send(embed=embed, file=match_image)
 
@@ -584,8 +591,7 @@ class DotaStats(MangoCog):
 		match_image = disnake.File(await drawdota.create_match_image(match), filename="matchimage.png")
 		embed.set_image(url=f"attachment://{match_image.filename}")
 
-		embed.set_footer(text=str(match_id))
-		embed.timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
+		self.set_match_footer(match, embed)
 
 		await inter.send(embed=embed, file=match_image)
 
@@ -595,8 +601,8 @@ class DotaStats(MangoCog):
 		await inter.response.defer()
 		pass
 	
-	@match.sub_command()
-	async def info(self, inter: disnake.CmdInter, match: DotaMatch):
+	@match.sub_command(name="info")
+	async def match_info(self, inter: disnake.CmdInter, match: DotaMatch):
 		"""Creates a table with some basic stats and information about the dota match
 
 		Parameters
@@ -605,8 +611,8 @@ class DotaStats(MangoCog):
 		"""
 		await self.player_match_stats(match.steamid, match.match, inter)
 
-	@match.sub_command()
-	async def story(self, inter: disnake.CmdInter, match: DotaMatch, perspective: commands.option_enum(OrderedDict({"Radiant": "radiant", "Dire": "dire"})) = "radiant"):
+	@match.sub_command(name="story")
+	async def match_story(self, inter: disnake.CmdInter, match: DotaMatch, perspective: commands.option_enum(OrderedDict({"Radiant": "radiant", "Dire": "dire"})) = "radiant"):
 		"""Tells the story of the match
 
 		Parameters
@@ -663,8 +669,7 @@ class DotaStats(MangoCog):
 		embed.title = f"Story of Match {match['match_id']}"
 		embed.url = f"https://www.opendota.com/matches/{match['match_id']}/story"
 
-		embed.set_footer(text=str(match["match_id"]))
-		embed.timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
+		self.set_match_footer(match, embed)
 
 		await inter.send(embed=embed)
 
@@ -1239,8 +1244,8 @@ class DotaStats(MangoCog):
 		await inter.send(file=image)
 
 
-	@match.sub_command()
-	async def laning(self, inter: disnake.CmdInter, match: DotaMatch):
+	@match.sub_command(name="laning")
+	async def match_laning(self, inter: disnake.CmdInter, match: DotaMatch):
 		"""Creates gif of the laning stage with a caption
 
 		Parameters
@@ -1271,8 +1276,7 @@ class DotaStats(MangoCog):
 		image = disnake.File(await self.create_dota_gif(match, stratz_match, -89, 600, 100), "map.gif")
 		embed.set_image(url=f"attachment://{image.filename}")
 
-		embed.set_footer(text=str(match_id))
-		embed.timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
+		self.set_match_footer(match, embed)
 
 		await inter.send(embed=embed, file=image)
 
@@ -1455,8 +1459,8 @@ class DotaStats(MangoCog):
 		embed.set_image(url=f"attachment://{image.filename}")
 		await inter.send(embed=embed, file=image)
 
-	@match.sub_command()
-	async def skillbuild(self, inter: disnake.CmdInter, match: DotaMatch):
+	@match.sub_command(name="skillbuild")
+	async def match_skillbuild(self, inter: disnake.CmdInter, match: DotaMatch):
 		"""Gets the ability upgrades for a match
 
 		Parameters
@@ -1476,13 +1480,12 @@ class DotaStats(MangoCog):
 		image = disnake.File(await drawdota.draw_match_ability_upgrades(match), "upgrades.png")
 		embed.set_image(url=f"attachment://{image.filename}")
 
-		embed.set_footer(text=str(match_id))
-		embed.timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
+		self.set_match_footer(match, embed)
 
 		await inter.send(embed=embed, file=image)
 
-	@match.sub_command()
-	async def graph(self, inter: disnake.CmdInter, match: DotaMatch, graphtype: commands.option_enum(OrderedDict(graphtypes)) = "teamdiff"):
+	@match.sub_command(name="graph")
+	async def match_graph(self, inter: disnake.CmdInter, match: DotaMatch, graphtype: commands.option_enum(OrderedDict(graphtypes)) = "teamdiff"):
 		"""Creates a graph for a dota match
 
 		Parameters
@@ -1533,8 +1536,7 @@ class DotaStats(MangoCog):
 		image = disnake.File(drawgraph.drawgraph(lines, colors, labels), "graph.png")
 		embed.set_image(url=f"attachment://{image.filename}")
 
-		embed.set_footer(text=str(match_id))
-		embed.timestamp = datetime.datetime.fromtimestamp(match['start_time'], tz=datetime.timezone.utc)
+		self.set_match_footer(match, embed)
 
 		await inter.send(embed=embed, file=image)
 

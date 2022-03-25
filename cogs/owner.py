@@ -3,12 +3,11 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor
 
 import disnake
-import utils.tools.loggingdb as loggingdb_spec
 import youtube_dl
 from disnake.ext import commands
 from sqlalchemy import desc
 from utils.command import checks
-from utils.tools.globals import botdata, httpgetter, loggingdb, settings, logger
+from utils.tools.globals import botdata, httpgetter, settings, logger
 from utils.tools.helpers import *
 
 from dotabase import Hero
@@ -222,28 +221,6 @@ class Owner(MangoCog):
 		await ctx.send(file=disnake.File(filename))
 
 	@commands.command()
-	async def errors(self, ctx, count : int=5, page : int=0, excludestring=None):
-		"""Gets a list of the most recent errors from loggingdb"""
-
-		for error in loggingdb.session.query(loggingdb_spec.Error).order_by(desc(loggingdb_spec.Error.timestamp)).offset(page * count):
-			if count <= 0:
-				return
-			error_chunks = error.error_text_chunks()
-			try:
-				if excludestring and re.search(excludestring, "\n".join(error_chunks)):
-					continue # skip this because our excludestring matches
-			except Exception:
-				raise UserError("Regex parsing error")
-			await ctx.send(embed=error.to_embed(self))
-			for chunk in error_chunks[:-1]:
-				await ctx.send(chunk)
-				await asyncio.sleep(0.5)
-
-			await ctx.send(error_chunks[-1] + "\n_ _")
-			await asyncio.sleep(0.5)
-			count -= 1
-
-	@commands.command()
 	async def remoteresummon(self, ctx, guild_id : int):
 		"""Re-summons the bot for the given guild
 
@@ -279,32 +256,6 @@ class Owner(MangoCog):
 			raise UserError(f"There was a timeout when attempting to do the `{cmdpfx}summon`")
 
 		await ctx.message.add_reaction("✅")
-
-
-	@commands.command(aliases=["logs", "logger"])
-	async def loggingdb(self, ctx, table, identifier):
-		"""Gets a list of the most recent errors from loggingdb"""
-		if table in [ "error", "errors", "bugs", "bug" ]:
-			table = loggingdb_spec.Error
-			filterer = lambda q: q.filter_by(message_id=identifier)
-		elif table in [ "message", "messages", "msg", "messages" ]:
-			table = loggingdb_spec.Message
-			filterer = lambda q: q.filter_by(id=identifier)
-		elif table in [ "command", "commands", "cmd", "cmds" ]:
-			table = loggingdb_spec.Command
-			filterer = lambda q: q.filter_by(message_id=identifier)
-		else:
-			raise UserError("Dont know what table you're talking about")
-		found = False
-		for obj in filterer(loggingdb.session.query(table)):
-			found = True
-			await ctx.send(embed=obj.to_embed(self))
-			if table == loggingdb_spec.Error:
-				chunks = obj.error_text_chunks()
-				for chunk in chunks:
-					await ctx.send(chunk)
-		if not found:
-			raise UserError("Couldn't find anything for that")
 
 	@commands.command(aliases=["restart", "quit", "kill", "pokemango", "exit"])
 	async def close(self, ctx):

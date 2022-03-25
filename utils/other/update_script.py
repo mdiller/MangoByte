@@ -49,8 +49,10 @@ def update(bot: commands.Bot):
 		})
 	for cmd in bot.help_command.expand_subcommands(bot.slash_commands):
 		if isinstance(cmd, commands.SubCommand):
+			cogname = cmd.help_cog_name
 			description = cmd.body.description
 		else:
+			cogname = cmd.help_cog_name
 			description = cmd.description
 		data["commands"].append({
 			"name": cmd.qualified_name,
@@ -58,7 +60,7 @@ def update(bot: commands.Bot):
 			"short_help": description,
 			"help": description,
 			"aliases": [],
-			"cog": cmd.cog.name if cmd.cog else "General",
+			"cog": cogname,
 			"prefix": "/"
 		})
 	for cog in bot.cogs:
@@ -113,8 +115,6 @@ def update(bot: commands.Bot):
 			text = re.sub(f"({replacement_start}).*?({replacement_end})", f"\\g<1>{value}\\2", text, flags=re.S)
 		with open(filename, "w+") as f:
 			f.write(text)
-
-	logger.info("done!")
 
 # gets a list of commands that take the given arg type
 def get_commands_with_arg(bot, argtype):

@@ -64,7 +64,11 @@ For playing audio in a voice channel
 
 ```
 /clipinfo            | Gets information and a file for the given clip                                     
+/clips chatwheel     | Shows a list of chatwheel lines                                                    
+/clips dota          | Plays a dota response                                                              
 /clips local         | Lists the names of local audio clips. For more info on clips, see '/docs Clips'    
+/play chatwheel      | Plays the given chat wheel sound. Try '/clips chatwheel' to get a list of clips.   
+/play dota           | Plays a dota response. Try '/clips dota' for a similar command that returns a list 
 /play local          | Plays a local audio clip. For more information on clips, see `/docs Clips`         
 /play tts            | Converts the given message to speech and plays the tts clip                        
 /replay              | Replays the last played clip                                                       
@@ -73,7 +77,7 @@ For playing audio in a voice channel
 ```
 
 #### Dotabase
-For information about Dota 2, and playing hero responses
+For information about the game Dota 2
 
 ```
 ?abilities           | Shows all of the abilities/spells for that hero                                    
@@ -81,8 +85,6 @@ For information about Dota 2, and playing hero responses
 ?addemoticon         | Adds a dota emoticon as an animated emoji                                          
 ?aghanim             | Gets the aghs upgrade for the given hero or ability                                
 ?blog                | Pulls the newest blog post for Dota 2                                              
-/clips chatwheel     | Shows a list of chatwheel lines                                                    
-/clips dota          | Plays a dota response                                                              
 ?courage             | Generates a challenge build                                                        
 ?emoticon            | Gets the gif of a dota emoticon                                                    
 ?fuseheroes          | See what would happen if you fused two heroes together                             
@@ -93,8 +95,6 @@ For information about Dota 2, and playing hero responses
 ?leveledstats        | Gets the stats for a hero at the specified level                                   
 ?lore                | Gets the lore of a hero, ability, or item                                          
 ?neutralitems        | Displays all of the neutral items                                                  
-/play chatwheel      | Plays the given chat wheel sound. Try '/clips chatwheel' to get a list of clips.   
-/play dota           | Plays a dota response. Try '/clips dota' for a similar command that returns a list 
 ?recipe              | Shows the recipes involving this item                                              
 ?talents             | Gets the talents of a specific hero                                                
 ```

@@ -44,7 +44,7 @@ class MangoCog(disnake.ext.commands.Cog):
 					continue
 		raise MissingClipType(clipid)
 
-	async def get_clip(self, clipid, ctx_inter: InterContext):
+	async def get_clip(self, clipid, clip_ctx: ClipContext):
 		cliptypes = Clip.types_dict()
 
 		match = re.search(f"^({'|'.join(cliptypes)}):(.*)$", clipid.replace("\n", " "))
@@ -52,22 +52,28 @@ class MangoCog(disnake.ext.commands.Cog):
 		if not match:
 			raise MissingClipType(clipid)
 
-		return await cliptypes[match.group(1)]().init(match.group(2), self.bot, ctx_inter)
+		return await cliptypes[match.group(1)]().init(match.group(2), self.bot, clip_ctx)
 
-	async def play_clip(self, clip, ctx_inter: InterContext, print=False):
+	async def play_clip(self, clip, clip_ctx: ClipContext, print=False):
 		if isinstance(clip, str):
-			clip = await self.get_clip(clip, ctx_inter)
+			clip = await self.get_clip(clip, clip_ctx)
 		
 		if clip.type == "url":
-			clip = await self.get_clip("tts:U R L clips have been deprecated", ctx_inter)
+			clip = await self.get_clip("tts:U R L clips have been deprecated", clip_ctx)
 
 		audio = self.bot.get_cog("Audio")
 
-		audioplayer = await audio.audioplayer(ctx_inter)
+		audioplayer = await audio.audioplayer(clip_ctx)
 		audio.last_played_audio[audioplayer.guild_id] = datetime.datetime.now()
-		await audioplayer.queue_clip(clip, ctx_inter)
+		await audioplayer.queue_clip(clip, clip_ctx)
 		if print:
-			await self.print_clip(ctx_inter, clip)
+			await self.print_clip(clip_ctx, clip)
+		logger.event("clip", {
+			"type": clip.type,
+			"clipid": clip.clipid,
+			"server_id": audioplayer.guild_id,
+			"channel_id": audioplayer.voice_channel_id
+		})
 		return clip
 	
 	async def print_clip(self, inter: disnake.Interaction, clip):

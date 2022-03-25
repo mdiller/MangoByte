@@ -94,7 +94,7 @@ class Clip(object):
 		return self.clipid
 
 class LocalClip(Clip):
-	async def init(self, clipname, bot, ctx_inter: InterContext):
+	async def init(self, clipname, bot, clip_ctx: ClipContext):
 		audio = bot.get_cog("Audio")
 		clipinfos = audio.local_clipinfo
 
@@ -138,8 +138,8 @@ class LocalClip(Clip):
 
 
 class TtsClip(Clip):
-	async def init(self, text, bot, ctx_inter: InterContext):
-		data = botdata.guildinfo(ctx_inter)
+	async def init(self, text, bot, clip_ctx: ClipContext):
+		data = botdata.guildinfo(clip_ctx)
 		ttslang = "en-au" if not data else data.ttslang
 		uri = f"clip_tts_{ttslang}:{text}"
 
@@ -159,7 +159,7 @@ class TtsClip(Clip):
 
 
 class UrlClip(Clip):
-	async def init(self, url, bot, ctx_inter: InterContext):
+	async def init(self, url, bot, clip_ctx: ClipContext):
 		if not re.match(f'^https?://.*\.({audio_extensions})$', url):
 			raise UserError("That's not a valid audio url")
 
@@ -173,7 +173,7 @@ class UrlClip(Clip):
 voice_actor_links = read_json(settings.resource("json/voice_actor_links.json"))
 
 class DotaClip(Clip):
-	async def init(self, responsename, bot, ctx_inter: InterContext):
+	async def init(self, responsename, bot, clip_ctx: ClipContext):
 		dotabase = bot.get_cog("Dotabase")
 		self.response = dotabase.get_response(responsename)
 		if self.response == None:
@@ -206,7 +206,7 @@ class DotaClip(Clip):
 		return embed
 
 class DotaChatWheel(Clip):
-	async def init(self, chatwheel_id, bot, ctx_inter: InterContext):
+	async def init(self, chatwheel_id, bot, clip_ctx: ClipContext):
 		dotabase = bot.get_cog("Dotabase")
 		self.message = dotabase.get_chatwheel_sound(chatwheel_id)
 		if self.message == None:
