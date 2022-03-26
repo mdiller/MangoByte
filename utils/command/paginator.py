@@ -6,7 +6,7 @@ import disnake
 
 class Paginator(disnake.ui.View):
 	def __init__(self, inter: disnake.CmdInter, embed_func, data, title: str, pages: int, start_page: int = 1, more_pages: bool = False):
-		super().__init__(timeout=30)
+		super().__init__(timeout=180)
 		self.inter = inter
 		self.title = title
 		self.embed_func = embed_func
