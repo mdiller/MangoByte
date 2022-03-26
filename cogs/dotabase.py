@@ -435,7 +435,7 @@ class Dotabase(MangoCog):
 		if text.startswith("dotachatwheel:"):
 			text = text.replace("dotachatwheel:", "")
 		if text.isdigit():
-			query = session.query(ChatWheelMessage).filter_by(id=int(text))
+			query = session.query(ChatWheelMessage).filter_by(id=int(text)).filter(ChatWheelMessage.sound != None)
 			if query.count() > 0:
 				return query.first()
 
@@ -512,7 +512,7 @@ class Dotabase(MangoCog):
 					text = text[:sizelimit - 3] + "..."
 				cliptext.append(text)
 		audio_cog = self.bot.get_cog("Audio")
-		await audio_cog.clips_pager(inter, "Dota Hero Responses", clipids, cliptext, page=page, morepages=len(clipids) == response_limit)
+		await audio_cog.clips_pager(inter, "Dota Hero Responses", clipids, cliptext, page=page, more_pages=len(clipids) == response_limit)
 
 	async def smart_dota_query(self, keyphrase, hero: Hero = None, criteria: str = None, exact = False):
 		if keyphrase is None:

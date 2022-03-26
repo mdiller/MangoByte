@@ -12,12 +12,14 @@ import disnake
 from disnake.ext import commands, tasks
 from utils.command import botdatatypes
 from utils.command.clip import *
+from utils.command.paginator import Paginator
 from utils.tools.globals import botdata, logger, settings
 from utils.tools.helpers import *
 from utils.other.errorhandling import report_error
 
 from cogs.mangocog import *
 
+CLIPS_ITEMS_PER_PAGE = 20
 URL_CLIP_ERROR_MESSAGE = "Unfortunatley I'm removing the url clip feature for now. I've got plans to eventually implement some custom clips that will be even more flexible than this, but I'm not sure when that feature will arrive."
 
 intro_outro_length = 4.5
@@ -313,34 +315,37 @@ class Audio(MangoCog):
 		"""Root command for listing different kinds of clips"""
 		await inter.response.defer()
 	
-	async def clips_pager(self, inter: disnake.CmdInter, title: str, clipids: List[str], cliptext: List[str] = None, page: int = 1, morepages: bool = False):
+
+	async def clips_pager(self, inter: disnake.CmdInter, title: str, clipids: List[str], cliptext: List[str] = None, page: int = 1, more_pages: bool = False):
 		"""A helper method for dumping a bunch of clips in one place. helps with the clips command."""
 		if not clipids:
 			await inter.send("No clips found!")
 			return
-
-		items_per_page = 20
-		total_pages = math.ceil(len(clipids) / items_per_page)
+		total_pages = math.ceil(len(clipids) / CLIPS_ITEMS_PER_PAGE)
 		if page > total_pages:
-			page = total_pages
+			page = total_pages		
+		
+		view = Paginator(inter, self.clips_pager_embed, (clipids, cliptext), title, total_pages, page, more_pages=more_pages)
+		embed = await view.get_page_embed(page)
 
+		if total_pages == 1:
+			await inter.send(embed=embed)
+		else:
+			await inter.send(embed=embed, view=view)
+	
+	async def clips_pager_embed(self, page: int, data):
+		"""A helper method for creating an embed for the clips pager"""
 		embed = disnake.Embed()
-		embed.title = title
-
-		page_clipids = clipids[(page - 1) * items_per_page:page * items_per_page]
+		clipids, cliptext = data
+		page_clipids = clipids[(page - 1) * CLIPS_ITEMS_PER_PAGE:page * CLIPS_ITEMS_PER_PAGE]
 
 		if cliptext:
-			page_cliptext = cliptext[(page - 1) * items_per_page:page * items_per_page]
+			page_cliptext = cliptext[(page - 1) * CLIPS_ITEMS_PER_PAGE:page * CLIPS_ITEMS_PER_PAGE]
 			embed.add_field(name="Clip IDs", value="\n".join(page_clipids))
 			embed.add_field(name="Clip Message", value="\n".join(page_cliptext))
 		else:
 			embed.description = "\n".join(page_clipids)
-		
-		if morepages:
-			total_pages = f"{total_pages}*"
-		embed.set_footer(text=f"Page {page}/{total_pages}. I'm gonna add some buttons for navigating pages soon, but haven't done that yet")
-
-		await inter.send(embed=embed)
+		return embed
 
 	@clips.sub_command(name="local")
 	async def clips_local(self, inter: disnake.CmdInter, tag: str, page: commands.Range[1, 99] = 1):
@@ -529,8 +534,10 @@ class Audio(MangoCog):
 		return await self.do_tts(message, clip_ctx)
 
 	@commands.Cog.listener()
-	async def on_message(self, message):
+	async def on_message(self, message: disnake.Message):
 		if message.guild and (not message.content.startswith(self.cmdpfx(message.guild))) and message.author.id != self.bot.user.id:
+			if message.content == "" or message.clean_content == "":
+				return # weird empty messages should get ignored
 			guildinfo = botdata.guildinfo(message.guild)
 			if guildinfo.is_banned(message.author):
 				return # banned users cant talk

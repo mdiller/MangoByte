@@ -30,9 +30,10 @@ audio_extensions = "mp3|wav|ogg"
 
 def slash_command_name(inter: disnake.CmdInter):
 	result = inter.application_command.qualified_name
-	for option in inter.data.options:
-		if option.type == disnake.OptionType.sub_command:
-			result += " " + option.name
+	if not isinstance(inter.application_command, commands.SubCommand):
+		for option in inter.data.options:
+			if option.type == disnake.OptionType.sub_command:
+				result += " " + option.name
 	return result
 
 
