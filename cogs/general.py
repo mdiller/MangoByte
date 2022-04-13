@@ -198,8 +198,7 @@ class General(MangoCog):
 
 	@bot.sub_command(name="changelog")
 	async def changelog(self, inter: disnake.CmdInter):
-		"""Gets a rough changelog for mangobyte
-		"""
+		"""Gets a rough changelog for mangobyte"""
 		await inter.response.defer()
 		commit_url = "https://github.com/mdiller/MangoByte"
 		description = f"For more information check out the [commit history]({commit_url}/commits/master) on GitHub, or visit the [Mangobyte Info Server]({HELP_GUILD_LINK}), and subscribe/follow the #updates channel.\n"

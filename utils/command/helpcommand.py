@@ -29,7 +29,6 @@ def get_config_help(variables, command):
 text_help_server = "Feel free to visit the [Mangobyte Help Server/Guild](https://discord.gg/d6WWHxx) if you have any questions! To see more in-depth descriptions for some of the features, try `/docs`"
 text_readme_reference = "To get a nicer view of all of the commands you see below, visit the [github page](https://github.com/mdiller/mangobyte#commands)"
 text_category_help = "To get more information about a specific category, try `{cmdpfx}help <category>`"
-text_command_help = "To get more information about a specific command, try `{cmdpfx}help <command>`"
 
 class MangoHelpCommand(DefaultHelpCommand):
 	def __init__(self, **options):
@@ -50,7 +49,7 @@ class MangoHelpCommand(DefaultHelpCommand):
 
 		if self.show_all:
 			# ?help all
-			embed = self.embed_description(f"{self.bot.description}\n\n{text_readme_reference}\n\n{text_help_server}\n\n{text_category_help}\n{text_command_help}", self.bot)
+			embed = self.embed_description(f"{self.bot.description}\n\n{text_readme_reference}\n\n{text_help_server}\n\n{text_category_help}", self.bot)
 			embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar.url, url="https://github.com/mdiller/MangoByte")
 
 			commands = list(self.bot.commands)
@@ -85,7 +84,6 @@ class MangoHelpCommand(DefaultHelpCommand):
 	async def send_cog_help(self, cog : Cog):
 		# ? help <cog>
 		description = inspect.getdoc(cog)
-		description += f"\n\n{text_command_help}"
 		commands = cog.get_commands()
 		commands.extend(self.expand_subcommands(cog.get_slash_commands()))
 		description += "\n\n**Commands:**\n" + self.list_commands(await self.filter_commands(commands))

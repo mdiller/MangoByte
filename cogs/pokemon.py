@@ -93,39 +93,40 @@ class Pokemon(MangoCog):
 		return data, species_data
 
 	# returns True on success, False on failure
-	async def play_pokecry(self, ctx, poke_id, namestring, old=False):
+	async def play_pokecry(self, inter: disnake.CmdInter, poke_id, namestring, old=False, print=False):
 		is_mega = "mega" in str(namestring).lower()
 
-		name = str(poke_id)
+		clipid = str(poke_id)
 		if old:
-			name = f"old/{name}"
+			clipid = f"old_{clipid}"
 		if is_mega:
-			name = f"{name}-mega"
+			clipid = f"mega_{clipid}"
 
 		try:
-			clip = await self.get_clip(f"url:http://dillerm.io/data/pokemon_cries/{name}.ogg", ctx)
+			clip = await self.get_clip(f"poke:{clipid}", inter)
 			clip.volume = 0.1
-			await self.play_clip(clip, ctx)
+			await self.play_clip(clip, inter, print=print)
 		except Http404Error:
 			return False
-		except AudioPlayerNotFoundError:
+		except AudioPlayerNotFoundError as e:
+			if print:
+				await inter.send(e.message)
 			return True
 
 		return True
 
+	@commands.slash_command()
+	async def pokemon(self, inter: disnake.CmdInter, pokemon: str, shiny: bool = False):
+		"""Looks up information about the given pokemon
 
-	@commands.command(aliases=["pokemon"])
-	async def pokedex(self, ctx, *, pokemon):
-		"""Looks up information about the indicated pokemon
-
-		Pokemon should be specified using either their name or id number
-
-		Clicking on the pokemon's name will bring you to their wiki page
-
-		Example:
-		`{cmdpfx}pokedex charizard`"""
-		with ctx.channel.typing():
-			data, species_data = await self.get_pokemon_data(pokemon)
+		Parameters
+		----------
+		pokemon: The name or id of the pokemon
+		shiny: Set to true if you want to see the shiny version of the pokemon
+		"""
+		await inter.response.defer()
+		
+		data, species_data = await self.get_pokemon_data(pokemon)
 
 		types = []
 		for t in sorted(data["types"], key=lambda t: t["slot"]):
@@ -138,7 +139,10 @@ class Pokemon(MangoCog):
 		embed.title = data["localized_name"] + f" #{data['id']}"
 		embed.url = data["wiki_url"]
 
-		embed.set_thumbnail(url=data["sprites"]["front_default"])
+		if shiny and data["sprites"].get("front_shiny"):
+			embed.set_thumbnail(url=data["sprites"].get("front_shiny"))
+		else:
+			embed.set_thumbnail(url=data["sprites"]["front_default"])
 
 		embed.add_field(name=f"Type{'s' if len(types) > 1 else ''}", value=f"{''.join(types)}")
 		if species_data.get("habitat"):
@@ -147,49 +151,23 @@ class Pokemon(MangoCog):
 		embed.add_field(name="Height", value=f"{data['height'] / 10} m")
 
 		# fails silently if there's no cry for this pokemon
-		await self.play_pokecry(ctx, data["id"], pokemon)
+		await self.play_pokecry(inter, data["id"], pokemon)
 
-		await ctx.send(embed=embed)
-
-	@commands.command()
-	async def shiny(self, ctx, *, pokemon):
-		"""Gets the shiny version of this pokemon
-
-		pokemon should be specified using either their name or id number
-
-		Example:
-		`{cmdpfx}shiny charizard`"""
-
-		# Sanitize input first
-		with ctx.channel.typing():
-			data, species_data = await self.get_pokemon_data(pokemon)
-
-		if not data["sprites"].get("front_shiny"):
-			await ctx.send("This pokemon doesn't have a shiny version")
-
-		embed = disnake.Embed(color=poke_color(species_data["color"]["name"]))
-		embed.set_image(url=data["sprites"].get("front_shiny"))
-
-		# fails silently if there's no cry for this pokemon
-		await self.play_pokecry(ctx, data["id"], pokemon)
-
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 	
-	@commands.command(aliases=["cry"])
-	async def pokecry(self, ctx, *, pokemon):
+	@commands.slash_command()
+	async def pokecry(self, inter: disnake.CmdInter, pokemon: str, old: bool = False):
 		"""Plays the pokemon's sound effect
 
-		Audio files for these pokemon cries were gotten from [Veekun](https://veekun.com/dex/downloads). Veekun does not have the cries for Generation VII yet, so I won't be able to play those.
 
-		Most pokemon have a new cry and an old cry. To get the old cry instead of the new one, add 'old' to the end of your command (see example below.)
-
-		**Example:**
-		`{cmdpfx}pokecry pikachu`
-		`{cmdpfx}pokecry bulbasaur old`"""
+		Parameters
+		----------
+		pokemon: The name or id of the pokemon
+		old: Set to true to use the old version of the pokemon's cry, if it exists
+		"""
+		await inter.response.defer()
+		# Audio files for these pokemon cries were gotten from [Veekun](https://veekun.com/dex/downloads). Veekun does not have the cries for Generation VII yet, so I won't be able to play those.
 		words = pokemon.split(" ")
-		old = "old" in words
-		if old:
-			words.remove("old") 
 		pokemon = " ".join(words)
 
 		data, species_data = await self.get_pokemon_data(pokemon)
@@ -197,7 +175,7 @@ class Pokemon(MangoCog):
 		if data["id"] > 721:
 			raise UserError("Sorry, I don't have the cries for pokemon in Generation VII yet")
 
-		success = await self.play_pokecry(ctx, data["id"], pokemon, old=old)
+		success = await self.play_pokecry(inter, data["id"], pokemon, old=old, print=True)
 
 		if not success:
 			raise UserError(f"Couldn't find the cry for {data['localized_name']}")

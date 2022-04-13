@@ -25,12 +25,12 @@ Want to try out mangobyte on your server? <!-- INVITE_LINK_START -->[Invite Link
 
 Mangobyte is currently in the process of migrating over to slash commands. If you are having issues getting slash commands working properly in your server, try taking a look at [Slash Command Common Issues](docs/slash_command_common_issues.md). If you use mangobyte already and want to know why we're switching to slash commands or just want more information on it, run the command `/docs Slash Commands`.
 
-**Current Migration Progress:** <!-- SLASH_PROGRESS_PERCENT_START -->64%<!-- SLASH_PROGRESS_PERCENT_END -->
+**Current Migration Progress:** <!-- SLASH_PROGRESS_PERCENT_START -->80%<!-- SLASH_PROGRESS_PERCENT_END -->
 
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 77 commands, separated into 6 categories
+Mangobyte currently has 74 commands, separated into 6 categories
 
 #### General
 Commands that don't really fit into the other categories
@@ -77,26 +77,24 @@ For playing audio in a voice channel
 ```
 
 #### Dotabase
-For information about the game Dota 2
+For information about the game Dota 2 [Patch **7.31b**]
 
 ```
 ?abilities           | Shows all of the abilities/spells for that hero                                    
 ?ability             | Gets information about a specific hero ability                                     
-?addemoticon         | Adds a dota emoticon as an animated emoji                                          
 ?aghanim             | Gets the aghs upgrade for the given hero or ability                                
-?blog                | Pulls the newest blog post for Dota 2                                              
-?courage             | Generates a challenge build                                                        
-?emoticon            | Gets the gif of a dota emoticon                                                    
-?fuseheroes          | See what would happen if you fused two heroes together                             
-?hello               | Says hello                                                                         
+/courage             | Generates a challenge build with a random hero and items                           
+/emoticon add        | Adds a dota emoticon as an animated emoji to this server                           
+/emoticon show       | Gets the gif of a dota emoticon                                                    
+/fuseheroes          | Visually fuse together two heroes                                                  
 /hero                | Gets information about a specific hero                                             
 ?herotable           | Displays a sorted table of heroes and their stats                                  
-?item                | Gets information about a specific item                                             
+/item                | Gets information about a specific dota 2 item                                      
 ?leveledstats        | Gets the stats for a hero at the specified level                                   
-?lore                | Gets the lore of a hero, ability, or item                                          
+/lore                | Gets the lore of a hero, ability, or item                                          
 ?neutralitems        | Displays all of the neutral items                                                  
-?recipe              | Shows the recipes involving this item                                              
-?talents             | Gets the talents of a specific hero                                                
+/recipe              | Shows the recipes involving this item                                              
+/talents             | Gets the talents of a specific hero                                                
 ```
 
 #### DotaStats
@@ -126,9 +124,8 @@ Commands for displaying information about Dota 2 players and matches
 Pokemon related commands
 
 ```
-?pokecry             | Plays the pokemon's sound effect                                                   
-?pokedex             | Looks up information about the indicated pokemon                                   
-?shiny               | Gets the shiny version of this pokemon                                             
+/pokecry             | Plays the pokemon's sound effect                                                   
+/pokemon             | Looks up information about the given pokemon                                       
 ```
 
 #### Admin

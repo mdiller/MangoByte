@@ -12,8 +12,8 @@
 		},
 		{
 			"name": "Dotabase",
-			"short_help": "For information about the game Dota 2",
-			"help": "For information about the game Dota 2\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see an old website I built that interfaces with dotabase."
+			"short_help": "For information about the game Dota 2 [Patch **7.31b**]",
+			"help": "For information about the game Dota 2 [Patch **{CURRENT_DOTA_PATCH_NUMBER}**]\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see an old website I built that interfaces with dotabase."
 		},
 		{
 			"name": "DotaStats",
@@ -55,17 +55,6 @@
 			"prefix": "?"
 		},
 		{
-			"name": "addemoticon",
-			"signature": "?addemoticon <name>",
-			"short_help": "Adds a dota emoticon as an animated emoji",
-			"help": "Adds a dota emoticon as an animated emoji\n\nThis command will add the dota emoticon as an animated emoji to the server. Because it is an animated emoji, only discord nitro users will be able to use it.\n\nObviously, this command needs the 'Manage Emoji' permission to be able to work.\n\n<a:pup:406270527766790145> <a:stunned:406274986769252353> <a:cocky:406274999951949835>\n\n**Examples:**\n\u200b`?addemoticon pup`\n\u200b`?addemoticon stunned`\n\u200b`?addemoticon naga_song`",
-			"aliases": [
-				"addemoji"
-			],
-			"cog": "Dotabase",
-			"prefix": "?"
-		},
-		{
 			"name": "aghanim",
 			"signature": "?aghanim <name>",
 			"short_help": "Gets the aghs upgrade for the given hero or ability",
@@ -76,17 +65,6 @@
 				"aghanims",
 				"scepter",
 				"shard"
-			],
-			"cog": "Dotabase",
-			"prefix": "?"
-		},
-		{
-			"name": "blog",
-			"signature": "?blog ",
-			"short_help": "Pulls the newest blog post for Dota 2",
-			"help": "Pulls the newest blog post for Dota 2",
-			"aliases": [
-				"rss"
 			],
 			"cog": "Dotabase",
 			"prefix": "?"
@@ -201,12 +179,12 @@
 		},
 		{
 			"name": "courage",
-			"signature": "?courage [hero]",
-			"short_help": "Generates a challenge build",
-			"help": "Generates a challenge build\n\nCreates a challenge build with a random (or given) hero and a random set of items\n\n**Examples:**\n\u200b`?courage`\n\u200b`?courage shadow fiend`",
+			"signature": null,
+			"short_help": "Generates a challenge build with a random hero and items",
+			"help": "Generates a challenge build with a random hero and items",
 			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "disablecommand",
@@ -245,15 +223,22 @@
 			"prefix": "/"
 		},
 		{
-			"name": "emoticon",
-			"signature": "?emoticon <name>",
-			"short_help": "Gets the gif of a dota emoticon",
-			"help": "Gets the gif of a dota emoticon\n\n<a:pup:406270527766790145> <a:stunned:406274986769252353> <a:cocky:406274999951949835>\n\n**Examples:**\n\u200b`?emoticon pup`\n\u200b`?emoticon stunned`\n\u200b`?emoticon naga_song`",
-			"aliases": [
-				"emoji"
-			],
+			"name": "emoticon add",
+			"signature": null,
+			"short_help": "Adds a dota emoticon as an animated emoji to this server",
+			"help": "Adds a dota emoticon as an animated emoji to this server",
+			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
+		},
+		{
+			"name": "emoticon show",
+			"signature": null,
+			"short_help": "Gets the gif of a dota emoticon",
+			"help": "Gets the gif of a dota emoticon",
+			"aliases": [],
+			"cog": "Dotabase",
+			"prefix": "/"
 		},
 		{
 			"name": "enablecommand",
@@ -275,27 +260,12 @@
 		},
 		{
 			"name": "fuseheroes",
-			"signature": "?fuseheroes [heroes]",
-			"short_help": "See what would happen if you fused two heroes together",
-			"help": "See what would happen if you fused two heroes together\n\nIf no heroes are given, two will be chosen at random\n\n**Example:**\n\u200b`?fuseheroes axe chen`",
-			"aliases": [
-				"fuse",
-				"fuze",
-				"fuzeheroes"
-			],
+			"signature": null,
+			"short_help": "Visually fuse together two heroes",
+			"help": "Visually fuse together two heroes",
+			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
-		},
-		{
-			"name": "hello",
-			"signature": "?hello ",
-			"short_help": "Says hello",
-			"help": "Says hello\n\nWHAT MORE DO YOU NEED TO KNOW!?!?!? IS 'Says hello' REALLY NOT CLEAR ENOUGH FOR YOU!?!!11?!!?11!!?!??",
-			"aliases": [
-				"hi"
-			],
-			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "help",
@@ -333,12 +303,12 @@
 		},
 		{
 			"name": "item",
-			"signature": "?item <item>",
-			"short_help": "Gets information about a specific item",
-			"help": "Gets information about a specific item\n\n**Examples:**\n\u200b`?item shadow blade`\n\u200b`?item tango`",
+			"signature": null,
+			"short_help": "Gets information about a specific dota 2 item",
+			"help": "Gets information about a specific dota 2 item",
 			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "leveledstats",
@@ -365,12 +335,12 @@
 		},
 		{
 			"name": "lore",
-			"signature": "?lore [name]",
+			"signature": null,
 			"short_help": "Gets the lore of a hero, ability, or item",
-			"help": "Gets the lore of a hero, ability, or item\n\nReturns a random piece of lore if no name is specified\n\n**Examples:**\n\u200b`?lore bristleback`\n\u200b`?lore shadow blade`\n\u200b`?lore venomous gale`",
+			"help": "Gets the lore of a hero, ability, or item",
 			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "match graph",
@@ -596,25 +566,21 @@
 		},
 		{
 			"name": "pokecry",
-			"signature": "?pokecry <pokemon>",
+			"signature": null,
 			"short_help": "Plays the pokemon's sound effect",
-			"help": "Plays the pokemon's sound effect\n\nAudio files for these pokemon cries were gotten from [Veekun](https://veekun.com/dex/downloads). Veekun does not have the cries for Generation VII yet, so I won't be able to play those.\n\nMost pokemon have a new cry and an old cry. To get the old cry instead of the new one, add 'old' to the end of your command (see example below.)\n\n**Example:**\n\u200b`?pokecry pikachu`\n\u200b`?pokecry bulbasaur old`",
-			"aliases": [
-				"cry"
-			],
+			"help": "Plays the pokemon's sound effect",
+			"aliases": [],
 			"cog": "Pokemon",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
-			"name": "pokedex",
-			"signature": "?pokedex <pokemon>",
-			"short_help": "Looks up information about the indicated pokemon",
-			"help": "Looks up information about the indicated pokemon\n\nPokemon should be specified using either their name or id number\n\nClicking on the pokemon's name will bring you to their wiki page\n\nExample:\n\u200b`?pokedex charizard`",
-			"aliases": [
-				"pokemon"
-			],
+			"name": "pokemon",
+			"signature": null,
+			"short_help": "Looks up information about the given pokemon",
+			"help": "Looks up information about the given pokemon",
+			"aliases": [],
 			"cog": "Pokemon",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "profile",
@@ -636,16 +602,12 @@
 		},
 		{
 			"name": "recipe",
-			"signature": "?recipe <item>",
+			"signature": null,
 			"short_help": "Shows the recipes involving this item",
 			"help": "Shows the recipes involving this item",
-			"aliases": [
-				"recipes",
-				"craft",
-				"crafting"
-			],
+			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "reddit",
@@ -693,15 +655,6 @@
 			"prefix": "/"
 		},
 		{
-			"name": "shiny",
-			"signature": "?shiny <pokemon>",
-			"short_help": "Gets the shiny version of this pokemon",
-			"help": "Gets the shiny version of this pokemon\n\npokemon should be specified using either their name or id number\n\nExample:\n\u200b`?shiny charizard`",
-			"aliases": [],
-			"cog": "Pokemon",
-			"prefix": "?"
-		},
-		{
 			"name": "stop",
 			"signature": null,
 			"short_help": "Stops the currently playing clip",
@@ -721,12 +674,12 @@
 		},
 		{
 			"name": "talents",
-			"signature": "?talents <hero>",
+			"signature": null,
 			"short_help": "Gets the talents of a specific hero",
-			"help": "Gets the talents of a specific hero\n\nYou can give this command almost any variant of the hero's name, or the hero's id, in the same format as `?hero`\n\n**Examples:**\n\u200b`?talents shadow fiend`",
+			"help": "Gets the talents of a specific hero",
 			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "twenty",

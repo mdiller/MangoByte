@@ -52,6 +52,15 @@ async def convert_hero(inter: disnake.CmdInter, text: str) -> Hero:
 	return hero
 register_custom_converter(Hero, convert_hero)
 
+async def convert_item(inter: disnake.CmdInter, text: str) -> Item:
+	dota_cog: Dotabase
+	dota_cog = inter.bot.get_cog("Dotabase")
+	item = dota_cog.lookup_item(text)
+	if item is None:
+		raise CustomBadArgument(UserError(f"Couldn't find a item called '{text}'"))
+	return item
+register_custom_converter(Item, convert_item)
+
 
 # A variable that can specify a filter on a query
 class QueryVariable():
@@ -197,7 +206,7 @@ class Dotabase(MangoCog):
 		else:
 			return None
 
-	def lookup_hero(self, hero):
+	def lookup_hero(self, hero) -> Hero:
 		if not hero:
 			return None
 		if isinstance(hero, str):
@@ -228,7 +237,7 @@ class Dotabase(MangoCog):
 				return self.hero_aliases[hero]
 		return None
 
-	def lookup_ability(self, text, full_check=True):
+	def lookup_ability(self, text, full_check=True) -> Ability:
 		if isinstance(text, str):
 			text = text.strip()
 		ability_query = session.query(Ability).filter(Ability.hero_id != None)
@@ -278,7 +287,7 @@ class Dotabase(MangoCog):
 					return abilities[ability_position - 1]
 		return None
 
-	def lookup_item(self, item, full_check=True):
+	def lookup_item(self, item, full_check=True) -> Item:
 		if not item:
 			return None
 		if isinstance(item, str):
@@ -570,29 +579,6 @@ class Dotabase(MangoCog):
 			response = query.first()
 		return response
 
-	@commands.command(aliases=["hi"])
-	async def hello(self, ctx):
-		"""Says hello
-
-		WHAT MORE DO YOU NEED TO KNOW!?!?!? IS 'Says hello' REALLY NOT CLEAR ENOUGH FOR YOU!?!!11?!!?11!!?!??"""
-		dota_hellos = [
-			"slark_attack_11",
-			"kunk_thanks_02",
-			"meepo_scepter_06",
-			"puck_ability_orb_03",
-			"tink_spawn_07",
-			"treant_ally_08",
-			"wraith_lasthit_02",
-			"timb_deny_08",
-			"tech_pain_39",
-			"meepo_attack_08",
-			"slark_lasthit_02"
-		]
-		dota_response = random.choice(dota_hellos)
-		response = session.query(Response).filter(Response.name == dota_response).first()
-		logger.info("hello: " + response.name)
-		await self.play_response(response, ctx)
-
 	@Audio.play.sub_command(name="chatwheel")
 	async def play_chatwheel(self, inter: disnake.CmdInter, text: str):
 		"""Plays the given chat wheel sound. Try '/clips chatwheel' to get a list of clips.
@@ -703,22 +689,19 @@ class Dotabase(MangoCog):
 			except AudioPlayerNotFoundError:
 				pass
 
-	@commands.command()
-	async def talents(self, ctx, *, hero : str):
+	@commands.slash_command()
+	async def talents(self, inter: disnake.CmdInter, hero: Hero):
 		"""Gets the talents of a specific hero
-
-		You can give this command almost any variant of the hero's name, or the hero's id, in the same format as `{cmdpfx}hero`
-
-		**Examples:**
-		`{cmdpfx}talents shadow fiend`"""
-		hero = self.lookup_hero(hero)
-		if not hero:
-			raise UserError("That doesn't look like a hero")
-
+		
+		Parameters
+		----------
+		hero: The name of the hero
+		"""
+		await inter.response.defer()
 		image = await drawdota.draw_hero_talents(hero)
 		image = disnake.File(image, f"{hero.name}_talents.png")
 
-		await ctx.send(file=image)
+		await inter.send(file=image)
 
 
 	@commands.command(aliases=["spell"])
@@ -895,18 +878,15 @@ class Dotabase(MangoCog):
 
 		await ctx.send(embed=embed)
 
-	@commands.command()
-	async def item(self, ctx, *, item : str):
-		"""Gets information about a specific item
+	@commands.slash_command()
+	async def item(self, inter: disnake.CmdInter, item: Item):
+		"""Gets information about a specific dota 2 item
 
-		**Examples:**
-		`{cmdpfx}item shadow blade`
-		`{cmdpfx}item tango`"""
-
-		item = self.lookup_item(item)
-
-		if item is None:
-			raise UserError("I couldn't find an item by that name")
+		Parameters
+		----------
+		item: The name of the dota 2 item to get
+		"""
+		await inter.response.defer()
 
 		description = ""
 
@@ -972,21 +952,21 @@ class Dotabase(MangoCog):
 		if item.lore and item.lore != "":
 			embed.set_footer(text=item.lore)
 
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
+	@commands.slash_command()
+	async def emoticon(self, inter: disnake.CmdInter):
+		"""Commands for dota 2 emotes"""
+		await inter.response.defer()
 
-	@commands.command(aliases=["emoji"])
-	async def emoticon(self, ctx, name):
+	@emoticon.sub_command(name="show")
+	async def emoticon_show(self, inter: disnake.CmdInter, name):
 		"""Gets the gif of a dota emoticon
 
-		<a:pup:406270527766790145> <a:stunned:406274986769252353> <a:cocky:406274999951949835>
-
-		**Examples:**
-		`{cmdpfx}emoticon pup`
-		`{cmdpfx}emoticon stunned`
-		`{cmdpfx}emoticon naga_song`"""
-		await ctx.channel.trigger_typing()
-
+		Parameters
+		----------
+		name: The in-game name of the emoticon
+		"""
 		emoticon = session.query(Emoticon).filter(Emoticon.name == name).first()
 
 		if not emoticon:
@@ -997,23 +977,16 @@ class Dotabase(MangoCog):
 		filetype = "gif" if emoticon.frames > 1 else "png"
 		image = disnake.File(await drawdota.create_dota_emoticon(emoticon, url), f"{name}.{filetype}")
 
-		await ctx.send(file=image)
+		await inter.send(file=image)
 
-	@commands.command(aliases=["addemoji"])
-	async def addemoticon(self, ctx, name):
-		"""Adds a dota emoticon as an animated emoji
+	@emoticon.sub_command(name="add")
+	async def emoticon_add(self, inter: disnake.CmdInter, name):
+		"""Adds a dota emoticon as an animated emoji to this server
 
-		This command will add the dota emoticon as an animated emoji to the server. Because it is an animated emoji, only discord nitro users will be able to use it.
-
-		Obviously, this command needs the 'Manage Emoji' permission to be able to work.
-
-		<a:pup:406270527766790145> <a:stunned:406274986769252353> <a:cocky:406274999951949835>
-
-		**Examples:**
-		`{cmdpfx}addemoticon pup`
-		`{cmdpfx}addemoticon stunned`
-		`{cmdpfx}addemoticon naga_song`"""
-
+		Parameters
+		----------
+		name: The in-game name of the emoticon
+		"""
 		emoticon = session.query(Emoticon).filter(Emoticon.name == name).first()
 
 		if not emoticon:
@@ -1024,26 +997,25 @@ class Dotabase(MangoCog):
 		with open(image, 'rb') as f:
 			image = f.read()
 
-		if not ctx.guild:
+		if not inter.guild:
 			raise UserError("You have to be in a server to use this command")
 
-		if not ctx.guild.me.guild_permissions.manage_emojis:
+		if not inter.guild.me.guild_permissions.manage_emojis:
 			raise UserError("An admin needs to give me the 'Manage Emojis' permission before I can do that")
 
-		await ctx.guild.create_custom_emoji(name=name, image=image, reason=f"Dota emoji created for {ctx.message.author.name}")
+		await inter.guild.create_custom_emoji(name=name, image=image, reason=f"Dota emoji created for {inter.author.name}")
 
-		await ctx.message.add_reaction("✅")
+		await inter.send("✅ done!")
 
-	@commands.command()
-	async def lore(self, ctx, *, name=None):
+	@commands.slash_command()
+	async def lore(self, inter: disnake.CmdInter, name: str):
 		"""Gets the lore of a hero, ability, or item
 
-		Returns a random piece of lore if no name is specified
-
-		**Examples:**
-		`{cmdpfx}lore bristleback`
-		`{cmdpfx}lore shadow blade`
-		`{cmdpfx}lore venomous gale`"""
+		Parameters
+		----------
+		name: The name of a hero, ability, or item. Leave blank to get random lore!
+		"""
+		await inter.response.defer()
 		lore_info = {}
 		found = False
 
@@ -1109,7 +1081,7 @@ class Dotabase(MangoCog):
 		if lore_info["icon"]:
 			embed.set_thumbnail(url=f"{self.vpkurl}{lore_info['icon']}")
 
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
 	@commands.command(aliases=["aghs", "ags", "aghanims", "scepter", "shard"])
 	async def aghanim(self, ctx, *, name):
@@ -1186,13 +1158,14 @@ class Dotabase(MangoCog):
 				embed.set_thumbnail(url=f"{self.vpkurl}{ability.icon}")
 				await ctx.send(embed=embed)
 
-	@commands.command(aliases=["recipes", "craft", "crafting"])
-	async def recipe(self, ctx, *, item):
-		"""Shows the recipes involving this item"""
-		item = self.lookup_item(item, True)
-		if not item:
-			raise UserError("Can't find an item by that name")
-
+	@commands.slash_command()
+	async def recipe(self, inter: disnake.CmdInter, item: Item):
+		"""Shows the recipes involving this item
+		
+		Parameters
+		----------
+		item: The name of the dota 2 item to get
+		"""
 		products = query_filter_list(session.query(Item), Item.recipe, item.name).all()
 		components = []
 		if item.recipe:
@@ -1236,35 +1209,20 @@ class Dotabase(MangoCog):
 		image = disnake.File(await drawdota.draw_itemrecipe(item, components, products), "recipe.png")
 		embed.set_image(url=f"attachment://{image.filename}")
 
-		await ctx.send(embed=embed, file=image)
+		await inter.send(embed=embed, file=image)
 
 
+	@commands.slash_command()
+	async def fuseheroes(self, inter: disnake.CmdInter, hero1: Hero, hero2: Hero):
+		"""Visually fuse together two heroes
 
-	@commands.command(aliases=["fuse", "fuze", "fuzeheroes"])
-	async def fuseheroes(self, ctx, *, heroes=None):
-		"""See what would happen if you fused two heroes together
+		Parameters
+		----------
+		hero1: The first of the two heroes to fuse
+		hero2: The second of the two heroes to fuse
+		"""
+		await inter.response.defer()
 
-		If no heroes are given, two will be chosen at random
-
-		**Example:**
-		`{cmdpfx}fuseheroes axe chen`"""
-		await ctx.channel.trigger_typing()
-		if heroes is None:
-			heroes = session.query(Hero).order_by(func.random()).limit(2).all()
-			heroes = " ".join(map(lambda h: h.localized_name, heroes))
-
-		words = heroes.split(" ")
-
-		hero1 = None
-		hero2 = None
-		for i in range(1, len(words)):
-			hero1 = self.lookup_hero(" ".join(words[:i]))
-			hero2 = self.lookup_hero(" ".join(words[i:]))
-			if hero1 and hero2:
-				break
-
-		if not (hero1 and hero2):
-			raise UserError("That doesn't look like two distinct heroes")
 		if hero1.id == hero2.id:
 			raise UserError("Fusing something with itself sounds boring")
 
@@ -1306,18 +1264,17 @@ class Dotabase(MangoCog):
 		image = disnake.File(await drawdota.fuse_hero_images(hero1, hero2), "hero.png")
 		embed.set_thumbnail(url=f"attachment://{image.filename}")
 
-		await ctx.send(embed=embed, file=image)
+		await inter.send(embed=embed, file=image)
 
 
-	@commands.command()
-	async def courage(self, ctx, *, hero = None):
-		"""Generates a challenge build
+	@commands.slash_command()
+	async def courage(self, inter: disnake.CmdInter, hero: Hero = None):
+		"""Generates a challenge build with a random hero and items
 
-		Creates a challenge build with a random (or given) hero and a random set of items
-
-		**Examples:**
-		`{cmdpfx}courage`
-		`{cmdpfx}courage shadow fiend`"""
+		Parameters
+		----------
+		hero: The hero to use. Leave this blank to random a hero
+		"""
 
 		all_boots = query_filter_list(session.query(Item), Item.recipe, "item_boots").all()
 
@@ -1338,16 +1295,14 @@ class Dotabase(MangoCog):
 		for item in items:
 			item_ids.append(item.id)
 		if hero:
-			hero_id = self.lookup_hero_id(hero)
-			if not hero_id:
-				raise UserError(f"Couldn't a hero called '{hero}'")
+			hero_id = hero.id
 		else:
 			hero_id = session.query(Hero).order_by(func.random()).first().id
 
 		logger.info(item_ids)
 
 		image = disnake.File(await drawdota.draw_courage(hero_id, item_ids), "courage.png")
-		await ctx.send(file=image)
+		await inter.send(file=image)
 
 
 	@commands.command(aliases=["neutrals", "neutraltier"])
@@ -1494,12 +1449,11 @@ class Dotabase(MangoCog):
 
 		await ctx.send(embed=embed, file=image)
 
-
-	@commands.command(aliases = ["rss"])
+	# disabling this as a command for now because valve broke this blog feed. (was rss feed before)
 	async def blog(self,ctx):
 		""" Pulls the newest blog post for Dota 2"""
-		await ctx.send("Sorry, Valve broke this for now.")
-		return # return cuz valve broke it
+		# await ctx.send("Sorry, Valve broke this for now.")
+		# return # return cuz valve broke it
 		feed = await httpgetter.get(r'https://blog.dota2.com/feed', return_type="text")
 		blog = feedparser.parse(feed)
 		title = "Dota 2 Blog"

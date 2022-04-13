@@ -157,6 +157,36 @@ class TtsClip(Clip):
 	def type(cls):
 		return "tts"
 
+class PokeClip(Clip):
+	async def init(self, name: str, bot, clip_ctx: ClipContext):
+		if "/" in urlpart:
+			raise UserError("That looks like an invalid pokemon")
+		clipname = str(name)
+		urlpart = str(name)
+		is_mega = urlpart.startswith("mega_")
+		if is_mega:
+			urlpart = urlpart.replace("mega_", "")
+		
+		is_old = urlpart.startswith("old_")
+		if is_old:
+			urlpart = urlpart.replace("old_", "")
+
+		if is_old:
+			urlpart = f"old/{urlpart}"
+		if is_mega:
+			urlpart = f"{urlpart}-mega"
+
+		url = f"http://dillerm.io/data/pokemon_cries/{urlpart}.ogg"
+		filename = await httpgetter.get(url, "filename", cache=True)
+		
+		clip = await Clip.init(self, clipname, filename)
+		clip.volume = 0.1
+		return clip
+
+	@classmethod
+	def type(cls):
+		return "poke"
+
 
 class UrlClip(Clip):
 	async def init(self, url, bot, clip_ctx: ClipContext):

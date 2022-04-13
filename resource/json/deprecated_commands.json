@@ -59,5 +59,9 @@
 	"play": "play local",
 	"tts": "play tts",
 	"dota": "play dota",
-	"chatwheel": "play chatwheel"
+	"chatwheel": "play chatwheel",
+	"pokedex": "pokemon",
+	"shiny": "pokemon shiny: True",
+	"addemoticon": "emoticon add",
+	"emoticon": "emoticon show"
 }

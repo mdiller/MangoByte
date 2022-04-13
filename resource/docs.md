@@ -92,7 +92,7 @@ A lot of people have been reporting issues with slash commands not working on th
 __Migration Status__
 Note that as of now, not all commands have been migrated over to slash commands. All will eventually be moved, but I'm doing it in chunks, so don't be surprised if you see some prefix commands and some slash commands for now.
 
-**Current Migration Progress:** <!-- SLASH_PROGRESS_PERCENT_START -->64%<!-- SLASH_PROGRESS_PERCENT_END -->
+**Current Migration Progress:** <!-- SLASH_PROGRESS_PERCENT_START -->80%<!-- SLASH_PROGRESS_PERCENT_END -->
 
 # Slash Command Issues
 
@@ -120,6 +120,9 @@ A dota hero voice line. You can search for a list of these by doing `/clips dota
 
 __Type: Dota Chatwheel [dotachatwheel]:__
 A dota chatwheel sound clip. You can get a list of these by doing `/clips chatwheel`, and can play them from `/play chatwheel`
+
+__Type: Pokemon [poke]:__
+A pokemon cry. Try playing these with the `/pokecry` command
 
 __Type: (WIP) Custom [custom]:__
 This clip type doesnt exist yet. In the past I've allowed a clip type called "url", and that has been removed in the latest rework. I'm planning on adding a new type of clip called "custom" that will be more powerful than url clips, and be easier to use. This hasn't been implemented yet, but I'll let you know (through the updates channel on the [Mangobyte Help Server](https://discord.gg/d6WWHxx)) once I get around to implementing it.
