@@ -119,8 +119,9 @@ class WikipediaPage():
 
 		image_data = await httpgetter.get(f"{base_query}&generator=images&gimlimit=max&prop=imageinfo&iiprop=url&pageids={self.id}")
 		images = []
-		for imageid, image in image_data["query"]["pages"].items():
-			images.append(image["imageinfo"][0]["url"])
+		if "query" in image_data:
+			for imageid, image in image_data["query"]["pages"].items():
+				images.append(image["imageinfo"][0]["url"])
 
 		for image in page_html.find_all(class_="navbox"):
 			image.decompose()
