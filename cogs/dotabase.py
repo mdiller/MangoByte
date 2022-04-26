@@ -1,3 +1,4 @@
+from ast import Or
 import json
 import random
 import re
@@ -61,6 +62,21 @@ async def convert_item(inter: disnake.CmdInter, text: str) -> Item:
 	return item
 register_custom_converter(Item, convert_item)
 
+async def convert_ability(inter: disnake.CmdInter, text: str) -> Ability:
+	dota_cog: Dotabase
+	dota_cog = inter.bot.get_cog("Dotabase")
+	ability = dota_cog.lookup_ability(text)
+	if ability is None:
+		raise CustomBadArgument(UserError(f"Couldn't find a ability called '{text}'"))
+	return ability
+register_custom_converter(Ability, convert_ability)
+
+# setup enum for hero stat
+HERO_STAT_ENUM = OrderedDict()
+for category in read_json(settings.resource("json/hero_stats.json")):
+	for stat in category["stats"]:
+		HERO_STAT_ENUM[stat["name"]] = stat["stat"]
+HERO_STAT_ENUM = commands.option_enum(HERO_STAT_ENUM)
 
 # A variable that can specify a filter on a query
 class QueryVariable():
@@ -704,19 +720,15 @@ class Dotabase(MangoCog):
 		await inter.send(file=image)
 
 
-	@commands.command(aliases=["spell"])
-	async def ability(self, ctx, *, ability : str):
+	@commands.slash_command()
+	async def ability(self, inter: disnake.CmdInter, ability: Ability):
 		"""Gets information about a specific hero ability
 
-		**Examples:**
-		`{cmdpfx}ability rocket flare`
-		`{cmdpfx}ability laser`
-		`{cmdpfx}ability sprout`"""
-
-		ability = self.lookup_ability(ability)
-
-		if ability is None:
-			raise UserError("I couldn't find an ability by that name")
+		Parameters
+		----------
+		ability: The name of the ability, or a hero name and the ability slot
+		"""
+		await inter.response.defer()
 
 		def format_values(values):
 			values = values.split(" ")
@@ -876,7 +888,7 @@ class Dotabase(MangoCog):
 		if ability.lore and ability.lore != "":
 			embed.set_footer(text=ability.lore)
 
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
 	@commands.slash_command()
 	async def item(self, inter: disnake.CmdInter, item: Item):
@@ -1083,14 +1095,18 @@ class Dotabase(MangoCog):
 
 		await inter.send(embed=embed)
 
-	@commands.command(aliases=["aghs", "ags", "aghanims", "scepter", "shard"])
-	async def aghanim(self, ctx, *, name):
+	@commands.slash_command()
+	async def aghanim(self, inter: disnake.CmdInter, name: str, type: commands.option_enum(["Both", "Scepter", "Shard"]) = "Both"):
 		"""Gets the aghs upgrade for the given hero or ability
 
-		This command will get the information about shard upgrades AND scepter upgrades.
-		If you want just shard or just scepter upgrades, try using `{cmdpfx}scepter` or `{cmdpfx}shard`"""
-		only_do_scepter = ctx.invoked_with == "scepter"
-		only_do_shard = ctx.invoked_with == "shard"
+		Parameters
+		----------
+		name: The name of the hero or ability to get aghanim info for
+		type: The type of aghanim information you're looking for
+		"""
+		await inter.response.defer()
+		only_do_scepter = type == "Scepter"
+		only_do_shard = type == "Shard"
 
 		abilities = []
 		hero = self.lookup_hero(name)
@@ -1156,7 +1172,7 @@ class Dotabase(MangoCog):
 				title = f"{aghs_item.localized_name} ({ability.localized_name})"
 				embed.set_author(name=title, icon_url=icon_url)
 				embed.set_thumbnail(url=f"{self.vpkurl}{ability.icon}")
-				await ctx.send(embed=embed)
+				await inter.send(embed=embed)
 
 	@commands.slash_command()
 	async def recipe(self, inter: disnake.CmdInter, item: Item):
@@ -1305,23 +1321,17 @@ class Dotabase(MangoCog):
 		await inter.send(file=image)
 
 
-	@commands.command(aliases=["neutrals", "neutraltier"])
-	async def neutralitems(self, ctx, *, tier = None):
-		"""Displays all of the neutral items
-
-		If a tier is specified, display the items in that tier, along with their names
-
-		`{cmdpfx}neutralitems`
-		`{cmdpfx}neutralitems tier 5`
-		`{cmdpfx}neutralitems 3`"""
-
-		if tier is not None:
-			tier = tier.lower().replace("tier", "").replace("t", "").strip()
-			if not tier.isdigit():
-				raise UserError("Please specify a tier like 'tier 5'")
-			tier = int(tier)
-			if tier < 1 or tier > 5:
-				raise UserError("Please specify a tier between 1 and 5")
+	@commands.slash_command()
+	async def neutralitems(self, inter: disnake.CmdInter, tier: commands.Range[0, 5] = 0):
+		"""Displays neutral item information
+		
+		Parameters
+		----------
+		tier: The neutral item tier to show
+		"""
+		await inter.response.defer()
+		if tier == 0:
+			tier = None
 
 		embed = disnake.Embed()
 
@@ -1340,34 +1350,18 @@ class Dotabase(MangoCog):
 
 		if tier is None:
 			embed.set_footer(text="Also try: ?neutralitems tier 4")
-		await ctx.send(embed=embed, file=image)
+		await inter.send(embed=embed, file=image)
 
-	@commands.command(aliases=["startingstats", "tradingstats", "lvlstats", "lvledstats"])
-	async def leveledstats(self, ctx, *, hero : str):
+	@commands.slash_command()
+	async def herostats(self, inter: disnake.CmdInter, hero: Hero, level: commands.Range[1, 30] = 1):
 		"""Gets the stats for a hero at the specified level
 
-		If no level is specified, get the stats for the hero at level 1
-
-		**Examples:**
-		`{cmdpfx}leveledstats tinker`
-		`{cmdpfx}leveledstats shaker lvl 2`
-		`{cmdpfx}leveledstats level 28 shaman`"""
-		lvl_regex = r"(?:(max) (?:lvl|level)|(?:lvl|level)? ?(\d+))"
-		match = re.search(lvl_regex, hero, re.IGNORECASE)
-		level = 1
-		if match:
-			if match.group(1):
-				level = 30
-			else:
-				level = int(match.group(2))
-			if level < 1 or level > 30:
-				raise UserError("Please enter a level between 1 and 30")
-			hero = re.sub(lvl_regex, "", hero)
-
-		hero = self.lookup_hero(hero)
-		if not hero:
-			raise UserError("That doesn't look like a hero")
-
+		Parameters
+		----------
+		hero: The hero to use. Leave this blank to random a hero
+		level: What level view the stats of this hero at
+		"""
+		await inter.response.defer()
 		stat_category = next((c for c in self.hero_stat_categories if c["section"] == "Combat Stats"), None)["stats"]
 
 		description = ""
@@ -1395,41 +1389,37 @@ class Dotabase(MangoCog):
 			embed.color = disnake.Color(int(hero.color[1:], 16))
 		embed.set_footer(text="The stats shown above do not account for talents, passives, or items")
 
-		await ctx.send(embed=embed)
+		await inter.send(embed=embed)
 
-	@commands.command(aliases=["statstable", "stattable", "heroestable", "leveledstatstable", "besthero", "bestheroes"])
-	async def herotable(self, ctx, *, table_args : HeroStatsTableArgs):
-		"""Displays a sorted table of heroes and their stats
+	@commands.slash_command()
+	async def herotable(self, inter: disnake.CmdInter, stat: HERO_STAT_ENUM, level: commands.Range[1, 30] = 1, hero_count: commands.Range[2, 40] = 20, reverse: bool = False):
+		"""Displays a table of dota heroes sorted by a stat
 
-		Displays a table with computed hero stats showing which heroes have the highest values for the specified stat. To see the list of possible stats, try the `{cmdpfx}leveledstats` command
-
-		**Examples:**
-		`{cmdpfx}herotable dps`
-		`{cmdpfx}herotable health lvl 30`
-		`{cmdpfx}herotable attack speed level 21 descending`
+		Parameters
+		----------
+		stat: The stat to sort the table by
+		level: What level the stats of the heroes should be calculated at
+		hero_count: The number of hero rows to show
+		reverse: Whether or not the sorting should be reversed
 		"""
-		if table_args.stat is None:
-			raise UserError(f"Please select a stat to sort by. For a list of stats, see `{self.cmdpfx(ctx)}leveledstats`")
-		if table_args.hero_level < 1 or table_args.hero_level > 30:
-			raise UserError("Please select a hero level between 1 and 30")
-		if table_args.hero_count < 2 or table_args.hero_count > 40:
-			raise UserError("Please select a hero count between 2 and 40")
-
+		await inter.response.defer()
 		embed = disnake.Embed()
 
-		image = disnake.File(await drawdota.draw_herostatstable(table_args, self.hero_stat_categories, self.leveled_hero_stats), "herotable.png")
+		image = disnake.File(await drawdota.draw_herostatstable(stat, level, hero_count, reverse, self.hero_stat_categories, self.leveled_hero_stats), "herotable.png")
 		embed.set_image(url=f"attachment://{image.filename}")
 		embed.set_footer(text="The stats shown above do not account for talents, passives, or items")
 
-		await ctx.send(embed=embed, file=image)
+		await inter.send(embed=embed, file=image)
 
-	@commands.command(aliases=["spells"])
-	async def abilities(self, ctx, *, hero):
-		"""Shows all of the abilities/spells for that hero"""
-		hero = self.lookup_hero(hero)
-		if not hero:
-			raise UserError("That doesn't look like a hero")
+	@commands.slash_command()
+	async def abilities(self, inter: disnake.CmdInter, hero: Hero):
+		"""Shows all of the abilities/spells for that hero
 
+		Parameters
+		----------
+		hero: The hero who's abilities to show
+		"""
+		await inter.response.defer()
 		abilities = []
 		for ability in list(filter(lambda a: a.slot is not None, hero.abilities)):
 			if not hero.id == 74: # invoker
@@ -1447,7 +1437,7 @@ class Dotabase(MangoCog):
 
 		embed.color = disnake.Color(int(hero.color[1:], 16))
 
-		await ctx.send(embed=embed, file=image)
+		await inter.send(embed=embed, file=image)
 
 	# disabling this as a command for now because valve broke this blog feed. (was rss feed before)
 	async def blog(self,ctx):

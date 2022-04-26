@@ -1281,34 +1281,32 @@ class DotaStats(MangoCog):
 		await inter.send(embed=embed, file=image)
 
 
-	@commands.command(aliases=["analyze", "studymatch"])
-	async def parse(self, ctx, match_id : int = None):
-		"""Requests that OpenDota parses a match
-
-		The input should be the match_id of the match
-
-		Note that matches from more than a couple days ago may not be able to be parsed because replay files are not saved that long
-
-		Not giving a matchid will make mangobyte attempt to use your last played match"""
+	@commands.slash_command()
+	async def parse(self, inter: disnake.CmdInter, match_id: int = None):
+		"""Request for OpenDota to parse a recent match
+		
+		Parameters
+		----------
+		match_id: The id of the match to parse. Leave this blank to parse your last played match
+		"""
 		if match_id is None:		
-			matchfilter = await MatchFilter.init(None, ctx)
+			matchfilter = await MatchFilter.convert(inter, "")
+			if matchfilter.player:
+				steamid = matchfilter.player.steam_id
 			match_id = await get_lastmatch_id(matchfilter)
 
-		await ctx.message.add_reaction("⏳")
-		await ctx.send("⏳ Requesting a parse...", delete_after=5)
+		await inter.response.defer()
 
 		try:
 			data = await httpgetter.post(f"https://api.opendota.com/api/request/{match_id}", errors=opendota_html_errors)
 		except HttpError as e:
-			await ctx.message.remove_reaction("⏳", self.bot.user)
 			if e.code == 400:
-				await ctx.send("❌ Looks like that's not a valid match id")
+				await inter.send("❌ Looks like that's not a valid match id")
 				return
 			raise
 
 		if data.get("status") == "failed" or data.get("err") is not None:
-			await ctx.message.remove_reaction("⏳", self.bot.user)
-			await ctx.send(f"❌ There was an error requesting the parse for match {match_id}")
+			await inter.send(f"❌ There was an error requesting the parse for match {match_id}")
 			return
 
 		jobId = data["job"]["jobId"]
@@ -1323,15 +1321,11 @@ class DotaStats(MangoCog):
 				await asyncio.sleep(seconds_per_check)
 				seconds_till_timeout -= seconds_per_check
 			else:
-				await ctx.message.remove_reaction("⏳", self.bot.user)
-				await ctx.message.add_reaction("✅")
-				await ctx.send(f"✅ Parsing of match {match_id} has completed!", delete_after=10)
+				await inter.send(f"✅ Parsing of match {match_id} has completed!")
 				return
 
 		# if we get to here, timeout
-		await ctx.message.remove_reaction("⏳", self.bot.user)
-		await ctx.message.add_reaction("❌")
-		await ctx.send(f"❌ Parsing of match {match_id} timed out. Try again later or on the opendota site.", delete_after=10)
+		await inter.send(f"❌ Parsing of match {match_id} timed out. Try again later or on the opendota site.", delete_after=10)
 
 
 	@commands.slash_command()

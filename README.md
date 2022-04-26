@@ -25,7 +25,7 @@ Want to try out mangobyte on your server? <!-- INVITE_LINK_START -->[Invite Link
 
 Mangobyte is currently in the process of migrating over to slash commands. If you are having issues getting slash commands working properly in your server, try taking a look at [Slash Command Common Issues](docs/slash_command_common_issues.md). If you use mangobyte already and want to know why we're switching to slash commands or just want more information on it, run the command `/docs Slash Commands`.
 
-**Current Migration Progress:** <!-- SLASH_PROGRESS_PERCENT_START -->80%<!-- SLASH_PROGRESS_PERCENT_END -->
+**Current Migration Progress:** <!-- SLASH_PROGRESS_PERCENT_START -->89%<!-- SLASH_PROGRESS_PERCENT_END -->
 
 ## Commands
 
@@ -80,19 +80,19 @@ For playing audio in a voice channel
 For information about the game Dota 2 [Patch **7.31b**]
 
 ```
-?abilities           | Shows all of the abilities/spells for that hero                                    
-?ability             | Gets information about a specific hero ability                                     
-?aghanim             | Gets the aghs upgrade for the given hero or ability                                
+/abilities           | Shows all of the abilities/spells for that hero                                    
+/ability             | Gets information about a specific hero ability                                     
+/aghanim             | Gets the aghs upgrade for the given hero or ability                                
 /courage             | Generates a challenge build with a random hero and items                           
 /emoticon add        | Adds a dota emoticon as an animated emoji to this server                           
 /emoticon show       | Gets the gif of a dota emoticon                                                    
 /fuseheroes          | Visually fuse together two heroes                                                  
 /hero                | Gets information about a specific hero                                             
-?herotable           | Displays a sorted table of heroes and their stats                                  
+/herostats           | Gets the stats for a hero at the specified level                                   
+/herotable           | Displays a table of dota heroes sorted by a stat                                   
 /item                | Gets information about a specific dota 2 item                                      
-?leveledstats        | Gets the stats for a hero at the specified level                                   
 /lore                | Gets the lore of a hero, ability, or item                                          
-?neutralitems        | Displays all of the neutral items                                                  
+/neutralitems        | Displays neutral item information                                                  
 /recipe              | Shows the recipes involving this item                                              
 /talents             | Gets the talents of a specific hero                                                
 ```
@@ -111,7 +111,7 @@ Commands for displaying information about Dota 2 players and matches
 /match story         | Tells the story of the match                                                       
 /matchids            | Gets a list of recent matchids that match the given filter                         
 /meta                | Prints the top meta heroes from https://opendota.com/heroes                        
-?parse               | Requests that OpenDota parses a match                                              
+/parse               | Request for OpenDota to parse a recent match                                       
 /playerstats         | Gets stats about the player's dota matches                                         
 /profile             | Displays information about the player's dota profile                               
 /recent              | Gets a list of your recent dota matches                                            

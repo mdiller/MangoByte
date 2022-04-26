@@ -108,6 +108,10 @@ class BotStats():
 
 	async def query_single_result(self, query):
 		data = await self.query_loki(query)
+		with open("temp.json", "w+") as f:
+			f.write(json.dumps(data, indent="\t"))
+		if len(data["data"]["result"]) == 0:
+			return 0 # No results found, so default to 0
 		return int(data["data"]["result"][0]["value"][1])
 	
 	async def query_user_count(self, timeframe):

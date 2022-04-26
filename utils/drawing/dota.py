@@ -1080,10 +1080,10 @@ def draw_polygraph(values, labels):
 
 	return fp
 
-async def draw_herostatstable(table_args, hero_stat_categories, leveled_hero_stats):
+async def draw_herostatstable(hero_stat, level, hero_count, reverse, hero_stat_categories, leveled_hero_stats):
 	category = None
 	for cat in hero_stat_categories:
-		if any(stat["stat"] == table_args.stat for stat in cat["stats"]):
+		if any(stat["stat"] == hero_stat for stat in cat["stats"]):
 			category = cat
 			break
 	if category is None:
@@ -1092,9 +1092,9 @@ async def draw_herostatstable(table_args, hero_stat_categories, leveled_hero_sta
 	stats = category["stats"]
 
 	# sort / get data 
-	hero_data = leveled_hero_stats[table_args.hero_level]
-	hero_data = sorted(hero_data, key=lambda hero: hero.get(table_args.stat), reverse=not table_args.reverse)
-	hero_data = hero_data[0:table_args.hero_count]
+	hero_data = leveled_hero_stats[level]
+	hero_data = sorted(hero_data, key=lambda hero: hero.get(hero_stat), reverse=not reverse)
+	hero_data = hero_data[0:hero_count]
 
 	table = Table(border_size=10)
 
@@ -1107,7 +1107,7 @@ async def draw_herostatstable(table_args, hero_stat_categories, leveled_hero_sta
 		header_row.append(SlantedTextCell(
 			stat["name"],
 			font_size=20,
-			background=stat_highlight_color if stat["stat"] == table_args.stat else table_background,
+			background=stat_highlight_color if stat["stat"] == hero_stat else table_background,
 			border_color=table_border_color,
 			border_size=2,
 			rotation=45))
@@ -1145,7 +1145,7 @@ async def draw_herostatstable(table_args, hero_stat_categories, leveled_hero_sta
 				padding=10,
 				border_color=table_border_color,
 				border_size=2,
-				background=stat_highlight_color if stat["stat"] == table_args.stat else cell_background))
+				background=stat_highlight_color if stat["stat"] == hero_stat else cell_background))
 		table.add_row(new_row)
 		i += 1
 

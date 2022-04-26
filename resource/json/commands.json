@@ -34,40 +34,30 @@
 	"commands": [
 		{
 			"name": "abilities",
-			"signature": "?abilities <hero>",
+			"signature": null,
 			"short_help": "Shows all of the abilities/spells for that hero",
 			"help": "Shows all of the abilities/spells for that hero",
-			"aliases": [
-				"spells"
-			],
+			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "ability",
-			"signature": "?ability <ability>",
+			"signature": null,
 			"short_help": "Gets information about a specific hero ability",
-			"help": "Gets information about a specific hero ability\n\n**Examples:**\n\u200b`?ability rocket flare`\n\u200b`?ability laser`\n\u200b`?ability sprout`",
-			"aliases": [
-				"spell"
-			],
+			"help": "Gets information about a specific hero ability",
+			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "aghanim",
-			"signature": "?aghanim <name>",
+			"signature": null,
 			"short_help": "Gets the aghs upgrade for the given hero or ability",
-			"help": "Gets the aghs upgrade for the given hero or ability\n\nThis command will get the information about shard upgrades AND scepter upgrades.\nIf you want just shard or just scepter upgrades, try using `?scepter` or `?shard`",
-			"aliases": [
-				"aghs",
-				"ags",
-				"aghanims",
-				"scepter",
-				"shard"
-			],
+			"help": "Gets the aghs upgrade for the given hero or ability",
+			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "bot changelog",
@@ -286,20 +276,22 @@
 			"prefix": "/"
 		},
 		{
-			"name": "herotable",
-			"signature": "?herotable <table_args>",
-			"short_help": "Displays a sorted table of heroes and their stats",
-			"help": "Displays a sorted table of heroes and their stats\n\nDisplays a table with computed hero stats showing which heroes have the highest values for the specified stat. To see the list of possible stats, try the `?leveledstats` command\n\n**Examples:**\n\u200b`?herotable dps`\n\u200b`?herotable health lvl 30`\n\u200b`?herotable attack speed level 21 descending`",
-			"aliases": [
-				"statstable",
-				"stattable",
-				"heroestable",
-				"leveledstatstable",
-				"besthero",
-				"bestheroes"
-			],
+			"name": "herostats",
+			"signature": null,
+			"short_help": "Gets the stats for a hero at the specified level",
+			"help": "Gets the stats for a hero at the specified level",
+			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
+		},
+		{
+			"name": "herotable",
+			"signature": null,
+			"short_help": "Displays a table of dota heroes sorted by a stat",
+			"help": "Displays a table of dota heroes sorted by a stat",
+			"aliases": [],
+			"cog": "Dotabase",
+			"prefix": "/"
 		},
 		{
 			"name": "item",
@@ -309,20 +301,6 @@
 			"aliases": [],
 			"cog": "Dotabase",
 			"prefix": "/"
-		},
-		{
-			"name": "leveledstats",
-			"signature": "?leveledstats <hero>",
-			"short_help": "Gets the stats for a hero at the specified level",
-			"help": "Gets the stats for a hero at the specified level\n\nIf no level is specified, get the stats for the hero at level 1\n\n**Examples:**\n\u200b`?leveledstats tinker`\n\u200b`?leveledstats shaker lvl 2`\n\u200b`?leveledstats level 28 shaman`",
-			"aliases": [
-				"startingstats",
-				"tradingstats",
-				"lvlstats",
-				"lvledstats"
-			],
-			"cog": "Dotabase",
-			"prefix": "?"
 		},
 		{
 			"name": "lm",
@@ -488,27 +466,21 @@
 		},
 		{
 			"name": "neutralitems",
-			"signature": "?neutralitems [tier]",
-			"short_help": "Displays all of the neutral items",
-			"help": "Displays all of the neutral items\n\nIf a tier is specified, display the items in that tier, along with their names\n\n\u200b`?neutralitems`\n\u200b`?neutralitems tier 5`\n\u200b`?neutralitems 3`",
-			"aliases": [
-				"neutrals",
-				"neutraltier"
-			],
+			"signature": null,
+			"short_help": "Displays neutral item information",
+			"help": "Displays neutral item information",
+			"aliases": [],
 			"cog": "Dotabase",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "parse",
-			"signature": "?parse [match_id]",
-			"short_help": "Requests that OpenDota parses a match",
-			"help": "Requests that OpenDota parses a match\n\nThe input should be the match_id of the match\n\nNote that matches from more than a couple days ago may not be able to be parsed because replay files are not saved that long\n\nNot giving a matchid will make mangobyte attempt to use your last played match",
-			"aliases": [
-				"analyze",
-				"studymatch"
-			],
+			"signature": null,
+			"short_help": "Request for OpenDota to parse a recent match",
+			"help": "Request for OpenDota to parse a recent match",
+			"aliases": [],
 			"cog": "DotaStats",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "ping",

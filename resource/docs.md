@@ -92,7 +92,7 @@ A lot of people have been reporting issues with slash commands not working on th
 __Migration Status__
 Note that as of now, not all commands have been migrated over to slash commands. All will eventually be moved, but I'm doing it in chunks, so don't be surprised if you see some prefix commands and some slash commands for now.
 
-**Current Migration Progress:** <!-- SLASH_PROGRESS_PERCENT_START -->80%<!-- SLASH_PROGRESS_PERCENT_END -->
+**Current Migration Progress:** <!-- SLASH_PROGRESS_PERCENT_START -->89%<!-- SLASH_PROGRESS_PERCENT_END -->
 
 # Slash Command Issues
 

@@ -84,7 +84,7 @@
 				"name": "Physical Damage Resistance",
 				"display": "resistance_percentage",
 				"regex": "(phys(ical)?|armor)( damage| dmg)? (resist(ance)?|reduction)",
-				"lambda": "lambda hero, h: 1 - ((0.06 * h['armor']) / (1 + 0.06 * abs(h['armor'])))"
+				"lambda": "lambda hero, h: 1 - ((0.052 * h['armor']) / (0.9 + 0.048 * abs(h['armor'])))"
 			},
 			{
 				"stat": "physical_effective_health",
@@ -98,7 +98,7 @@
 				"name": "Magic Damage Resistance",
 				"display": "resistance_percentage",
 				"regex": "magic(al)?( damage| dmg)? (resist(ance)?|reduction)",
-				"lambda": "lambda hero, h: (1 - (hero.magic_resistance / 100)) * (1 - (h['strength'] * 0.0008))"
+				"lambda": "lambda hero, h: (1 - (hero.magic_resistance / 100))"
 			},
 			{
 				"stat": "magic_effective_health",
@@ -130,14 +130,14 @@
 				"name": "Movement Speed",
 				"regex": "move(ment)?( speed)?",
 				"display": "int",
-				"lambda": "lambda hero, h: hero.base_movement * (1 + (h['agility'] * 0.0005))"
+				"lambda": "lambda hero, h: hero.base_movement"
 			},
 			{
 				"stat": "movement_speed_boots",
 				"name": "Movement Speed w/ Boots",
 				"regex": "move(ment)?( speed)? w(/|ith) boots",
 				"display": "int",
-				"lambda": "lambda hero, h: hero.base_movement * (1 + (h['agility'] * 0.0005) + 0.15)"
+				"lambda": "lambda hero, h: hero.base_movement + 45"
 			},
 			{
 				"stat": "turn_rate",
