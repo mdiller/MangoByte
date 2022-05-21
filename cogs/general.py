@@ -9,11 +9,13 @@ from collections import OrderedDict
 from io import BytesIO
 import urllib.parse
 import base64
+import inspect
 
 import disnake
 import praw
 from bs4 import BeautifulSoup, Tag
 from disnake.ext import commands, tasks
+from sqlalchemy import desc
 from utils.command import botdatatypes, checks
 from utils.other import wikipedia
 from utils.tools.botdata import UserInfo
@@ -34,6 +36,17 @@ DONATE_LINKS = {
 	"Ko-fi": "https://ko-fi.com/dillerm",
 	"PayPal": "https://www.paypal.me/dillerm"
 }
+
+HELP_ARG_ENUM = commands.option_enum({
+	"Bot Information": "botinfo",
+	"Category Overview": "cogs",
+	"Category: General": "cog:General",
+	"Category: Audio": "cog:Audio",
+	"Category: Dotabase": "cog:Dotabase",
+	"Category: DotaStats": "cog:DotaStats",
+	"Category: Pokemon": "cog:Pokemon",
+	"Category: Admin": "cog:Admin"
+})
 
 def load_words():
 	words = {}
@@ -67,6 +80,8 @@ def load_md_as_dict(filename):
 	with open(filename, "r") as f:
 		text = f.read()
 	text = re.sub(r"<!--.*?-->\n?", "", text)
+	text = re.sub(r"\n## (.*)\n", "\n**__\\1__**\n", text)
+	text = re.sub(r"\n### (.*)\n", "\n__\\1__\n", text)
 	text = "\n" + text
 	result = {}
 	pattern = re.compile(r"\n# ([^\n]+)\n([\s\S]*?)(?=\n# |$)")
@@ -78,7 +93,7 @@ def load_md_as_dict(filename):
 	return result
 
 def get_docs_keys():
-	docs_data = load_md_as_dict(settings.resource("docs.md"))
+	docs_data = load_md_as_dict(settings.resource("../docs/docs.md"))
 	return list(docs_data.keys())
 
 LOKI_APPLICATION_NAME = settings.loki["application"]
@@ -108,8 +123,6 @@ class BotStats():
 
 	async def query_single_result(self, query):
 		data = await self.query_loki(query)
-		with open("temp.json", "w+") as f:
-			f.write(json.dumps(data, indent="\t"))
 		if len(data["data"]["result"]) == 0:
 			return 0 # No results found, so default to 0
 		return int(data["data"]["result"][0]["value"][1])
@@ -147,7 +160,7 @@ class General(MangoCog):
 		self.subscripts = read_json(settings.resource("json/subscripts.json"))
 		self.superscripts = read_json(settings.resource("json/superscripts.json"))
 		self.showerthoughts_data = read_json(settings.resource("json/showerthoughts.json"))
-		self.docs_data = load_md_as_dict(settings.resource("docs.md"))
+		self.docs_data = load_md_as_dict(settings.resource("../docs/docs.md"))
 		self.words = load_words()
 		self.botstats_weekly = BotStats("7d")
 
@@ -234,6 +247,10 @@ class General(MangoCog):
 	@bot.sub_command(name="info")
 	async def info(self, inter: disnake.CmdInter):
 		"""Prints info about mangobyte"""
+		await self._bot_info(inter)
+	
+	# Separated away so we can call it from elsewhere
+	async def _bot_info(self, inter: disnake.CmdInter):
 		github = "https://github.com/mdiller/MangoByte"
 		python_version = "[Python {}.{}.{}]({})".format(*os.sys.version_info[:3], "https://www.python.org/")
 		library_url = "https://github.com/DisnakeDev/disnake"
@@ -250,9 +267,8 @@ class General(MangoCog):
 			f"If you want to invite mangobyte to your server/guild, click this [invite link]({settings.invite_link}). "
 			f"If you have a question or suggestion, check out the [Help Server/Guild]({HELP_GUILD_LINK})."))
 
-		cmdpfx = botdata.command_prefix_guild(inter.guild)
 		embed.add_field(name="Find Out More", value=(
-			f"• Browse commands and command categories via the `{cmdpfx}help` command\n"
+			f"• Browse commands and command categories via the `/help` command\n"
 			f"• Learn more about mangobyte's core features with the `/docs` command\n"
 			f"• Per-user configuration is available via `/userconfig`\n"
 			f"• Configure settings for your server via `/config`"), inline=False)
@@ -691,9 +707,6 @@ class General(MangoCog):
 			ctx = await self.bot.get_context(message)
 			await self.bot.invoke(ctx)
 
-		if message.content.startswith(self.cmdpfx(message.guild)):
-			return # ignore stuff that starts with the command prefix
-
 		if not guildinfo.reactions:
 			return # only keep going for guilds with reactions enabled
 
@@ -792,6 +805,74 @@ class General(MangoCog):
 		dog_dir = settings.resource("images/dog")
 		imagepath = os.path.join(dog_dir, random.choice(os.listdir(dog_dir)))
 		await inter.send(file=disnake.File(imagepath))
+
+	@commands.slash_command()
+	async def help(self, inter: disnake.CmdInter, topic: HELP_ARG_ENUM):
+		"""Gives some information about the bot command categories
+		
+		Parameters
+		----------
+		topic: The topic you want to get information on
+		"""
+		await inter.response.defer()
+		if topic == "botinfo":
+			await self._bot_info(inter)
+			return
+		if topic == "cogs":
+			embed = disnake.Embed()
+			embed.title = f"{inter.bot.user.name} Command Categories"
+			embed.description = "Mangobyte's commands are sorted into the following categories. To get more information about a specific category, try `/help <category>`"
+			for cogname in inter.bot.cogs:
+				if cogname != "Owner":
+					embed.add_field(
+						name=f"**{cogname}**",
+						value=inter.bot.cogs[cogname].description.split('\n')[0],
+						inline=False)
+			await inter.send(embed=embed)
+			return
+		# if we get to here, its a cog
+		cogname = topic.replace("cog:", "")
+		cog = inter.bot.cogs[cogname]
+		embed = disnake.Embed()
+		embed.title = f"Category: {cogname}"
+		description = inter.bot.cogs[cogname].description
+		description += "\n\n**Commands:**\n"
+		
+		cmds: typing.List[typing.Union[commands.InvokableSlashCommand, commands.SubCommand]]
+		cmds = slash_command_expand(cog.get_slash_commands())
+		cmds.sort(key=lambda c: c.qualified_name)
+
+		# parse out all the commands in the cog
+		cmd_names = []
+		cmd_descriptions = []
+		for command in cmds:
+			if isinstance(command, commands.SubCommand):
+				desc = command.body.description
+			else:
+				desc = command.description
+			cmd_names.append(f"/{command.qualified_name}")
+			cmd_descriptions.append(desc)
+		lines = []
+		line_char_limit = 64
+		max_cmd_size = max(map(len, cmd_names))
+		for i in range(len(cmd_names)):
+			name = cmd_names[i]
+			desc = cmd_descriptions[i]
+			if desc == "":
+				lines.append(f"`{name}`")
+			else:
+				newline = "`{0:{1}<{2}}".format(name, u"\u00A0", max_cmd_size)
+				newline += " | "
+				if len(newline) + len(desc) > line_char_limit:
+					desc = desc[:line_char_limit - (len(newline) + 4)]
+					desc += "..."
+				newline += desc
+				newline += "`"
+				lines.append(newline)
+		description += "\n".join(lines)
+		
+		embed.description = description
+		await inter.send(embed=embed)
 
 
 

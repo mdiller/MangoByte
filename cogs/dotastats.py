@@ -25,7 +25,7 @@ from cogs.mangocog import *
 class MatchNotParsedError(UserError):
 	def __init__(self, match_id, action=None):
 		self.action = action if action else "do that"
-		super().__init__(f"This match must be parsed before I can {self.action}.\nTry `{{cmdpfx}}parse {match_id}` to request a parse.")
+		super().__init__(f"This match must be parsed before I can {self.action}.\nTry `/parse {match_id}` to request a parse.")
 
 class StratzMatchNotParsedError(UserError):
 	def __init__(self, match_id):

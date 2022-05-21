@@ -21,7 +21,6 @@ async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 		logger.info("Logged in as:\n{0} (ID: {0.id})".format(bot.user))
 		logger.info("Connecting to voice channels if specified in botdata.json ...")
 
-		bot.help_command.cog = bot.get_cog("General")
 		appinfo = await bot.application_info()
 		general_cog = bot.get_cog("General")
 		audio_cog = bot.get_cog("Audio")
@@ -97,7 +96,7 @@ async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 			await appinfo.owner.send(message)
 
 		game = disnake.Activity(
-			name="DOTA 3 [?help]",
+			name="DOTA 3 [/help]",
 			type=disnake.ActivityType.playing,
 			start=datetime.datetime.utcnow())
 		await bot.change_presence(status=disnake.Status.online, activity=game)

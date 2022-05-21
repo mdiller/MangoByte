@@ -12,8 +12,8 @@
 		},
 		{
 			"name": "Dotabase",
-			"short_help": "For information about the game Dota 2 [Patch **7.31b**]",
-			"help": "For information about the game Dota 2 [Patch **{CURRENT_DOTA_PATCH_NUMBER}**]\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see an old website I built that interfaces with dotabase."
+			"short_help": "For information about the game Dota 2 [Patch **7.31c**]",
+			"help": "For information about the game Dota 2 [Patch **7.31c**]\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see an old website I built that interfaces with dotabase."
 		},
 		{
 			"name": "DotaStats",
@@ -28,7 +28,7 @@
 		{
 			"name": "Admin",
 			"short_help": "Commands to help manage mangobyte on your server/guild",
-			"help": "Commands to help manage mangobyte on your server/guild\n\nPrimarily used to stop people from ruining stuff, and to configure mangobyte to do different things.\n\nOnly admins or people with the correct role can use these commands. To set a role as the 'Bot Admin' role, try `{cmdpfx}config botadmin`"
+			"help": "Commands to help manage mangobyte on your server/guild\n\nPrimarily used to configure mangobyte for this particular server/guild, and also for moving in and out of voice channels.\n\nOnly admins or people with the correct role can use these commands. To set a role as the 'Bot Admin' role, try `/config botadmin`. Note that the `/summon` and `/unsummon` commands can be configured to be usable by everyone via `/config restrictsummoning disable`."
 		}
 	],
 	"commands": [
@@ -105,22 +105,13 @@
 			"prefix": "/"
 		},
 		{
-			"name": "botban",
-			"signature": "?botban <user>",
-			"short_help": "Bans the user from using commands",
-			"help": "Bans the user from using commands",
-			"aliases": [],
-			"cog": "Admin",
-			"prefix": "?"
-		},
-		{
 			"name": "botunban",
-			"signature": "?botunban <user>",
-			"short_help": "Unbans the user, allowing them to use commands",
-			"help": "Unbans the user, allowing them to use commands",
+			"signature": null,
+			"short_help": "Unbans the user, allowing them to use commands. Note this will soon be deprecated.",
+			"help": "Unbans the user, allowing them to use commands. Note this will soon be deprecated.",
 			"aliases": [],
 			"cog": "Admin",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "clipinfo",
@@ -177,15 +168,6 @@
 			"prefix": "/"
 		},
 		{
-			"name": "disablecommand",
-			"signature": "?disablecommand <command>",
-			"short_help": "Disabled the specified command or command category",
-			"help": "Disabled the specified command or command category\n\n**Examples:**\n\u200b`?disablecommand wiki`\n\u200b`?disablecommand Audio`",
-			"aliases": [],
-			"cog": "Admin",
-			"prefix": "?"
-		},
-		{
 			"name": "docs",
 			"signature": null,
 			"short_help": "Shows some documentation about a specific part of the bot",
@@ -232,12 +214,12 @@
 		},
 		{
 			"name": "enablecommand",
-			"signature": "?enablecommand <command>",
-			"short_help": "Re-enables the specified command or command category",
-			"help": "Re-enables the specified command or command category\n\nOnly works on commands that have already been disabled by the `?disablecommand` command\n\n**Examples:**\n\u200b`?enablecommand wiki`\n\u200b`?enablecommand Audio`",
+			"signature": null,
+			"short_help": "Re-enables the specified command or command category. Note this will soon be deprecated.",
+			"help": "Re-enables the specified command or command category. Note this will soon be deprecated.",
 			"aliases": [],
 			"cog": "Admin",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "firstmatch",
@@ -259,12 +241,12 @@
 		},
 		{
 			"name": "help",
-			"signature": "?help [command]",
-			"short_help": "Shows this message",
-			"help": "Shows this message",
+			"signature": null,
+			"short_help": "Gives some information about the bot command categories",
+			"help": "Gives some information about the bot command categories",
 			"aliases": [],
 			"cog": "General",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "hero",
@@ -600,15 +582,6 @@
 			"prefix": "/"
 		},
 		{
-			"name": "resummon",
-			"signature": "?resummon ",
-			"short_help": "Re-summons the bot to the voice channel",
-			"help": "Re-summons the bot to the voice channel\n\nThis command is useful if you are having issues with mangobyte not being responsive",
-			"aliases": [],
-			"cog": "Admin",
-			"prefix": "?"
-		},
-		{
 			"name": "rolesgraph",
 			"signature": null,
 			"short_help": "Gets a graph displaying the dota player's hero roles",
@@ -637,12 +610,12 @@
 		},
 		{
 			"name": "summon",
-			"signature": "?summon [channel]",
+			"signature": null,
 			"short_help": "Summons the bot to the voice channel",
-			"help": "Summons the bot to the voice channel\n\nYou can specify the specific voice channel that you would like to connect to. If no channel is specified, it will connect to whatever channel you are currently in.\n**Examples:**\n\u200b`?summon`\n\u200b`?summon General`",
+			"help": "Summons the bot to the voice channel",
 			"aliases": [],
 			"cog": "Admin",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "talents",
@@ -664,12 +637,12 @@
 		},
 		{
 			"name": "unsummon",
-			"signature": "?unsummon ",
+			"signature": null,
 			"short_help": "Removes the bot from the voice channel",
 			"help": "Removes the bot from the voice channel",
 			"aliases": [],
 			"cog": "Admin",
-			"prefix": "?"
+			"prefix": "/"
 		},
 		{
 			"name": "userconfig",

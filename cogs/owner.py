@@ -43,40 +43,6 @@ class Owner(MangoCog):
 		return await self.bot.loop.run_in_executor(ThreadPoolExecutor(max_workers=1), youtube_download_func, youtube_id, video_file)
 
 	@commands.command()
-	async def updateemoji(self, ctx, name=None):
-		"""Updates the emoji information for the bot
-
-		will also add new heroes to the emoji's if there are any
-
-		passing in a name will target that emoji specifically"""
-		emoji_json = read_json(settings.resource("json/emoji.json"))
-
-		# find any heroes not currently added
-		with ctx.channel.typing():
-			dotabase = self.bot.get_cog("Dotabase")
-			for hero in dotabase.session.query(Hero):
-				emoji_name =f"dota_hero_{hero.name}"
-				if emoji_name not in emoji_json:
-					# missing this hero, gotta add it
-					await ctx.send(f"Adding emoji for {hero.localized_name}")
-					url = dotabase.vpkurl + hero.icon
-					image = await httpgetter.get(url, return_type="filename", cache=True)
-					with open(image, "rb") as f:
-						image = f.read()
-					emoji = await ctx.guild.create_custom_emoji(name=emoji_name, image=image, reason=f"New Hero got added")
-					emoji_json[emoji_name] = emoji.id
-
-			for emoji in ctx.guild.emojis:
-				if name is None or name == emoji.name:
-					imgpath = settings.resource(f"images/emojis/{emoji.name}.png")
-					with open(imgpath, 'wb+') as f:
-						f.write((await httpgetter.get(str(emoji.url), return_type="bytes")).read())
-					emoji_json[emoji.name] = emoji.id
-		write_json(settings.resource("json/emoji.json"), emoji_json)
-		await ctx.send("done!")
-
-
-	@commands.command()
 	async def addclip(self, ctx, url, clipname, start, end, start_fade=0.25, end_fade=0.25):
 		"""Adds a clip from youtube"""
 		outfile = settings.resource(f"clips/{clipname}.mp3")
@@ -126,7 +92,7 @@ class Owner(MangoCog):
 		warning: volume actually edits the clip, and is a multiplier (0.5 cuts in half, 2 doubles)
 
 		Example:
-		`{cmdpfx}editclipinfo wow text Waow!`"""
+		`?editclipinfo wow text Waow!`"""
 		audio = self.bot.get_cog("Audio")
 		if clipname not in audio.local_clipinfo:
 			raise UserError("That clip doesn't exist")
@@ -252,8 +218,7 @@ class Owner(MangoCog):
 			await audio.connect_voice(channel)
 			guildinfo.voicechannel = channel.id
 		except asyncio.TimeoutError:
-			cmdpfx = botdata.command_prefix(ctx)
-			raise UserError(f"There was a timeout when attempting to do the `{cmdpfx}summon`")
+			raise UserError(f"There was a timeout when attempting to do the `/summon`")
 
 		await ctx.message.add_reaction("✅")
 

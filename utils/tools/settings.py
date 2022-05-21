@@ -46,7 +46,7 @@ class Settings:
 	def debug(self):
 		return self.json_data.get("debug", False)
 
-	# an api key/secret for the reddit api (if not given, the ?reddit command wont work. see that command to see the format that the api key should be in)
+	# an api key/secret for the reddit api (if not given, the /reddit command wont work. see that command to see the format that the api key should be in)
 	@property
 	def reddit(self):
 		return self.json_data.get("reddit", None)
@@ -85,6 +85,11 @@ class Settings:
 	@property
 	def loki(self):
 		return self.json_data.get("loki", None)
+	
+	# used for storing emoji mango needs to use
+	@property
+	def emoji_dev_server(self):
+		return self.json_data.get("emoji_dev_server", None)
 
 	# BELOW ARE SOME STATICS NOT DEFINED IN THE SETTINGS.JSON FILE
 

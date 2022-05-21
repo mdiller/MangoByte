@@ -255,6 +255,13 @@ guildinfo_variables = [
 		"type": types.Boolean,
 		"description": "Whether or not the bot should pay attention to webhooks when processing commands or tts",
 		"example": "enable"
+	},
+	{
+		"key": "restrictsummoning",
+		"default": True,
+		"type": types.Boolean,
+		"description": "Whether or not the bot should restrict the usage of `/summon` and `/unsummon` to bot admins.",
+		"example": "disable"
 	}
 ]
 

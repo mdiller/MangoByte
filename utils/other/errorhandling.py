@@ -15,10 +15,6 @@ with open(settings.resource("json/deprecated_commands.json"), "r") as f:
 	deprecated_commands = json.loads(f.read())
 
 
-async def get_cmd_signature(ctx):
-	ctx.bot.help_command.context = ctx
-	return ctx.bot.help_command.get_command_signature(ctx.command)
-
 # Whether or not we report invalid commands
 async def invalid_command_reporting(ctx):
 	if ctx.message.guild is None:
@@ -26,15 +22,16 @@ async def invalid_command_reporting(ctx):
 	else:
 		return botdata.guildinfo(ctx.message.guild.id).invalidcommands
 
+# leave this in for a bit for now cuz owner commands still use it
 async def on_prefix_command_error(ctx: commands.Context, error: commands.CommandError):
 	bot: commands.Bot
 	bot = ctx.bot
-	cmdpfx = botdata.command_prefix(ctx)
+	cmdpfx = "?"
 
 	try:
 		if isinstance(error, commands.CommandNotFound):
 			cmd = ctx.message.content[1:].split(" ")[0]
-			slash_command_names = list(map(lambda c: c.name, bot.help_command.expand_subcommands(bot.slash_commands)))
+			slash_command_names = list(map(lambda c: c.name, slash_command_expand(bot.slash_commands)))
 			if cmd in deprecated_commands:
 				logger.info(f"deprecated command '{cmd}' attempted")
 				if deprecated_commands[cmd].startswith("_"):
@@ -58,15 +55,9 @@ async def on_prefix_command_error(ctx: commands.Context, error: commands.Command
 		elif isinstance(error, CustomBadArgument):
 			await error.user_error.send_self(ctx, botdata)
 		elif isinstance(error, commands.BadArgument):
-			signature = await get_cmd_signature(ctx)
-			await ctx.send((
-				"Thats the wrong type of argument for that command.\n\n"
-				f"Ya gotta do it like this:\n`{signature}`\n\n"
-				f"Try `{cmdpfx}help {ctx.command}` for a more detailed description of the command"))
+			await ctx.send("Thats the wrong type of argument for that command.")
 		elif isinstance(error, commands.MissingRequiredArgument):
-			help_command = bot.help_command.copy()
-			help_command.context = ctx
-			await help_command.command_callback(ctx, command=ctx.command.name)
+			await ctx.send("Missing a required argument for that command.") # should never get triggered for public facing commands
 		else:
 			await command_error_handler(ctx, error)
 	except disnake.errors.Forbidden:

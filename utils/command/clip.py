@@ -159,10 +159,10 @@ class TtsClip(Clip):
 
 class PokeClip(Clip):
 	async def init(self, name: str, bot, clip_ctx: ClipContext):
-		if "/" in urlpart:
-			raise UserError("That looks like an invalid pokemon")
 		clipname = str(name)
 		urlpart = str(name)
+		if "/" in urlpart:
+			raise UserError("That looks like an invalid pokemon")
 		is_mega = urlpart.startswith("mega_")
 		if is_mega:
 			urlpart = urlpart.replace("mega_", "")

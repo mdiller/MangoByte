@@ -85,5 +85,8 @@
 	"neutrals": "neutralitems",
 	"neutraltier": "neutralitems",
 	"analyze": "parse", 
-	"studymatch": "parse"
+	"studymatch": "parse",
+	"botban": "_See `/docs Command and User Permissions` for more info",
+	"disablecommand": "_See `/docs Command and User Permissions` for more info",
+	"resummon": "summon"
 }

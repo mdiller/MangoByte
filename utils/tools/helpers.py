@@ -36,6 +36,20 @@ def slash_command_name(inter: disnake.CmdInter):
 				result += " " + option.name
 	return result
 
+# expands a list of slash commands to include all sub commands
+def slash_command_expand(list_of_commands: list[commands.InvokableSlashCommand]):
+	new_list = []
+	for command in list_of_commands:
+		if isinstance(command, commands.InvokableSlashCommand):
+			if command.children:
+				for child in command.children.values():
+					child.help_cog_name = command.cog_name
+					new_list.append(child)
+			else:
+				command.help_cog_name = command.cog_name
+				new_list.append(command)
+	return new_list
+
 
 def stringify_slash_command(inter: disnake.CmdInter):
 	result = "/"
@@ -141,8 +155,7 @@ class UserError(Exception):
 		if self.file:
 			kwargs["file"] = self.file
 
-		message = re.sub("\{cmdpfx\}", botdata.command_prefix(ctx_inter), self.message)
-		await ctx_inter.send(message, **kwargs)
+		await ctx_inter.send(self.message, **kwargs)
 
 
 # thinks about messages

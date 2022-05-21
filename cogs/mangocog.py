@@ -1,4 +1,5 @@
 import disnake
+import inspect
 from utils.command.clip import *
 from utils.tools.globals import botdata, logger, settings
 from utils.tools.helpers import *
@@ -27,6 +28,10 @@ class MangoCog(disnake.ext.commands.Cog):
 	@property
 	def name(self):
 		return self.__class__.__name__
+	
+	@property
+	def description(self):
+		return inspect.getdoc(self)
 
 	async def send_owner(self, *args, **kwargs):
 		appinfo = await self.bot.application_info()
@@ -83,6 +88,3 @@ class MangoCog(disnake.ext.commands.Cog):
 		if isinstance(clip, str):
 			clip = await self.get_clip(clip, inter)
 		await inter.send(f"{self.get_emoji('chat_wheel_sound')} {clip.clipid}")
-
-	def cmdpfx(self, ctx):
-		return botdata.command_prefix(ctx)

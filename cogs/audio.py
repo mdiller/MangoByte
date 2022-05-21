@@ -121,7 +121,7 @@ class AudioPlayer:
 			self.voice.play(disnake.FFmpegPCMAudio(clip.audiopath), after=self.done_talking)
 		except disnake.errors.ClientException as e:
 			if str(e) == "Not connected to voice.":
-				raise UserError("Error playing clip. Try doing `?resummon`.")
+				raise UserError("Error playing clip. Try doing `/resummon`.")
 			else:
 				raise
 
@@ -535,7 +535,7 @@ class Audio(MangoCog):
 
 	@commands.Cog.listener()
 	async def on_message(self, message: disnake.Message):
-		if message.guild and (not message.content.startswith(self.cmdpfx(message.guild))) and message.author.id != self.bot.user.id:
+		if message.guild and message.author.id != self.bot.user.id:
 			if message.content == "" or message.clean_content == "":
 				return # weird empty messages should get ignored
 			guildinfo = botdata.guildinfo(message.guild)

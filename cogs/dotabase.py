@@ -120,6 +120,12 @@ class Dotabase(MangoCog):
 		self.build_helpers()
 		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
 		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos(), self.get_ability_infos(), self.vpkurl)
+	
+	@property
+	def description(self):
+		text = str(inspect.getdoc(self))
+		text = re.sub("\{CURRENT_DOTA_PATCH_NUMBER\}", CURRENT_DOTA_PATCH_NUMBER, text)
+		return text
 
 	def build_helpers(self):
 		def clean_input(t):
@@ -1349,7 +1355,7 @@ class Dotabase(MangoCog):
 			embed.color = disnake.Color(int(tier_color[1:], 16))
 
 		if tier is None:
-			embed.set_footer(text="Also try: ?neutralitems tier 4")
+			embed.set_footer(text="Also try: /neutralitems tier 4")
 		await inter.send(embed=embed, file=image)
 
 	@commands.slash_command()

@@ -5,18 +5,21 @@ import typing
 
 import cogs.dotastats
 import utils.command.commandargs
+from dotabase import Hero
 from disnake.ext import commands
-from utils.tools.globals import settings, logger
+from utils.tools.globals import settings, logger, httpgetter
 from utils.tools.helpers import *
 
 
 # Note: This code used to be in mangobyte.py so look there for more history
 
 # a script to update static files for mangobyte
-def update(bot: commands.Bot):
+async def update(bot: commands.Bot):
+	logger.info("Running update script:")
+	
+	print("- Updating generated files...")
 	replacements_dict = {
 		"COMMANDS": None,
-		"SLASH_PROGRESS_PERCENT": None,
 		"MATCH_FILTER_COMMANDS": None,
 		"MATCH_ARGUMENT_COMMANDS": None,
 		"INVITE_LINK": f"[Invite Link]({settings.invite_link})"
@@ -24,7 +27,7 @@ def update(bot: commands.Bot):
 
 	target_files = [
 		"README.md",
-		"resource/docs.md",
+		"docs/docs.md",
 		"docs/slash_command_common_issues.md"
 	]
 
@@ -40,14 +43,13 @@ def update(bot: commands.Bot):
 			continue
 		data["commands"].append({
 			"name": cmd.name,
-			"signature": bot.help_command.get_command_signature(cmd),
 			"short_help": cmd.short_doc,
-			"help": bot.help_command.fill_template(cmd.help),
+			"help": cmd.help,
 			"aliases": cmd.aliases,
 			"cog": cmd.cog.name if cmd.cog else "General",
 			"prefix": "?"
 		})
-	for cmd in bot.help_command.expand_subcommands(bot.slash_commands):
+	for cmd in slash_command_expand(bot.slash_commands):
 		if isinstance(cmd, commands.SubCommand):
 			cogname = cmd.help_cog_name
 			description = cmd.body.description
@@ -68,8 +70,8 @@ def update(bot: commands.Bot):
 			continue
 		data["cogs"].append({
 			"name": cog,
-			"short_help": bot.help_command.cog_short_doc(bot.cogs[cog]),
-			"help":  inspect.getdoc(bot.cogs[cog])
+			"short_help": bot.cogs[cog].description.split('\n')[0],
+			"help":  bot.cogs[cog].description
 		})
 	data["commands"] = list(sorted(data["commands"], key=lambda c: c["name"]))
 
@@ -92,13 +94,6 @@ def update(bot: commands.Bot):
 
 	replacements_dict["COMMANDS"] = docs
 
-	# Get fill value for SLASH_PROGRESS_PERCENT
-
-	total_count = len(data["commands"])
-	slash_count = len(list(filter(lambda c: c["prefix"] == "/", data["commands"])))
-	percent_value = str(round(100 * slash_count / total_count)) + "%"
-	replacements_dict["SLASH_PROGRESS_PERCENT"] = percent_value
-
 	# Get fill values for args stuff
 	
 	replacements_dict["MATCH_ARGUMENT_COMMANDS"] = get_commands_with_arg(bot, cogs.dotastats.DotaMatch)
@@ -115,11 +110,16 @@ def update(bot: commands.Bot):
 			text = re.sub(f"({replacement_start}).*?({replacement_end})", f"\\g<1>{value}\\2", text, flags=re.S)
 		with open(filename, "w+") as f:
 			f.write(text)
+	
+	print("- Updating emoji...")
+	await update_emoji(bot)
+
+	print("done!")
 
 # gets a list of commands that take the given arg type
 def get_commands_with_arg(bot, argtype):
 	matching_commands = []
-	all_commands = bot.help_command.expand_subcommands(bot.slash_commands)
+	all_commands = slash_command_expand(bot.slash_commands)
 	all_commands.extend(bot.commands)
 	for cmd in all_commands:
 		for paramtype in typing.get_type_hints(cmd._callback).values():
@@ -130,3 +130,36 @@ def get_commands_with_arg(bot, argtype):
 				break
 	matching_commands.sort()
 	return "\n".join(map(lambda c: f"`{c}`", matching_commands))
+
+async def update_emoji(bot: commands.Bot):
+	emoji_json_file = settings.resource("json/emoji.json")
+	emoji_json = read_json(emoji_json_file)
+	if settings.emoji_dev_server is None:
+		print("Can't update emoji without 'emoji_dev_server' set in settings file")
+		return
+	guild = bot.get_guild(settings.emoji_dev_server)
+	dotabase = bot.get_cog("Dotabase")
+	# check for any missing heroes
+	for hero in dotabase.session.query(Hero):
+		hero: Hero
+		emoji_name =f"dota_hero_{hero.name}"
+		if emoji_name not in emoji_json:
+			# missing this hero, gotta add it
+			print(f"Adding emoji for {hero.localized_name}")
+			url = dotabase.vpkurl + hero.icon
+			image = await httpgetter.get(url, return_type="filename", cache=True)
+			with open(image, "rb") as f:
+				image = f.read()
+			emoji = await guild.create_custom_emoji(name=emoji_name, image=image, reason=f"New Hero got added")
+			emoji_json[emoji_name] = emoji.id
+	
+	# add any extra emoji that we dont have
+	for emoji in guild.emojis:
+		if emoji.name not in emoji_json:
+			imgpath = settings.resource(f"images/emojis/{emoji.name}.png")
+			with open(imgpath, 'wb+') as f:
+				f.write((await httpgetter.get(str(emoji.url), return_type="bytes")).read())
+			print(f"adding '{emoji.name}' emoji")
+			emoji_json[emoji.name] = emoji.id
+
+	write_json(emoji_json_file, emoji_json)
