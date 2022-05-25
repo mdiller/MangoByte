@@ -5,6 +5,7 @@ import typing
 
 import cogs.dotastats
 import utils.command.commandargs
+import utils.tools.botdata as botdata
 from dotabase import Hero
 from disnake.ext import commands
 from utils.tools.globals import settings, logger, httpgetter
@@ -22,6 +23,8 @@ async def update(bot: commands.Bot):
 		"COMMANDS": None,
 		"MATCH_FILTER_COMMANDS": None,
 		"MATCH_ARGUMENT_COMMANDS": None,
+		"CONFIG_SETTINGS": None,
+		"USERCONFIG_SETTINGS": None,
 		"INVITE_LINK": f"[Invite Link]({settings.invite_link})"
 	}
 
@@ -99,7 +102,17 @@ async def update(bot: commands.Bot):
 	replacements_dict["MATCH_ARGUMENT_COMMANDS"] = get_commands_with_arg(bot, cogs.dotastats.DotaMatch)
 	replacements_dict["MATCH_FILTER_COMMANDS"] = get_commands_with_arg(bot, utils.command.commandargs.MatchFilter)
 
-	# Update all the files with the n	ew values
+	# Get fill values for /userconfig and /config settings
+	def setting_variables_list_names(variables):
+		lines = []
+		for variable in variables:
+			if not variable.get("disabled"):
+				lines.append(f"- {variable.get('key')}")
+		return "\n".join(lines) + "\n"
+	replacements_dict["CONFIG_SETTINGS"] = setting_variables_list_names(botdata.guildinfo_variables)
+	replacements_dict["USERCONFIG_SETTINGS"] = setting_variables_list_names(botdata.userinfo_variables)
+
+	# Update all the files with the new values
 
 	for filename in target_files:
 		with open(filename, "r") as f:

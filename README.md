@@ -141,58 +141,78 @@ Commands to help manage mangobyte on your server/guild
 
 ## Examples
 
-`?hero brew`
+`/hero brew`
 
 ![hero_brew](resource/images/readme/hero_brew.png)
 
-`?ability dream coil`
+`/ability dream coil`
 
 ![ability_dream_coil](resource/images/readme/ability_dream_coil.png)
 
-`?item silver edge`
+`/item silver edge`
 
 ![item_silver_edge](resource/images/readme/item_silver_edge.png)
 
-`?herotable lvl 20 effective hp`
+`/herotable lvl 20 effective hp`
 
 <img width="600px" src="resource/images/readme/herotable_lvl20_effhp.png"/>
 
-`?lastmatch as skywrath this patch`
+`/lastmatch as skywrath this patch`
 
 ![lastmatch](resource/images/readme/lastmatch.png)
 
-`?playerstats`
+`/playerstats`
 
 ![playerstats](resource/images/readme/playerstats.png)
 
-`?twenty`
+`/twenty`
 
 ![twenty](resource/images/readme/twenty.png)
 
-`?laning`
+`/laning`
 
 ![laning](resource/images/readme/laning.gif)
 
-`?recent`
+`/recent`
 
 <img width="600px" src="resource/images/readme/recent.png"/>
 
-`?recent tinker wins` (See the options you can use for this [here](resource/docs.md))
+`/recent tinker wins` (See the options you can use for this [here](resource/docs.md))
 
 <img width="600px" src="resource/images/readme/recent_tinker_wins.png"/>
 
-`?rolesgraph`
+`/rolesgraph`
 
 ![rolesgraph](resource/images/readme/rolesgraph.png)
 
-`?help config`
+## Customization options
+Mangobyte is customizable on a per-user and per-server level, via the `/userconfig` and `/config` commands. The following is a list of the different options you have for each command. To see more information about a particular option, try giving it the value 'show' like this: `/userconfig steam show`.
 
-![help_config](resource/images/readme/help_config.png)
+### /config (per-server configuration)
+<!-- CONFIG_SETTINGS_START -->
+- reactions
+- ttschannel
+- botadmin
+- intros
+- outros
+- ttslang
+- usenickname
+- simpletts
+- announcetts
+- ttschannelwarn
+- allowedbots
+- allowwebhooks
+- restrictsummoning
+<!-- CONFIG_SETTINGS_END -->
 
-`?help userconfig`
-
-![help_userconfig](resource/images/readme/help_userconfig.png)
-
+### /userconfig (per-user configuration)
+<!-- USERCONFIG_SETTINGS_START -->
+- steam
+- intro
+- outro
+- introtts
+- outrotts
+<!-- USERCONFIG_SETTINGS_END -->
 
 ## Installation
 

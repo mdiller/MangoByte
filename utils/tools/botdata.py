@@ -151,6 +151,7 @@ guildinfo_variables = [
 	{
 		"key": "prefix",
 		"default": "?",
+		"disabled": True,
 		"type": types.CommandPrefix,
 		"description": "Configures the character to use to prefix your commands for this server",
 		"example": "!"
