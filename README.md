@@ -177,7 +177,7 @@ Commands to help manage mangobyte on your server/guild
 
 <img width="600px" src="resource/images/readme/recent.png"/>
 
-`/recent tinker wins` (See the options you can use for this [here](resource/docs.md))
+`/recent tinker wins` (See the options you can use for this [here](docs/docs.md))
 
 <img width="600px" src="resource/images/readme/recent_tinker_wins.png"/>
 
@@ -239,4 +239,4 @@ You should now be done! You can run mangobyte by calling `python3.9 mangobyte.py
 	"debug": false
 }
 ```
-For explanation of each option, see the comments on the properties in [settings.py](cogs/utils/settings.py)
+For explanation of each option, see the comments on the properties in [settings.py](utils/tools/settings.py)
