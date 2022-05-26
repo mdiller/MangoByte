@@ -12,7 +12,7 @@ from utils.tools.helpers import *
 class Settings:
 	def __init__(self):
 		self.path = "settings.json"
-		self.defaults = OrderedDict([  ("token", ""), ("error_logging", False), ("debug", False) ])
+		self.defaults = OrderedDict([  ("token", ""), ("error_logging", False), ("debug", False), ("loki", OrderedDict([  ("base_url", ""), ("application", ""), ("username", ""), ("password","") ]))])
 		if not os.path.exists(self.path):
 			self.json_data = self.defaults
 			self.save_settings()

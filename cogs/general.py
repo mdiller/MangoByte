@@ -96,7 +96,9 @@ def get_docs_keys():
 	docs_data = load_md_as_dict(settings.resource("../docs/docs.md"))
 	return list(docs_data.keys())
 
-LOKI_APPLICATION_NAME = settings.loki["application"]
+if settings.loki:
+	LOKI_APPLICATION_NAME = settings.loki["application"]
+
 class BotStats():
 	server_count: int
 	user_count: int
@@ -552,7 +554,8 @@ class General(MangoCog):
 	async def update_botstats(self):
 		logger.info("task_triggered: update_botstats()")
 		try:
-			await self.botstats_weekly.update(self.bot)
+			if LOKI_APPLICATION_NAME:
+				await self.botstats_weekly.update(self.bot)
 		except Exception as e:
 			await report_error("update_botstats()", e)
 
