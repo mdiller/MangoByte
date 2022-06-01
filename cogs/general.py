@@ -96,6 +96,7 @@ def get_docs_keys():
 	docs_data = load_md_as_dict(settings.resource("../docs/docs.md"))
 	return list(docs_data.keys())
 
+BOT_STAT_MONTHLY_COUNTER = 24 # makes sure we only grab the monthly stats every day
 LOKI_APPLICATION_NAME = settings.loki["application"]
 class BotStats():
 	server_count: int
@@ -127,6 +128,9 @@ class BotStats():
 			return 0 # No results found, so default to 0
 		return int(data["data"]["result"][0]["value"][1])
 	
+	async def query_custom_trace_count(self, query, timeframe):
+		return await self.query_single_result(f'sum(count_over_time({{application="{LOKI_APPLICATION_NAME}", level="trace"}} | json | {query} [{timeframe}]))')
+	
 	async def query_user_count(self, timeframe):
 		return await self.query_single_result(f'count(sum (count_over_time({{application="{LOKI_APPLICATION_NAME}", level="trace"}} | json | author_id != "" [{timeframe}])) by (author_id))')
 	
@@ -146,6 +150,7 @@ class BotStats():
 		self.user_count = await self.query_user_count(self.timeframe)
 		self.command_count = await self.query_command_count(self.timeframe)
 		self.top_commands = await self.query_top_commands(5, self.timeframe)
+		self.tts_count = await self.query_custom_trace_count('type = "tts"', self.timeframe)
 
 
 class General(MangoCog):
@@ -163,6 +168,7 @@ class General(MangoCog):
 		self.docs_data = load_md_as_dict(settings.resource("../docs/docs.md"))
 		self.words = load_words()
 		self.botstats_weekly = BotStats("7d")
+		self.botstats_monthly = BotStats("30d")
 
 	@commands.slash_command()
 	async def misc(self, inter):
@@ -265,7 +271,8 @@ class General(MangoCog):
 
 		embed.add_field(name="Help", value=(
 			f"If you want to invite mangobyte to your server/guild, click this [invite link]({settings.invite_link}). "
-			f"If you have a question or suggestion, check out the [Help Server/Guild]({HELP_GUILD_LINK})."))
+			f"If you have a question or suggestion, check out the [Help Server/Guild]({HELP_GUILD_LINK})."
+			f"To learn more about how mangobyte uses your data checkout the [Privacy Policy](https://github.com/mdiller/MangoByte/blob/master/docs/privacy_policy.md)."))
 
 		embed.add_field(name="Find Out More", value=(
 			f"• Browse commands and command categories via the `/help` command\n"
@@ -285,26 +292,40 @@ class General(MangoCog):
 		await inter.send(settings.invite_link)
 
 	@bot.sub_command(name="stats")
-	async def stats(self, inter: disnake.CmdInter):
+	async def stats(self, inter: disnake.CmdInter, interval: commands.option_enum(["Weekly", "Monthly"]) = "Monthly"):
 		"""Displays some bot statistics"""
 		await inter.response.defer()
+
+		interval_info = {
+			"Weekly": {
+				"days": 7,
+				"refresh": "every hour",
+				"stats": self.botstats_weekly
+			},
+			"Monthly": {
+				"days": 30,
+				"refresh": "every day",
+				"stats": self.botstats_monthly
+			}
+		}[interval]
 
 		if not settings.loki:
 			await inter.send("Stats not available for this bot. Whoever's running it hasnt set up loki")
 			return
 
 		embed = disnake.Embed(color=disnake.Color.green())
-		embed.description = "Note: The data for these stats began on March 22nd."
 
-		embed.set_author(name=self.bot.user.name + " Stats (Last 7 Days)", icon_url=self.bot.user.avatar.url)
+		embed.set_author(name=f"{self.bot.user.name} Stats (Last {interval_info['days']} Days)", icon_url=self.bot.user.avatar.url)
 
-		botstats = self.botstats_weekly
-		embed.add_field(name="Servers/Guilds", value=f"{botstats.server_count:,}")
+		botstats: BotStats
+		botstats = interval_info["stats"]
+		embed.add_field(name="Guilds", value=f"{botstats.server_count:,}")
 		embed.add_field(name="Unique Users", value=f"{botstats.user_count:,}")
-		embed.add_field(name="Total Commands", value=f"{botstats.command_count:,}")
+		embed.add_field(name="Commands", value=f"{botstats.command_count:,}")
 		embed.add_field(name="Top Commands", value="\n".join(map(lambda c: f"`/{c}`", botstats.top_commands)))
+		embed.add_field(name="TTS Messages", value=f"{botstats.tts_count:,}")
 		
-		embed.set_footer(text="stats refreshes every hour")
+		embed.set_footer(text=f"These statistics refresh {interval_info['refresh']}")
 
 		await inter.send(embed=embed)
 
@@ -550,9 +571,14 @@ class General(MangoCog):
 	
 	@tasks.loop(hours=1)
 	async def update_botstats(self):
+		global BOT_STAT_MONTHLY_COUNTER
 		logger.info("task_triggered: update_botstats()")
 		try:
 			await self.botstats_weekly.update(self.bot)
+			BOT_STAT_MONTHLY_COUNTER += 1
+			if BOT_STAT_MONTHLY_COUNTER >= 24:
+				BOT_STAT_MONTHLY_COUNTER = 0
+				await self.botstats_monthly.update(self.bot)
 		except Exception as e:
 			await report_error("update_botstats()", e)
 

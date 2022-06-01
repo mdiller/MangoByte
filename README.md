@@ -203,6 +203,7 @@ Mangobyte is customizable on a per-user and per-server level, via the `/userconf
 - allowedbots
 - allowwebhooks
 - restrictsummoning
+
 <!-- CONFIG_SETTINGS_END -->
 
 ### /userconfig (per-user configuration)
@@ -212,6 +213,7 @@ Mangobyte is customizable on a per-user and per-server level, via the `/userconf
 - outro
 - introtts
 - outrotts
+
 <!-- USERCONFIG_SETTINGS_END -->
 
 ## Installation

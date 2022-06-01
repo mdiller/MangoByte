@@ -134,3 +134,7 @@ To set up some slash command permissions for mangobyte, head over to Server Sett
 
 ### "What about users/commands I've banned/disabled?"
 I'll leave mangobyte's internal user banning and command disabling system up for a while during this transition period. I've removed the `?disablecommand` and `?enablecommand` commands, but I've left up the other two for now and moved them to slash commands so that you can un-ban people or enable commands if needed. In a month or more (probably not till July or so) I'll remove these commands entirely, and remove the internal system that mango uses to ban people and disable commands and the system will be gone. If you have any issues with this or questions about it feel free to drop by the [Mangobyte Help Server](https://discord.gg/d6WWHxx) and let me know.
+
+# Privacy Policy
+
+Mangobyte collects some data in order to make for a configurable experience and also to help with debugging issues. To learn more, check out the [Privacy Policy](https://github.com/mdiller/MangoByte/blob/master/docs/privacy_policy.md).

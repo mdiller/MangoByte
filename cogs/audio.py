@@ -539,8 +539,11 @@ class Audio(MangoCog):
 			if message.content == "" or message.clean_content == "":
 				return # weird empty messages should get ignored
 			guildinfo = botdata.guildinfo(message.guild)
+			userinfo = botdata.userinfo(message.author.id)
 			if guildinfo.is_banned(message.author):
 				return # banned users cant talk
+			if userinfo.ignoremytts:
+				return # ignore anyone who's configured the bot to ignore them
 			if message.author.bot:
 				if message.webhook_id:
 					if not guildinfo.allowwebhooks:
@@ -558,7 +561,11 @@ class Audio(MangoCog):
 						"author_id": message.author.id,
 						"server_id": message.guild.id,
 						"channel_id": message.channel.id,
-						"timestamp": message.created_at.isoformat(),
+						"timestamp": message.created_at.isoformat()
+					})
+					logger.event_info("TTS_MESSAGE_CONTENT", {
+						"message_id": message.id,
+						"author_id": message.author.id,
 						"content": message.content,
 						"clean_content": message.clean_content
 					})
@@ -578,19 +585,19 @@ class Audio(MangoCog):
 					try:
 						await message.channel.send(e.message)
 					except disnake.errors.Forbidden as e:
-						logger.info("on_message usererror blocked because permissions")
+						logger.warn("on_message usererror blocked because permissions")
 						pass
 				except UserError as e:
 					try:
 						await message.channel.send(e.message)
 					except disnake.errors.Forbidden as e:
-						logger.info("on_message usererror blocked because permissions")
+						logger.warn("on_message usererror blocked because permissions")
 						pass
 				except Exception as e:
 					try:
 						await message.channel.send("Uh-oh, sumthin dun gone wrong 😱")
 					except disnake.errors.Forbidden as e:
-						logger.info("on_message usererror blocked because permissions")
+						logger.warn("on_message usererror blocked because permissions")
 						pass
 					await report_error(message, TtsChannelError(e))
 

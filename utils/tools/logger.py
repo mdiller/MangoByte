@@ -30,6 +30,15 @@ def event(self, type, data = {}):
 		self._log(trace_level, message, [])
 logging.Logger.event = event
 
+# creates an event object but at the "info" level, so it gets deleted after 30 days
+def event_info(self, type, data = {}):
+	if self.isEnabledFor(logging.INFO):
+		data = OrderedDict(data)
+		data["type"] = type
+		data.move_to_end("type", last=False)
+		message = json.dumps(data)
+		self._log(logging.INFO, message, [])
+logging.Logger.event_info = event_info
 
 def setup_logger():
 	logger = logging.getLogger("mangologger")

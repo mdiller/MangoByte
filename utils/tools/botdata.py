@@ -126,6 +126,13 @@ userinfo_variables = [
 		"type": types.Boolean,
 		"description": "Enabling this will let mangobyte dm you about Dota blog updates",
 		"example": "enable"
+	},
+	{
+		"key": "ignoremytts",
+		"default": False,
+		"type": types.Boolean,
+		"description": "Enabling this will mean mangobyte will ignore when you type in a #tts channel",
+		"example": "enable"
 	}
 ]
 
