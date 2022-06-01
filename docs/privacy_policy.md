@@ -1,19 +1,19 @@
 # Mangobyte's Privacy Policy
 The purpose of this privacy policy is to describe what data mangobyte collects, how that data is stored, who has access to the data, when the data is deleted, etc. If you have any questions about this or think that something is missing from here, head on over to the [Mangobyte Help Server](https://discord.gg/d6WWHxx) and let me know!
 
-## Terms
+### Terms
 For the remainder of this document keep in mind the following:
 - "I" or "me" refers to Malcolm Diller (aka [@mdiller](https://github.com/mdiller/) or "@Bilbo's Last Clean Doily" on discord), the person writing this privacy policy, who is the sole developer of mangobyte.
 - "mangobyte" refers to the verified instance of the bot, who's client_id is 213476188037971968.
 - "guild" refers to a discord "guild", which have also been called discord "servers" in the past.
 - "user" refers to a discord "user".
 
-## Some Basic Things
+### Some Basic Things
 Heres some basic things that you should know about what I do with the data mangobyte collects:
 - I do not and will never sell your data.
 - I do not and will never share your message content with anyone without your explicit consent.
 
-## The kinds of data collected
+### The kinds of data collected
 There are 3 main types of data that mangobyte collects. Note that these categories are described in more depth in the following sections.
 - **Configuration Data**: This is data users specifically provide to mangobyte via commands like `/config` or `/userconfig`
 - **Statistics Log Data**: This is logged information that gets recorded whenever a user interacts with mangobyte (primarily via tts messages or a slash command)

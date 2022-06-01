@@ -519,7 +519,7 @@ class Dotabase(MangoCog):
 	
 	@Audio.clips.sub_command(name="dota")
 	async def clips_dota(self, inter: disnake.CmdInter, text: str = None, hero: Hero = None, criteria: commands.option_enum(CRITERIA_ALIASES) = None, page: commands.Range[1, 10] = 1):
-		"""Plays a dota response
+		"""Searches for dota responses
 
 		Parameters
 		----------
