@@ -230,7 +230,7 @@ class Audio(MangoCog):
 				return audioplayer
 
 		if error_on_none:
-			raise AudioPlayerNotFoundError(f"I'm not in a voice channel on this server/guild. Have an admin do `{botdata.command_prefix(ctx_inter)}summon` to put me in one.")
+			raise AudioPlayerNotFoundError(f"I'm not in a voice channel on this server/guild. Have an admin do `/summon` to put me in one.")
 		else:
 			return None
 

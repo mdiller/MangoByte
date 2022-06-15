@@ -16,7 +16,7 @@ description = """A discord bot built primarily around playing audio clips and do
 				For more information about me, try `/bot info`"""
 
 bot = commands.AutoShardedBot(
-	command_prefix=botdata.command_prefix_botmessage, 
+	command_prefix="?", # for any lingering owner-only commands
 	description=description, 
 	case_insensitive=True,
 	shard_count=settings.shard_count,

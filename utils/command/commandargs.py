@@ -217,6 +217,8 @@ class TimeSpanArg(QueryArg):
 
 	async def parse(self, text):
 		match = re.match(self.regex(), text)
+		k = match.group("kind")
+		c = match.group("count")
 
 		if match.group("kind"):
 			chunk_count = float(match.group("count") or "1")
@@ -272,7 +274,7 @@ class TimeSpanArg(QueryArg):
 
 	def regex(self):
 		pattern = "(?:(?:in|over|during) )?"
-		pattern += f"((?P<since>since )?(?:patch )?(?P<patch>{self.dotabase.patches_regex})|(?:the )?(?:(?:this|last|past) )?(?:(?P<count>\\d{1,5}\\.?\\d{0,5}) )?(?P<kind>(?:to)?day|week|month|year|patch|hour)e?s?)"
+		pattern += f"((?P<since>since )?(?:patch )?(?P<patch>{self.dotabase.patches_regex})|(?:the )?(?:(?:this|last|past) )?(?:(?P<count>\\d{{1,5}}\\.?\\d{{0,5}}?) )?(?P<kind>(?:to)?day|week|month|year|patch|hour)e?s?)"
 		pattern = f"\\b{pattern}\\b"
 		pattern = re.compile(pattern, re.IGNORECASE)
 		return pattern
