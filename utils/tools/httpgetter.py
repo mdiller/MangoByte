@@ -22,8 +22,8 @@ class HttpGetter:
 		self.cache = Cache(self.loop)
 
 	async def get(self, url, return_type="json", cache=False, errors={}, headers=None):
-		if cache and self.cache.get_filename(url):
-			return self.cache.get(url, return_type)
+		if cache and await self.cache.get_filename(url):
+			return await self.cache.get(url, return_type)
 
 		timer = SimpleTimer()
 		async with self.session.get(url, headers=headers, timeout=60) as r:
@@ -36,7 +36,7 @@ class HttpGetter:
 				if cache:
 					await self.cache.save(url, return_type, r)
 					if return_type == "filename":
-						return self.cache.get_filename(url)
+						return await self.cache.get_filename(url)
 
 				if return_type == "json":
 					return json.loads(await r.text(), object_pairs_hook=OrderedDict)

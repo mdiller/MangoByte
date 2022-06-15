@@ -168,7 +168,7 @@ async def get_talents_image(abilities, hero_id):
 				talent_slots.append(talent.slot)
 	talent_slots = sorted(talent_slots, reverse=True)
 	uri = f"talents_icon:{'_'.join(map(str, talent_slots))}"
-	filename = httpgetter.cache.get_filename(uri)
+	filename = await httpgetter.cache.get_filename(uri)
 	if filename and not settings.debug:
 		return Image.open(filename)
 	filename = await httpgetter.cache.new(uri, "png")
@@ -530,7 +530,7 @@ def place_icon_on_map(map_image, icon, x, y):
 async def create_dota_gif(bot, match, stratz_match, start_time, end_time, ms_per_second=100):
 	uri = f"match_gif:{match['match_id']}:{start_time}:{end_time}:{ms_per_second}"
 
-	filename = httpgetter.cache.get_filename(uri)
+	filename = await httpgetter.cache.get_filename(uri)
 	if filename and not settings.debug:
 		return filename
 	filename = await httpgetter.cache.new(uri, "gif")
@@ -686,7 +686,7 @@ def create_dota_gif_main(match, stratz_match, start_time, end_time, ms_per_secon
 
 async def create_dota_emoticon(emoticon, url):
 	uri = f"dota_emoticon:{emoticon.name}"
-	filename = httpgetter.cache.get_filename(uri)
+	filename = await httpgetter.cache.get_filename(uri)
 	if filename and not settings.debug:
 		return filename
 
@@ -731,7 +731,7 @@ async def dota_rank_icon(rank_tier, leaderboard_rank):
 
 	uri = f"dota_rank:{rank_tier}_{leaderboard_rank}"
 	logger.info(uri)
-	filename = httpgetter.cache.get_filename(uri)
+	filename = await httpgetter.cache.get_filename(uri)
 	if filename and not settings.debug:
 		return filename
 
@@ -967,7 +967,7 @@ async def draw_courage(hero_id, icon_ids):
 
 async def draw_artifact_deck(deck_string, cards, hero_turns, card_counts):
 	uri = f"artifact_deck:{deck_string}"
-	filename = httpgetter.cache.get_filename(uri)
+	filename = await httpgetter.cache.get_filename(uri)
 	if filename and not settings.debug:
 		return filename
 
@@ -1228,7 +1228,7 @@ async def draw_itemrecipe(main_item, components, products):
 	item_ids.extend(map(lambda i: i.id, products))
 	item_ids = "_".join(map(str, item_ids))
 	uri = f"dota_recipe:{item_ids}"
-	filename = httpgetter.cache.get_filename(uri)
+	filename = await httpgetter.cache.get_filename(uri)
 	if filename and not settings.debug:
 		return filename
 

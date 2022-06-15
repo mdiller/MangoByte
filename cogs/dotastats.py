@@ -100,7 +100,7 @@ async def opendota_query_filter(matchfilter):
 # rate_limit = false if this is the only query we're sending
 async def get_match(match_id):
 	url = opendota_query_get_url(f"/matches/{match_id}")
-	cached_data = httpgetter.cache.get(url, "json")
+	cached_data = await httpgetter.cache.get(url, "json")
 
 	def check_valid_match(match_data):
 		if match_data.get('radiant_win', True) is None:
@@ -131,7 +131,7 @@ async def get_stratz_match(match_id):
 		raise UserError("Stratz not configured properly. The bot owner has gotta put the stratz api key in the config file")
 
 	url = f"https://api.stratz.com/api/v1/match/{match_id}"
-	cached_data = httpgetter.cache.get(url, "json")
+	cached_data = await httpgetter.cache.get(url, "json")
 	
 	if cached_data:
 		if is_stratz_parsed(cached_data):

@@ -1,5 +1,7 @@
 import re
+import datetime
 from io import BytesIO
+from tinydb import TinyDB, Query
 
 from utils.tools.helpers import *
 from utils.tools.logger import logger
@@ -7,41 +9,44 @@ from utils.tools.settings import settings
 
 default_cache = { "count": 0, "files": {} }
 
+# EXAMPLE CACHE ITEM
+# {
+# 	"key": "<the cache key>",
+# 	"file": "<filename>",
+# 	"timestamp": "<last time this file was visited>"
+# }
+CacheItem = Query()
+
+def get_timestamp(date=None):
+	if date is None:
+		date = datetime.datetime.now()
+	return int(datetime.datetime.timestamp(date) * 1000)
+
 class Cache:
 	def __init__(self, loop):
 		self.loop = loop
 		self.cache_dir = settings.resource("cache/")
-		self.index_file = self.cache_dir + "cache_index.json"
-		self.cache = {}
+		self.db = TinyDB(self.cache_dir + "_cache_tinydb.json")
 		self.lock = asyncio.Lock(loop=self.loop)
-		if os.path.isfile(self.index_file):
-			self.cache = read_json(self.index_file)
-		for key in default_cache:
-			if key not in self.cache:
-				self.cache[key] = default_cache[key]
-		self.save_cache()
 
-	@property
+	@property # TODO: PROLLY REMOVE
 	def files(self):
 		return self.cache["files"]
 
-	def save_cache(self):
-		if not os.path.exists(self.cache_dir):
-			os.makedirs(self.cache_dir)
-		write_json(self.index_file, self.cache)
-
 	# Returns the filename of the cached url if it exists, otherwise None
-	def get_filename(self, uri):
-		if uri not in self.files:
-			return None
-		filename = self.cache_dir + self.files[uri]
+	async def get_filename(self, uri):
+		async with self.lock:
+			item = self.db.get(CacheItem.key == uri)
+			if item is None:
+				return None
+			filename = self.cache_dir + item["file"]
 		if not os.path.isfile(filename):
 			return None
 		return filename
 
 	# Returns the file if it exists, otherwise None
-	def get(self, uri, return_type):
-		filename = self.get_filename(uri)
+	async def get(self, uri, return_type):
+		filename = await self.get_filename(uri)
 		if not filename:
 			return None
 		if return_type == "json":
@@ -59,15 +64,18 @@ class Cache:
 
 	#creates a new entry in the cache and returns the filename of the new entry
 	async def new(self, uri, extension=None):
+		filename = await self.get_filename(uri)
+		if filename is not None:
+			return filename
 		async with self.lock:
-			if uri in self.files:
-				return self.cache_dir + self.files[uri]
-			filename = f"{self.cache['count']:0>4}"
+			filename = f"{len(self.db):0>4}"
 			if extension:
 				filename = f"{filename}.{extension}"
-			self.files[uri] = filename
-			self.cache["count"] += 1
-			self.save_cache()
+			self.db.upsert({
+				"key": uri,
+				"file": filename,
+				"timestamp": get_timestamp()
+			}, CacheItem.key == uri)
 		return self.cache_dir + filename
 
 
@@ -91,8 +99,9 @@ class Cache:
 
 	async def remove(self, uri):
 		async with self.lock:
-			if uri in self.files:
-				filename = self.cache_dir + self.files.pop(uri)
-				self.save_cache()
+			item = self.db.get(CacheItem.key == uri)
+			if item is not None:
+				filename = self.cache_dir + item["file"]
 				if os.path.isfile(filename):
 					os.remove(filename)
+				self.db.remove(doc_ids=[item.doc_id])

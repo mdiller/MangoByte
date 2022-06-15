@@ -143,7 +143,7 @@ class TtsClip(Clip):
 		ttslang = "en-au" if not data else data.ttslang
 		uri = f"clip_tts_{ttslang}:{text}"
 
-		filename = httpgetter.cache.get_filename(uri)
+		filename = await httpgetter.cache.get_filename(uri)
 		if not filename:
 			filename = await httpgetter.cache.new(uri, "wav")
 			try:

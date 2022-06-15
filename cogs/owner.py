@@ -179,7 +179,7 @@ class Owner(MangoCog):
 	@commands.command()
 	async def getcache(self, ctx, uri):
 		"""Gets a file in the cache"""
-		filename = httpgetter.cache.get_filename(uri)
+		filename = await httpgetter.cache.get_filename(uri)
 
 		if filename is None:
 			raise UserError("Couldn't find a file at that uri")
