@@ -66,6 +66,10 @@ class Cell:
 	def render(self, draw, image, x, y, width, height):
 		return image, draw
 
+# an empty cell that takes up space but doesn't get drawn
+class EmptyCell(Cell):
+	def __init__(self, **kwargs):
+		Cell.__init__(self, **kwargs)
 
 # a wrapper class to make the color specifying simpler
 class ColorCell(Cell):
@@ -74,6 +78,16 @@ class ColorCell(Cell):
 		if "background" not in kwargs:
 			kwargs["background"] = self.color
 		Cell.__init__(self, **kwargs)
+
+class CustomRenderCell(Cell):
+	def __init__(self, **kwargs):
+		self.render_func = kwargs.get('render_func')
+		Cell.__init__(self, **kwargs)
+	
+	def render(self, draw, image, x, y, width, height):
+		if self.render_func:
+			return self.render_func(draw, image, x, y, width, height)
+		return image, draw
 
 class DoubleCell(Cell):
 	def __init__(self, cell1, cell2, **kwargs):
@@ -269,7 +283,7 @@ class Table:
 		column_count = max(map(len, self.rows))
 		column_width = []
 		for col in range(column_count):
-			width = None
+			width = 0
 			for row in self.rows:
 				if len(row) <= col or row[col] is None:
 					continue

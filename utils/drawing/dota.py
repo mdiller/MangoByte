@@ -1,5 +1,6 @@
 import math
 import os
+from queue import Empty
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
@@ -11,7 +12,7 @@ from utils.tools.helpers import (UserError, format_duration_simple, get_pretty_t
 
 from .imagetools import *
 from utils.other.metastats import get_hero_pickban_percent, get_hero_winrate
-from utils.drawing.table import (ColorCell, DoubleCell, ImageCell, SlantedTextCell, Table, TextCell, get_table_font)
+from utils.drawing.table import (ColorCell, DoubleCell, ImageCell, SlantedTextCell, Table, TextCell, EmptyCell, CustomRenderCell, get_table_font)
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
@@ -304,13 +305,61 @@ def get_lane(player):
 	else:
 		return lane_role_dict[player.get('lane_role')]
 
+def create_party_cell(match, player, can_be_top=True, can_be_bottom=True):
+	if player.get("party_size", 0) <= 1:
+		return EmptyCell()
+	team_colors = [  "purple", "turquoise", "orange", "blue" ]
+	all_teams = []
+	player_slots_in_team = []
+	for p in match["players"]:
+		if p.get("party_size", 0) > 1 and p.get("party_id") not in all_teams:
+			all_teams.append(p.get("party_id"))
+		if p.get("party_id") == player.get("party_id"):
+			player_slots_in_team.append(p["player_slot"])
+	color_index = all_teams.index(player.get("party_id"))
+	if color_index >= len(team_colors):
+		color_index = len(team_colors) - 1
+	cell_color = team_colors[color_index]
 
-async def add_player_row(table, player, is_parsed, is_ability_draft, has_talents):
+	if player_slots_in_team[0] == player["player_slot"]:
+		position = "top"
+	elif player_slots_in_team[-1] == player["player_slot"]:
+		position = "bottom"
+	else:
+		position = "middle"
+
+	if position == "middle":
+		return ColorCell(width=8, color=cell_color)
+	# custom cell renderer for some curviness
+	def custom_cell_render(draw, image, x, y, width, height):
+		corner = Image.new('RGBA', (width, width), (0, 0, 0, 0))
+		draw_corner = ImageDraw.Draw(corner)
+		draw_corner.pieslice((0, 0, width * 2, width * 2), 180, 270, fill=cell_color)
+		if position == "top":
+			draw.rectangle([x, y + width, x + width, y + height], fill=cell_color)
+			image = paste_image(image, corner.rotate(0), x, y)
+		elif position == "bottom":
+			draw.rectangle([x, y, x + width, y + height - width], fill=cell_color)
+			image = paste_image(image, corner.rotate(90), x, y + height - width)
+		return image, draw
+
+	return CustomRenderCell(width=8, render_func=custom_cell_render)
+
+def truncate(text, max_size):
+	if len(text) <= max_size:
+		return text
+	text = text[:max_size - 3]
+	text = re.sub(r"[\.\s]+$", "", text)
+	return text + "..."
+
+async def draw_match_table_row(table, match, player, is_parsed, is_ability_draft, has_talents):
+	draw_bear_row = player["hero_id"] == 80 and len(player.get("additional_units", [])) > 0
 	row = [
-		ColorCell(width=5, color=("green" if player["isRadiant"] else "red")),
+		ColorCell(width=8, color=("green" if player["isRadiant"] else "red")),
+		create_party_cell(match, player, can_be_bottom=(not draw_bear_row)),
 		ImageCell(img=await get_hero_image(player["hero_id"]), height=48),
 		ImageCell(img=await get_level_image(player.get("level", 1))),
-		TextCell(player.get("personaname", "Anonymous")),
+		TextCell(truncate(player.get("personaname", "Anonymous"), 25)),
 		TextCell(player.get("kills")),
 		TextCell(player.get("deaths")),
 		TextCell(player.get("assists")),
@@ -340,6 +389,20 @@ async def add_player_row(table, player, is_parsed, is_ability_draft, has_talents
 
 	table.add_row(row)
 
+	# add lone druid items row
+	if draw_bear_row:
+		bear_unit = player["additional_units"][0]
+		bear_image = await get_url_image(vpkurl + "/panorama/images/heroes/npc_dota_hero_spirit_bear_png.png")
+		bear_row = [
+			ColorCell(width=8, color=("green" if player["isRadiant"] else "red")),
+			create_party_cell(match, player, can_be_top=False),
+			ImageCell(img=bear_image, height=48),
+		]
+		bear_row.extend([EmptyCell()] * (len(row) - (len(bear_row) + 1)))
+		bear_row.append(ImageCell(img=await get_item_images(bear_unit), height=48))
+		table.add_row(bear_row)
+
+
 async def draw_match_table(match):
 	is_parsed = match.get("version")
 	table = Table(background=discord_color2)
@@ -348,10 +411,11 @@ async def draw_match_table(match):
 	has_talents = has_ability_upgrades and match["start_time"] > 1481500800
 	# Header
 	headers = [
-		TextCell("", padding=0),
-		TextCell(""),
-		TextCell(""),
-		TextCell(""),
+		EmptyCell(),
+		EmptyCell(),
+		EmptyCell(),
+		EmptyCell(),
+		EmptyCell(),
 		TextCell("K", horizontal_align="center"),
 		TextCell("D", horizontal_align="center"),
 		TextCell("A", horizontal_align="center"),
@@ -361,10 +425,10 @@ async def draw_match_table(match):
 		headers.extend([
 			TextCell("APM"),
 			TextCell("Lane"),
-			TextCell("")
+			EmptyCell()
 		])
 	if has_talents:
-		headers.append(TextCell(""))
+		headers.append(EmptyCell())
 	headers.append(TextCell("Items"))
 	if is_ability_draft:
 		headers[3:3] = [
@@ -378,11 +442,11 @@ async def draw_match_table(match):
 	# Do players
 	for player in match["players"]:
 		if player['isRadiant']:
-			await add_player_row(table, player, is_parsed, is_ability_draft, has_talents)
+			await draw_match_table_row(table, match, player, is_parsed, is_ability_draft, has_talents)
 	table.add_row([ColorCell(color=discord_color1, height=5) for i in range(len(headers))])
 	for player in match["players"]:
 		if not player['isRadiant']:
-			await add_player_row(table, player, is_parsed, is_ability_draft, has_talents)
+			await draw_match_table_row(table, match, player, is_parsed, is_ability_draft, has_talents)
 	return table.render()
 
 async def create_match_image(match):
