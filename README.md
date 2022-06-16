@@ -203,6 +203,7 @@ Mangobyte is customizable on a per-user and per-server level, via the `/userconf
 - allowedbots
 - allowwebhooks
 - restrictsummoning
+- deprecationhints
 
 <!-- CONFIG_SETTINGS_END -->
 
