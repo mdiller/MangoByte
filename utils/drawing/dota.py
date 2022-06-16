@@ -306,7 +306,7 @@ def get_lane(player):
 		return lane_role_dict[player.get('lane_role')]
 
 def create_party_cell(match, player, can_be_top=True, can_be_bottom=True):
-	if player.get("party_size", 0) <= 1:
+	if (player.get("party_size", 0) or 0) <= 1:
 		return EmptyCell()
 	team_colors = [  "purple", "turquoise", "orange", "blue" ]
 	all_teams = []
@@ -345,6 +345,16 @@ def create_party_cell(match, player, can_be_top=True, can_be_bottom=True):
 
 	return CustomRenderCell(width=8, render_func=custom_cell_render)
 
+# gets the hero image and adds a disconenct icon if applicable
+async def get_hero_player_status_image(player):
+	image = await get_hero_image(player["hero_id"])
+	if (player.get("leaver_status", 0) or 0) <= 1:
+		return image
+	disconnect_image = await get_url_image(vpkurl + "/panorama/images/hud/reborn/icon_disconnect_png.png")
+	disconnect_image = disconnect_image.resize((image.width, int((image.width / disconnect_image.width) * disconnect_image.height)), Image.ANTIALIAS)
+	image = paste_image(image, disconnect_image, 0, (image.height // 2) - (disconnect_image.height // 2))
+	return image
+
 def truncate(text, max_size):
 	if len(text) <= max_size:
 		return text
@@ -357,7 +367,7 @@ async def draw_match_table_row(table, match, player, is_parsed, is_ability_draft
 	row = [
 		ColorCell(width=8, color=("green" if player["isRadiant"] else "red")),
 		create_party_cell(match, player, can_be_bottom=(not draw_bear_row)),
-		ImageCell(img=await get_hero_image(player["hero_id"]), height=48),
+		ImageCell(img=await get_hero_player_status_image(player), height=48),
 		ImageCell(img=await get_level_image(player.get("level", 1))),
 		TextCell(truncate(player.get("personaname", "Anonymous"), 25)),
 		TextCell(player.get("kills")),
@@ -387,6 +397,9 @@ async def draw_match_table_row(table, match, player, is_parsed, is_ability_draft
 			ImageCell(img=await get_spell_images(abilities), height=48)
 		]
 
+	if (player.get("leaver_status", 0) or 0) > 1:
+		for cell in row[2:]:
+			cell.background = "#6d2426"
 	table.add_row(row)
 
 	# add lone druid items row

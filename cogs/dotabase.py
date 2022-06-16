@@ -366,7 +366,7 @@ class Dotabase(MangoCog):
 		else:
 			return query.all()[n - 1]
 
-	def lookup_patch_bounds(self, patch_name):
+	def lookup_patch_and_bounds(self, patch_name):
 		query = session.query(Patch).order_by(Patch.timestamp)
 		start = None
 		end = None
@@ -382,7 +382,7 @@ class Dotabase(MangoCog):
 		if end is None:
 			end = datetime.datetime.now()
 
-		return (start, end)
+		return (patch, start, end)
 
 
 	def get_hero_infos(self):

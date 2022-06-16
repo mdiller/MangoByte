@@ -30,6 +30,8 @@ async def on_prefix_command_error(ctx: commands.Context, error: commands.Command
 
 	try:
 		if isinstance(error, commands.CommandNotFound):
+			if ctx.guild and not botdata.guildinfo(ctx).deprecationhints:
+				return # if deprecation hints are disabled, do nothing.
 			cmd = ctx.message.content[1:].split(" ")[0]
 			slash_command_names = list(map(lambda c: c.name, slash_command_expand(bot.slash_commands)))
 			if cmd in deprecated_commands:

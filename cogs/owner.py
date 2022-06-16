@@ -165,28 +165,6 @@ class Owner(MangoCog):
 			await ctx.send(embed=embed)
 
 	@commands.command()
-	async def clearcache(self, ctx, uri):
-		"""Clears the cache at the given uri
-
-		or clears everything from cache if given the 'all' keyword"""
-		try:
-			await httpgetter.cache.remove(uri)
-		except KeyError:
-			raise UserError("Couldn't find a cached version of that")
-
-		await ctx.message.add_reaction("✅")
-
-	@commands.command()
-	async def getcache(self, ctx, uri):
-		"""Gets a file in the cache"""
-		filename = await httpgetter.cache.get_filename(uri)
-
-		if filename is None:
-			raise UserError("Couldn't find a file at that uri")
-
-		await ctx.send(file=disnake.File(filename))
-
-	@commands.command()
 	async def remoteresummon(self, ctx, guild_id : int):
 		"""Re-summons the bot for the given guild
 

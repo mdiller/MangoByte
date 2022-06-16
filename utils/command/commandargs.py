@@ -1,11 +1,15 @@
+import chunk
 import datetime
 import math
 import re
 from collections import OrderedDict
 from functools import lru_cache
+from enum import Enum
+
 
 import disnake
 from disnake.ext import commands
+from tinydb import Query
 from utils.tools.globals import botdata, httpgetter, logger, settings
 from utils.tools.helpers import *
 
@@ -48,11 +52,11 @@ def get_cache_hero_stats_patterns(dotabase):
 		hero_stats_patterns = patterns
 	return hero_stats_patterns
 
-game_mode_patterns = {}
-def get_cache_game_mode_patterns():
-	global game_mode_patterns
-	if not game_mode_patterns:
-		patterns = OrderedDict()
+game_mode_arg_options = {}
+def get_cache_game_mode_arg_options():
+	global game_mode_arg_options
+	if not game_mode_arg_options:
+		options = []
 		dota_strings = read_json(settings.resource("json/dota_game_strings.json"))
 		for key in dota_strings:
 			prefix = "game_mode_"
@@ -61,9 +65,9 @@ def get_cache_game_mode_patterns():
 			mode_id = int(key.replace(prefix, ""))
 			name = dota_strings[key]
 			pattern = name.lower()
-			patterns[pattern] = mode_id
-		game_mode_patterns = patterns
-	return game_mode_patterns
+			options.append(ArgOption(mode_id, name, pattern))
+		game_mode_arg_options = options
+	return game_mode_arg_options
 
 def clean_input(t):
 	return re.sub(r'[^a-z1-9\s]', r'', str(t).lower())
@@ -164,19 +168,33 @@ class DotaPlayer():
 			raise CustomBadArgument(SteamNotLinkedError())
 		return cls(userinfo.steam, f"<@!{user_id}>", is_author)
 
+# the thing we should wrap values with to highlight them in localized matchfilters
+LOCALIZE_HIGHLIGHT_WRAPPER = "**"
+
+class ArgOption():
+	def __init__(self, value, localized, regex):
+		self.value = value
+		self.localized = localized
+		self.regex = regex
+
 class QueryArg():
-	def __init__(self, name, args_dict=None, post_filter=None, parse_levels=1):
+	def __init__(self, name, args=None, post_filter=None, check_filter=None, parse_levels=1, localization_context=None, localization_index=0):
 		self.name = name
-		self.args_dict = args_dict or {}
+		self.args: typing.List[ArgOption]
+		self.args = args or []
 		self.post_filter = post_filter
+		self.check_filter = check_filter
 		self.value = None
 		self.parse_levels = parse_levels
+		self.localization_context = localization_context
+		self.localization_index = localization_index
 
 	async def parse(self, text, level=1):
-		for key in self.args_dict:
+		for arg in self.args:
+			key = arg.regex
 			match = re.match(key, text)
 			if match:
-				value = self.args_dict[key]
+				value = arg.value
 				if callable(value):
 					value = value(match)
 				self.value = value
@@ -185,7 +203,7 @@ class QueryArg():
 		return self.value is not None
 
 	def regex(self):
-		return "|".join(map(lambda k: f"(?:{k})", self.args_dict.keys()))
+		return "|".join(map(lambda k: f"(?:{k.regex})", self.args))
 
 	def to_query_arg(self):
 		return f"{self.name}={self.value}"
@@ -195,6 +213,20 @@ class QueryArg():
 			if self.post_filter is not None:
 				return self.post_filter.func(p)
 		return True
+	
+	def localize(self):
+		if self.has_value():
+			for arg in self.args:
+				if arg.value == self.value:
+					result = arg.localized
+					if result is None:
+						return None
+					result.format(value=self.value)
+					if LOCALIZE_HIGHLIGHT_WRAPPER not in result:
+						result = f"{LOCALIZE_HIGHLIGHT_WRAPPER}{result}{LOCALIZE_HIGHLIGHT_WRAPPER}"
+					return result
+		return None
+
 
 # added manually
 class SimpleQueryArg(QueryArg):
@@ -206,11 +238,11 @@ class SimpleQueryArg(QueryArg):
 
 # a span of time to look in
 class TimeSpanArg(QueryArg):
-	def __init__(self, inter):
-		kwargs = {}
+	def __init__(self, inter, **kwargs):
 		kwargs["post_filter"] = PostFilter("start_time", self.post_filter_checker)
 		super().__init__("date", **kwargs)
 		self.dotabase = inter.bot.get_cog("Dotabase")
+		self.localized_value = None
 		self.min = None
 		self.max = None
 		self.value = None
@@ -226,9 +258,11 @@ class TimeSpanArg(QueryArg):
 				self.value = 0
 				return
 			chunk_kind = match.group("kind")
+			self.localization_kind = chunk_kind
 			if chunk_kind == "patch":
 				patch = self.dotabase.lookup_nth_patch(round(chunk_count))
 				self.min = patch.timestamp
+				self.localized_value = "since patch " + f"{LOCALIZE_HIGHLIGHT_WRAPPER}{patch.number}{LOCALIZE_HIGHLIGHT_WRAPPER}"
 			else:
 				chunk_kind_value = {
 					"hour": 1 / 24,
@@ -238,17 +272,32 @@ class TimeSpanArg(QueryArg):
 					"month": 30,
 					"year": 365
 				}[chunk_kind]
-				logger.info(f"using {chunk_count} of {chunk_kind}")
 				numdays = chunk_count * chunk_kind_value
 				min_datetime = datetime.datetime.now() - datetime.timedelta(days=numdays)
 				self.min = min_datetime
+				# localize
+				def pretty_number(num):
+					num = str(num)
+					num = re.sub(r".0$", "", num)
+					return num
+				self.localized_value = f"in the last {LOCALIZE_HIGHLIGHT_WRAPPER}"
+				localized_chunk = chunk_kind
+				if chunk_count != 1:
+					self.localized_value += f"{pretty_number(chunk_count)} "
+					localized_chunk += "s"
+				if localized_chunk == "today":
+					localized_chunk = f"{pretty_number(chunk_kind_value * 24)} hours"
+				self.localized_value += localized_chunk
+				self.localized_value += LOCALIZE_HIGHLIGHT_WRAPPER
 		else:
 			patch_name = match.group("patch")
-			bounds = self.dotabase.lookup_patch_bounds(patch_name)
-			self.min = bounds[0]
-			self.max = bounds[1]
+			patch, self.min, self.max = self.dotabase.lookup_patch_and_bounds(patch_name)
+			self.localized_value = f"{LOCALIZE_HIGHLIGHT_WRAPPER}{patch.number}{LOCALIZE_HIGHLIGHT_WRAPPER}"
 			if match.group("since") is not None:
 				self.max = None
+				self.localized_value = "since patch " + self.localized_value
+			else:
+				self.localized_value = "during patch " + self.localized_value
 
 
 	def post_filter_checker(self, p):
@@ -278,6 +327,9 @@ class TimeSpanArg(QueryArg):
 		pattern = f"\\b{pattern}\\b"
 		pattern = re.compile(pattern, re.IGNORECASE)
 		return pattern
+	
+	def localize(self):
+		return self.localized_value
 
 all_item_slots = [ "item_0", "item_1", "item_2", "item_3", "item_4", "item_5", "item_neutral" ]
 class ItemArg(QueryArg):
@@ -301,11 +353,18 @@ class ItemArg(QueryArg):
 		self.item = self.dotabase.lookup_item(text)
 		self.value = self.item.id
 
+	def localize(self):
+		result = self.item.localized_name
+		result = f"{LOCALIZE_HIGHLIGHT_WRAPPER}{result}{LOCALIZE_HIGHLIGHT_WRAPPER}"
+		return result
+
+
 class HeroArg(QueryArg):
-	def __init__(self, inter, name, prefix, **kwargs):
+	def __init__(self, inter, name, prefix, localization_template = None, **kwargs):
 		super().__init__(name, **kwargs)
 		self.prefix = prefix
 		self.dotabase = inter.bot.get_cog("Dotabase")
+		self.localization_template = localization_template
 		self.hero = None
 
 	def regex(self):
@@ -315,8 +374,16 @@ class HeroArg(QueryArg):
 		text = re.sub(self.prefix, "", text, flags=re.IGNORECASE)
 		self.hero = self.dotabase.lookup_hero(text)
 		self.value = self.hero.id
+	
+	def localize(self):
+		result = self.hero.localized_name
+		result = f"{LOCALIZE_HIGHLIGHT_WRAPPER}{result}{LOCALIZE_HIGHLIGHT_WRAPPER}"
+		if self.localization_template:
+			result = self.localization_template.format(result)
+		return result
 
 class PlayerArg(QueryArg):
+	player: DotaPlayer
 	def __init__(self, inter, name, prefix, **kwargs):
 		super().__init__(name, **kwargs)
 		self.inter = inter
@@ -333,15 +400,199 @@ class PlayerArg(QueryArg):
 		self.player = player
 		self.value = player.steam_id
 
+	def localize(self):
+		if self.player is None:
+			return "you"
+		return self.prefix + self.player.mention
+
 	async def parse(self, text):
 		text = re.sub(self.prefix, "", text, flags=re.IGNORECASE)
 		self.set_player(await DotaPlayer.convert(self.inter, text))
 
-# a filter to be applied to the match after retrieval
+# a filter to be applied to the match after retrieval, to supplement the actual query where needed
 class PostFilter():
 	def __init__(self, key, func):
 		self.key = key
 		self.func = func
+
+# a filter that can fully replace the query, for use on already-queried data
+# func is match, value (THIS ISNT FINSHED)
+class CheckFilter():
+	def __init__(self, keys, func):
+		if isinstance(keys, str):
+			keys = [keys]
+		self.keys = keys
+		self.func = func
+
+
+class LocalizationContext(str, Enum):
+	PreMatch = 'prematch'
+	PostMatch = 'postmatch'
+	WhoWith = 'whowith'
+	PlayerLocation = 'playerloc'
+
+def localize_matchfilter(matchfilter):
+	args: typing.List[QueryArg]
+	args = matchfilter.args
+	def get_single_val(key):
+		for arg in args:
+			if arg.name == key:
+				if arg.has_value():
+					return arg.localize()
+				else:
+					return None
+		return None
+	def get_context(context):
+		c_args = []
+		for arg in args:
+			if arg.has_value() and arg.localization_context == context:
+				destination_index = len(c_args)
+				for index in range(len(c_args)):
+					if c_args[index].localization_index > arg.localization_index:
+						destination_index = index
+						break
+				if destination_index == len(c_args):
+					c_args.append(arg)
+				else:
+					c_args.insert(destination_index, arg)
+		if not c_args:
+			return None
+		c_args = list(filter(lambda a: a is not None, map(lambda a: a.localize(), c_args)))
+		return " ".join(c_args)
+	
+	# x matches/match played/won by _ as x, with/without _ where _
+	phrases = []
+	matchword = "matches"
+	limit_count = matchfilter.get_arg("limit")
+	if limit_count:
+		phrases.append("The last")
+		if limit_count == 1:
+			matchword = "match"
+		else:
+			phrases.append(f"{LOCALIZE_HIGHLIGHT_WRAPPER}{limit_count}{LOCALIZE_HIGHLIGHT_WRAPPER}")
+	else:
+		phrases.append("All")
+	
+	# what kind of matches
+	phrases.append(get_context(LocalizationContext.PreMatch))
+
+	# "match" or "matches"
+	phrases.append(matchword)
+
+	# who played the matches
+	phrases.append((get_single_val("win") or "played"))
+	phrases.append("by " + get_single_val("_player"))
+	# TODO: do custom stuff here for heroes & items etc
+	hero = get_single_val("hero_id")
+	item = get_single_val("_item")
+	location = get_context(LocalizationContext.PlayerLocation) # lane & maybe position in future
+	if hero:
+		if location:
+			article = "an" if ("off" in location) else "a"
+			phrases.extend([f"as {article}", location, hero])
+		else:
+			phrases.append("as " + hero)
+	elif location:
+		location = location.replace("ing", "er")
+		phrases.append("as " + location)
+	if item:
+		phrases.append("with a " + item)
+
+	# post-match stuff
+	phrases.append(get_context(LocalizationContext.PostMatch))
+
+	# with/without context stuff
+	phrases.append(get_context(LocalizationContext.WhoWith))
+
+	return " ".join(filter(lambda p: p is not None, phrases))
+
+
+def create_matchfilter_args(inter: disnake.CmdInter):
+	return [
+		QueryArg("win", [
+				ArgOption(1, "won", r"wins?|won|victory"),
+				ArgOption(0, "lost", r"loss|lose|lost|losses|defeat")
+			],
+			check_filter=CheckFilter(None, lambda m, v: (m.get('radiant_win') == (m.get('player_slot') < 128)) == (v == 1))
+		),
+		QueryArg("is_radiant", [
+				ArgOption(1, f"on the {LOCALIZE_HIGHLIGHT_WRAPPER}radiant{LOCALIZE_HIGHLIGHT_WRAPPER} team", r"(as|on)? ?radiant"),
+				ArgOption(0, f"on the {LOCALIZE_HIGHLIGHT_WRAPPER}dire{LOCALIZE_HIGHLIGHT_WRAPPER} team", r"(as|on)? ?dire")
+			],
+			check_filter=CheckFilter(None, lambda m, v: (m.get('player_slot') < 128) == (v == 1)),
+			localization_context=LocalizationContext.PostMatch
+		),
+		QueryArg("lobby_type", [
+				ArgOption(7, "ranked", r"ranked"),
+				ArgOption(0, "non-ranked", r"(un|non)-?ranked")
+			],
+			localization_context=LocalizationContext.PreMatch
+		), 
+		QueryArg("significant", [
+				ArgOption(1, "all-pick", r"(significant|standard)"),
+				ArgOption(0, None, r"(not|non|in|un)(-| )?(significant|standard)")
+			],
+			check_filter=CheckFilter(None, lambda m, v: (v == 0) or (m.get('game_mode') in [1, 22])),
+			localization_context=LocalizationContext.PreMatch
+		),
+		QueryArg("game_mode",
+			get_cache_game_mode_arg_options(),
+			check_filter=CheckFilter(None, lambda m, v: (v == 0) or (m.get('game_mode') in [1, 22])),
+			localization_context=LocalizationContext.PreMatch
+		),
+		TimeSpanArg(inter,
+			localization_context=LocalizationContext.PostMatch), # TODO: figure out how to specify that this should ONLY use the postfilter for CheckFilter
+		QueryArg("limit", [
+				ArgOption(lambda m: int(m.group(1)), "{value}", r"(?:limit|count|show)? ?(\d{1,3})")
+			],
+			check_filter=CheckFilter(None, lambda m, v: True)
+		),
+		QueryArg("party_size", [
+				ArgOption(1, "solo", r"solo"),
+			],
+			localization_context=LocalizationContext.PreMatch,
+			localization_index=-1
+		),
+		QueryArg("_inparty", [
+				ArgOption(True, "party", r"((in|with)? (a )?)?(party|group|friends|team)"),
+			], PostFilter("party_size", lambda p: (p.get("party_size", 0) or 0) > 1),
+			localization_context=LocalizationContext.PreMatch,
+			localization_index=-1
+		),
+		QueryArg("lane_role", [
+				ArgOption(1, "safelane", r"safe( ?lane)?"),
+				ArgOption(2, "mid", r"mid(dle)?( ?lane)?"),
+				ArgOption(3, "offlane", r"(off|hard)( ?lane)?"),
+				ArgOption(4, "jungling", r"jungl(e|ing)"),
+			], PostFilter("is_roaming", lambda p: p.get("is_roaming") == False),
+			localization_context=LocalizationContext.PlayerLocation
+		),
+		QueryArg("_roaming", [
+				ArgOption(True, "roaming", r"roam(ing)?|gank(ing)?"),
+			], PostFilter("is_roaming", lambda p: p.get("is_roaming") == True),
+			localization_context=LocalizationContext.PlayerLocation
+		),
+		QueryArg("_parsed", [
+				ArgOption(True, "parsed", r"(is)?( |_)?parsed"),
+			], PostFilter("version", lambda p: p.get("version") is not None),
+			localization_context=LocalizationContext.PreMatch,
+			localization_index=-2
+		),
+		PlayerArg(inter, "included_account_id", "with ",
+			localization_context=LocalizationContext.WhoWith),
+		PlayerArg(inter, "excluded_account_id", "without ",
+			localization_context=LocalizationContext.WhoWith),
+		ItemArg(inter, "_item"),
+		HeroArg(inter, "with_hero_id", "(?:with|alongside) ",
+			localization_template="alongside a {}",
+			localization_context=LocalizationContext.WhoWith),
+		HeroArg(inter, "against_hero_id", "(?:against|vs) ",
+			localization_template="vs a {}",
+			localization_context=LocalizationContext.WhoWith),
+		HeroArg(inter, "hero_id", "(?:as )?"),
+		PlayerArg(inter, "_player", "")
+	]
+
 
 class MatchFilter():
 	def __init__(self, args=None):
@@ -357,54 +608,7 @@ class MatchFilter():
 	@commands.converter_method
 	async def convert(cls, inter: disnake.CmdInter, argument: str):
 		parser = InputParser(argument)
-		args = [
-			QueryArg("win", {
-				r"wins?|won|victory": 1,
-				r"loss|lose|lost|losses|defeat": 0
-			}),
-			QueryArg("is_radiant", {
-				r"(as|on)? ?radiant": 1,
-				r"(as|on)? ?dire": 0
-			}),
-			QueryArg("lobby_type", {
-				r"ranked": 7,
-				r"(un|non)-?ranked": 0
-			}),
-			QueryArg("significant", {
-				r"(significant|standard)": 1,
-				r"(not|non|in|un)(-| )?(significant|standard)": 0
-			}),
-			QueryArg("game_mode", get_cache_game_mode_patterns()),
-			TimeSpanArg(inter),
-			QueryArg("limit", {
-				r"(?:limit|count|show)? ?(\d{1,3})": lambda m: int(m.group(1))
-			}),
-			QueryArg("party_size", {
-				r"solo": 1
-			}),
-			QueryArg("_inparty", {
-				r"((in|with)? (a )?)?(party|group|friends|team)": True
-			}, PostFilter("party_size", lambda p: (p.get("party_size", 0) or 0) > 1)),
-			QueryArg("lane_role", {
-				r"safe( ?lane)?": 1,
-				r"mid(dle)?( ?lane)?": 2,
-				r"(off|hard)( ?lane)?": 3,
-				r"jungl(e|ing)": 4
-			}, PostFilter("is_roaming", lambda p: p.get("is_roaming") == False)),
-			QueryArg("_roaming", {
-				r"roam(ing)?|gank(ing)?": True
-			}, PostFilter("is_roaming", lambda p: p.get("is_roaming") == True)),
-			QueryArg("_parsed", {
-				r"(is)?( |_)?parsed": True
-			}, PostFilter("version", lambda p: p.get("version") is not None)),
-			PlayerArg(inter, "included_account_id", "with "),
-			PlayerArg(inter, "excluded_account_id", "without "),
-			ItemArg(inter, "_item"),
-			HeroArg(inter, "against_hero_id", "(?:against|vs) "),
-			HeroArg(inter, "with_hero_id", "with "),
-			HeroArg(inter, "hero_id", "(?:as )?"),
-			PlayerArg(inter, "_player", "")
-		]
+		args = create_matchfilter_args(inter)
 		for arg in args:
 			value = parser.take_regex(arg.regex())
 			if value:
@@ -504,6 +708,9 @@ class MatchFilter():
 			if arg.has_value() and arg.post_filter is not None:
 				return True
 		return False
+	
+	def localize(self):
+		return localize_matchfilter(self)
 
 	def to_query_url(self):
 		args = self.to_query_args()

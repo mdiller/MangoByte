@@ -1,13 +1,37 @@
 import re
 import datetime
+import uuid
 from io import BytesIO
-from tinydb import TinyDB, Query
+from disnake.ext import tasks
+from tinydb import TinyDB, Query, middlewares
+from tinydb.storages import JSONStorage
 
 from utils.tools.helpers import *
 from utils.tools.logger import logger
 from utils.tools.settings import settings
 
-default_cache = { "count": 0, "files": {} }
+
+# a middleware we can use to delay flushing till its needed. ie: dont write on every query
+class DelayedStorageMiddleware(middlewares.Middleware):
+	def __init__(self, storage_cls):
+		super().__init__(storage_cls)
+		self.cache = None
+
+	def read(self):
+		if self.cache is None:
+			self.cache = self.storage.read()
+		return self.cache
+
+	def write(self, data):
+		self.cache = data
+
+	# actually write data to disk
+	def flush(self):
+		self.storage.write(self.cache)
+
+	def close(self):
+		self.flush()
+		self.storage.close()
 
 # EXAMPLE CACHE ITEM
 # {
@@ -16,6 +40,9 @@ default_cache = { "count": 0, "files": {} }
 # 	"timestamp": "<last time this file was visited>"
 # }
 CacheItem = Query()
+
+# currently set to 1 week timeout for cache files
+CACHE_FILE_TIMEOUT_MS = 1000 * 60 * 60 * 24 * 7
 
 def get_timestamp(date=None):
 	if date is None:
@@ -26,12 +53,30 @@ class Cache:
 	def __init__(self, loop):
 		self.loop = loop
 		self.cache_dir = settings.resource("cache/")
-		self.db = TinyDB(self.cache_dir + "_cache_tinydb.json")
+		if not os.path.exists(self.cache_dir):
+			os.makedirs(self.cache_dir)
+		self.db = TinyDB(self.cache_dir + "_cache_db.json", storage=DelayedStorageMiddleware(JSONStorage))
 		self.lock = asyncio.Lock(loop=self.loop)
-
-	@property # TODO: PROLLY REMOVE
-	def files(self):
-		return self.cache["files"]
+	
+	@property
+	def size(self):
+		return len(self.db)
+	
+	# Cleans up any old files and flushes the cache to disk
+	@tasks.loop(hours=4)
+	async def cleanup_and_flush(self):
+		threshold = get_timestamp() - CACHE_FILE_TIMEOUT_MS
+		async with self.lock:
+			timer = SimpleTimer()
+			expired_items = self.db.search(CacheItem.timestamp < threshold)
+			expired_item_ids = list(map(lambda item: item.doc_id, expired_items))
+			for item in expired_items:
+				filename = self.cache_dir + item["file"]
+				if os.path.isfile(filename):
+					os.remove(filename)
+			self.db.remove(doc_ids=expired_item_ids)
+			self.db.storage.flush()
+			logger.info(f"{len(expired_item_ids)} culled from cache in {timer.miliseconds}ms. New cache size {self.size}")
 
 	# Returns the filename of the cached url if it exists, otherwise None
 	async def get_filename(self, uri):
@@ -39,6 +84,7 @@ class Cache:
 			item = self.db.get(CacheItem.key == uri)
 			if item is None:
 				return None
+			self.db.update({"timestamp": get_timestamp()}, doc_ids=[item.doc_id])
 			filename = self.cache_dir + item["file"]
 		if not os.path.isfile(filename):
 			return None
@@ -64,11 +110,13 @@ class Cache:
 
 	#creates a new entry in the cache and returns the filename of the new entry
 	async def new(self, uri, extension=None):
-		filename = await self.get_filename(uri)
-		if filename is not None:
-			return filename
 		async with self.lock:
-			filename = f"{len(self.db):0>4}"
+			item = self.db.get(CacheItem.key == uri)
+			if item is not None:
+				filename = self.cache_dir + item["file"]
+				if os.path.isfile(filename):
+					return filename
+			filename = str(uuid.uuid4())
 			if extension:
 				filename = f"{filename}.{extension}"
 			self.db.upsert({
@@ -76,6 +124,7 @@ class Cache:
 				"file": filename,
 				"timestamp": get_timestamp()
 			}, CacheItem.key == uri)
+			self.db.storage.flush()
 		return self.cache_dir + filename
 
 

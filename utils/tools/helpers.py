@@ -186,9 +186,19 @@ class Thinker():
 			await asyncio.sleep(1)
 
 class SimpleTimer():
-	def __init__(self):
+	def __init__(self, message=None):
+		self.message = message
 		self.start = datetime.datetime.now()
 		self.end = None
+	
+	def __enter__(self):
+		self.start = datetime.datetime.now()
+		return self
+
+	def __exit__(self, type, value, traceback):
+		self.stop()
+		if self.message:
+			print(self.message + f": {self.miliseconds} ms")
 
 	def stop(self):
 		self.end = datetime.datetime.now()

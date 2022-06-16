@@ -63,7 +63,7 @@ For playing audio in a voice channel
 ```
 /clipinfo            | Gets information and a file for the given clip                                           
 /clips chatwheel     | Shows a list of chatwheel lines                                                          
-/clips dota          | Plays a dota response                                                                    
+/clips dota          | Searches for dota responses                                                              
 /clips local         | Lists the names of local audio clips. For more info on clips, see '/docs Clips'          
 /play chatwheel      | Plays the given chat wheel sound. Try '/clips chatwheel' to get a list of clips.         
 /play dota           | Plays a dota response. Try '/clips dota' for a similar command that returns a list       
@@ -75,7 +75,7 @@ For playing audio in a voice channel
 ```
 
 #### Dotabase
-For information about the game Dota 2 [Patch **7.31c**]
+For information about the game Dota 2 [Patch **7.31d**]
 
 ```
 /abilities           | Shows all of the abilities/spells for that hero                                          
@@ -213,6 +213,7 @@ Mangobyte is customizable on a per-user and per-server level, via the `/userconf
 - outro
 - introtts
 - outrotts
+- ignoremytts
 
 <!-- USERCONFIG_SETTINGS_END -->
 

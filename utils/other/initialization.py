@@ -52,7 +52,9 @@ async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 			await appinfo.owner.send(message)
 		
 		# start periodic tasts
-		periodic_tasks = []
+		periodic_tasks = [
+			httpgetter.cache.cleanup_and_flush
+		]
 		if not settings.debug:
 			periodic_tasks.append(audio_cog.voice_channel_culler)
 		if settings.topgg:

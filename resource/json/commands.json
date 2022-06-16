@@ -12,8 +12,8 @@
 		},
 		{
 			"name": "Dotabase",
-			"short_help": "For information about the game Dota 2 [Patch **7.31c**]",
-			"help": "For information about the game Dota 2 [Patch **7.31c**]\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see an old website I built that interfaces with dotabase."
+			"short_help": "For information about the game Dota 2 [Patch **7.31d**]",
+			"help": "For information about the game Dota 2 [Patch **7.31d**]\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see an old website I built that interfaces with dotabase."
 		},
 		{
 			"name": "DotaStats",
@@ -134,8 +134,8 @@
 		{
 			"name": "clips dota",
 			"signature": null,
-			"short_help": "Plays a dota response",
-			"help": "Plays a dota response",
+			"short_help": "Searches for dota responses",
+			"help": "Searches for dota responses",
 			"aliases": [],
 			"cog": "Audio",
 			"prefix": "/"
