@@ -152,7 +152,7 @@ class DotaPlayer():
 
 			if player_info.get("profile") is None:
 				raise CustomBadArgument(NoMatchHistoryError(player))
-			return cls(player, f"[{player_info['profile']['personaname']}](https://www.opendota.com/players/{player})", is_author)
+			return cls(player, f"[{player_info['profile']['personaname'] or 'Anonymous'}](https://www.opendota.com/players/{player})", is_author)
 
 		if isinstance(player, disnake.abc.User):
 			player = player.mention

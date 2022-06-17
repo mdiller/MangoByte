@@ -737,6 +737,8 @@ class Dotabase(MangoCog):
 		await inter.response.defer()
 
 		def format_values(values):
+			if values is None:
+				return None
 			values = values.split(" ")
 			return " / ".join(values)
 
@@ -830,16 +832,28 @@ class Dotabase(MangoCog):
 			if not header:
 				continue
 			header = format_pascal_case(header)
+			is_scepter_upgrade = attribute.get("scepter_upgrade")
+			is_shard_upgrade = attribute.get("shard_upgrade")
 
-			value = attribute["value"]
+			value = attribute.get("value")
 			footer = attribute.get("footer")
+			if value is None:
+				if attribute.get("scepter_value"):
+					is_scepter_upgrade = True
+					value = attribute.get("scepter_value")
+				elif attribute.get("shard_value"):
+					is_shard_upgrade = True
+					value = attribute.get("shard_value")
+				else:
+					continue
+
 			text = f"**{header}** {format_values(value)}"
 			if footer:
 				text += f" {footer}"
 
-			if attribute.get("scepter_upgrade") and not ability.scepter_grants:
+			if is_scepter_upgrade and not ability.scepter_grants:
 				scepter_attributes.append(text)
-			elif attribute.get("shard_upgrade") and not ability.shard_grants:
+			elif is_shard_upgrade and not ability.shard_grants:
 				shard_attributes.append(text)
 			else:
 				formatted_attributes.append(text)

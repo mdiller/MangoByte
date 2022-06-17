@@ -369,7 +369,7 @@ async def draw_match_table_row(table, match, player, is_parsed, is_ability_draft
 		create_party_cell(match, player, can_be_bottom=(not draw_bear_row)),
 		ImageCell(img=await get_hero_player_status_image(player), height=48),
 		ImageCell(img=await get_level_image(player.get("level", 1))),
-		TextCell(truncate(player.get("personaname", "Anonymous"), 25)),
+		TextCell(truncate(player.get("personaname", None) or "Anonymous", 25)),
 		TextCell(player.get("kills")),
 		TextCell(player.get("deaths")),
 		TextCell(player.get("assists")),
