@@ -243,4 +243,28 @@ You should now be done! You can run mangobyte by calling `python3.9 mangobyte.py
 	"debug": false
 }
 ```
-For explanation of each option, see the comments on the properties in [settings.py](utils/tools/settings.py)
+
+In addition to these basic settings. The following optional settings are available for use if desired. If something is complaining about missing a token or something needing to be setup in your `settings.json`, its probable described below. The following is an example settings file that has all of the settings filled in. The "<>" characters indicate that this is just a description of what should go there, you don't need to include them when adding your tokens etc.
+
+```json
+{
+  "token": "<discord bot token (NOTE THIS IS NOT OPTIONAL)>",
+  "ttslang": "<the default ttslang used for mangobyte's tts. possible values here: /resource/json/gtts_languages.json>",
+  "debug": "<true/false: turns on/off some debugging features in mangobyte>",
+  "reddit": {
+    "client_id": "<the client_id for reddit api (required for /reddit)>",
+    "client_secret": "<the client_secret for reddit api (required for /reddit)>",
+    "user_agent": "<the user_agent for reddit api (required for /reddit)>"
+  },
+  "odota": "<opendota api token (optional as long as you don't use the api too much)>",
+  "stratz": "<stratz api token (required for any commands that use the stratz api, ie: /laning)>",
+  "shard_count": "<int: a manual setting for how many shards to use for mangobyte>",
+  "infodump_path": "<a path to dump some mangobyte information to as json. Used for generating the svgs at the top of this readme.>",
+  "loki": {
+    "base_url": "<the base url for a loki logging connection>",
+    "application": "<the application tag to give to every log sent>",
+    "username": "<the username for authenticating with loki>",
+    "password": "<the password for authenticating with loki>"
+  }
+}
+```

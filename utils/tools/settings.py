@@ -12,7 +12,7 @@ from utils.tools.helpers import *
 class Settings:
 	def __init__(self):
 		self.path = "settings.json"
-		self.defaults = OrderedDict([  ("token", ""), ("error_logging", False), ("debug", False) ])
+		self.defaults = OrderedDict([  ("token", "") ])
 		if not os.path.exists(self.path):
 			self.json_data = self.defaults
 			self.save_settings()
@@ -35,11 +35,6 @@ class Settings:
 	@property
 	def token(self):
 		return self.json_data["token"]
-
-	# enables/disables logging of errors to discord text chat
-	@property
-	def error_logging(self):
-		return self.json_data.get("error_logging", False)
 
 	# enables/disables certain features like caching
 	@property
