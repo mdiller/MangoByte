@@ -14,4 +14,4 @@ aiosqlite==0.10.0
 feedparser >= 6.0.2
 python-dateutil>=2.8.1
 python-logging-loki==0.3.1
-tinydb>=4.7.0
+orjson>=3.7.2

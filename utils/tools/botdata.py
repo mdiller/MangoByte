@@ -335,14 +335,13 @@ class BotData:
 			self.json_data = self.defaults
 			self.save_data()
 		else:
-			current = read_json(self.path)
-			if current.keys() != self.defaults.keys():
-				for key in self.defaults.keys():
-					if key not in current.keys():
-						current[key] = self.defaults[key]
-						logger.info("Adding " + str(key) + " field to botdata.json")
-				write_json(self.path, current)
 			self.json_data = read_json(self.path)
+			if self.json_data.keys() != self.defaults.keys():
+				for key in self.defaults.keys():
+					if key not in self.json_data.keys():
+						self.json_data[key] = self.defaults[key]
+						logger.info("Adding " + str(key) + " field to botdata.json")
+				self.save_data()
 
 	def __getitem__(self, key):
 		if key not in self.defaults:

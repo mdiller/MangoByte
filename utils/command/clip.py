@@ -99,7 +99,7 @@ class LocalClip(Clip):
 		clipinfos = audio.local_clipinfo
 
 		if not clipname in clipinfos:
-			raise ClipNotFound(self.type, clipname)
+			raise ClipNotFound(self.type(), clipname)
 
 		info = clipinfos[clipname]
 		self.author = info.get("author")
