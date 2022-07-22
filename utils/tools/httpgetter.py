@@ -1,3 +1,4 @@
+from math import perm
 import re
 from io import BytesIO
 
@@ -21,7 +22,9 @@ class HttpGetter:
 		self.session = aiohttp.ClientSession(loop=self.loop)
 		self.cache = Cache(self.loop)
 
-	async def get(self, url, return_type="json", cache=False, errors={}, headers=None):
+	async def get(self, url, return_type="json", cache=False, cache_permanent=False, errors={}, headers=None):
+		if cache_permanent:
+			cache = True
 		if cache and await self.cache.get_filename(url):
 			return await self.cache.get(url, return_type)
 
@@ -34,7 +37,7 @@ class HttpGetter:
 			})
 			if r.status == 200:
 				if cache:
-					await self.cache.save(url, return_type, r)
+					await self.cache.save(url, return_type, r, permanent=cache_permanent)
 					if return_type == "filename":
 						return await self.cache.get_filename(url)
 

@@ -88,7 +88,7 @@ def get_hero_name(hero_id):
 	return hero_infos[hero_id]["name"]
 
 async def get_url_image(url):
-	return Image.open(await httpgetter.get(url, "bytes", cache=True))
+	return Image.open(await httpgetter.get(url, "bytes", cache_permanent=True))
 
 async def get_hero_image(hero_id):
 	try:

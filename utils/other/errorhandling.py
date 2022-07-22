@@ -15,13 +15,6 @@ with open(settings.resource("json/deprecated_commands.json"), "r") as f:
 	deprecated_commands = json.loads(f.read())
 
 
-# Whether or not we report invalid commands
-async def invalid_command_reporting(ctx):
-	if ctx.message.guild is None:
-		return True
-	else:
-		return botdata.guildinfo(ctx.message.guild.id).invalidcommands
-
 # leave this in for a bit for now cuz owner commands still use it
 async def on_prefix_command_error(ctx: commands.Context, error: commands.CommandError):
 	bot: commands.Bot
@@ -52,8 +45,6 @@ async def on_prefix_command_error(ctx: commands.Context, error: commands.Command
 				new_message = ctx.message
 				new_message.content = cmdpfx + cmd.lower() + ctx.message.content[len(cmd) + 1:]
 				await bot.process_commands(new_message)
-			elif await invalid_command_reporting(ctx):
-				await ctx.send(f"🤔 Ya I dunno what a '{cmd}' is, but it ain't a command. Try `{cmdpfx}help` fer a list of things that ARE commands.")
 		elif isinstance(error, CustomBadArgument):
 			await error.user_error.send_self(ctx, botdata)
 		elif isinstance(error, commands.BadArgument):

@@ -10,11 +10,13 @@ from utils.command.commandargs import *
 from utils.tools.botdata import GuildInfo
 from utils.tools.globals import botdata, logger, settings
 from utils.tools.helpers import *
+from utils.tools.logger import init_logger
 
 # Note: This code used to be in mangobyte.py so look there for more history
 
 async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 	try:
+		await init_logger()
 		logger.event("startup", {
 			"message": "initialize started"
 		})

@@ -21,7 +21,6 @@ def get_cache_hero_pattern(dotabase, prefix):
 	pattern = re.compile(pattern, re.IGNORECASE)
 	return pattern
 
-
 @lru_cache(maxsize=None)
 def get_item_pattern(dotabase, level=1):
 	regex_levels = [
@@ -68,6 +67,20 @@ def get_cache_game_mode_arg_options():
 			options.append(ArgOption(mode_id, name, pattern))
 		game_mode_arg_options = options
 	return game_mode_arg_options
+
+region_arg_options = {}
+def get_cache_region_arg_options():
+	global region_arg_options
+	if not region_arg_options:
+		options = []
+		dota_strings = read_json(settings.resource("json/region_data.json"))
+		for key in dota_strings:
+			region_id = int(key)
+			name = dota_strings[key]["name"]
+			pattern = name.lower()
+			options.append(ArgOption(region_id, name, pattern))
+		region_arg_options = options
+	return region_arg_options
 
 def clean_input(t):
 	return re.sub(r'[^a-z1-9\s]', r'', str(t).lower())
@@ -537,7 +550,10 @@ def create_matchfilter_args(inter: disnake.CmdInter):
 		),
 		QueryArg("game_mode",
 			get_cache_game_mode_arg_options(),
-			check_filter=CheckFilter(None, lambda m, v: (v == 0) or (m.get('game_mode') in [1, 22])),
+			localization_context=LocalizationContext.PreMatch
+		),
+		QueryArg("region",
+			get_cache_region_arg_options(),
 			localization_context=LocalizationContext.PreMatch
 		),
 		TimeSpanArg(inter,

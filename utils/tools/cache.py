@@ -21,13 +21,15 @@ def get_timestamp(date=None):
 class CacheItem(dict):
 	filename: str
 	timestamp: int
+	permanent: bool
 	def __init__(self, json_data={}): # only to be used internally
 		for key in json_data:
 			self[key] = json_data[key]
 		
 	@classmethod
-	def create(cls, filename):
+	def create(cls, filename, permanent=False):
 		item = CacheItem()
+		item.permanent = permanent
 		item["filename"] = filename
 		item.update_timestamp()
 		return item
@@ -42,6 +44,9 @@ class CacheItem(dict):
 
 	def update_timestamp(self):
 		self["timestamp"] = get_timestamp()
+	
+	def is_expired(self, timestamp_threshold):
+		return (not self.permanent) and (self.timestamp < timestamp_threshold)
 
 
 class Cache:
@@ -76,7 +81,7 @@ class Cache:
 			timer = SimpleTimer()
 			removed_count = 0
 			for uri, item in list(self.cache_data.items()):
-				if item.timestamp < threshold:
+				if item.is_expired(threshold):
 					filename = self.cache_dir + item.filename
 					if os.path.isfile(filename):
 						os.remove(filename)
@@ -116,7 +121,7 @@ class Cache:
 			raise ValueError(f"Invalid return type '{return_type}'")
 
 	#creates a new entry in the cache and returns the filename of the new entry
-	async def new(self, uri, extension=None):
+	async def new(self, uri, extension=None, permanent=False):
 		async with self.lock:
 			item = self.cache_data.get(uri)
 			if item is not None:
@@ -126,25 +131,25 @@ class Cache:
 			filename = str(uuid.uuid4())
 			if extension:
 				filename = f"{filename}.{extension}"
-			self.cache_data[uri] = CacheItem.create(filename)
+			self.cache_data[uri] = CacheItem.create(filename, permanent=permanent)
 			self._save_to_disk()
 		return self.cache_dir + filename
 
 
-	async def save(self, url, return_type, response):
+	async def save(self, uri, return_type, response, permanent=False):
 		extension = None
 		if return_type == "json":
 			extension = "json"
 		elif return_type == "text":
 			extension = "txt"
 		elif return_type in ["filename", "bytes"]:
-			match = re.search(r"\.([a-z0-9]{1,6})$", url.lower())
+			match = re.search(r"\.([a-z0-9]{1,6})$", uri.lower())
 			if match:
 				extension = match.group(1)
 		else:
 			raise ValueError(f"Invalid return type '{return_type}'")
 
-		filename = await self.new(url, extension)
+		filename = await self.new(uri, extension, permanent=permanent)
 		with open(filename, "wb+") as f:
 			f.write(await response.read())
 

@@ -22,6 +22,7 @@ Mangobyte has a feature to allow users to be very specific when requesting infor
 - as `<hero>`
 - against/vs `<hero>`
 - with `<hero>`
+- us west/us east (etc.)
 - `<item>` (*the exact name of the item in your inventory at end of game*)
 - since `<patch>` (*gets matches since that patch was released*)
 - `<patch>` (*gets matches during this patch*)
