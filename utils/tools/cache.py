@@ -29,11 +29,15 @@ class CacheItem(dict):
 	@classmethod
 	def create(cls, filename, permanent=False):
 		item = CacheItem()
-		item.permanent = permanent
+		item["permanent"] = permanent
 		item["filename"] = filename
 		item.update_timestamp()
 		return item
 	
+	@property
+	def permanent(self):
+		return self.get("permanent")
+		
 	@property
 	def filename(self):
 		return self["filename"]

@@ -15,6 +15,9 @@ startupTimer = SimpleTimer()
 description = """A discord bot built primarily around playing audio clips and dota related commands.
 				For more information about me, try `/bot info`"""
 
+intents = disnake.Intents.default()
+intents.message_content = True
+
 bot = commands.AutoShardedBot(
 	command_prefix="?", # for any lingering owner-only commands
 	description=description, 
@@ -22,7 +25,8 @@ bot = commands.AutoShardedBot(
 	shard_count=settings.shard_count,
 	sync_commands_debug=False,
 	test_guilds=settings.test_guilds,
-	reload=False)
+	reload=False,
+	intents=intents)
 bot.remove_command("help")
 
 
