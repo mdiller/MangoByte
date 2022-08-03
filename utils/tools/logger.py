@@ -11,12 +11,12 @@ from utils.tools.settings import settings
 
 MANGO_LOGGER_NAME = "mangologger"
 
-# if we wanna log disnake stuff https://docs.disnake.dev/en/latest/logging.html?highlight=logger
-# we can also get the root logger, which will give us a ton of info for all the libraries we have
+# Se quiser registrar disnake material aqui https://docs.disnake.dev/en/latest/logging.html?highlight=logger
+# também podemos obter o root logger, que nos dará uma tonelada de informações para todas as bibliotecas que temos
 
 trace_level = 21
 logging.addLevelName(trace_level, "TRACE")
-# this log level captures json events that happen during mangobyte
+# este nível de log captura eventos json que acontecem durante o mangobyte
 def trace(self, message, *args, **kws):
 	if self.isEnabledFor(trace_level):
 		message = json.dumps(message)
@@ -32,7 +32,7 @@ def event(self, type, data = {}):
 		self._log(trace_level, message, [])
 logging.Logger.event = event
 
-# creates an event object but at the "info" level, so it gets deleted after 30 days
+# cria um objeto de evento, mas no nível "info", para que seja excluído após 30 dias
 def event_info(self, type, data = {}):
 	if self.isEnabledFor(logging.INFO):
 		data = OrderedDict(data)
@@ -54,7 +54,7 @@ def setup_logger():
 
 
 # LOKI LOGGING STUFF
-# The below was heavily inspired by https://github.com/AXVin/aioloki
+# aqui foi fortemente inspirado por https://github.com/AXVin/aioloki
 
 class LokiStream(TypedDict):
 	stream: Dict[str, str]
@@ -124,7 +124,7 @@ class AioLokiHandler(logging.Handler):
 	def emit(self, record: logging.LogRecord) -> None:
 		self._queue.put_nowait(record)
 
-# call this to initialize the logger once the loop has been created
+# chame isso para inicializar o logger assim que o loop for criado
 async def init_logger():
 	loki_config = settings.loki
 	logger = logging.getLogger(MANGO_LOGGER_NAME)

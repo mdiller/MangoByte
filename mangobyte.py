@@ -12,8 +12,8 @@ from utils.tools.helpers import *
 
 startupTimer = SimpleTimer()
 
-description = """A discord bot built primarily around playing audio clips and dota related commands.
-				For more information about me, try `/bot info`"""
+description = """Um bot de Discord construído principalmente para reproduzir clipes de áudio e comandos relacionados a dota..
+				para mais informações tente usar `/bot info`"""
 
 intents = disnake.Intents.default()
 intents.message_content = True
