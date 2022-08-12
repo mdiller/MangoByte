@@ -85,29 +85,44 @@ async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 	except Exception as e:
 		logger.error(traceback.format_exc())
 	finally:
+		timeout_seconds_to_wait = 60 * 5
 		if "TimeoutError" in channel_connector.exceptions_dict:
-			seconds_to_wait = 60 * 10
-			logger.error(f"there was a timeout error during initialization, waiting {seconds_to_wait} seconds before finishing")
-			await asyncio.sleep(seconds_to_wait)
+			logger.error(f"there was a timeout error during initialization, waiting {timeout_seconds_to_wait} seconds before finishing")
+			await asyncio.sleep(timeout_seconds_to_wait)
 
 		message = "__**Initialization Complete:**__\n"
 		message += channel_connector.status_as_string("voice channels connected") + "\n\n"
 		message += f"initialization took {initTimer}" + "\n"
 		message += f"Full startup took {startupTimer}"
 
-		logger.info(message + "\n")
-		if not settings.debug:
-			await appinfo.owner.send(message)
+		success = False
+		status_set = False
+		while not success:
+			try:
+				logger.info("attempting to finish initialization")
+				if not status_set:
+					game = disnake.Activity(
+						name="DOTA 3 [/help]",
+						type=disnake.ActivityType.playing,
+						start=datetime.datetime.utcnow())
+					await bot.change_presence(status=disnake.Status.online, activity=game)
+					status_set = True
+				
+				if not settings.debug:
+					await appinfo.owner.send(message)
+					logger.info(message + "\n")
+				
+				logger.event("startup", {
+					"message": "initialize finished"
+				})
+				success = True
+			except Exception as e:
+				logger.event("startup", {
+					"message": f"initialization timeout error. Retrying again in {timeout_seconds_to_wait} sec"
+				})
+				logger.error(traceback.format_exc())
+				await asyncio.sleep(timeout_seconds_to_wait)
 
-		game = disnake.Activity(
-			name="DOTA 3 [/help]",
-			type=disnake.ActivityType.playing,
-			start=datetime.datetime.utcnow())
-		await bot.change_presence(status=disnake.Status.online, activity=game)
-		
-		logger.event("startup", {
-			"message": "initialize finished"
-		})
 
 
 async def initial_channel_connect_wrapper(audio_cog: Audio, guildinfo: GuildInfo):

@@ -97,7 +97,7 @@ class AudioPlayer:
 
 	def done_talking(self, error):
 		if error:
-			logger.info(f"Error on voice.play: {error.message}")
+			logger.error(f"Error on voice.play: {error}")
 		if not self.clipqueue.empty():
 			coro = self.play_next_clip()
 			fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
@@ -121,7 +121,7 @@ class AudioPlayer:
 			self.voice.play(disnake.FFmpegPCMAudio(clip.audiopath), after=self.done_talking)
 		except disnake.errors.ClientException as e:
 			if str(e) == "Not connected to voice.":
-				raise UserError("Error playing clip. Try doing `/resummon`.")
+				raise UserError("Error playing clip. Try doing `/summon`.")
 			else:
 				raise
 

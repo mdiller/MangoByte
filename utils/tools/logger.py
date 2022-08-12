@@ -85,7 +85,9 @@ class AioLokiHandler(logging.Handler):
 				payload = self.build_payload(log)
 				try:
 					async with self.session.post(self.url, json=payload) as response:
-						if response.status != 204:
+						if response.status == 400:
+							print("LOKI LOGGER SAID WE HAD INVALID PACKET (response code 400), SKIPPING THIS ONE.")
+						elif response.status != 204:
 							print("Loki logger bad response: ", response.status)
 							print("Sleeping 1 min before retrying")
 							self._queue.put_nowait(log)
@@ -145,6 +147,9 @@ async def init_logger():
 		tags={"application": loki_config["application"]},
 		session=session
 	)
+
+	rootlogger = logging.getLogger("root")
 	logger.addHandler(handler)
+	rootlogger.addHandler(handler)
 
 logger = setup_logger()
