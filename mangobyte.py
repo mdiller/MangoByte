@@ -35,23 +35,9 @@ bot.remove_command("help")
 async def on_shard_ready(shard_id):
 	logger.info(f"shard {shard_id} ({len(bot.shards)} total) called its on_shard_ready ({len(bot.guilds)} guilds)")
 
-just_run_update_script = False
-initialize_started = False
 @bot.event
 async def on_ready():
-	if just_run_update_script:
-		await update_script.update(bot)
-		await bot.close()
-		return
-
-	logger.info(f"on_ready() started")
-	global initialize_started
-	
-	if not initialize_started:
-		initialize_started = True
-		await initialization.initialize(bot, startupTimer)
-	else:
-		logger.info("on_ready called again")
+	logger.info(f"on_ready() triggered")
 
 @bot.application_command_check()
 def check_app_commands(inter: disnake.Interaction):
@@ -89,12 +75,11 @@ if __name__ == '__main__':
 		just_run_update_script = True
 		print("Starting bot temporarily...")
 		loop = asyncio.get_event_loop()
+		loop.create_task(update_script.update(bot))
 		loop.run_until_complete(bot.start(settings.token))
 	else:
-		logger.event("startup", {
-			"message": "mangobyte script started"
-		})
-		logger.info(f"Starting mango at {datetime.datetime.today().strftime('%d-%b-%Y %I:%M %p')}")
+		print(f"Starting mango at {datetime.datetime.today().strftime('%d-%b-%Y %I:%M %p')}")
+		bot.loop.create_task(initialization.initialize(bot, startupTimer))
 		bot.run(settings.token)
 
 

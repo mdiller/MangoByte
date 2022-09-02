@@ -16,7 +16,9 @@ from utils.tools.helpers import *
 
 # a script to update static files for mangobyte
 async def update(bot: commands.Bot):
-	logger.info("Running update script:")
+	print("Update script started")
+	await bot.wait_until_ready()
+	print("bot is ready")
 	
 	print("- Updating generated files...")
 	replacements_dict = {
@@ -176,3 +178,5 @@ async def update_emoji(bot: commands.Bot):
 			emoji_json[emoji.name] = emoji.id
 
 	write_json(emoji_json_file, emoji_json)
+	
+	await bot.close()

@@ -39,14 +39,14 @@ class MatchNotFoundError(UserError):
 	def __init__(self, matchfilter):
 		embed = disnake.Embed()
 		embed.title = "No Matches Found"
-		embed.description = matchfilter.localize()
+		embed.description = matchfilter.localize([])
 		embed.description += "\n\nNo matches found!"
 		super().__init__(message="", embed=embed)
 
 opendota_html_errors = {
 	404: "Dats not a valid query. Take a look at the OpenDota API Documentation: https://docs.opendota.com",
 	521: "[http error 521] Looks like the OpenDota API is down or somethin, so ya gotta wait a sec",
-	502: "[http error 502] Looks like there was an issue with the OpenDota API. Try again in a bit",
+	502: "[http error 502] The OpenDota API is having some trouble connecting to Steam. Try again in a bit",
 	"default": "OpenDota said we did things wrong 😢. http status code: {}"
 }
 
@@ -745,7 +745,7 @@ class DotaStats(MangoCog):
 		if query_args:
 			embed.url += "?" + query_args
 
-		embed.description = matchfilter.localize()
+		embed.description = matchfilter.localize(matches)
 
 		matches_image = await drawdota.draw_matches_table(matches, self.dota_game_strings)
 		matches_image = disnake.File(matches_image, "matches.png")
@@ -794,8 +794,7 @@ class DotaStats(MangoCog):
 		if query_args:
 			embed.url += "?" + query_args
 
-		
-		embed.description = matchfilter.localize()
+		embed.description = matchfilter.localize(matches)
 
 		embed.description += "\n\n```\n"
 		embed.description += "\n".join(list(map(lambda m: str(m["match_id"]), matches)))
@@ -1016,7 +1015,7 @@ class DotaStats(MangoCog):
 		embed = disnake.Embed(color=self.embed_color)
 		embed_attachment = None
 
-		embed.description = matchfilter.localize() + "\n"
+		embed.description = matchfilter.localize(matches_info) + "\n"
 		embed.set_footer(text=f"To see the filtering options for this command, try \"/docs matchfilter\"")
 
 		matches_url = f"https://www.opendota.com/players/{steam32}/matches?{matchfilter.to_query_args(for_web_url=True)}"
@@ -1437,6 +1436,7 @@ class DotaStats(MangoCog):
 		----------
 		player: Either a steam32 id, a steam64 id, or an @mention of a discord user who has a steamid set
 		"""
+		await inter.response.defer()
 		if not player:
 			player = await DotaPlayer.from_author(inter)
 

@@ -6,6 +6,7 @@ import aiohttp
 import logging.handlers
 from multiprocessing import Queue
 from typing import OrderedDict, List, Dict, Tuple, TypedDict, Optional
+from aiohttp.client_exceptions import ClientConnectorError
 
 from utils.tools.settings import settings
 
@@ -52,9 +53,25 @@ def setup_logger():
 		
 	return logger
 
+def get_full_class_name(obj):
+	module = obj.__class__.__module__
+	if module is None or module == str.__class__.__module__:
+		return obj.__class__.__name__
+	return module + '.' + obj.__class__.__name__
+
 
 # LOKI LOGGING STUFF
 # The below was heavily inspired by https://github.com/AXVin/aioloki
+
+class CustomQueue(asyncio.Queue):
+	# places an item at the front of the queue
+	def put_front_nowait(self, item):
+		if self.full():
+			raise asyncio.QueueFull
+		self._queue.appendleft(item)
+		self._unfinished_tasks += 1
+		self._finished.clear()
+		self._wakeup_next(self._getters)
 
 class LokiStream(TypedDict):
 	stream: Dict[str, str]
@@ -72,8 +89,8 @@ class AioLokiHandler(logging.Handler):
 		tags: Optional[Dict[str, str]]=None,
 	) -> None:
 		super().__init__()
-		self._queue: asyncio.Queue[logging.LogRecord] = asyncio.Queue()
-		self.url = url + '/loki/api/v1/push'
+		self._queue: CustomQueue[logging.LogRecord] = CustomQueue()
+		self.url = url + "/loki/api/v1/push"
 		self.session = session
 		self.tags = tags
 		self._task = asyncio.create_task(self._queue_worker())
@@ -88,17 +105,23 @@ class AioLokiHandler(logging.Handler):
 						if response.status == 400:
 							print("LOKI LOGGER SAID WE HAD INVALID PACKET (response code 400), SKIPPING THIS ONE.")
 						elif response.status != 204:
-							print("Loki logger bad response: ", response.status)
+							print("LOKI LOGGER bad response: ", response.status)
 							print("Sleeping 1 min before retrying")
-							self._queue.put_nowait(log)
+							self._queue.put_front_nowait(log)
 							await asyncio.sleep(60)
 				except asyncio.TimeoutError: # if we get a timeout error, dont break our loop. re-add the log to the queue and keep goin.
-					print("Timeout on loki logging. Re-trying...")
-					self._queue.put_nowait(log)
+					print("LOKI LOGGER TimeoutError. Re-trying...")
+					self._queue.put_front_nowait(log)
+				except ClientConnectorError as e:
+					print(f"LOKI LOGGER ClientConnectorError: {e}")
+					print("Sleeping 1 min before retrying")
+					self._queue.put_front_nowait(log)
+					await asyncio.sleep(60)
+
 		except asyncio.CancelledError as e:
-			print("LOKI LOGGER CANCELLED: ", e)
+			print("LOKI LOGGER CANCELLED")
 		except Exception as e:
-			print("LOKI LOGGER BROKE: ", e)
+			print(f"LOKI LOGGER BROKE: [{get_full_class_name(e)}]: {e}")
 
 	def build_tags(self, log: logging.LogRecord, /):
 		tags = copy.deepcopy(self.tags) or {}

@@ -20,6 +20,10 @@ async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 		logger.event("startup", {
 			"message": "initialize started"
 		})
+		await bot.wait_until_ready()
+		logger.event("startup", {
+			"message": "bot is ready"
+		})
 		logger.info("Logged in as:\n{0} (ID: {0.id})".format(bot.user))
 		logger.info("Connecting to voice channels if specified in botdata.json ...")
 
@@ -33,12 +37,17 @@ async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 			type=disnake.ActivityType.playing,
 			start=datetime.datetime.utcnow())
 		await bot.change_presence(status=disnake.Status.dnd, activity=activity)
+		
+		logger.event("startup", {
+			"message": "building initialization message"
+		})
 
 		# now do voice channels and the rest!
 		minimum_channels_to_space = 50
 		voice_channels_per_minute_timing = 4
 		voice_channel_count = 0
 		for guildinfo in botdata.guildinfo_list():
+			await asyncio.sleep(0) # shard was complaining about being asleep, so doing this to resync with the event loop
 			if guildinfo.voicechannel is not None:
 				voice_channel_count += 1
 		expected_minutes = int(round(voice_channel_count / voice_channels_per_minute_timing))
@@ -53,6 +62,10 @@ async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 		if not settings.debug:
 			await appinfo.owner.send(message)
 		
+		logger.event("startup", {
+			"message": "starting periodic tasks"
+		})
+
 		# start periodic tasts
 		periodic_tasks = [
 			httpgetter.cache.cleanup_and_flush
@@ -71,6 +84,9 @@ async def initialize(bot: commands.Bot, startupTimer: SimpleTimer):
 					await asyncio.sleep(5) # wait just a little bit before starting each. (so they dont all run at once on their schedules)
 				task.start()
 
+		logger.event("startup", {
+			"message": "starting voice channel connections"
+		})
 		# trigger the actual voice channel reconnecting
 		audio_cog = bot.get_cog("Audio")
 		channel_tasks = []

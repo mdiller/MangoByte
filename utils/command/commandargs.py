@@ -230,11 +230,11 @@ class QueryArg():
 	def localize(self):
 		if self.has_value():
 			for arg in self.args:
-				if arg.value == self.value:
+				if arg.value == self.value or (callable(arg.value) and len(self.args) == 1):
 					result = arg.localized
 					if result is None:
 						return None
-					result.format(value=self.value)
+					result = result.format(value=self.value)
 					if LOCALIZE_HIGHLIGHT_WRAPPER not in result:
 						result = f"{LOCALIZE_HIGHLIGHT_WRAPPER}{result}{LOCALIZE_HIGHLIGHT_WRAPPER}"
 					return result
@@ -444,7 +444,8 @@ class LocalizationContext(str, Enum):
 	WhoWith = 'whowith'
 	PlayerLocation = 'playerloc'
 
-def localize_matchfilter(matchfilter):
+# matches arg may be included to give the localizer more info
+def localize_matchfilter(matchfilter, matches = None):
 	args: typing.List[QueryArg]
 	args = matchfilter.args
 	def get_single_val(key):
@@ -477,6 +478,8 @@ def localize_matchfilter(matchfilter):
 	phrases = []
 	matchword = "matches"
 	limit_count = matchfilter.get_arg("limit")
+	if (matches is not None) and limit_count and len(matches) < limit_count:
+		limit_count = None # if the limit wasn't used, then don't mention it
 	if limit_count:
 		phrases.append("The last")
 		if limit_count == 1:
@@ -558,6 +561,11 @@ def create_matchfilter_args(inter: disnake.CmdInter):
 		),
 		TimeSpanArg(inter,
 			localization_context=LocalizationContext.PostMatch), # TODO: figure out how to specify that this should ONLY use the postfilter for CheckFilter
+		QueryArg("offset", [
+				ArgOption(lambda m: int(m.group(1)), "(skip {value} matches)", r"(?:skip|offset) ?(\d{1,3})"),
+			],
+			localization_context=LocalizationContext.WhoWith
+		),
 		QueryArg("limit", [
 				ArgOption(lambda m: int(m.group(1)), "{value}", r"(?:limit|count|show)? ?(\d{1,3})")
 			],
@@ -703,8 +711,11 @@ class MatchFilter():
 						projections.append(arg.post_filter.key)
 			if len(projections) > 0:
 				args.extend(map(lambda p: f"project={p}", projections))
-			if self.has_value("limit") and self.is_post_filter_required(): # if we need post_filter, limit afterwards
-				args.remove(MatchFilter._get_arg(self.args, "limit").to_query_arg())
+			if self.is_post_filter_required(): # if we need post_filter, limit & offset afterwards
+				if self.has_value("limit"):
+					args.remove(MatchFilter._get_arg(self.args, "limit").to_query_arg())
+				if self.has_value("offset"):
+					args.remove(MatchFilter._get_arg(self.args, "offset").to_query_arg())
 		return "&".join(args)
 
 	# whether or not this query will only return parsed games
@@ -715,6 +726,12 @@ class MatchFilter():
 	def post_filter(self, matches):
 		if self.is_post_filter_required():
 			matches = list(filter(lambda m: all(a.check_post_filter(m) for a in self.args), matches))
+			if self.has_value("offset"):
+				offset_value = self.get_arg("offset")
+				if len(matches) <= offset_value:
+					matches = []
+				else:
+					matches = matches[offset_value:]
 			if self.has_value("limit") and len(matches) > self.get_arg("limit"):
 				matches = matches[0:self.get_arg("limit")]
 		return matches
@@ -725,8 +742,8 @@ class MatchFilter():
 				return True
 		return False
 	
-	def localize(self):
-		return localize_matchfilter(self)
+	def localize(self, matches = None):
+		return localize_matchfilter(self, matches)
 
 	def to_query_url(self):
 		args = self.to_query_args()

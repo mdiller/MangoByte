@@ -3,7 +3,7 @@
 
 This document is for if you're having issues getting slash commands working. If you're wondering why mango is using slash commands at all, or want more info on mango's slash commands, try running `/docs Slash Commands`
 
-## First Things To Try
+## Main Things To Try
 These are all things that people have said fixed their problem, so they might be worth a try
 - Try verifying `/ping` works via a DM with mango or on the help server first, that way you can make sure the problem is with your server and not mangobyte or your discord app.
 - Kick and re-invite Mangobyte (This step solves most people's issues)
@@ -14,6 +14,7 @@ These are all things that people have said fixed their problem, so they might be
   - If you're getting a "This interaction failed" message sometimes, one of the things that could mean is that mangobyte is lagging. I'm working on fixing these timeout issues, but at the moment they're still happening from time to time.
 - Try re-inviting Mangobyte via a *desktop computer*, not a phone (this made a difference for at least one person)
 - Restart your discord
+- Make sure you don't have too many bot integrations! Some people hve reported that you can have too many and then some will stop working. Try removing some of your unused ones and then reinvite mangobyte.
 
 ## "It's working for other people on the server but not for me"
 

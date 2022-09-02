@@ -17,6 +17,7 @@ Mangobyte has a feature to allow users to be very specific when requesting infor
 - mid/safe/off/roaming (*lane*)
 - 5 days/2 weeks/1 year
 - limit/count `<number>` (*number of matches*)
+- skip/offset `<number>` (*skip this many matches*)
 - with `<player>` (*they were in the match, not necessarily on your team*)
 - without `<player>`
 - as `<hero>`

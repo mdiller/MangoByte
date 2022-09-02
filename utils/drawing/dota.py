@@ -363,7 +363,7 @@ def truncate(text, max_size):
 	return text + "..."
 
 async def draw_match_table_row(table, match, player, is_parsed, is_ability_draft, has_talents):
-	draw_bear_row = player["hero_id"] == 80 and len(player.get("additional_units", [])) > 0
+	draw_bear_row = player["hero_id"] == 80 and len(player.get("additional_units") or []) > 0
 	row = [
 		ColorCell(width=8, color=("green" if player["isRadiant"] else "red")),
 		create_party_cell(match, player, can_be_bottom=(not draw_bear_row)),
@@ -507,7 +507,6 @@ async def combine_image_halves(img_url1, img_url2):
 	return fp
 
 def optimize_gif(uri, filename):
-
 	# if need further, try doing O3 only after colors instead of before
 	optimization = [
 		["--colors", "256"],
