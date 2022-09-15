@@ -276,6 +276,15 @@
 			"prefix": "/"
 		},
 		{
+			"name": "inventory",
+			"signature": null,
+			"short_help": "Shows the most commonly bought items for each slot in your inventory",
+			"help": "Shows the most commonly bought items for each slot in your inventory",
+			"aliases": [],
+			"cog": "DotaStats",
+			"prefix": "/"
+		},
+		{
 			"name": "item",
 			"signature": null,
 			"short_help": "Gets information about a specific dota 2 item",

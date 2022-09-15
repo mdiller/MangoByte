@@ -28,7 +28,7 @@ Mangobyte has recently finished migrating to slash commands. If you are having i
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 71 commands, separated into 6 categories
+Mangobyte currently has 72 commands, separated into 6 categories
 
 #### General
 Commands that don't really fit into the other categories
@@ -101,6 +101,7 @@ Commands for displaying information about Dota 2 players and matches
 ```
 /dotagif             | Creates a gif of a specific part of a dota match                                         
 /firstmatch          | Gets info about the player's first dota game                                             
+/inventory           | Shows the most commonly bought items for each slot in your inventory                     
 /lm                  | Gets info about the player's last dota game                                              
 /match graph         | Creates a graph for a dota match                                                         
 /match info          | Creates a table with some basic stats and information about the dota match               

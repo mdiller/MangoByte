@@ -1595,7 +1595,7 @@ class DotaStats(MangoCog):
 
 	@commands.slash_command()
 	async def inventory(self, inter: disnake.CmdInter, matchfilter: MatchFilter = None):
-		"""Gets a visualization of where you put your items
+		"""Shows the most commonly bought items for each slot in your inventory
 
 		Parameters
 		----------
@@ -1615,12 +1615,12 @@ class DotaStats(MangoCog):
 		for match in matches:
 			for i in range(len(item_slots)):
 				item = match.get(item_slots[i])
-				if item is None:
+				if item is None or item == 0:
 					continue
 				if item not in slot_item_counts[i]:
 					slot_item_counts[i][item] = 0
 				slot_item_counts[i][item] += 1
-	
+
 		slot_item_counts = list(map(lambda item_counts: sorted(item_counts.items(), key=lambda x: x[1], reverse=True), slot_item_counts))
 
 		# filter out duplicates (keep an item only in its best slot)
@@ -1636,8 +1636,15 @@ class DotaStats(MangoCog):
 					slot_item_counts[i] = list(filter(lambda item_count: item_count[0] != item, slot_item_counts[i]))
 
 		embed = disnake.Embed()
-
+		
+		embed.title = "Common Items"
+		embed.url = f"https://www.opendota.com/players/{matchfilter.player.steam_id}/matches"
+		query_args = matchfilter.to_query_args()
+		if query_args:
+			embed.url += "?" + query_args
+		
 		embed.description = matchfilter.localize()
+		embed.set_footer(text="The 3 most common items for each inventory slot. (At the end of the game)")
 
 		image = disnake.File(await drawdota.draw_item_slots(slot_item_counts), "items.png")
 		embed.set_image(url=f"attachment://{image.filename}")

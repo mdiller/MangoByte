@@ -33,6 +33,7 @@ You can also specify to get matches for someone other than yourself by just @men
 ### Compatible Commands:
 <!-- MATCH_FILTER_COMMANDS_START -->
 `/firstmatch`
+`/inventory`
 `/lm`
 `/matchids`
 `/playerstats`

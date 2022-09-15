@@ -1436,7 +1436,7 @@ async def draw_item_slots(slot_item_counts: typing.List[typing.Tuple[int, int]])
 	]
 	blank_item_image = await get_url_image(f"{vpkurl}/panorama/images/items/emptyitembg_png.png")
 	border_gap = 8
-	border_color = "#3b3f43"
+	border_color = discord_color3
 
 	# Ugh this code is ugly but whatever its fine
 	table = Table(background=border_color, border_size=border_gap)
