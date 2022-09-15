@@ -1593,6 +1593,58 @@ class DotaStats(MangoCog):
 
 		await ctx.send(embed=embed)
 
+	@commands.slash_command()
+	async def itemslots(self, inter: disnake.CmdInter, matchfilter: MatchFilter = None):
+		"""Gets a visualization of where you put your items
+
+		Parameters
+		----------
+		matchfilter: Specify how to filter these matches. To learn more, try '/docs Match Filter'
+		"""
+		matchfilter = await MatchFilter.init(matchfilter, inter)
+		await inter.response.defer()
+
+		item_slots = [ "item_0", "item_1", "item_2", "item_3", "item_4", "item_5" ]
+		matchfilter.add_projections(item_slots)
+
+		matches = await opendota_query_filter(matchfilter)
+
+		slot_item_counts = []
+		for slot in item_slots:
+			slot_item_counts.append({})
+		for match in matches:
+			for i in range(len(item_slots)):
+				item = match.get(item_slots[i])
+				if item is None:
+					continue
+				if item not in slot_item_counts[i]:
+					slot_item_counts[i][item] = 0
+				slot_item_counts[i][item] += 1
+	
+		slot_item_counts = list(map(lambda item_counts: sorted(item_counts.items(), key=lambda x: x[1], reverse=True), slot_item_counts))
+
+		# filter out duplicates (keep an item only in its best slot)
+		items_best_slots = {} # key: item_id, value: (slot, count)
+		for slot in range(len(slot_item_counts)):
+			for item, count in slot_item_counts[slot]:
+				if (item not in items_best_slots) or (items_best_slots[item][1] < count):
+					items_best_slots[item] = (slot, count)
+		for item, slot_count in items_best_slots.items():
+			slot = slot_count[0]
+			for i in range(len(slot_item_counts)):
+				if i != slot:
+					slot_item_counts[i] = list(filter(lambda item_count: item_count[0] != item, slot_item_counts[i]))
+
+		embed = disnake.Embed()
+
+		embed.description = matchfilter.localize()
+
+		image = disnake.File(await drawdota.draw_item_slots(slot_item_counts), "items.png")
+		embed.set_image(url=f"attachment://{image.filename}")
+
+		await inter.send(embed=embed, file=image)
+				
+
 
 
 

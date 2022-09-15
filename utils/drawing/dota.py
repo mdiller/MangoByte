@@ -5,6 +5,7 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
+import typing
 
 from PIL import Image, ImageDraw, ImageFont
 from utils.tools.globals import httpgetter, logger, settings
@@ -1421,3 +1422,43 @@ async def draw_match_ability_upgrades(match):
 
 	return fp
 
+
+async def draw_item_slots(slot_item_counts: typing.List[typing.Tuple[int, int]]):
+	# these are tuples, (slot, index)
+	item_size = (88, 64)
+	item_size_smaller = (int(item_size[0] / 2), int(item_size[1] / 2))
+	item_rows = [
+		[(0, 1),(0, 2), (1, 1),(1, 2), (2, 1),(2, 2)],
+		[(0, 0),        (1, 0),        (2, 0)       ],
+		[(3, 0),        (4, 0),        (5, 0)       ],
+		[(3, 1),(3, 2), (4, 1),(4, 2), (5, 1),(5, 2)],
+	]
+	# icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
+	blank_item_image = await get_url_image(f"{vpkurl}/panorama/images/items/emptyitembg_png.png")
+	# Image.new("RGBA", item_size)
+
+	table = Table(background=discord_color2)
+	for item_row in item_rows:
+		images = []
+		for item in item_row:
+			if len(slot_item_counts[item[0]]) > item[1]:
+				item_id, count = slot_item_counts[item[0]][item[1]]
+				images.append(await get_item_image(item_id))
+			else:
+				images.append(blank_item_image)
+
+		image_row = Image.new("RGBA", (item_size[0] * len(images), item_size[1]))
+		for i in range(len(images)):
+			image_row.paste(images[i], (i * item_size[0], 0))
+
+		if len(images) == 6:
+			image_row = image_row.resize((item_size_smaller[0] * len(images), item_size_smaller[1]), Image.ANTIALIAS)
+		
+		table.add_row([ImageCell(img=image_row)])
+	image = table.render()
+	
+	fp = BytesIO()
+	image.save(fp, format="PNG")
+	fp.seek(0)
+
+	return fp
