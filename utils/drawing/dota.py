@@ -1430,15 +1430,20 @@ async def draw_item_slots(slot_item_counts: typing.List[typing.Tuple[int, int]])
 	item_rows = [
 		[(0, 1),(0, 2), (1, 1),(1, 2), (2, 1),(2, 2)],
 		[(0, 0),        (1, 0),        (2, 0)       ],
+		None,
 		[(3, 0),        (4, 0),        (5, 0)       ],
 		[(3, 1),(3, 2), (4, 1),(4, 2), (5, 1),(5, 2)],
 	]
-	# icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
 	blank_item_image = await get_url_image(f"{vpkurl}/panorama/images/items/emptyitembg_png.png")
-	# Image.new("RGBA", item_size)
+	border_gap = 8
+	border_color = "#3b3f43"
 
-	table = Table(background=discord_color2)
+	# Ugh this code is ugly but whatever its fine
+	table = Table(background=border_color, border_size=border_gap)
 	for item_row in item_rows:
+		if item_row is None:
+			table.add_row([ColorCell(height=border_gap, color=border_color)])
+			continue
 		images = []
 		for item in item_row:
 			if len(slot_item_counts[item[0]]) > item[1]:
@@ -1447,12 +1452,18 @@ async def draw_item_slots(slot_item_counts: typing.List[typing.Tuple[int, int]])
 			else:
 				images.append(blank_item_image)
 
-		image_row = Image.new("RGBA", (item_size[0] * len(images), item_size[1]))
+		is_dense_row = len(images) == 6
+		gap_size = (2 * border_gap) if is_dense_row else border_gap
+		image_row = Image.new("RGBA", ((item_size[0] * len(images)) + (gap_size * 2), item_size[1]))
+		x = 0
 		for i in range(len(images)):
-			image_row.paste(images[i], (i * item_size[0], 0))
+			image_row.paste(images[i], (x, 0))
+			x += item_size[0]
+			if (not is_dense_row) or (i % 2):
+				x += gap_size
 
 		if len(images) == 6:
-			image_row = image_row.resize((item_size_smaller[0] * len(images), item_size_smaller[1]), Image.ANTIALIAS)
+			image_row = image_row.resize(((item_size_smaller[0] * len(images) + (border_gap * 2)), item_size_smaller[1]), Image.ANTIALIAS)
 		
 		table.add_row([ImageCell(img=image_row)])
 	image = table.render()
