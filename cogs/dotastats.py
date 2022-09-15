@@ -1594,7 +1594,7 @@ class DotaStats(MangoCog):
 		await ctx.send(embed=embed)
 
 	@commands.slash_command()
-	async def itemslots(self, inter: disnake.CmdInter, matchfilter: MatchFilter = None):
+	async def inventory(self, inter: disnake.CmdInter, matchfilter: MatchFilter = None):
 		"""Gets a visualization of where you put your items
 
 		Parameters
