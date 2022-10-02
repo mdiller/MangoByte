@@ -75,7 +75,7 @@ For playing audio in a voice channel
 ```
 
 #### Dotabase
-For information about the game Dota 2 [Patch **7.32b**]
+For information about the game Dota 2 [Patch **7.32c**]
 
 ```
 /abilities           | Shows all of the abilities/spells for that hero                                          

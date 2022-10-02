@@ -96,8 +96,9 @@ def get_docs_keys():
 	docs_data = load_md_as_dict(settings.resource("../docs/docs.md"))
 	return list(docs_data.keys())
 
-BOT_STAT_MONTHLY_COUNTER = 24 # makes sure we only grab the monthly stats every day
-LOKI_APPLICATION_NAME = settings.loki["application"]
+if settings.loki:
+	BOT_STAT_MONTHLY_COUNTER = 24 # makes sure we only grab the monthly stats every day
+	LOKI_APPLICATION_NAME = settings.loki["application"]
 class BotStats():
 	server_count: int
 	user_count: int

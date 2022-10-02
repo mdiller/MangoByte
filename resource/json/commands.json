@@ -12,8 +12,8 @@
 		},
 		{
 			"name": "Dotabase",
-			"short_help": "For information about the game Dota 2 [Patch **7.32b**]",
-			"help": "For information about the game Dota 2 [Patch **7.32b**]\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see an old website I built that interfaces with dotabase."
+			"short_help": "For information about the game Dota 2 [Patch **7.32c**]",
+			"help": "For information about the game Dota 2 [Patch **7.32c**]\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see an old website I built that interfaces with dotabase."
 		},
 		{
 			"name": "DotaStats",
