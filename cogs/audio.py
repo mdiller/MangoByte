@@ -72,6 +72,12 @@ class AudioPlayer:
 	async def update_guild(self):
 		self.guild = await self.bot.fetch_guild(self.guild.id)
 
+	# re-assigns a fresh server object (hotfix to solve library issue)
+	async def manually_kill_voice_client(self):
+		logger.warn(f"manual kill info: guild:{self.guild_id}")
+		logger.warn(f"manual kill info: channel info: (type:{type(self.voice.channel)}) attributes: {dir(self.voice.channel)}")
+		self.bot._connection._remove_voice_client(self.guild_id)
+
 	# connects to a voice channel
 	async def connect(self, channel):
 		if not isinstance(channel, disnake.VoiceChannel):
@@ -85,7 +91,10 @@ class AudioPlayer:
 			logger.info(f"finished connect to: {channel.id}")
 		elif voice.channel and voice.channel.id == channel.id:
 			logger.info(f"doin' a disconnect and reconnect for: {channel.id}")
-			await voice.disconnect(force=True)
+			try:
+				await voice.disconnect(force=True)
+			except AttributeError:
+				await self.manually_kill_voice_client()
 			await asyncio.sleep(2)
 			await channel.connect()
 			logger.info(f"finished reconnect for: {channel.id}")
