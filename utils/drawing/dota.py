@@ -898,14 +898,13 @@ async def draw_matches_table(matches, game_strings):
 
 # given talents as they are stored in dotabase
 async def draw_hero_talents(hero):
-	talents = list(map(lambda t: t.localized_name, hero.talents))
+	talents = list(map(lambda t: t.ability.localized_name, hero.talents))
 	talent_rows = [
 		[ talents[7], talents[6] ],
 		[ talents[5], talents[4] ],
 		[ talents[3], talents[2] ],
 		[ talents[1], talents[0] ]
 	]
-
 	image = Image.open(settings.resource("images/talents.png"))
 	draw = ImageDraw.Draw(image)
 
