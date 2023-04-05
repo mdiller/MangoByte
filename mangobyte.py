@@ -1,9 +1,8 @@
 import datetime
 import sys
-
+from translator import translator
 import disnake
 from disnake.ext import commands
-
 import utils.other.errorhandling as errorhandling
 import utils.other.initialization as initialization
 import utils.other.update_script as update_script
@@ -29,7 +28,28 @@ bot = commands.AutoShardedBot(
 	intents=intents)
 bot.remove_command("help")
 
+""""
+When flag reaction gets added to the bot reply it translate the text based on the flag country
+"""
+@bot.event
+async def on_reaction_add(reaction, user):
+    
+    supported_lang = ['🇮🇷','🇷🇺','🇩🇪','🇺🇸']
+    message = reaction.message
+    
+    if message.reference is not None:
+        channel = bot.get_channel(message.channel.id)
+        question_author_message = await channel.fetch_message(message.reference.message_id)
+        if question_author_message.author.id == user.id and reaction.emoji in supported_lang :
 
+            user_message = str(message.content)
+            translate = translator.eng_translator(user_message,reaction.emoji)
+
+            await message.edit(content=translate)
+        else:
+            await message.remove_reaction(reaction.emoji,user)
+
+    
 # registering some global events
 @bot.event
 async def on_shard_ready(shard_id):

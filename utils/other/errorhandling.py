@@ -117,7 +117,7 @@ async def command_error_handler(ctx_inter: InterContext, error: commands.Command
 		elif isinstance(error, commands.ConversionError) and isinstance(error.original, CustomBadArgument):
 			await error.original.user_error.send_self(ctx_inter, botdata)
 		else:
-			await ctx_inter.send("Uh-oh, sumthin dun gone wrong 😱")
+			await ctx_inter.reply("Uh-oh, sumthin dun gone wrong 😱")
 			trace_string = await report_error(ctx_inter, error, skip_lines=4)
 			if settings.debug:
 				if len(trace_string) > 1950:
