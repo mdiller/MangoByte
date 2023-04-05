@@ -1467,7 +1467,7 @@ class DotaStats(MangoCog):
 				role_totals[role] += value
 		role_totals = role_totals.values()
 		role_totals_avg = sum(role_totals) / len(role_totals)
-		role_totals_modifiers = list(map(lambda x: role_totals_avg / x, role_totals))
+		role_totals_modifiers = list(map(lambda x: role_totals_avg / (x or 1), role_totals))
 		for i in range(len(roles)):
 			role_scores[i] *= role_totals_modifiers[i]
 

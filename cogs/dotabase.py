@@ -12,10 +12,12 @@ import utils.other.rsstools as rsstools
 from disnake.ext import commands, tasks
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.sql.expression import func
+from sqlalchemy.orm.collections import InstrumentedList
 from utils.command.clip import *
 from utils.command.commandargs import *
 from utils.tools.globals import httpgetter, logger, settings
 from utils.tools.helpers import *
+from typing import TypeVar
 
 from cogs.audio import AudioPlayerNotFoundError, Audio
 from dotabase import *
@@ -23,10 +25,40 @@ from dotabase import *
 from cogs.mangocog import *
 
 CRITERIA_ALIASES = read_json(settings.resource("json/criteria_aliases.json"))
+DOTA_LANG_MAP = read_json(settings.resource("json/dota_lang_map.json"))
 
 session = dotabase_session()
 
 CURRENT_DOTA_PATCH_NUMBER = session.query(Patch).order_by(desc(Patch.timestamp)).first().number
+
+T = TypeVar('T')
+class LocaleWrapper():
+	def __init__(self, object, locale):
+		self.object = object
+		self.locale = locale
+
+	def __getattr__(self, name):
+		if not hasattr(self.object, name):
+			return None
+		if hasattr(self.object, "strings"):
+			for string in self.object.strings:
+				if string.lang == self.locale and string.column == name:
+					return string.value
+		result = getattr(self.object, name)
+		if isinstance(result, Base):
+			return LocaleWrapper(result, self.locale)
+		if isinstance(result, InstrumentedList):
+			return list(map(lambda o: LocaleWrapper(o, self.locale), result))
+		return result
+	
+	@classmethod
+	def wrap(cls, inter: disnake.CmdInter, object: T) -> T:
+		if object is None or isinstance(object, LocaleWrapper):
+			return object
+		lang = DOTA_LANG_MAP.get(inter.locale.name, None)
+		if not lang:
+			lang = "english"
+		return LocaleWrapper(object, lang)
 
 ABILITY_KEY_MAP = {
 	"q": 1,
@@ -50,6 +82,7 @@ async def convert_hero(inter: disnake.CmdInter, text: str) -> Hero:
 	hero = dota_cog.lookup_hero(text)
 	if hero is None:
 		raise CustomBadArgument(UserError(f"Couldn't find a hero called '{text}'"))
+	hero = LocaleWrapper.wrap(inter, hero)
 	return hero
 register_custom_converter(Hero, convert_hero)
 
@@ -59,6 +92,7 @@ async def convert_item(inter: disnake.CmdInter, text: str) -> Item:
 	item = dota_cog.lookup_item(text)
 	if item is None:
 		raise CustomBadArgument(UserError(f"Couldn't find a item called '{text}'"))
+	item = LocaleWrapper.wrap(inter, item)
 	return item
 register_custom_converter(Item, convert_item)
 
@@ -68,6 +102,7 @@ async def convert_ability(inter: disnake.CmdInter, text: str) -> Ability:
 	ability = dota_cog.lookup_ability(text)
 	if ability is None:
 		raise CustomBadArgument(UserError(f"Couldn't find a ability called '{text}'"))
+	ability = LocaleWrapper.wrap(inter, ability)
 	return ability
 register_custom_converter(Ability, convert_ability)
 
@@ -206,6 +241,8 @@ class Dotabase(MangoCog):
 			self.leveled_hero_stats.append(all_hero_stats)
 
 	def get_wiki_url(self, obj):
+		if isinstance(obj, LocaleWrapper):
+			obj = obj.object
 		if isinstance(obj, Hero):
 			wikiurl = obj.localized_name
 		elif isinstance(obj, Ability):
@@ -228,14 +265,17 @@ class Dotabase(MangoCog):
 		else:
 			return None
 
-	def lookup_hero(self, hero) -> Hero:
+	def lookup_hero(self, hero, inter: disnake.CmdInter = None) -> Hero:
 		if not hero:
 			return None
 		if isinstance(hero, str):
 			hero = hero.strip()
 		hero_id = self.lookup_hero_id(hero)
 		if hero_id:
-			return session.query(Hero).filter(Hero.id == hero_id).first()
+			result = session.query(Hero).filter(Hero.id == hero_id).first()
+			if inter:
+				result = LocaleWrapper.wrap(inter, result)
+			return result
 		else:
 			return None
 
@@ -259,7 +299,13 @@ class Dotabase(MangoCog):
 				return self.hero_aliases[hero]
 		return None
 
-	def lookup_ability(self, text, full_check=True) -> Ability:
+	def lookup_ability(self, text, full_check=True, inter: disnake.CmdInter = None) -> Ability:
+		result = self._lookup_ability(text, full_check=full_check)
+		if inter:
+			result = LocaleWrapper.wrap(inter, result)
+		return result
+
+	def _lookup_ability(self, text, full_check=True) -> Ability:
 		if isinstance(text, str):
 			text = text.strip()
 		ability_query = session.query(Ability).filter(Ability.hero_id != None)
@@ -309,14 +355,17 @@ class Dotabase(MangoCog):
 					return abilities[ability_position - 1]
 		return None
 
-	def lookup_item(self, item, full_check=True) -> Item:
+	def lookup_item(self, item, full_check=True, inter: disnake.CmdInter = None) -> Item:
 		if not item:
 			return None
 		if isinstance(item, str):
 			item = item.strip()
 		item_id = self.lookup_item_id(item, full_check)
 		if item_id:
-			return session.query(Item).filter(Item.id == item_id).first()
+			result = session.query(Item).filter(Item.id == item_id).first()
+			if inter:
+				result = LocaleWrapper.wrap(inter, result)
+			return result
 		else:
 			return None
 
@@ -658,9 +707,7 @@ class Dotabase(MangoCog):
 			icon = self.get_emoji(f"attr_{name}")
 			return f"{icon} {result}\n"
 
-		description += add_attr("strength", lambda h: h.attr_strength_base, lambda h: h.attr_strength_gain)
-		description += add_attr("agility", lambda h: h.attr_agility_base, lambda h: h.attr_agility_gain)
-		description += add_attr("intelligence", lambda h: h.attr_intelligence_base, lambda h: h.attr_intelligence_gain)
+		description += hero.hype
 
 		embed = disnake.Embed(description=description)
 
@@ -695,6 +742,11 @@ class Dotabase(MangoCog):
 			f"{self.get_emoji('hero_speed')} {hero.base_movement}\n"
 			f"{self.get_emoji('hero_turn_rate')} {hero.turn_rate}\n"
 			f"{self.get_emoji('hero_vision_range')} {hero.vision_day:,} / {hero.vision_night:,}\n"))
+		
+		stats_value = add_attr("strength", lambda h: h.attr_strength_base, lambda h: h.attr_strength_gain)
+		stats_value += add_attr("agility", lambda h: h.attr_agility_base, lambda h: h.attr_agility_gain)
+		stats_value += add_attr("intelligence", lambda h: h.attr_intelligence_base, lambda h: h.attr_intelligence_gain)
+		embed.add_field(name="Stats", value=stats_value)
 
 		if hero.real_name != '':
 			embed.add_field(name="Real Name", value=hero.real_name)
@@ -720,6 +772,8 @@ class Dotabase(MangoCog):
 		hero: The name of the hero
 		"""
 		await inter.response.defer()
+		
+		# talents = list(map(lambda t: LocaleWrapper.wrap(inter, t.ability).localized_name, hero.talents))
 		image = await drawdota.draw_hero_talents(hero)
 		image = disnake.File(image, f"{hero.name}_talents.png")
 
@@ -1062,7 +1116,7 @@ class Dotabase(MangoCog):
 				names.append(hero.localized_name)
 			name = random.choice(names)
 
-		item = self.lookup_item(name, False)
+		item = self.lookup_item(name, False, inter=inter)
 		if item:
 			found = True
 			lore_info = {
@@ -1073,7 +1127,7 @@ class Dotabase(MangoCog):
 			}
 
 		if not found:
-			ability = self.lookup_ability(name, False)
+			ability = self.lookup_ability(name, False, inter=inter)
 			if ability:
 				found = True
 				lore_info = {
@@ -1084,7 +1138,7 @@ class Dotabase(MangoCog):
 				}
 
 		if not found:
-			hero = self.lookup_hero(name)
+			hero = self.lookup_hero(name, inter=inter)
 			if hero:
 				found = True
 				lore_info = {
@@ -1129,7 +1183,7 @@ class Dotabase(MangoCog):
 		only_do_shard = type == "Shard"
 
 		abilities = []
-		hero = self.lookup_hero(name)
+		hero = self.lookup_hero(name, inter=inter)
 		if hero:
 			for ability in hero.abilities:
 				if (ability.shard_upgrades or ability.shard_grants) and not only_do_scepter:
@@ -1140,13 +1194,13 @@ class Dotabase(MangoCog):
 			if len(abilities) == 0:
 				raise UserError(f"Couldn't find an aghs upgrade for {hero.localized_name}. Either they don't have one or I just can't find it.")
 		else:
-			ability = self.lookup_ability(name, True)
+			ability = self.lookup_ability(name, True, inter)
 			if not ability:
 				raise UserError("Couldn't find a hero or ability by that name")
 			abilities = [ ability ]
 
-		item_shard = self.lookup_item("aghanim's shard")
-		item_scepter = self.lookup_item("aghanim's scepter")
+		item_shard = self.lookup_item("aghanim's shard", inter=inter)
+		item_scepter = self.lookup_item("aghanim's scepter", inter=inter)
 		upgrade_types = [ "scepter", "shard" ]
 		if only_do_scepter:
 			upgrade_types = [ "scepter" ]
