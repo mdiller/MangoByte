@@ -47,9 +47,21 @@ async def on_reaction_add(reaction, user):
 
             await message.edit(content=translate)
         else:
-            await message.remove_reaction(reaction.emoji,user)
+            await message.remove_reaction(reaction.emoji,user)	
+    elif message.interaction.type.name == 'application_command':
+	
+        channel = bot.get_channel(message.channel.id)
+        question_author_message = await channel.fetch_message(message.id)
 
-    
+        if question_author_message.interaction.user.id == user.id and reaction.emoji in supported_lang :
+            user_message = str(message.content)
+
+            translate = translator.eng_translator(user_message,reaction.emoji)
+            await message.edit(content=translate)
+
+        else:
+            await message.remove_reaction(reaction.emoji,user)	
+	    
 # registering some global events
 @bot.event
 async def on_shard_ready(shard_id):
