@@ -60,10 +60,12 @@ async def on_reaction_add(reaction, user):
         question_author_message = await channel.fetch_message(message.id)
 
         if question_author_message.interaction.user.id == user.id and reaction.emoji in supported_lang :
-            user_message = str(message.embeds[0].description)
-
-            translate = translator.eng_translator(user_message,reaction.emoji)
-            await message.edit(content=translate)
+    			
+            embed_to_edit = question_author_message.embeds[0]  # Assuming there is only one embed in the message
+          
+            translate = translator.eng_translator(embed_to_edit.description,reaction.emoji)
+            embed_to_edit.description = translate
+            await question_author_message.edit(embed=embed_to_edit)
 
         else:
             await message.remove_reaction(reaction.emoji,user)	
