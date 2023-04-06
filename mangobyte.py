@@ -60,7 +60,7 @@ async def on_reaction_add(reaction, user):
         question_author_message = await channel.fetch_message(message.id)
 
         if question_author_message.interaction.user.id == user.id and reaction.emoji in supported_lang :
-            user_message = str(message.content)
+            user_message = str(message.embeds[0].description)
 
             translate = translator.eng_translator(user_message,reaction.emoji)
             await message.edit(content=translate)
