@@ -36,18 +36,24 @@ async def on_reaction_add(reaction, user):
     
     supported_lang = ['🇮🇷','🇷🇺','🇩🇪','🇺🇸']
     message = reaction.message
-    
+
+    #refrence message means bot replied to user and user did not use / commands like /help
     if message.reference is not None:
+        # get channel id where reaction was added 
         channel = bot.get_channel(message.channel.id)
+        # fetch the message that reaction was added to it
         question_author_message = await channel.fetch_message(message.reference.message_id)
         if question_author_message.author.id == user.id and reaction.emoji in supported_lang :
-
+            
+            #gets the pure message
             user_message = str(message.content)
+            # message goes to transtalor to be translated
             translate = translator.eng_translator(user_message,reaction.emoji)
 
             await message.edit(content=translate)
         else:
             await message.remove_reaction(reaction.emoji,user)	
+	# intractiion means that user used / command like /help 
     elif message.interaction.type.name == 'application_command':
 	
         channel = bot.get_channel(message.channel.id)
