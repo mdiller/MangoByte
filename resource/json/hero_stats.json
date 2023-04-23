@@ -37,6 +37,11 @@
 				"stat": "attr_intelligence_gain",
 				"regex": "int(elligence)? gain",
 				"name": "Intelligence Gain"
+			},
+			{
+				"stat": "universal",
+				"name": "_Universal Stat",
+				"lambda": "lambda hero, h: (h['strength'] + h['intelligence'] + h['agility']) * 0.6"
 			}
 		]
 	},

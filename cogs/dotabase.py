@@ -722,7 +722,8 @@ class Dotabase(MangoCog):
 		base_damage = {
 			"strength": hero.attr_strength_base,
 			"agility": hero.attr_agility_base,
-			"intelligence": hero.attr_intelligence_base
+			"intelligence": hero.attr_intelligence_base,
+			"universal": (hero.attr_strength_base + hero.attr_agility_base + hero.attr_intelligence_base) * 0.6
 		}[hero.attr_primary]
 
 		attack_stats = (
