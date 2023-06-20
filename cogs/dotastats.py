@@ -514,7 +514,9 @@ class DotaStats(MangoCog):
 			lobby_type = ""
 		
 		description = (f"{winstatus} a {lobby_type}**{game_mode}** match as {hero_name} in {duration}. "
-					f"More info at [DotaBuff](https://www.dotabuff.com/matches/{match_id}), "
+					"More info at "
+					+ (f"[Windrun](https://www.windrun.io/matches/{match_id}), " if game_mode == "Ability Draft" else "") +
+					f"[DotaBuff](https://www.dotabuff.com/matches/{match_id}), "
 					f"[OpenDota](https://www.opendota.com/matches/{match_id}), or "
 					f"[STRATZ](https://www.stratz.com/match/{match_id})")
 		
@@ -605,7 +607,9 @@ class DotaStats(MangoCog):
 
 		embed = disnake.Embed(color=self.embed_color)
 		embed.description = (f"This {lobby_type}**{game_mode}** match ended in {duration} \n"
-					f"More info at [DotaBuff](https://www.dotabuff.com/matches/{match_id}), "
+					"More info at "
+					+ (f"[Windrun](https://www.windrun.io/matches/{match_id}), " if game_mode == "Ability Draft" else "") +
+					f"[DotaBuff](https://www.dotabuff.com/matches/{match_id}), "
 					f"[OpenDota](https://www.opendota.com/matches/{match_id}), or "
 					f"[STRATZ](https://www.stratz.com/match/{match_id})")
 
