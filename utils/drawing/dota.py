@@ -313,7 +313,7 @@ def create_party_cell(match, player, can_be_top=True, can_be_bottom=True):
 	all_teams = []
 	player_slots_in_team = []
 	for p in match["players"]:
-		if p.get("party_size", 0) > 1 and p.get("party_id") not in all_teams:
+		if (p.get("party_size", 0) or 0) > 1 and p.get("party_id") not in all_teams:
 			all_teams.append(p.get("party_id"))
 		if p.get("party_id") == player.get("party_id"):
 			player_slots_in_team.append(p["player_slot"])
