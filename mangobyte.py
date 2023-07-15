@@ -28,6 +28,7 @@ bot = commands.AutoShardedBot(
 	shard_count=settings.shard_count,
 	command_sync_flags=sync_flags,
 	test_guilds=settings.test_guilds,
+	guild_ready_timeout=10.0,
 	reload=False,
 	intents=intents)
 bot.remove_command("help")

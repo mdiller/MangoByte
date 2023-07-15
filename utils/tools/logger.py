@@ -125,6 +125,9 @@ class AioLokiHandler(logging.Handler):
 
 	def build_tags(self, log: logging.LogRecord, /):
 		tags = copy.deepcopy(self.tags) or {}
+		if log.name.startswith("disnake"):
+			log.msg = f"DISNAKE({log.name}): " + log.msg
+			log.name = MANGO_LOGGER_NAME
 		tags["level"] = log.levelname.lower()
 		tags["logger"] = log.name
 		try:
@@ -171,8 +174,12 @@ async def init_logger():
 		session=session
 	)
 
+	disnake_logger = logging.getLogger("disnake")
+	disnake_logger.setLevel(logging.INFO)
+
 	rootlogger = logging.getLogger("root")
 	logger.addHandler(handler)
 	rootlogger.addHandler(handler)
+	disnake_logger.addHandler(handler)
 
 logger = setup_logger()
