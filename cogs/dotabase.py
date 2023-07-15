@@ -567,7 +567,7 @@ class Dotabase(MangoCog):
 			await self.print_clip(inter, clip)
 	
 	@Audio.clips.sub_command(name="dota")
-	async def clips_dota(self, inter: disnake.CmdInter, text: str = None, hero: Hero = None, criteria: commands.option_enum(CRITERIA_ALIASES) = None, page: commands.Range[1, 10] = 1):
+	async def clips_dota(self, inter: disnake.CmdInter, text: str = None, hero: Hero = None, criteria: commands.option_enum(CRITERIA_ALIASES) = None, page: commands.Range[int, 1, 10] = 1):
 		"""Searches for dota responses
 
 		Parameters
@@ -665,7 +665,7 @@ class Dotabase(MangoCog):
 		await self.play_clip(f"dotachatwheel:{message.id}", inter, print=True)
 	
 	@Audio.clips.sub_command(name="chatwheel")
-	async def clips_chatwheel(self, inter: disnake.CmdInter, text: str, page: commands.Range[1, 50] = 1):
+	async def clips_chatwheel(self, inter: disnake.CmdInter, text: str, page: commands.Range[int, 1, 50] = 1):
 		"""Shows a list of chatwheel lines
 		
 		Parameters
@@ -1397,7 +1397,7 @@ class Dotabase(MangoCog):
 
 
 	@commands.slash_command()
-	async def neutralitems(self, inter: disnake.CmdInter, tier: commands.Range[0, 5] = 0):
+	async def neutralitems(self, inter: disnake.CmdInter, tier: commands.Range[int, 0, 5] = 0):
 		"""Displays neutral item information
 		
 		Parameters
@@ -1428,7 +1428,7 @@ class Dotabase(MangoCog):
 		await inter.send(embed=embed, file=image)
 
 	@commands.slash_command()
-	async def herostats(self, inter: disnake.CmdInter, hero: Hero, level: commands.Range[1, 30] = 1):
+	async def herostats(self, inter: disnake.CmdInter, hero: Hero, level: commands.Range[int, 1, 30] = 1):
 		"""Gets the stats for a hero at the specified level
 
 		Parameters
@@ -1467,7 +1467,7 @@ class Dotabase(MangoCog):
 		await inter.send(embed=embed)
 
 	@commands.slash_command()
-	async def herotable(self, inter: disnake.CmdInter, stat: HERO_STAT_ENUM, level: commands.Range[1, 30] = 1, hero_count: commands.Range[2, 40] = 20, reverse: bool = False):
+	async def herotable(self, inter: disnake.CmdInter, stat: HERO_STAT_ENUM, level: commands.Range[int, 1, 30] = 1, hero_count: commands.Range[int, 2, 40] = 20, reverse: bool = False):
 		"""Displays a table of dota heroes sorted by a stat
 
 		Parameters

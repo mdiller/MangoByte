@@ -357,7 +357,7 @@ class Audio(MangoCog):
 		return embed
 
 	@clips.sub_command(name="local")
-	async def clips_local(self, inter: disnake.CmdInter, tag: str, page: commands.Range[1, 99] = 1):
+	async def clips_local(self, inter: disnake.CmdInter, tag: str, page: commands.Range[int, 1, 99] = 1):
 		"""Lists the names of local audio clips. For more info on clips, see '/docs Clips'
 
 		Parameters
@@ -624,7 +624,7 @@ class Audio(MangoCog):
 
 	#function called when this event occurs
 	@commands.Cog.listener()
-	async def on_voice_state_update(self, member, before, after):
+	async def on_voice_state_update(self, member: disnake.Member, before: disnake.VoiceState, after: disnake.VoiceState):
 		channel_id = "not sure yet"
 		try:
 			if member.bot and member.id != self.bot.user.id:
@@ -654,7 +654,7 @@ class Audio(MangoCog):
 						outroclip = userinfo.outro
 
 					outrotts = userinfo.outrotts
-					name = member.name
+					name = member.global_name
 					if guildinfo.usenickname and member.nick:
 						name = member.nick
 
@@ -690,7 +690,7 @@ class Audio(MangoCog):
 						introclip = userinfo.intro
 
 					introtts = userinfo.introtts
-					name = member.name
+					name = member.global_name
 					if guildinfo.usenickname and member.nick:
 						name = member.nick
 

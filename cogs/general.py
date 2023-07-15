@@ -202,7 +202,7 @@ class General(MangoCog):
 			await inter.send(f"✅ {setting} has been set!")
 
 	@commands.slash_command()
-	async def ping(self, inter: disnake.CmdInter, count : commands.Range[1, 20] = 1):
+	async def ping(self, inter: disnake.CmdInter, count : commands.Range[int, 1, 20] = 1):
 		"""Pongs a number of times(within reason)"""
 		ping_string = ""
 		for i in range(0, count):

@@ -805,7 +805,7 @@ class DotaStats(MangoCog):
 		await inter.send(embed=embed)
 
 	@commands.slash_command()
-	async def meta(self, inter: disnake.CmdInter, count: commands.Range[1, 120] = 10): 
+	async def meta(self, inter: disnake.CmdInter, count: commands.Range[int, 1, 120] = 10): 
 		"""Prints the top meta heroes from https://opendota.com/heroes
 		
 		Parameters
