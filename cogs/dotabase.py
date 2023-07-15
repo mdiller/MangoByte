@@ -140,7 +140,7 @@ def query_filter_list(query, column, value, separator="|"):
 class Dotabase(MangoCog):
 	"""For information about the game Dota 2 [Patch **{CURRENT_DOTA_PATCH_NUMBER}**]
 
-	Interfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see an old website I built that interfaces with dotabase."""
+	Interfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see a website I built that interfaces with dotabase."""
 	def __init__(self, bot):
 		MangoCog.__init__(self, bot)
 		self.session = session
@@ -419,11 +419,13 @@ class Dotabase(MangoCog):
 		query = session.query(Patch).order_by(Patch.timestamp)
 		start = None
 		end = None
+		found_patch = None
 
 		for patch in query:
 			if start is None:
 				if patch.number == patch_name:
 					start = patch.timestamp
+					found_patch = patch
 			else:
 				if re.sub(r"[a-z]", "", patch.number) != patch_name:
 					end = patch.timestamp
@@ -431,7 +433,7 @@ class Dotabase(MangoCog):
 		if end is None:
 			end = datetime.datetime.now()
 
-		return (patch, start, end)
+		return (found_patch, start, end)
 
 
 	def get_hero_infos(self):
