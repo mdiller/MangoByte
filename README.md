@@ -75,7 +75,7 @@ For playing audio in a voice channel
 ```
 
 #### Dotabase
-For information about the game Dota 2 [Patch **7.32c**]
+For information about the game Dota 2 [Patch **7.34c**]
 
 ```
 /abilities           | Shows all of the abilities/spells for that hero                                          
@@ -204,7 +204,6 @@ Mangobyte is customizable on a per-user and per-server level, via the `/userconf
 - allowedbots
 - allowwebhooks
 - restrictsummoning
-- deprecationhints
 
 <!-- CONFIG_SETTINGS_END -->
 

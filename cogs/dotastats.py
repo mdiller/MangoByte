@@ -151,7 +151,8 @@ async def get_stratz_match(match_id):
 		auth_header = { "Authorization": f"Bearer {settings.stratz}" }
 		return await httpgetter.get(url, cache=True, errors={
 			500: "Looks like something wrong with the STRATZ api",
-			204: "STRATZ hasn't recieved this match yet. Try again a bit later"
+			204: "STRATZ hasn't recieved this match yet. Try again a bit later",
+			403: "got some weird auth error"
 		}, headers=auth_header)
 	except aiohttp.ClientConnectorError:
 		logger.info("ClientConnectorError on stratz api result")
@@ -1121,6 +1122,7 @@ class DotaStats(MangoCog):
 					CoolStat(self.get_emoji('attr_strength'), percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'strength'), separator=" "),
 					CoolStat(self.get_emoji('attr_agility'), percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'agility'), separator=" "),
 					CoolStat(self.get_emoji('attr_intelligence'), percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'intelligence'), separator=" "),
+					CoolStat(self.get_emoji('attr_universal'), percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'universal'), separator=" "),
 					CoolStat("Randomed", percent('randomed'), ignore_value=zeropercent),
 					CoolStat("__Favorites__", f"\n{favorite_heroes}")
 				]

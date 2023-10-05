@@ -23,28 +23,7 @@ async def on_prefix_command_error(ctx: commands.Context, error: commands.Command
 
 	try:
 		if isinstance(error, commands.CommandNotFound):
-			if ctx.guild and not botdata.guildinfo(ctx).deprecationhints:
-				return # if deprecation hints are disabled, do nothing.
-			cmd = ctx.message.content[1:].split(" ")[0]
-			slash_command_names = list(map(lambda c: c.name, slash_command_expand(bot.slash_commands)))
-			if cmd in deprecated_commands:
-				logger.info(f"deprecated command '{cmd}' attempted")
-				if deprecated_commands[cmd].startswith("_"):
-					await ctx.send(f"`{cmdpfx}{cmd}` has been deprecated. {deprecated_commands[cmd][1:]}")
-					return
-				await ctx.send(f"`{cmdpfx}{cmd}` has been deprecated. Try `/{deprecated_commands[cmd]}` instead.")
-				return
-			elif cmd in slash_command_names:
-				logger.info(f"deprecated command '{cmd}' attempted")
-				await ctx.send(f"`{cmdpfx}{cmd}` has been moved to a slash command. Try typing `/{cmd}`.")
-				return
-			elif cmd == "" or cmd.startswith("?") or cmd.startswith("!"):
-				return # These were probably not meant to be commands
-
-			if cmd.lower() in bot.commands:
-				new_message = ctx.message
-				new_message.content = cmdpfx + cmd.lower() + ctx.message.content[len(cmd) + 1:]
-				await bot.process_commands(new_message)
+			return # no longer need support for this, as everything has been moved to slash commands, except for owner commands
 		elif isinstance(error, CustomBadArgument):
 			await error.user_error.send_self(ctx, botdata)
 		elif isinstance(error, commands.BadArgument):

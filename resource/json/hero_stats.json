@@ -41,7 +41,7 @@
 			{
 				"stat": "universal",
 				"name": "_Universal Stat",
-				"lambda": "lambda hero, h: (h['strength'] + h['intelligence'] + h['agility']) * 0.6"
+				"lambda": "lambda hero, h: (h['strength'] + h['intelligence'] + h['agility']) * 0.7"
 			}
 		]
 	},

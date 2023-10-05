@@ -379,9 +379,9 @@ async def draw_match_table_row(table, match, player, is_parsed, is_ability_draft
 	if is_parsed:
 		row.extend([
 			TextCell(player.get("actions_per_min")),
-			TextCell(get_lane(player)),
-			ImageCell(img=await get_active_aghs_image(player), height=48)
+			TextCell(get_lane(player))
 		])
+	row.append(ImageCell(img=await get_active_aghs_image(player), height=48))
 	if has_talents:
 		row.append(ImageCell(img=await get_talents_image(player.get("ability_upgrades_arr"), player["hero_id"]), height=48))
 	row.append(ImageCell(img=await get_item_images(player), height=48))
@@ -438,9 +438,9 @@ async def draw_match_table(match):
 	if is_parsed:
 		headers.extend([
 			TextCell("APM"),
-			TextCell("Lane"),
-			EmptyCell()
+			TextCell("Lane")
 		])
+	headers.append(EmptyCell()) # Aghs
 	if has_talents:
 		headers.append(EmptyCell())
 	headers.append(TextCell("Items"))
@@ -534,9 +534,13 @@ def optimize_gif(uri, filename):
 # places an icon on the map at the indicated x/y using the dota coordinant system
 # scale is how much to scale the icon
 def place_icon_on_map(map_image, icon, x, y):
-	scale = map_image.width / 128
-	x = (x - 64) * scale
-	y = (128 - (y - 64)) * scale
+	map_padding_from_733_patch = 10
+	map_coord_padding = 64 - map_padding_from_733_patch
+	map_coord_size = 128 + (2 * map_padding_from_733_patch)
+
+	scale = map_image.width / map_coord_size
+	x = (x - map_coord_padding) * scale
+	y = (map_coord_size - (y - map_coord_padding)) * scale
 	return paste_image(map_image, icon, int(x - (icon.width / 2)), int(y - (icon.height / 2)))
 
 # wraps the main gif creation code so it doesnt block

@@ -270,13 +270,6 @@ guildinfo_variables = [
 		"type": types.Boolean,
 		"description": "Whether or not the bot should restrict the usage of `/summon` and `/unsummon` to bot admins.",
 		"example": "disable"
-	},
-	{
-		"key": "deprecationhints",
-		"default": True,
-		"type": types.Boolean,
-		"description": "Disabling this will disable messages like:\n`?play` has been deprecated. Try `/play local` instead.",
-		"example": "disable"
 	}
 ]
 

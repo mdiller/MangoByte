@@ -704,7 +704,7 @@ class Dotabase(MangoCog):
 		def add_attr(name, base_func, gain_func):
 			global description
 			result = f"{base_func(hero)} + {gain_func(hero)}"
-			if hero.attr_primary == name:
+			if hero.attr_primary == name or hero.attr_primary == "universal":
 				result = f"**{result}**"
 			icon = self.get_emoji(f"attr_{name}")
 			return f"{icon} {result}\n"
@@ -725,8 +725,10 @@ class Dotabase(MangoCog):
 			"strength": hero.attr_strength_base,
 			"agility": hero.attr_agility_base,
 			"intelligence": hero.attr_intelligence_base,
-			"universal": (hero.attr_strength_base + hero.attr_agility_base + hero.attr_intelligence_base) * 0.6
+			"universal": round((hero.attr_strength_base + hero.attr_agility_base + hero.attr_intelligence_base) * 0.7)
 		}[hero.attr_primary]
+
+		primary_attr_icon = self.get_emoji(f"attr_{hero.attr_primary}")
 
 		attack_stats = (
 			f"{self.get_emoji('hero_damage')} {base_damage + hero.attack_damage_min} - {base_damage + hero.attack_damage_max}\n"
@@ -734,7 +736,7 @@ class Dotabase(MangoCog):
 			f"{self.get_emoji('hero_attack_range')} {hero.attack_range}\n")
 		if not hero.is_melee:
 			attack_stats += f"{self.get_emoji('hero_projectile_speed')} {hero.attack_projectile_speed:,}\n"
-		embed.add_field(name="Attack", value=attack_stats)
+		embed.add_field(name=f"Attack {primary_attr_icon}", value=attack_stats)
 
 		base_armor = hero.base_armor + round(hero.attr_agility_base / 6.0, 1)
 		embed.add_field(name="Defence", value=(
@@ -749,7 +751,7 @@ class Dotabase(MangoCog):
 		stats_value = add_attr("strength", lambda h: h.attr_strength_base, lambda h: h.attr_strength_gain)
 		stats_value += add_attr("agility", lambda h: h.attr_agility_base, lambda h: h.attr_agility_gain)
 		stats_value += add_attr("intelligence", lambda h: h.attr_intelligence_base, lambda h: h.attr_intelligence_gain)
-		embed.add_field(name="Stats", value=stats_value)
+		embed.add_field(name="Attributes", value=stats_value)
 
 		if hero.real_name != '':
 			embed.add_field(name="Real Name", value=hero.real_name)
@@ -961,6 +963,9 @@ class Dotabase(MangoCog):
 
 		if ability.mana_cost and ability.mana_cost != "0":
 			embed.add_field(name="\u200b", value=f"{self.get_emoji('mana_cost')} {format_values(ability.mana_cost)}\n")
+		
+		if ability.health_cost and ability.health_cost != "0":
+			embed.add_field(name="\u200b", value=f"{self.get_emoji('health_cost')} {format_values(ability.health_cost)}\n")
 
 		if ability.lore and ability.lore != "":
 			embed.set_footer(text=ability.lore)
@@ -1023,6 +1028,8 @@ class Dotabase(MangoCog):
 			description += f"{self.get_emoji('gold')} {item.cost:,}\n"
 		if item.mana_cost and item.mana_cost != "0":
 			description += f"{self.get_emoji('mana_cost')} {clean_values(item.mana_cost)}  "
+		if item.health_cost and item.health_cost != "0":
+			description += f"{self.get_emoji('health_cost')} {clean_values(item.health_cost)}  "
 		if item.cooldown and item.cooldown != "0":
 			description += f"{self.get_emoji('cooldown')} {clean_values(item.cooldown)}"
 
