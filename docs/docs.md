@@ -36,6 +36,7 @@ You can also specify to get matches for someone other than yourself by just @men
 `/inventory`
 `/lm`
 `/matchids`
+`/percent`
 `/playerstats`
 `/recent`
 `/twenty`

@@ -28,7 +28,7 @@ Mangobyte has recently finished migrating to slash commands. If you are having i
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 72 commands, separated into 6 categories
+Mangobyte currently has 73 commands, separated into 6 categories
 
 #### General
 Commands that don't really fit into the other categories
@@ -111,6 +111,7 @@ Commands for displaying information about Dota 2 players and matches
 /matchids            | Gets a list of recent matchids that match the given filter                               
 /meta                | Prints the top meta heroes from https://opendota.com/heroes                              
 /parse               | Request for OpenDota to parse a recent match                                             
+/percent             | Out of the matches that match filter1, the percent of them that also match filter2       
 /playerstats         | Gets stats about the player's dota matches                                               
 /profile             | Displays information about the player's dota profile                                     
 /recent              | Gets a list of your recent dota matches                                                  

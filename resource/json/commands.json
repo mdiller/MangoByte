@@ -474,6 +474,15 @@
 			"prefix": "/"
 		},
 		{
+			"name": "percent",
+			"signature": null,
+			"short_help": "Out of the matches that match filter1, the percent of them that also match filter2",
+			"help": "Out of the matches that match filter1, the percent of them that also match filter2",
+			"aliases": [],
+			"cog": "DotaStats",
+			"prefix": "/"
+		},
+		{
 			"name": "ping",
 			"signature": null,
 			"short_help": "Pongs a number of times(within reason)",

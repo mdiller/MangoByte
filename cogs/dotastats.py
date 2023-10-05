@@ -1653,8 +1653,48 @@ class DotaStats(MangoCog):
 
 		await inter.send(embed=embed, file=image)
 				
+	@commands.slash_command()
+	async def percent(self, inter: disnake.CmdInter, filter1: MatchFilter = None, filter2: MatchFilter = None):
+		"""Out of the matches that match filter1, the percent of them that also match filter2
+    
+		Parameters
+		----------
+		filter1: The primary filter that determines the denominator
+		filter2: The secondary filter that determines the numerator
+		"""
+		await inter.response.defer()
 
+		filter1 = await MatchFilter.init(filter1, inter)
+		filter2 = await MatchFilter.init(filter2, inter)
+		
+		matches1 = await opendota_query_filter(filter1)
+		if not matches1:
+			raise MatchNotFoundError(filter1)
 
+		matches2 = await opendota_query_filter(filter2)
+
+		matchids1 = list(map(lambda m: m["match_id"], matches1))
+		matchids2 = list(map(lambda m: m["match_id"], matches2))
+		both_matching = list(filter(lambda id: id in matchids2, matchids1))
+
+		percent = 100 * len(both_matching) / len(matchids1)
+
+		embed = disnake.Embed()
+
+		embed.title = f"Percent: {percent:.2f}%"
+
+		description = f"{len(both_matching)} out of {len(matchids1)} matches, or {percent:.2f}% is the answer to the question:\n\n"
+
+		filter1 = filter1.localize()
+		filter2 = filter2.localize().replace("All matches ", "")
+		filter2 = re.sub(r"^All matches", "", filter2)
+		filter2 = re.sub(r"^played by [^\s]+", "played", filter2)
+
+		description += "**Out of** " + filter1 + ", **what percent of them were** " + filter2
+
+		embed.description = description
+
+		await inter.send(embed=embed)
 
 
 
