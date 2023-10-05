@@ -1685,10 +1685,13 @@ class DotaStats(MangoCog):
 
 		description = f"{len(both_matching)} out of {len(matchids1)} matches, or {percent:.2f}% is the answer to the question:\n\n"
 
+		players_match = filter1.player.mention == filter2.player.mention
+
 		filter1 = filter1.localize()
 		filter2 = filter2.localize().replace("All matches ", "")
 		filter2 = re.sub(r"^All matches", "", filter2)
-		filter2 = re.sub(r"^played by [^\s]+", "played", filter2)
+		if players_match:
+			filter2 = re.sub(r"^played by [^\s]+", "played", filter2)
 
 		description += "**Out of** " + filter1 + ", **what percent of them were** " + filter2 + "?"
 
