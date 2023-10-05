@@ -1690,7 +1690,7 @@ class DotaStats(MangoCog):
 		filter2 = re.sub(r"^All matches", "", filter2)
 		filter2 = re.sub(r"^played by [^\s]+", "played", filter2)
 
-		description += "**Out of** " + filter1 + ", **what percent of them were** " + filter2
+		description += "**Out of** " + filter1 + ", **what percent of them were** " + filter2 + "?"
 
 		embed.description = description
 
