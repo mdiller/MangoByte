@@ -683,7 +683,8 @@ def create_dota_gif_main(match, stratz_match, start_time, end_time, ms_per_secon
 			image = place_icon_on_map(image, icon, player[t]["x"], player[t]["y"])
 		for rune in runes.get(t, {}):
 			rune = runes[t][rune]
-			image = place_icon_on_map(image, rune_icons[rune["type"]], rune["x"], rune["y"])
+			if rune["type"] in rune_icons:
+				image = place_icon_on_map(image, rune_icons[rune["type"]], rune["x"], rune["y"])
 
 		image = paste_image(image, clock_bg_image, (image.width // 2) - (clock_bg_image.width // 2), 0)
 		draw = ImageDraw.Draw(image)
