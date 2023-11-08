@@ -212,6 +212,10 @@ class ShortClip(ConfigVarType):
 		if value.startswith("url:"):
 			raise InvalidInputError("Unfortunatley I'm removing the url clip feature for now. I've got plans to eventually implement some custom clips that will be even more flexible than this, but I'm not sure when that feature will arrive.")
 
+		if value.startswith("custom"):
+			raise InvalidInputError("You can set a custom clip via the `/customclip` command")
+
+
 		clip = await audio_cog.get_clip_try_types(value, "local|dota", inter)
 
 		audiolength = clip.audiolength

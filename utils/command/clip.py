@@ -187,7 +187,40 @@ class PokeClip(Clip):
 	def type(cls):
 		return "poke"
 
+CUSTOM_CLIP_DIR = settings.resource(f"clips/custom")
+if not os.path.exists(CUSTOM_CLIP_DIR):
+    os.makedirs(CUSTOM_CLIP_DIR)
 
+# Composed of a user id and a number (1 = intro, 2 = outro).
+class CustomClip(Clip):
+	async def init(self, clip_identifier: str, bot, clip_ctx: ClipContext):
+		filename = CustomClip.get_clip_path(clip_identifier)
+
+		if not os.path.exists(filename):
+			raise UserError("This custom clip does not yet exist. See `/customclip`.")
+
+		return await Clip.init(self, clip_identifier, filename)
+
+	@classmethod
+	def type(cls):
+		return "custom"
+
+	@classmethod
+	def get_clip_path(cls, clip_identifier: str):
+		match = re.match(f'(\d+)_(\d+)', clip_identifier)
+		if not match:
+			raise UserError("That's not a valid custom clip")
+		
+		user_id = match.group(1)
+		clipnum = match.group(2)
+
+		if not clipnum in [ "1", "2" ]:
+			raise UserError("That's not a valid custom clipnum")
+		
+		return os.path.join(CUSTOM_CLIP_DIR, f"{user_id}_{clipnum}.mp3")
+
+
+# DEPRECATED
 class UrlClip(Clip):
 	async def init(self, url, bot, clip_ctx: ClipContext):
 		if not re.match(f'^https?://.*\.({audio_extensions})$', url):

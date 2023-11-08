@@ -125,8 +125,8 @@ A dota chatwheel sound clip. You can get a list of these by doing `/clips chatwh
 ### Type: Pokemon [poke]:
 A pokemon cry. Try playing these with the `/pokecry` command
 
-### Type: (WIP) Custom [custom]:
-This clip type doesnt exist yet. In the past I've allowed a clip type called "url", and that has been removed in the latest rework. I'm planning on adding a new type of clip called "custom" that will be more powerful than url clips, and be easier to use. This hasn't been implemented yet, but I'll let you know (through the #updates channel on the [Mangobyte Help Server](https://discord.gg/d6WWHxx)) once I get around to implementing it.
+### Type: Custom [custom]:
+You can specify a custom clip for your intro or outro via the `/customclip` command. Note that the mp3 file you upload must be less than 4 seconds long.
 
 
 # Command and User Permissions

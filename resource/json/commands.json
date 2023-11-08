@@ -12,8 +12,8 @@
 		},
 		{
 			"name": "Dotabase",
-			"short_help": "For information about the game Dota 2 [Patch **7.34c**]",
-			"help": "For information about the game Dota 2 [Patch **7.34c**]\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see a website I built that interfaces with dotabase."
+			"short_help": "For information about the game Dota 2 [Patch **7.34d**]",
+			"help": "For information about the game Dota 2 [Patch **7.34d**]\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see a website I built that interfaces with dotabase."
 		},
 		{
 			"name": "DotaStats",
@@ -165,6 +165,15 @@
 			"help": "Generates a challenge build with a random hero and items",
 			"aliases": [],
 			"cog": "Dotabase",
+			"prefix": "/"
+		},
+		{
+			"name": "customclip",
+			"signature": null,
+			"short_help": "Sets your intro or outro to a custom mp3 clip",
+			"help": "Sets your intro or outro to a custom mp3 clip",
+			"aliases": [],
+			"cog": "Audio",
 			"prefix": "/"
 		},
 		{

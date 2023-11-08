@@ -3,6 +3,7 @@ import math
 import os
 import queue
 import re
+import shutil
 from typing import List
 import urllib.request
 from ctypes.util import find_library
@@ -613,6 +614,7 @@ class Audio(MangoCog):
 	# fixes discord user names which either are in all caps or have a number serving as a letter
 	async def fix_name(self, name):
 		# If all upper case or numbers n stuff, make all lower case
+		name = str(name)
 		if re.match(r"^[^a-z]*$", name):
 			name = name.lower()
 
@@ -649,8 +651,8 @@ class Audio(MangoCog):
 							if outroclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
 								userinfo.set_default(ctx, "outro")
 								outroclip = userinfo.outro
-					except:
-						userinfo.set_default(ctx, "outro")
+					except Exception as e:
+						logger.error(f"exception '{type(e)}' thrown when getting outro for {member.id}")
 						outroclip = userinfo.outro
 
 					outrotts = userinfo.outrotts
@@ -685,8 +687,8 @@ class Audio(MangoCog):
 							if introclip.audiolength > botdatatypes.max_intro_outro_length + 0.5:
 								userinfo.set_default(ctx, "intro")
 								introclip = userinfo.intro
-					except:
-						userinfo.set_default(ctx, "intro")
+					except Exception as e:
+						logger.error(f"exception '{type(e)}' thrown when getting intro for {member.id}")
 						introclip = userinfo.intro
 
 					introtts = userinfo.introtts
@@ -708,6 +710,45 @@ class Audio(MangoCog):
 		except UserError as e:
 			logger.error(f"Bad voice channel connection to ({channel_id}) from on_voice_state_update: {e.message}")
 
+		
+	@commands.slash_command()
+	async def customclip(self, inter: disnake.CmdInter, target: commands.option_enum(["intro", "outro"]), clip: disnake.Attachment):
+		"""Sets your intro or outro to a custom mp3 clip
+
+		Parameters
+		----------
+		target: Whether you're setting your outro or your intro
+		clip: A file to set as your clip. Must be an mp3 less than 4 seconds long."""
+		await inter.response.defer()
+		print(f"setting {target} to {clip.filename}")
+
+		clipnum = {
+			"intro": "1",
+			"outro": "2"
+		}[target]
+
+		clip_identifier = f"{inter.author.id}_{clipnum}"
+		filename = CustomClip.get_clip_path(clip_identifier)
+
+		temp_filename = filename.replace(".mp3", "_TEMP.mp3")
+		await clip.save(temp_filename)
+		
+		# verify that it is less than 4 seconds
+		clip_duration = round(float(run_command(["ffprobe", "-i", temp_filename, "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0"])), 2)
+		if clip_duration > 4:
+			os.remove(temp_filename)
+			raise UserError("Custom clips for intros and outros must be less than 4 seconds long")
+		
+		# move the temp file to the right destination
+		if os.path.exists(filename):
+			os.remove(filename)
+		shutil.copy(temp_filename, filename)
+		os.remove(temp_filename)
+
+		clipid = f"custom:{clip_identifier}"
+
+		botdata.userinfo(inter.author)[target] = clipid
+		await inter.send(f"✅ {target} has been set!")
 
 def setup(bot):
 	bot.add_cog(Audio(bot))

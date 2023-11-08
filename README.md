@@ -28,7 +28,7 @@ Mangobyte has recently finished migrating to slash commands. If you are having i
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 73 commands, separated into 6 categories
+Mangobyte currently has 74 commands, separated into 6 categories
 
 #### General
 Commands that don't really fit into the other categories
@@ -65,6 +65,7 @@ For playing audio in a voice channel
 /clips chatwheel     | Shows a list of chatwheel lines                                                          
 /clips dota          | Searches for dota responses                                                              
 /clips local         | Lists the names of local audio clips. For more info on clips, see '/docs Clips'          
+/customclip          | Sets your intro or outro to a custom mp3 clip                                            
 /play chatwheel      | Plays the given chat wheel sound. Try '/clips chatwheel' to get a list of clips.         
 /play dota           | Plays a dota response. Try '/clips dota' for a similar command that returns a list       
 /play local          | Plays a local audio clip. For more information on clips, see `/docs Clips`               
@@ -75,7 +76,7 @@ For playing audio in a voice channel
 ```
 
 #### Dotabase
-For information about the game Dota 2 [Patch **7.34c**]
+For information about the game Dota 2 [Patch **7.34d**]
 
 ```
 /abilities           | Shows all of the abilities/spells for that hero                                          
