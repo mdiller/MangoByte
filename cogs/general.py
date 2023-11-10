@@ -223,7 +223,7 @@ class General(MangoCog):
 	@bot.sub_command(name="changelog")
 	async def changelog(self, inter: disnake.CmdInter):
 		"""Gets a rough changelog for mangobyte"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		commit_url = "https://github.com/mdiller/MangoByte"
 		description = f"For more information check out the [commit history]({commit_url}/commits/master) on GitHub, or visit the [Mangobyte Info Server]({HELP_GUILD_LINK}), and subscribe/follow the #updates channel.\n"
 		lines = get_changelog().split("\n")
@@ -295,7 +295,7 @@ class General(MangoCog):
 	@bot.sub_command(name="stats")
 	async def stats(self, inter: disnake.CmdInter, interval: commands.option_enum(["Weekly", "Monthly"]) = "Monthly"):
 		"""Displays some bot statistics"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		interval_info = {
 			"Weekly": {
@@ -379,7 +379,7 @@ class General(MangoCog):
 		----------
 		thing: The thing to look up on wikipedia
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		page = await wikipedia.get_wikipedia_page(thing)
 
@@ -409,7 +409,7 @@ class General(MangoCog):
 		if settings.reddit is None:
 			raise UserError("This MangoByte has not been configured to get reddit submissions. Gotta add your info to `settings.json`")
 
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		reddit = praw.Reddit(client_id=settings.reddit["client_id"],
 			client_secret=settings.reddit["client_secret"],
@@ -463,7 +463,7 @@ class General(MangoCog):
 	@misc.sub_command(name="showerthought")
 	async def misc_showerthought(self, inter: disnake.CmdInter):
 		"""Gets a top post from the r/ShowerThoughts subreddit"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		thought = random.choice(self.showerthoughts_data)
 
@@ -841,7 +841,7 @@ class General(MangoCog):
 		----------
 		topic: The topic you want to get information on
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		if topic == "botinfo":
 			await self._bot_info(inter)
 			return

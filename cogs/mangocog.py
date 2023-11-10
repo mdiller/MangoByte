@@ -33,6 +33,9 @@ class MangoCog(disnake.ext.commands.Cog):
 	def description(self):
 		return inspect.getdoc(self)
 
+	async def safe_defer(self, inter: disnake.CmdInter):
+		await safe_defer(inter)
+
 	async def send_owner(self, *args, **kwargs):
 		appinfo = await self.bot.application_info()
 		await appinfo.owner.send(*args, **kwargs)

@@ -62,7 +62,7 @@ class Admin(MangoCog):
 		----------
 		user: The user to unban
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		if inter.guild is None:
 			await inter.send(f"You must be in a server/guild to use this command\n{perms_cmd_deprecation_message}")
 			return
@@ -96,7 +96,7 @@ class Admin(MangoCog):
 		----------
 		command: The command or cog to re-enable
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		if inter.guild is None:
 			await inter.send(f"You must be in a server/guild to use this command\n{perms_cmd_deprecation_message}")
 			return
@@ -122,7 +122,7 @@ class Admin(MangoCog):
 		----------
 		channel: The voice channel to summon to. Will summon to the one that you're in if you don't specify
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		if not channel:
 			if not inter.guild:
 				raise UserError("You have to say that in a server")
@@ -148,7 +148,7 @@ class Admin(MangoCog):
 	@commands.slash_command()
 	async def unsummon(self, inter: disnake.CmdInter):
 		"""Removes the bot from the voice channel"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		if not inter.guild:
 			raise UserError("You must be in a server/guild to use this command")
 		audio = self.bot.get_cog("Audio")
@@ -167,7 +167,7 @@ class Admin(MangoCog):
 		setting: The setting you'd like to show/change
 		value: The value you'd like to set for this setting, or 'show' to see the current value and more info
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		if inter.guild is None:
 			await inter.send("You must be in a server/guild to use this command")
 			return

@@ -558,7 +558,7 @@ class DotaStats(MangoCog):
 		----------
 		matchfilter: Specify how to filter these matches. To learn more, try '/docs Match Filter'
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		
 		def matchfilterfixer(text):
 			text = re.sub(r"^All", "The last", text)
@@ -581,7 +581,7 @@ class DotaStats(MangoCog):
 		----------
 		matchfilter: Specify how to filter these matches. To learn more, try '/docs Match Filter'
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		
 		def matchfilterfixer(text):
 			text = re.sub(r"^All", "The first", text)
@@ -625,7 +625,7 @@ class DotaStats(MangoCog):
 	# a header to be used for sub commands
 	@commands.slash_command()
 	async def match(self, inter: disnake.CmdInter):
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		pass
 	
 	@match.sub_command(name="info")
@@ -708,7 +708,7 @@ class DotaStats(MangoCog):
 		----------
 		matchfilter: Specify how to filter these matches. To learn more, try '/docs Match Filter'
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		matchfilter = await MatchFilter.init(matchfilter, inter)
 
@@ -762,7 +762,7 @@ class DotaStats(MangoCog):
 		Parameters
 		----------
 		matchfilter: Specify how to filter these matches. To learn more, try '/docs Match Filter'"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		matchfilter = await MatchFilter.init(matchfilter, inter)
 
@@ -813,7 +813,7 @@ class DotaStats(MangoCog):
 		----------
 		count: The number of heroes to show
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		json = await self.get_meta_json()
 		sorted_json = self.sort_meta(json, count)
 		description = (f"Top {count} meta hero(s) in professional matches")
@@ -834,7 +834,7 @@ class DotaStats(MangoCog):
 			player = await DotaPlayer.from_author(inter)
 		steam32 = player.steam_id
 
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		playerinfo = await opendota_query(f"/players/{steam32}")
 		matches = await opendota_query(f"/players/{steam32}/matches")
@@ -980,7 +980,7 @@ class DotaStats(MangoCog):
 		matchfilter.add_projections([ "kills", "deaths", "assists", "party_size", "version", "hero_id", "lane_role", "is_roaming", "lobby_type", "start_time", "duration" ])
 		steam32 = matchfilter.player.steam_id
 
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		# 
 		# STEP 1: download all match data
 		# 
@@ -1246,7 +1246,7 @@ class DotaStats(MangoCog):
 		end: How many minutes into the match to end the gif. ex: 30:30
 		ms_per_second: How many miliseconds between each frame of the gif (each frame is 1 dota second)
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		match = match.match
 		match_id = match["match_id"]
@@ -1328,7 +1328,7 @@ class DotaStats(MangoCog):
 				steamid = matchfilter.player.steam_id
 			match_id = await get_lastmatch_id(matchfilter)
 
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		try:
 			data = await httpgetter.post(f"https://api.opendota.com/api/request/{match_id}", errors=opendota_html_errors)
@@ -1438,7 +1438,7 @@ class DotaStats(MangoCog):
 		----------
 		player: Either a steam32 id, a steam64 id, or an @mention of a discord user who has a steamid set
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		if not player:
 			player = await DotaPlayer.from_author(inter)
 
@@ -1604,7 +1604,7 @@ class DotaStats(MangoCog):
 		matchfilter: Specify how to filter these matches. To learn more, try '/docs Match Filter'
 		"""
 		matchfilter = await MatchFilter.init(matchfilter, inter)
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		item_slots = [ "item_0", "item_1", "item_2", "item_3", "item_4", "item_5" ]
 		matchfilter.add_projections(item_slots)
@@ -1662,7 +1662,7 @@ class DotaStats(MangoCog):
 		filter1: The primary filter that determines the denominator
 		filter2: The secondary filter that determines the numerator
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		filter1 = await MatchFilter.init(filter1, inter)
 		filter2 = await MatchFilter.init(filter2, inter)

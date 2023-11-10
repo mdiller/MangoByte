@@ -698,7 +698,7 @@ class Dotabase(MangoCog):
 		----------
 		hero: The name or id of the hero
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		description = ""
 		def add_attr(name, base_func, gain_func):
@@ -776,7 +776,7 @@ class Dotabase(MangoCog):
 		----------
 		hero: The name of the hero
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		
 		# talents = list(map(lambda t: LocaleWrapper.wrap(inter, t.ability).localized_name, hero.talents))
 		image = await drawdota.draw_hero_talents(hero)
@@ -793,7 +793,7 @@ class Dotabase(MangoCog):
 		----------
 		ability: The name of the ability, or a hero name and the ability slot
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		def format_values(values):
 			if values is None:
@@ -980,7 +980,7 @@ class Dotabase(MangoCog):
 		----------
 		item: The name of the dota 2 item to get
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		description = ""
 
@@ -1053,7 +1053,7 @@ class Dotabase(MangoCog):
 	@commands.slash_command()
 	async def emoticon(self, inter: disnake.CmdInter):
 		"""Commands for dota 2 emotes"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 	@emoticon.sub_command(name="show")
 	async def emoticon_show(self, inter: disnake.CmdInter, name):
@@ -1111,7 +1111,7 @@ class Dotabase(MangoCog):
 		----------
 		name: The name of a hero, ability, or item. Leave blank to get random lore!
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		lore_info = {}
 		found = False
 
@@ -1188,7 +1188,7 @@ class Dotabase(MangoCog):
 		name: The name of the hero or ability to get aghanim info for
 		type: The type of aghanim information you're looking for
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		only_do_scepter = type == "Scepter"
 		only_do_shard = type == "Shard"
 
@@ -1321,7 +1321,7 @@ class Dotabase(MangoCog):
 		hero1: The first of the two heroes to fuse
 		hero2: The second of the two heroes to fuse
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 		if hero1.id == hero2.id:
 			raise UserError("Fusing something with itself sounds boring")
@@ -1413,7 +1413,7 @@ class Dotabase(MangoCog):
 		----------
 		tier: The neutral item tier to show
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		if tier == 0:
 			tier = None
 
@@ -1445,7 +1445,7 @@ class Dotabase(MangoCog):
 		hero: The hero to use. Leave this blank to random a hero
 		level: What level view the stats of this hero at
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		stat_category = next((c for c in self.hero_stat_categories if c["section"] == "Combat Stats"), None)["stats"]
 
 		description = ""
@@ -1486,7 +1486,7 @@ class Dotabase(MangoCog):
 		hero_count: The number of hero rows to show
 		reverse: Whether or not the sorting should be reversed
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		embed = disnake.Embed()
 
 		image = disnake.File(await drawdota.draw_herostatstable(stat, level, hero_count, reverse, self.hero_stat_categories, self.leveled_hero_stats), "herotable.png")
@@ -1503,7 +1503,7 @@ class Dotabase(MangoCog):
 		----------
 		hero: The hero who's abilities to show
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		abilities = []
 		for ability in list(filter(lambda a: a.slot is not None, hero.abilities)):
 			if not hero.id == 74: # invoker

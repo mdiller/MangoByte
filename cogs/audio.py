@@ -295,7 +295,7 @@ class Audio(MangoCog):
 	@commands.slash_command()
 	async def play(self, inter: disnake.CmdInter):
 		"""Root command for clip-controlling commands"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 
 	@play.sub_command(name="local")
 	async def play_local(self, inter: disnake.CmdInter, clipname: str):
@@ -323,7 +323,7 @@ class Audio(MangoCog):
 	@commands.slash_command()
 	async def clips(self, inter: disnake.CmdInter):
 		"""Root command for listing different kinds of clips"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 	
 
 	async def clips_pager(self, inter: disnake.CmdInter, title: str, clipids: List[str], cliptext: List[str] = None, page: int = 1, more_pages: bool = False):
@@ -412,7 +412,7 @@ class Audio(MangoCog):
 	@commands.slash_command()
 	async def stop(self, inter: disnake.CmdInter):
 		"""Stops the currently playing clip"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		audioplayer = await self.audioplayer(inter)
 		while not audioplayer.clipqueue.empty():
 			try:
@@ -426,7 +426,7 @@ class Audio(MangoCog):
 	@commands.slash_command()
 	async def replay(self, inter: disnake.CmdInter):
 		"""Replays the last played clip"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		last_clip = (await self.audioplayer(inter)).last_clip
 		if last_clip == None:
 			await inter.send("Nobody said anythin' yet")
@@ -443,7 +443,7 @@ class Audio(MangoCog):
 		----------
 		clipid: A clipid (see '/docs Clips' for more info) or leave this blank, which will get the last played clip
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		if clipid is None:
 			if (await self.audioplayer(inter)).last_clip == None:
 				await inter.send("Nobody said anythin' yet")
@@ -502,7 +502,7 @@ class Audio(MangoCog):
 		----------
 		message: A message to say
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		clip = await self.do_smarttts(message, inter)
 		await self.print_clip(inter, clip)
 
@@ -719,7 +719,7 @@ class Audio(MangoCog):
 		----------
 		target: Whether you're setting your outro or your intro
 		clip: A file to set as your clip. Must be an mp3 less than 4 seconds long."""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		print(f"setting {target} to {clip.filename}")
 
 		clipnum = {

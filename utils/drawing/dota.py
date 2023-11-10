@@ -68,6 +68,10 @@ hero_infos = {}
 item_infos = {}
 ability_infos = {}
 
+def get_text_size(font, text):
+	bbox = font.getbbox(text)
+	return [ bbox[2] - bbox[0], bbox[3] - bbox[1] ]
+
 def get_item_color(item, default=None):
 	if item is None:
 		return default
@@ -134,7 +138,7 @@ async def get_level_image(level):
 	font_adjustment_y = -4
 	level = str(level)
 	font = get_table_font(24)
-	font_size = font.getsize(level)
+	font_size = get_text_size(font, level)
 	x_loc = (image.size[0] / 2) - (font_size[0] / 2)
 	y_loc = (image.size[1] / 2) - (font_size[1] / 2)
 	draw.text((x_loc, y_loc + font_adjustment_y), level, font=font, fill=faded_yellow_color)
@@ -379,9 +383,9 @@ async def draw_match_table_row(table, match, player, is_parsed, is_ability_draft
 	if is_parsed:
 		row.extend([
 			TextCell(player.get("actions_per_min")),
-			TextCell(get_lane(player))
+			TextCell(get_lane(player)),
+			ImageCell(img=await get_active_aghs_image(player), height=48)
 		])
-	row.append(ImageCell(img=await get_active_aghs_image(player), height=48))
 	if has_talents:
 		row.append(ImageCell(img=await get_talents_image(player.get("ability_upgrades_arr"), player["hero_id"]), height=48))
 	row.append(ImageCell(img=await get_item_images(player), height=48))
@@ -438,9 +442,9 @@ async def draw_match_table(match):
 	if is_parsed:
 		headers.extend([
 			TextCell("APM"),
-			TextCell("Lane")
+			TextCell("Lane"),
+			EmptyCell() # Aghs
 		])
-	headers.append(EmptyCell()) # Aghs
 	if has_talents:
 		headers.append(EmptyCell())
 	headers.append(TextCell("Items"))
@@ -689,7 +693,7 @@ def create_dota_gif_main(match, stratz_match, start_time, end_time, ms_per_secon
 		image = paste_image(image, clock_bg_image, (image.width // 2) - (clock_bg_image.width // 2), 0)
 		draw = ImageDraw.Draw(image)
 		clock_text = get_pretty_time(abs(t))
-		clock_pos = ((image.width // 2) - (font.getsize(clock_text)[0] // 2), -1)		
+		clock_pos = ((image.width // 2) - (get_text_size(font, clock_text)[0] // 2), -1)		
 		draw.text(clock_pos, clock_text, font=font, fill="#ffffff")
 
 		image.save(process.stdin, "gif")
@@ -1114,7 +1118,7 @@ def get_poly_points(n, radius, origin=(0, 0), radius_percentages=None):
 
 def draw_poly_label(draw, point, center, text):
 	font = ImageFont.truetype(settings.resource("images/arial_unicode_bold.ttf"), 16)
-	font_size = font.getsize(text)
+	font_size = get_text_size(font, text)
 	point = list(point)
 	if point[0] < center[0]:
 		point[0] -= font_size[0]

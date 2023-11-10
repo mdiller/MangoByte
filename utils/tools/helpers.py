@@ -28,6 +28,10 @@ MENTION_PATTERN = re.compile('|'.join(MENTION_TRANSFORMS.keys()))
 
 audio_extensions = "mp3|wav|ogg"
 
+async def safe_defer(inter: disnake.CmdInter):
+	if inter.response._response_type is None:
+		await inter.response.defer()
+
 def slash_command_name(inter: disnake.CmdInter):
 	result = inter.application_command.qualified_name
 	if not isinstance(inter.application_command, commands.SubCommand):

@@ -148,6 +148,7 @@ class DotaPlayer():
 
 	@commands.converter_method
 	async def convert(cls, inter: disnake.CmdInter, player: str):
+		await safe_defer(inter)
 		is_author = player is None or player == ""
 		if is_author:
 			player = inter.author
@@ -631,6 +632,7 @@ class MatchFilter():
 
 	@commands.converter_method
 	async def convert(cls, inter: disnake.CmdInter, argument: str):
+		await safe_defer(inter)
 		parser = InputParser(argument)
 		args = create_matchfilter_args(inter)
 		for arg in args:

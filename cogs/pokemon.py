@@ -124,7 +124,7 @@ class Pokemon(MangoCog):
 		pokemon: The name or id of the pokemon
 		shiny: Set to true if you want to see the shiny version of the pokemon
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		
 		data, species_data = await self.get_pokemon_data(pokemon)
 
@@ -165,7 +165,7 @@ class Pokemon(MangoCog):
 		pokemon: The name or id of the pokemon
 		old: Set to true to use the old version of the pokemon's cry, if it exists
 		"""
-		await inter.response.defer()
+		await self.safe_defer(inter)
 		# Audio files for these pokemon cries were gotten from [Veekun](https://veekun.com/dex/downloads). Veekun does not have the cries for Generation VII yet, so I won't be able to play those.
 		words = pokemon.split(" ")
 		pokemon = " ".join(words)

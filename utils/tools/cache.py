@@ -57,7 +57,7 @@ class Cache:
 	cache_data: typing.Dict[str, CacheItem]
 	def __init__(self, loop):
 		self.loop = loop
-		self.lock = asyncio.Lock(loop=self.loop)
+		self.lock = asyncio.Lock()
 		self.cache_dir = settings.resource("cache/")
 		if not os.path.exists(self.cache_dir):
 			os.makedirs(self.cache_dir)

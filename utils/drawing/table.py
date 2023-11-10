@@ -9,6 +9,10 @@ table_font = settings.resource("images/arial_unicode_bold.ttf")
 # cache of table_font based on size
 table_font_cache = {}
 
+def get_text_size(font, text):
+	bbox = font.getbbox(text)
+	return [ bbox[2] - bbox[0], bbox[3] - bbox[1] ]
+
 def get_table_font(size):
 	if size not in table_font_cache:
 		table_font_cache[size] = ImageFont.truetype(table_font, size)
@@ -47,6 +51,9 @@ class Cell:
 		self.border_color = kwargs.get('border_color', "#ffffff")
 
 	def base_render(self, draw, image, x, y, width, height):
+		if width == 0 or height == 0:
+			return image, draw # dont render anything if width or height is 0
+
 		# background
 		if self.background:
 			draw.rectangle([x, y, x + width - 1, y + height - 1], fill=self.background)
@@ -122,7 +129,7 @@ class TextCell(Cell):
 		self.vertical_align = kwargs.get('vertical_align', 'middle') # top middle bottom
 
 		self.padding = get_padding(kwargs, [ 0, 5, 0, 5 ])
-		self.text_size = self.font.getsize(self.text)
+		self.text_size = get_text_size(self.font, self.text)
 		if not self.width:
 			self.width = self.padding[1] + self.text_size[0] + self.padding[3]
 		if not self.height:
@@ -136,7 +143,7 @@ class TextCell(Cell):
 			words = words[1:]
 			i = 0
 			for word in words:
-				if self.font.getsize(lines[i] + " " + word)[0] < actual_width:
+				if get_text_size(self.font, lines[i] + " " + word)[0] < actual_width:
 					lines[i] += " " + word
 				else:
 					i += 1
@@ -149,7 +156,7 @@ class TextCell(Cell):
 		total_height = self.font.size + ((len(lines) - 1) * (line_padding + self.font.size))
 
 		for i in range(0, len(lines)):
-			text_size = self.font.getsize(lines[i])
+			text_size = get_text_size(self.font, lines[i])
 			x_loc = {
 				'left': x + self.padding[3],
 				'center': int(x + (width / 2) - (text_size[0] / 2)),
@@ -183,7 +190,7 @@ class SlantedTextCell(Cell):
 		self.rotation_rad = math.radians(self.rotation)
 
 		self.padding = get_padding(kwargs, [ 10, 10, 10, 10 ])
-		self.text_size = self.font.getsize(self.text)
+		self.text_size = get_text_size(self.font, self.text)
 		if not self.width:
 			self.width = self.padding[1] + self.text_size[1] + self.padding[3]
 		if not self.height:
@@ -254,7 +261,7 @@ class ImageCell(Cell):
 	def render(self, draw, image, x, y, width, height):
 		if not self.image:
 			return image, draw # no image, so this is basically an empty cell
-		actual_image = self.image.resize((self.width - (self.padding[1] + self.padding[3]), self.height - (self.padding[0] + self.padding[2])), Image.ANTIALIAS)
+		actual_image = self.image.resize((self.width - (self.padding[1] + self.padding[3]), self.height - (self.padding[0] + self.padding[2])), Image.LANCZOS)
 		image = paste_image(image, actual_image, x + self.padding[3], y + self.padding[0])
 		draw = ImageDraw.Draw(image)
 		return image, draw
