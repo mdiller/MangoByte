@@ -6,7 +6,7 @@ Mangobyte has a feature to allow users to be very specific when requesting infor
 
 ### Filter options:
 
-*Note: Many of these options allow for slight variations on the text. If you want more info and can read regular expressions, see the MatchFilter class in [this file](https://github.com/mdiller/MangoByte/blob/master/cogs/utils/commandargs.py)*
+*Note: Many of these options allow for slight variations on the text. If you want more info and can read regular expressions, see the MatchFilter class in [this file](https://github.com/mdiller/MangoByte/blob/master/utils/command/commandargs.py)*
 
 - won/lost
 - ranked/unranked

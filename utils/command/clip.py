@@ -291,6 +291,8 @@ class DotaChatWheel(Clip):
 			embed.add_field(name="Category", value=self.message.category)
 		allchat_value = "Yes" if self.message.all_chat else "No"
 		embed.add_field(name="All-Chat", value=allchat_value)
+		if self.message.source:
+			embed.add_field(name="Source", value=self.message.source)
 
 		self.add_info_embed_parts(embed)
 		return embed
