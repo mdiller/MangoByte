@@ -509,6 +509,8 @@ class Dotabase(MangoCog):
 
 	def get_chatwheel_sound(self, text, loose_fit=False):
 		def simplify(t):
+			if not t:
+				return ""
 			t = re.sub(r"[?!',！？.-]", "", t.lower())
 			return re.sub(r"[_，]", " ", t)
 		text = simplify(text)
