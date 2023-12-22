@@ -500,7 +500,7 @@ class DotaStats(MangoCog):
 		match_id = match["match_id"]
 		player = None
 		if steamid:
-			player = next((p for p in match['players'] if p['account_id'] == steamid), None)
+			player = next((p for p in match['players'] if p.get('account_id') == steamid), None)
 		if player is None:
 			await self.print_match_stats(inter, match)
 			return
