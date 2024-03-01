@@ -416,9 +416,13 @@ class General(MangoCog):
 			user_agent=settings.reddit["user_agent"])
 
 		try:
-			if re.search(r"(redd\.it|reddit.com)", post):
+			if re.search(r"^(https?://)?(www.)?(redd\.it|reddit.com)", post):
 				if not re.search(r"https?://", post):
 					post = "http://" + post
+				if "/s/" in post: 
+					# this is a share-link, so find the actual link by following the redirect
+					response = requests.get(post, allow_redirects=True)
+					post = response.url
 				submission = reddit.submission(url=post)
 			else:
 				submission = reddit.submission(id=post)
@@ -585,6 +589,9 @@ class General(MangoCog):
 
 	@tasks.loop(hours=12)
 	async def update_topgg(self):
+		logger.info("skipping_task: update_topgg() (api broken)")
+		return # just skipping this cuz the api seems broken, and this isnt important
+
 		logger.info("task_triggered: update_topgg()")
 		if settings.debug or (settings.topgg is None):
 			return # nothing to do here

@@ -44,6 +44,8 @@ def tagsToMarkdown(tag, plaintext=False):
 			if contents == "":
 				return ""
 			return f"[{contents}]({href})"
+		elif tag.name in [ "style" ]:
+			return ""
 		else:
 			# raise UserError(f"Unrecognized tag: {tag.name}")
 			return tagsToMarkdown(tag.contents)
@@ -109,12 +111,15 @@ class WikipediaPage():
 			text = re.sub(r"\[([^\[]*)]\([^\(]*\)", r"\1", text)
 			return len(text)
 
-		matches = re.finditer(r"([^\s\.]+\.)(\s|$)", summary)
+		# cut to length at the end of a sentance
+		sentance_end_pattern = r"([^\s\.]+\.)(\s|$)"
+		matches = re.finditer(sentance_end_pattern, summary)
 		if matches:
 			for match in list(matches):
 				if markdownLength(summary[0:match.end()]) > 70:
 					summary = summary[0:match.end()]
 					break
+		
 		self.markdown = summary
 
 		image_data = await httpgetter.get(f"{base_query}&generator=images&gimlimit=max&prop=imageinfo&iiprop=url&pageids={self.id}")

@@ -995,7 +995,7 @@ class DotaStats(MangoCog):
 			while i < len(matches_info) and len(matches) < 20:
 				if matches_info[i].get('version', None) is not None:
 					match = await get_match(matches_info[i]['match_id'])
-					player_match = next((p for p in match['players'] if p['account_id'] == steam32), None)
+					player_match = next((p for p in match['players'] if p.get('account_id') == steam32), None)
 					if player_match is not None:
 						player_matches.append(player_match)
 						matches.append(match)

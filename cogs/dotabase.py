@@ -685,6 +685,8 @@ class Dotabase(MangoCog):
 		for message in query.all():
 			clipids.append(f"dotachatwheel:{message.id}")
 			text = message.message
+			if not text:
+				text = ""
 			sizelimit = 45
 			if len(text) > sizelimit:
 				text = text[:sizelimit - 3] + "..."
