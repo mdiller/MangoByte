@@ -6,7 +6,7 @@ import typing
 import cogs.dotastats
 import utils.command.commandargs
 import utils.tools.botdata as botdata
-from dotabase import Hero
+from dotabase import Hero, Facet
 from disnake.ext import commands
 from utils.tools.globals import settings, logger, httpgetter
 from utils.tools.helpers import *
@@ -149,33 +149,73 @@ def get_commands_with_arg(bot, argtype):
 async def update_emoji(bot: commands.Bot):
 	emoji_json_file = settings.resource("json/emoji.json")
 	emoji_json = read_json(emoji_json_file)
-	if settings.emoji_dev_server is None:
-		print("Can't update emoji without 'emoji_dev_server' set in settings file")
+	if settings.emoji_dev_servers is None:
+		print("Can't update emoji without 'emoji_dev_servers' set in settings file")
 		return
-	guild = bot.get_guild(settings.emoji_dev_server)
+	# guild = bot.get_guild(settings.emoji_dev_servers)
+
+	emoji_guilds: typing.List[disnake.Guild]
+	emoji_guilds = []
+	for server_id in settings.emoji_dev_servers:
+		emoji_guilds.append(bot.get_guild(server_id))
+
+	existing_emojis = []
+	for guild in emoji_guilds:
+		existing_emojis.extend(guild.emojis)
+
+	EMOJI_PER_SERVER_LIMIT = 48
+	
+	open_slots = (EMOJI_PER_SERVER_LIMIT * len(emoji_guilds)) - len(existing_emojis)
+	print(f"{open_slots} open emoji slots")
+	
+	# add any extra emoji that we dont have
+	for guild in emoji_guilds:
+		for emoji in guild.emojis:
+			if emoji.name not in emoji_json:
+				imgpath = settings.resource(f"images/emojis/{emoji.name}.png")
+				with open(imgpath, 'wb+') as f:
+					f.write((await httpgetter.get(str(emoji.url), return_type="bytes")).read())
+				print(f"recording '{emoji.name}' emoji")
+				emoji_json[emoji.name] = emoji.id
+
+	emojis_to_add = [] # tuples of emoji_name, image url
+
 	dotabase = bot.get_cog("Dotabase")
 	# check for any missing heroes
 	for hero in dotabase.session.query(Hero):
 		hero: Hero
 		emoji_name =f"dota_hero_{hero.name}"
 		if emoji_name not in emoji_json:
-			# missing this hero, gotta add it
-			print(f"Adding emoji for {hero.localized_name}")
-			url = dotabase.vpkurl + hero.icon
-			image = await httpgetter.get(url, return_type="filename", cache=True)
-			with open(image, "rb") as f:
-				image = f.read()
-			emoji = await guild.create_custom_emoji(name=emoji_name, image=image, reason=f"New Hero got added")
-			emoji_json[emoji_name] = emoji.id
+			emojis_to_add.append((emoji_name, dotabase.vpkurl + hero.icon))
+
+	# check for any missing facet icons
+	for facet in dotabase.session.query(Facet):
+		facet: Facet
+		emoji_name =f"dota_facet_icon_{facet.icon_name}"
+		if len(emoji_name) > 32:
+			emoji_name = emoji_name[:32]
+		if emoji_name not in emoji_json:
+			emojis_to_add.append((emoji_name, dotabase.vpkurl + facet.icon))
+
+	guild_index = 0
+	guild_slots_available = 0
+	# add the new dota emojis
+	for emoji_name, emoji_url in emojis_to_add:
+		print(f"Adding new emoji {emoji_name}")
+		image = await httpgetter.get(emoji_url, return_type="filename", cache=True)
+		with open(image, "rb") as f:
+			image = f.read()
+		
+		while guild_index < len(emoji_guilds) and guild_slots_available <= 0:
+			guild_index += 1
+			guild_slots_available = EMOJI_PER_SERVER_LIMIT - len(emoji_guilds[guild_index].emojis)
+		if guild_index >= len(emoji_guilds):
+			print("RAN OUT OF ROOM FOR NEW EMOJIS!!!!!!!!!!\n\n\nNEED NEW EMOJIS GUILD!!!!")
+			break
 	
-	# add any extra emoji that we dont have
-	for emoji in guild.emojis:
-		if emoji.name not in emoji_json:
-			imgpath = settings.resource(f"images/emojis/{emoji.name}.png")
-			with open(imgpath, 'wb+') as f:
-				f.write((await httpgetter.get(str(emoji.url), return_type="bytes")).read())
-			print(f"adding '{emoji.name}' emoji")
-			emoji_json[emoji.name] = emoji.id
+		emoji = await emoji_guilds[guild_index].create_custom_emoji(name=emoji_name, image=image, reason=f"New Dota emoji")
+		emoji_json[emoji_name] = emoji.id
+		guild_slots_available -= 1
 
 	write_json(emoji_json_file, emoji_json)
 	

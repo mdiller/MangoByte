@@ -1,3 +1,8 @@
+'''''
+PROMPT:
+
+[- Used So Far: 0.0¢ | 0 tokens -]
+'''''
 import datetime
 import html
 import json

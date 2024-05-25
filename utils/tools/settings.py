@@ -83,8 +83,8 @@ class Settings:
 	
 	# used for storing emoji mango needs to use
 	@property
-	def emoji_dev_server(self):
-		return self.json_data.get("emoji_dev_server", None)
+	def emoji_dev_servers(self):
+		return self.json_data.get("emoji_dev_servers", None)
 
 	# BELOW ARE SOME STATICS NOT DEFINED IN THE SETTINGS.JSON FILE
 
