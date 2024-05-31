@@ -26,6 +26,7 @@ from cogs.mangocog import *
 
 CRITERIA_ALIASES = read_json(settings.resource("json/criteria_aliases.json"))
 DOTA_LANG_MAP = read_json(settings.resource("json/dota_lang_map.json"))
+FACET_COLORS = read_json(settings.resource("json/facet_colors.json"))
 
 session = dotabase_session()
 
@@ -154,7 +155,7 @@ class Dotabase(MangoCog):
 		self.patches_regex = ""
 		self.build_helpers()
 		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
-		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos(), self.get_ability_infos(), self.vpkurl)
+		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos(), self.get_ability_infos(), self.get_facet_infos(), self.vpkurl)
 	
 	@property
 	def description(self):
@@ -489,6 +490,21 @@ class Dotabase(MangoCog):
 			}
 		return result
 
+	def get_facet_infos(self):
+		result = {}
+		for facet in session.query(Facet):
+			if facet.icon is None:
+				continue
+			facet_identifier = f"{facet.hero_id}_{facet.slot + 1}"
+			result[facet_identifier] = {
+				"name": facet.localized_name,
+				"icon": self.vpkurl + facet.icon,
+				"icon_name": facet.icon_name,
+				"color": facet.color,
+				"gradient_id": facet.gradient_id
+			}
+		return result
+
 	def get_chat_wheel_infos(self):
 		result = {}
 		for message in session.query(ChatWheelMessage):
@@ -783,10 +799,10 @@ class Dotabase(MangoCog):
 		await self.safe_defer(inter)
 		
 		# talents = list(map(lambda t: LocaleWrapper.wrap(inter, t.ability).localized_name, hero.talents))
-		image = await drawdota.draw_hero_talents(hero)
-		image = disnake.File(image, f"{hero.name}_talents.png")
-
-		await inter.send(file=image)
+		images = await drawdota.draw_hero_talents(hero)
+		for image in images:
+			image = disnake.File(image, f"{hero.name}_talents.png")
+			await inter.send(file=image)
 
 
 	@commands.slash_command()
@@ -798,7 +814,9 @@ class Dotabase(MangoCog):
 		ability: The name of the ability, or a hero name and the ability slot
 		"""
 		await self.safe_defer(inter)
-
+		await self._ability(inter, ability)
+	
+	async def _ability(self, inter: disnake.CmdInter, ability: Ability):
 		def format_values(values):
 			if values is None:
 				return None
@@ -863,11 +881,6 @@ class Dotabase(MangoCog):
 				"value": ability.channel_time
 			},
 			{
-				"key": "cast_range",
-				"header": "Cast Range:",
-				"value": ability.cast_range if ability.cast_range != 0 else None
-			},
-			{
 				"key": "cast_point",
 				"header": "Cast Point:",
 				"value": ability.cast_point
@@ -890,6 +903,8 @@ class Dotabase(MangoCog):
 		formatted_attributes = []
 		scepter_attributes = []
 		shard_attributes = []
+
+		facet_attr_info = {}
 		for attribute in ability_special:
 			header = attribute.get("header")
 			if not header:
@@ -897,6 +912,11 @@ class Dotabase(MangoCog):
 			header = format_pascal_case(header)
 			is_scepter_upgrade = attribute.get("scepter_upgrade")
 			is_shard_upgrade = attribute.get("shard_upgrade")
+			is_facet_upgrade = attribute.get("facet_upgrade")
+
+			facet_attr_info[attribute.get("key")] = {
+				"header": header
+			}
 
 			value = attribute.get("value")
 			footer = attribute.get("footer")
@@ -918,11 +938,20 @@ class Dotabase(MangoCog):
 				scepter_attributes.append(text)
 			elif is_shard_upgrade and not ability.shard_grants:
 				shard_attributes.append(text)
+			elif is_facet_upgrade and not ability.facet_grants:
+				facet_attr_info[attribute.get("key")]["value"] = value
+				facet_attr_info[attribute.get("key")]["facet_name"] = is_facet_upgrade
 			else:
 				formatted_attributes.append(text)
 
 		if formatted_attributes:
 			description += "\n\n" + "\n".join(formatted_attributes)
+
+		# facet data retrieval
+		talent_rewrites = {} # dictionary of id => description rewrites that gets filled if this is changed by the given facet
+		if ability.facet_grants:
+			for ability_string in ability.facet.ability_strings:
+				talent_rewrites[ability_string.ability_id] = ability_string.description
 
 		# talents
 		talent_query = query_filter_list(session.query(Talent), Talent.linked_abilities, ability.name)
@@ -930,15 +959,20 @@ class Dotabase(MangoCog):
 		if len(talents) > 0:
 			description += f"\n\n{self.get_emoji('talent_tree')} **Talents:**"
 			for talent in talents:
-				description += f"\n[Level {talent.level}] {talent.localized_name}"
+				talent_text = talent.localized_name
+				if talent.ability_id in talent_rewrites:
+					talent_text = talent_rewrites[talent.ability_id]
+				description += f"\n[Level {talent.level}] {talent_text}"
 
 		# aghs scepter
 		if ability.scepter_description:
 			if ability.scepter_grants:
 				description += f"\n\n{self.get_emoji('aghanims_scepter')} **Granted by Aghanim's Scepter**"
 			else:
-				description += f"\n\n{self.get_emoji('aghanims_scepter')} __**Upgradable by Aghanim's Scepter**__\n"
-				description += f"*{ability.scepter_description}*\n"
+				description += f"\n\n{self.get_emoji('aghanims_scepter')} __**Upgradable by Aghanim's Scepter**__"
+				description += f"\n*{ability.scepter_description}*"
+				if len(scepter_attributes) > 0:
+					description += "\n"
 				for attribute in scepter_attributes:
 					description += f"\n{attribute}"
 
@@ -947,10 +981,53 @@ class Dotabase(MangoCog):
 			if ability.shard_grants:
 				description += f"\n\n{self.get_emoji('aghanims_shard')} **Granted by Aghanim's Shard**"
 			else:
-				description += f"\n\n{self.get_emoji('aghanims_shard')} __**Upgradable by Aghanim's Shard**__\n"
-				description += f"*{ability.shard_description}*\n"
+				description += f"\n\n{self.get_emoji('aghanims_shard')} __**Upgradable by Aghanim's Shard**__"
+				description += f"\n*{ability.shard_description}*"
+				if len(shard_attributes) > 0:
+					description += "\n"
 				for attribute in shard_attributes:
 					description += f"\n{attribute}"
+		
+		# facets
+		if ability.facet_grants:
+			emoji = self.get_emoji(f"dota_facet_icon_{ability.facet.icon_name}")
+			facet_name = ability.facet.localized_name
+			if facet_name == "":
+				facet_name = ability.localized_name
+			description += f"\n\n**Granted by Facet:** {emoji} {facet_name}"
+		
+		for facet in ability.hero.facets:
+			facet_desc = ""
+			for string in ability.facet_strings:
+				if string.facet_id == facet.id:
+					facet_desc += f"*{string.description}*"
+
+			ability_special = json.loads(facet.ability_special, object_pairs_hook=OrderedDict)
+			facet_desc_attrs = []
+			for key in facet_attr_info:
+				attr_info = facet_attr_info[key]
+				value = attr_info.get("value")
+				facet_name = attr_info.get("facet_name")
+				if facet_name and facet.name != facet_name:
+					continue
+				for attribute in ability_special:
+					f_key = attribute.get("key")
+					if f_key == key or f"bonus_{key}" == f_key:
+						value = attribute.get("value")
+				if value is not None:
+					header = attr_info["header"]
+					text = f"**{header}** {format_values(value)}"
+					facet_desc_attrs.append(text)
+			if len(facet_desc_attrs) > 0:
+				if facet_desc != "":
+					facet_desc += "\n"
+				for text in facet_desc_attrs:
+					facet_desc += f"\n{text}"
+			
+			if facet_desc != "":
+				emoji = self.get_emoji(f"dota_facet_icon_{facet.icon_name}")
+				description += f"\n\n{emoji} __**{facet.localized_name}**__ (Facet)\n{facet_desc}"
+
 
 		embed = disnake.Embed(description=description)
 
@@ -970,11 +1047,111 @@ class Dotabase(MangoCog):
 		
 		if ability.health_cost and ability.health_cost != "0":
 			embed.add_field(name="\u200b", value=f"{self.get_emoji('health_cost')} {format_values(ability.health_cost)}\n")
+		
+		if ability.cast_range and ability.cast_range != "0":
+			embed.add_field(name="\u200b", value=f"{self.get_emoji('castrange')} {format_values(ability.cast_range)}\n")
 
 		if ability.lore and ability.lore != "":
 			embed.set_footer(text=ability.lore)
 
 		await inter.send(embed=embed)
+	
+	@commands.slash_command()
+	async def facets(self, inter: disnake.CmdInter, hero: Hero):
+		"""Gets the facets for the given hero
+
+		Parameters
+		----------
+		hero: The name of the hero
+		"""
+		await self.safe_defer(inter)
+
+		facets = session.query(Facet).filter(Facet.hero_id == hero.id).all()
+
+		if len(facets) == 0:
+			raise UserError("Can't find facets for that hero")
+		
+		affected_talents = []
+		for talent in hero.talents:
+			if len(talent.ability.facet_strings) > 0:
+				affected_talents.append(talent)
+			
+		
+		for facet in facets:
+			embed = disnake.Embed()
+
+			description = ""
+			if facet.description != "":
+				description = facet.description
+			
+			facet_icon = f"{self.vpkurl}{facet.icon}"
+			color = FACET_COLORS["min"][facet.color + str(facet.gradient_id)]
+			
+			embed.color = disnake.Color(int(color[1:], 16))
+
+			localized_name = facet.localized_name
+
+			linked_ability: Ability
+			linked_ability = None
+			if len(facet.abilities) > 0:
+				linked_ability = facet.abilities[0]
+			
+			if linked_ability:
+				if localized_name == "":
+					localized_name = linked_ability.localized_name
+
+				if "hidden" in linked_ability.behavior:
+					if description == "":
+						description = linked_ability.description
+				else:
+					description += f"\n\nSee `/ability {linked_ability.localized_name}` for more info"
+				
+				if linked_ability.icon != "/panorama/images/spellicons/attribute_bonus_png.png":
+					embed.set_thumbnail(url=f"{self.vpkurl}{linked_ability.icon}")
+			
+			embed.set_author(name=localized_name, icon_url=facet_icon)
+
+			ability_strings = session.query(FacetAbilityString).filter(FacetAbilityString.facet_id == facet.id).all()
+
+			if len(ability_strings) < 0 and description != "":
+				description += "\n\n"
+
+			# granted_talents = []
+			for ability_string in ability_strings:
+				ability = session.query(Ability).filter(Ability.id == ability_string.ability_id).first()
+				if description != "" and not description.endswith("\n\n"):
+					description += "\n\n"
+				if ability.name.startswith("special_bonus_"):
+					# granted_talents.append(ability_string)
+					continue
+				description += f"**{ability.localized_name}**\n"
+				description += f"• {ability_string.description}"
+			
+			if len(affected_talents) > 0:
+				if not description.endswith("\n\n"):
+					description += "\n\n"
+				description += self.get_emoji('talent_tree') + " **Grants Talents:**"
+				for talent in affected_talents:
+					talent_text = talent.ability.localized_name
+					facet_string = talent.ability.facet_strings[0]
+					if facet_string.facet_id == facet.id:
+						talent_text = facet_string.description					
+					description += f"\n[Level {talent.level}] {talent_text}"
+
+			embed.description = description
+			await inter.send(embed=embed)
+	
+	@commands.slash_command()
+	async def innate(self, inter: disnake.CmdInter, hero: Hero):
+		"""Shows the given hero's innate ability
+
+		Parameters
+		----------
+		hero: The name of the hero
+		"""
+		await self.safe_defer(inter)
+		ability = session.query(Ability).filter_by(hero_id = hero.id, innate = 1).first()
+		await self._ability(inter, ability)
 
 	@commands.slash_command()
 	async def item(self, inter: disnake.CmdInter, item: Item):
@@ -1030,6 +1207,8 @@ class Dotabase(MangoCog):
 		description += "\n"
 		if item.cost and item.cost != "0":
 			description += f"{self.get_emoji('gold')} {item.cost:,}\n"
+		if item.cast_range and item.cast_range != "0":
+			description += f"{self.get_emoji('castrange')} {clean_values(item.cast_range)}  "
 		if item.mana_cost and item.mana_cost != "0":
 			description += f"{self.get_emoji('mana_cost')} {clean_values(item.mana_cost)}  "
 		if item.health_cost and item.health_cost != "0":

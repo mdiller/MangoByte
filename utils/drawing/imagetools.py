@@ -134,6 +134,26 @@ def colorize_image(filename1, filename2, out_filename):
 
 	image.save(out_filename, format="PNG")
 
+def create_gradient_square(color1: Color, color2: Color, size: int):
+	print("START_GRADIENT")
+	start_color = color1.rgb_tuple
+	end_color = color2.rgb_tuple
+	def interpolate_func(factor):
+		return tuple([
+			int(start_color[i] + (end_color[i] - start_color[i]) * factor)
+			for i in range(3)
+		])
+	
+	image = Image.new("RGBA", (size, size))
+	for x in range(size):
+		factor = x / float(size - 1)
+		color = interpolate_func(factor)
+		for y in range(size):
+			image.putpixel((x, y), color)
+	print("END_GRADIENT")
+	
+	return image
+
 
 # pastes image 2 onto image 1, preserving alpha/transparency
 # this will close the first image that was passed in, as it is assumed that this will replace it

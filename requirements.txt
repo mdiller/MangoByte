@@ -6,7 +6,7 @@ gTTS-token>=1.1.4
 SQLAlchemy==1.4.40
 Pillow>=9.0.1
 youtube-dl>=2018.8.28
-dotabase>=7.6.0
+dotabase>=7.7.0
 praw==6.0.0
 numpy>=1.22.0
 databases==0.2.2

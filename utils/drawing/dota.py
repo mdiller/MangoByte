@@ -1,5 +1,6 @@
 import math
 import os
+import json
 from queue import Empty
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
@@ -17,6 +18,11 @@ from utils.drawing.table import (ColorCell, DoubleCell, ImageCell, SlantedTextCe
 
 radiant_icon = settings.resource("images/radiant.png")
 dire_icon = settings.resource("images/dire.png")
+
+# mincolor and maxcolor dicts with keys like "Grey3" etc.
+# a script extracted this from vpk\panorama\styles\dotastyles.css
+with open(settings.resource("json/facet_colors.json"), "r") as f:
+	facet_colors = json.loads(f.read())
 
 discord_color0 = "#6f7377" # much lighter, mostly unused color
 discord_color1 = "#2C2F33"
@@ -67,6 +73,7 @@ vpkurl = None
 hero_infos = {}
 item_infos = {}
 ability_infos = {}
+facet_infos = {}
 
 def get_text_size(font, text):
 	bbox = font.getbbox(text)
@@ -82,11 +89,12 @@ def get_item_color(item, default=None):
 	else:
 		return default
 
-def init_dota_info(hero_info, item_info, ability_info, the_vpkurl):
-	global hero_infos, item_infos, ability_infos, vpkurl
+def init_dota_info(hero_info, item_info, ability_info, facet_info, the_vpkurl):
+	global hero_infos, item_infos, ability_infos, facet_infos, vpkurl
 	hero_infos = hero_info
 	item_infos = item_info
 	ability_infos = ability_info
+	facet_infos = facet_info
 	vpkurl = the_vpkurl
 
 def get_hero_name(hero_id):
@@ -119,6 +127,28 @@ async def get_item_image(item_id):
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
+async def get_facet_image(hero_id, facet_slot):
+	try:
+		# TODO: add caching of this
+		padding = 16
+		facet_info = facet_infos[f"{hero_id}_{facet_slot}"]
+		icon_cache_uri = f"facet_{facet_info['icon_name']}_{facet_info['color']}_{facet_info['gradient_id']}"
+		filename = await httpgetter.cache.get_filename(icon_cache_uri)
+		if filename:
+			return Image.open(filename)
+		color1 = Color(facet_colors["min"][facet_info["color"] + str(facet_info["gradient_id"])])
+		color2 = Color(facet_colors["max"][facet_info["color"] + str(facet_info["gradient_id"])])
+		icon_image = await get_url_image(facet_info["icon"])
+		gradient_image = create_gradient_square(color1, color2, icon_image.size[0] + (padding * 2))
+		image = paste_image(gradient_image, icon_image, padding, padding)
+
+		filename = await httpgetter.cache.new(icon_cache_uri, "png")
+		image.save(filename, format="PNG")
+		return image
+	except KeyError:
+		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
+
+
 async def get_level_image(level):
 	rowheight = 48
 
@@ -126,16 +156,16 @@ async def get_level_image(level):
 	draw = ImageDraw.Draw(image)
 
 	size = image.size
-	outer_radius = 20
+	outer_radius = 21
 	inner_radius = outer_radius - 2
 	outer_circle = ((size[0] / 2) - outer_radius, (size[1] / 2) - outer_radius, 
 					(size[0] / 2) + outer_radius, (size[1] / 2) + outer_radius)
 	inner_circle = ((size[0] / 2) - inner_radius, (size[1] / 2) - inner_radius, 
 					(size[0] / 2) + inner_radius, (size[1] / 2) + inner_radius)
-	draw.ellipse(outer_circle, fill=discord_color3)
+	draw.ellipse(outer_circle, fill="#0c0c0e")
 	draw.ellipse(inner_circle, fill=discord_color4)
 
-	font_adjustment_y = -4
+	font_adjustment_y = -8
 	level = str(level)
 	font = get_table_font(24)
 	font_size = get_text_size(font, level)
@@ -356,7 +386,7 @@ async def get_hero_player_status_image(player):
 	if (player.get("leaver_status", 0) or 0) <= 1:
 		return image
 	disconnect_image = await get_url_image(vpkurl + "/panorama/images/hud/reborn/icon_disconnect_png.png")
-	disconnect_image = disconnect_image.resize((image.width, int((image.width / disconnect_image.width) * disconnect_image.height)), Image.ANTIALIAS)
+	disconnect_image = disconnect_image.resize((image.width, int((image.width / disconnect_image.width) * disconnect_image.height)), Image.LANCZOS)
 	image = paste_image(image, disconnect_image, 0, (image.height // 2) - (disconnect_image.height // 2))
 	return image
 
@@ -369,10 +399,12 @@ def truncate(text, max_size):
 
 async def draw_match_table_row(table, match, player, is_parsed, is_ability_draft, has_talents):
 	draw_bear_row = player["hero_id"] == 80 and len(player.get("additional_units") or []) > 0
+	
 	row = [
 		ColorCell(width=8, color=("green" if player["isRadiant"] else "red")),
 		create_party_cell(match, player, can_be_bottom=(not draw_bear_row)),
 		ImageCell(img=await get_hero_player_status_image(player), height=48),
+		ImageCell(img=await get_facet_image(player["hero_id"], player["hero_variant"]), height=48) if "hero_variant" in player else EmptyCell(),
 		ImageCell(img=await get_level_image(player.get("level", 1))),
 		TextCell(truncate(player.get("personaname", None) or "Anonymous", 25)),
 		TextCell(player.get("kills")),
@@ -429,6 +461,7 @@ async def draw_match_table(match):
 	has_talents = has_ability_upgrades and match["start_time"] > 1481500800
 	# Header
 	headers = [
+		EmptyCell(),
 		EmptyCell(),
 		EmptyCell(),
 		EmptyCell(),
@@ -569,7 +602,7 @@ def create_dota_gif_main(match, stratz_match, start_time, end_time, ms_per_secon
 	building_data = read_json(settings.resource("json/building_data.json"))
 
 	map_image = Image.open(settings.resource("images/map/dota_map.png"))
-	map_image = map_image.resize((256, 256), Image.ANTIALIAS)
+	map_image = map_image.resize((256, 256), Image.LANCZOS)
 
 	clock_bg_image = Image.open(settings.resource("images/map/clock_background.png"))
 	font = ImageFont.truetype(settings.resource("images/arial_unicode_bold.ttf"), 16)
@@ -593,7 +626,7 @@ def create_dota_gif_main(match, stratz_match, start_time, end_time, ms_per_secon
 		deathEvents = playbackData["deathEvents"]
 		scale = 0.75
 		icon = hero_icons[str(player["heroId"])]
-		icon = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
+		icon = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.LANCZOS)
 		# icon = outline_image(icon, 2, (0, 255, 0) if player["isRadiant"] else (255, 0, 0))
 		x = 0
 		y = 0
@@ -630,7 +663,7 @@ def create_dota_gif_main(match, stratz_match, start_time, end_time, ms_per_secon
 			"barracks": int(map_image.width * (12 / 300)),
 			"ancient": int(map_image.width * (25 / 300))
 		}[b["type"]]
-		icon = icon.resize((size, size), Image.ANTIALIAS)
+		icon = icon.resize((size, size), Image.LANCZOS)
 
 		building = {
 			"icon": icon,
@@ -667,7 +700,7 @@ def create_dota_gif_main(match, stratz_match, start_time, end_time, ms_per_secon
 	for i in range(0, 9):
 		scale = 0.5
 		icon = Image.open(settings.resource(f"images/map/rune_{i}.png"))
-		rune_icons[i] = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.ANTIALIAS)
+		rune_icons[i] = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.LANCZOS)
 
 
 	process = subprocess.Popen(["gifsicle", "--multifile", "-d", str(ms_per_second // 10), "--conserve-memory", "-O3", "-", "-o", filename], stdin=subprocess.PIPE, bufsize=-1)
@@ -853,6 +886,7 @@ async def draw_matches_table(matches, game_strings):
 	# Header
 	headers = [
 		TextCell("Hero", padding=0),
+		EmptyCell(),
 		TextCell(""),
 		TextCell("Result"),
 		TextCell("K", horizontal_align="center"),
@@ -876,8 +910,10 @@ async def draw_matches_table(matches, game_strings):
 			first = False
 		else:
 			table.add_row([ColorCell(color=discord_color2, height=12) for i in range(len(headers))])
+		
 		table.add_row([
 			ImageCell(img=await get_hero_image(match["hero_id"]), height=48),
+			ImageCell(img=await get_facet_image(match["hero_id"], match["hero_variant"]), height=48) if "hero_variant" in match else EmptyCell(),
 			DoubleCell(
 				TextCell(get_hero_name(match["hero_id"]), font_size=24),
 				TextCell(match.get("match_id"), font_size=12, horizontal_align="left", color=grey_color)
@@ -907,13 +943,30 @@ async def draw_matches_table(matches, game_strings):
 
 # given talents as they are stored in dotabase
 async def draw_hero_talents(hero):
-	talents = list(map(lambda t: t.ability.localized_name, hero.talents))
+	talents = list(map(lambda t: t, hero.talents))
 	talent_rows = [
 		[ talents[7], talents[6] ],
 		[ talents[5], talents[4] ],
 		[ talents[3], talents[2] ],
 		[ talents[1], talents[0] ]
 	]
+
+	do_facets_change_talents = False
+	for row in talent_rows:
+		for talent in row:
+			if len(talent.ability.facet_strings) > 0:
+				do_facets_change_talents = True
+	
+	if not do_facets_change_talents:
+		return [ await draw_hero_talents_single(hero, talent_rows, None) ]
+	else:
+		images = []
+		for facet in hero.facets:
+			images.append(await draw_hero_talents_single(hero, talent_rows, facet))
+		return images
+
+# given talents as they are stored in dotabase
+async def draw_hero_talents_single(hero, talent_rows, facet = None):
 	image = Image.open(settings.resource("images/talents.png"))
 	draw = ImageDraw.Draw(image)
 
@@ -922,8 +975,23 @@ async def draw_hero_talents(hero):
 	header_width = 655
 	header_height = 51
 
-	cell = TextCell(hero.localized_name, color="#dddddd", font_size=28, horizontal_align="center")
-	cell.render(draw, image, header_x, header_y, header_width, header_height)
+	cell = TextCell(hero.localized_name, color="#cccccc", font_size=28, horizontal_align="center")
+	if facet is None:
+		cell.render(draw, image, header_x, header_y, header_width, header_height)
+	else:
+		cell.horizontal_align="right"
+		icon_size = 40
+		spacing = 6
+		text_width = int((header_width / 2) - (icon_size / 2) - spacing)
+		cell.render(draw, image, header_x, header_y, text_width, header_height)
+		cell = TextCell(facet.localized_name, color="#cccccc", font_size=28, horizontal_align="left")
+		right_text_x = int((header_width / 2) + (icon_size / 2) + spacing) + header_x
+		cell.render(draw, image, right_text_x, header_y, text_width, header_height)
+		
+		facet_icon = await get_facet_image(hero.id, facet.slot + 1)
+		facet_icon = facet_icon.resize((icon_size, icon_size), Image.LANCZOS)
+		image = paste_image(image, facet_icon, int((header_width - icon_size) / 2) + header_x, int((header_height - icon_size) / 2) + header_y)
+		draw = ImageDraw.Draw(image)
 
 	box_width = 306
 	box_height = 73
@@ -938,10 +1006,20 @@ async def draw_hero_talents(hero):
 		for j in range(0, 2):
 			x = start_x[j]
 			y = start_y + (i * (box_height + box_margin_y))
-			text = talent_rows[i][j]
+			talent = talent_rows[i][j]
 
-			cell = TextCell(text, color="#cca770", font_size=20, wrap=True, padding=[ 0, 15, 0, 15 ], horizontal_align="center")
-			cell.render(draw, image, x, y, box_width, box_height)
+			shadow_color = None
+			text = talent.ability.localized_name
+			if facet:
+				for string in facet.ability_strings:
+					if string.ability_id == talent.ability_id:
+						text = string.description
+				
+				if len(talent.ability.facet_strings) > 0:
+					shadow_color = facet_colors["min"][facet.color + str(facet.gradient_id)]
+
+			cell = TextCell(text, color="#cca770", font_size=20, wrap=True, padding=[ 0, 15, 0, 15 ], horizontal_align="center", shadow_color=shadow_color, shadow_amount=6)
+			image, draw = cell.render(draw, image, x, y, box_width, box_height)
 
 	fp = BytesIO()
 	image.save(fp, format="PNG")
@@ -962,7 +1040,7 @@ async def fuse_hero_images(hero1, hero2):
 async def draw_courage(hero_id, icon_ids):
 	# scaled to 128 height
 	hero_image = await get_hero_portrait(hero_id)
-	hero_image = hero_image.resize((97, 128), Image.ANTIALIAS)
+	hero_image = hero_image.resize((97, 128), Image.LANCZOS)
 
 	table = Table(background="#000000")
 	table.add_row([
@@ -1331,33 +1409,44 @@ async def draw_itemrecipe(main_item, components, products):
 			image = await get_item_image(row[j].id)
 			base_image.paste(image, row_points[i][j])
 
-	base_image = base_image.resize((base_size[0] // 2, base_size[1] // 2), Image.ANTIALIAS)
+	base_image = base_image.resize((base_size[0] // 2, base_size[1] // 2), Image.LANCZOS)
 
 	base_image.save(filename, format="PNG")
 
 	return filename
 
+INNATE_ICON_PATH = "/panorama/images/hud/facets/innate_icon_large_png.png"
+
 async def draw_heroabilities(abilities):
-	abilities = sorted(abilities, key=lambda a: a.slot)
+	abilities = sorted(abilities, key=lambda a: -1 if (a.icon == INNATE_ICON_PATH) else a.slot)
 	table = Table(background=discord_color2)
+	icon_size = 64
 	for ability in abilities:
+		padding = 0
+		if ability.icon == INNATE_ICON_PATH:
+			padding = 8
 		icon = await get_url_image(f"{vpkurl}{ability.icon}")
-		icon = icon.resize((icon.size[0] // 2, icon.size[1] // 2), Image.ANTIALIAS)
+		icon = icon.resize((icon_size - (padding * 2), icon_size - (padding * 2)), Image.LANCZOS)
 		row = [
-			ImageCell(img=icon),
+			ImageCell(img=icon, padding = padding),
 			TextCell(ability.localized_name, font_size=30, padding=10),
 			TextCell("")
 		]
 		if ability.scepter_grants:
 			aghs_icon = f"{vpkurl}/panorama/images/hud/reborn/aghsstatus_scepter_on_psd.png"
 			aghs_icon = await get_url_image(aghs_icon)
-			aghs_icon = aghs_icon.resize(icon.size, Image.ANTIALIAS)
+			aghs_icon = aghs_icon.resize(icon.size, Image.LANCZOS)
 			row[2] = ImageCell(img=aghs_icon)
 		elif ability.shard_grants:
 			aghs_icon = f"{vpkurl}/panorama/images/hud/reborn/aghsstatus_shard_on_psd.png"
 			aghs_icon = await get_url_image(aghs_icon)
-			# aghs_icon = aghs_icon.resize(icon.size, Image.ANTIALIAS)
+			# aghs_icon = aghs_icon.resize(icon.size, Image.LANCZOS)
 			row[2] = ImageCell(img=aghs_icon, padding_top=20)
+		elif ability.facet_grants:
+			facet_image = await get_facet_image(ability.facet.hero_id, ability.facet.slot + 1)
+			facet_image = facet_image.resize((icon_size, icon_size), Image.LANCZOS)
+			row[2] = ImageCell(img=facet_image)
+
 		table.add_row(row)
 	image = table.render()
 	
@@ -1471,7 +1560,7 @@ async def draw_item_slots(slot_item_counts: typing.List[typing.Tuple[int, int]])
 				x += gap_size
 
 		if len(images) == 6:
-			image_row = image_row.resize(((item_size_smaller[0] * len(images) + (border_gap * 2)), item_size_smaller[1]), Image.ANTIALIAS)
+			image_row = image_row.resize(((item_size_smaller[0] * len(images) + (border_gap * 2)), item_size_smaller[1]), Image.LANCZOS)
 		
 		table.add_row([ImageCell(img=image_row)])
 	image = table.render()

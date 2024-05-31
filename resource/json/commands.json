@@ -12,8 +12,8 @@
 		},
 		{
 			"name": "Dotabase",
-			"short_help": "For information about the game Dota 2 [Patch **7.36**]",
-			"help": "For information about the game Dota 2 [Patch **7.36**]\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see a website I built that interfaces with dotabase."
+			"short_help": "For information about the game Dota 2 [Patch **7.36a**]",
+			"help": "For information about the game Dota 2 [Patch **7.36a**]\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see a website I built that interfaces with dotabase."
 		},
 		{
 			"name": "DotaStats",
@@ -231,6 +231,15 @@
 			"prefix": "/"
 		},
 		{
+			"name": "facets",
+			"signature": null,
+			"short_help": "Gets the facets for the given hero",
+			"help": "Gets the facets for the given hero",
+			"aliases": [],
+			"cog": "Dotabase",
+			"prefix": "/"
+		},
+		{
 			"name": "firstmatch",
 			"signature": null,
 			"short_help": "Gets info about the player's first dota game",
@@ -280,6 +289,15 @@
 			"signature": null,
 			"short_help": "Displays a table of dota heroes sorted by a stat",
 			"help": "Displays a table of dota heroes sorted by a stat",
+			"aliases": [],
+			"cog": "Dotabase",
+			"prefix": "/"
+		},
+		{
+			"name": "innate",
+			"signature": null,
+			"short_help": "Shows the given hero's innate ability",
+			"help": "Shows the given hero's innate ability",
 			"aliases": [],
 			"cog": "Dotabase",
 			"prefix": "/"

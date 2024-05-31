@@ -121,7 +121,7 @@ def drawgraph(lines, colors, labels):
 
 
 	if downscale_amount != 1:
-		image = image.resize((width // downscale_amount, height // downscale_amount), Image.ANTIALIAS)
+		image = image.resize((width // downscale_amount, height // downscale_amount), Image.LANCZOS)
 
 	fp = BytesIO()
 	image.save(fp, format="PNG")

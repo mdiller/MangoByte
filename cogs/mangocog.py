@@ -23,6 +23,8 @@ class MangoCog(disnake.ext.commands.Cog):
 		self.bot = bot
 
 	def get_emoji(self, key):
+		if len(key) > 32: # cuz max length of emoji names
+			return key[:32]
 		return simple_get_emoji(key, self.bot)
 
 	@property

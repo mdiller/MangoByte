@@ -28,7 +28,7 @@ Mangobyte has recently finished migrating to slash commands. If you are having i
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 74 commands, separated into 6 categories
+Mangobyte currently has 76 commands, separated into 6 categories
 
 #### General
 Commands that don't really fit into the other categories
@@ -76,7 +76,7 @@ For playing audio in a voice channel
 ```
 
 #### Dotabase
-For information about the game Dota 2 [Patch **7.36**]
+For information about the game Dota 2 [Patch **7.36a**]
 
 ```
 /abilities           | Shows all of the abilities/spells for that hero                                          
@@ -85,10 +85,12 @@ For information about the game Dota 2 [Patch **7.36**]
 /courage             | Generates a challenge build with a random hero and items                                 
 /emoticon add        | Adds a dota emoticon as an animated emoji to this server                                 
 /emoticon show       | Gets the gif of a dota emoticon                                                          
+/facets              | Gets the facets for the given hero                                                       
 /fuseheroes          | Visually fuse together two heroes                                                        
 /hero                | Gets information about a specific hero                                                   
 /herostats           | Gets the stats for a hero at the specified level                                         
 /herotable           | Displays a table of dota heroes sorted by a stat                                         
+/innate              | Shows the given hero's innate ability                                                    
 /item                | Gets information about a specific dota 2 item                                            
 /lore                | Gets the lore of a hero, ability, or item                                                
 /neutralitems        | Displays neutral item information                                                        

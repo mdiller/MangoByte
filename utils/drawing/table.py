@@ -1,6 +1,6 @@
 import math
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from utils.tools.globals import settings
 from utils.drawing.imagetools import *
 
@@ -128,6 +128,9 @@ class TextCell(Cell):
 		self.horizontal_align = kwargs.get('horizontal_align', 'left') # left center right
 		self.vertical_align = kwargs.get('vertical_align', 'middle') # top middle bottom
 
+		self.shadow_color = kwargs.get('shadow_color', None) # top middle bottom
+		self.shadow_amount = kwargs.get('shadow_amount', 10) # top middle bottom
+
 		self.padding = get_padding(kwargs, [ 0, 5, 0, 5 ])
 		self.text_size = get_text_size(self.font, self.text)
 		if not self.width:
@@ -171,7 +174,14 @@ class TextCell(Cell):
 				'bottom': y + height - self.padding[2] - (total_height - y_diff)
 			}[self.vertical_align]
 
-
+			if self.shadow_color:
+				shadow_image = Image.new("RGBA", image.size, (255, 255, 255, 0))
+				shadow_draw = ImageDraw.Draw(shadow_image)
+				shadow_draw.text((x_loc, y_loc), lines[i], font=self.font, fill=self.shadow_color)
+				shadow_image = shadow_image.filter(ImageFilter.GaussianBlur(self.shadow_amount))
+				image = paste_image(image, shadow_image, 0, 0)
+				draw = ImageDraw.Draw(image)
+			
 			draw.text((x_loc, y_loc), lines[i], font=self.font, fill=self.color)
 		return image, draw
 
