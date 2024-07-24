@@ -109,12 +109,14 @@ class TextChannel(ConfigVarType):
 		return f"<#{value}>" if value else "None"
 
 	@classmethod
-	async def _parse(cls, value, inter):
+	async def _parse(cls, value, inter: disnake.Interaction):
 		try:
+			if value == "HERE":
+				return inter.channel.id
 			channel = await commands.TextChannelConverter().convert(inter, value)
 			return channel.id
 		except commands.BadArgument:
-			raise InvalidInputError("Try giving me a channel reference like `#general`")
+			raise InvalidInputError("Try giving me a channel reference like `#general`, or just say HERE to refer to this channel.")
 
 
 class Role(ConfigVarType):

@@ -135,7 +135,6 @@ def colorize_image(filename1, filename2, out_filename):
 	image.save(out_filename, format="PNG")
 
 def create_gradient_square(color1: Color, color2: Color, size: int):
-	print("START_GRADIENT")
 	start_color = color1.rgb_tuple
 	end_color = color2.rgb_tuple
 	def interpolate_func(factor):
@@ -150,7 +149,6 @@ def create_gradient_square(color1: Color, color2: Color, size: int):
 		color = interpolate_func(factor)
 		for y in range(size):
 			image.putpixel((x, y), color)
-	print("END_GRADIENT")
 	
 	return image
 
