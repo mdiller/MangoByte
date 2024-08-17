@@ -103,6 +103,23 @@ class Boolean(ConfigVarType):
 			raise InvalidInputError("Try giving me something like `enable` or `disable`")
 
 
+class HoursInteger(ConfigVarType):
+	@classmethod
+	async def _localize(cls, value, inter):
+		return str(value)
+
+	@classmethod
+	async def _parse(cls, value, inter):
+		error_text = "Try giving me a number between 1 and 100"
+		if not value.isdigit():
+			raise InvalidInputError(error_text)
+		value = int(value)
+		if value < 1 or value > 100:
+			raise InvalidInputError(error_text)
+		
+		return value
+
+
 class TextChannel(ConfigVarType):
 	@classmethod
 	async def _localize(cls, value, inter):

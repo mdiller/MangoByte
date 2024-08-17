@@ -245,5 +245,8 @@
 	"dota_facet_icon_double_bounce": 1244055269919686738,
 	"dota_facet_icon_brush": 1244055271395823637,
 	"dota_facet_icon_dawnbreaker_hamm": 1244056451165458494,
-	"castrange": 1245812256206229617
+	"castrange": 1245812256206229617,
+	"dota_facet_icon_focus_fire": 1274111073338921000,
+	"dota_facet_icon_lifestealer_rage": 1274111074613985465,
+	"dota_facet_icon_vortex_in": 1274111076081864765
 }

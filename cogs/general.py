@@ -18,6 +18,7 @@ import inspect
 
 import disnake
 import praw
+from prawcore import Redirect
 from bs4 import BeautifulSoup, Tag
 from disnake.ext import commands, tasks
 from sqlalchemy import desc
@@ -51,6 +52,12 @@ HELP_ARG_ENUM = commands.option_enum({
 	"Category: DotaStats": "cog:DotaStats",
 	"Category: Pokemon": "cog:Pokemon",
 	"Category: Admin": "cog:Admin"
+})
+
+REDDIT_COMMENTS_ENUM = commands.option_enum({
+	"Top 3": 3,
+	"Top 1": 1,
+	"None": 0
 })
 
 def load_words():
@@ -405,12 +412,13 @@ class General(MangoCog):
 		await inter.send(embed=embed)
 
 	@commands.slash_command()
-	async def reddit(self, inter: disnake.CmdInter, post: str):
+	async def reddit(self, inter: disnake.CmdInter, post: str, comments: REDDIT_COMMENTS_ENUM = 3):
 		"""Displays a formatted reddit post
 
 		Parameters
 		----------
-		post: The url or id of the post to link"""
+		post: The url or id of the post to link
+		comments: Which comments to show"""
 		if settings.reddit is None:
 			raise UserError("This MangoByte has not been configured to get reddit submissions. Gotta add your info to `settings.json`")
 
@@ -425,9 +433,10 @@ class General(MangoCog):
 				if not re.search(r"https?://", post):
 					post = "http://" + post
 				if "/s/" in post: 
-					# this is a share-link, so find the actual link by following the redirect
-					response = requests.get(post, allow_redirects=True)
-					post = response.url
+					try:
+						reddit.get(post)
+					except Redirect as e:
+						post = e.response.next.url
 				submission = reddit.submission(url=post)
 			else:
 				submission = reddit.submission(id=post)
@@ -443,31 +452,85 @@ class General(MangoCog):
 
 		character_limit = 600
 		# convert between markdown types
-		description = re.sub(r"\n(?:\*|-) (.*)", r"\n• \1", description)
-		description = re.sub(r"(?:^|\n)#+([^#\n]+)\n", r"\n__**\1**__ \n", description)
-		description = re.sub(r"\n+---\n+", r"\n\n", description)
-		description = re.sub(r"&nbsp;", r" ", description)
-
-		description = html.unescape(description)
+		def redditmd_to_discordmd(text):
+			text = re.sub(r"\n(?:\*|-) (.*)", r"\n• \1", text)
+			text = re.sub(r"(?:^|\n)#+([^#\n]+)\n", r"\n__**\1**__ \n", text)
+			text = re.sub(r"\n+---\n+", r"\n\n", text)
+			text = re.sub(r"&nbsp;", r" ", text)
+			text = html.unescape(text)
+			return text
+		
+		description = redditmd_to_discordmd(description)
 
 		if len(description) > character_limit:
 			description = f"{description[0:character_limit]}...\n[Read More]({submission.shortlink})"
 
 		embed = disnake.Embed(description=description, color=disnake.Color(int("ff4500", 16)))
-		embed.set_footer(text=f"/r/{submission.subreddit}", icon_url="https://images-na.ssl-images-amazon.com/images/I/418PuxYS63L.png")
-
+		
 		embed.title = submission.title
 		embed.url = submission.shortlink
 
 		url_ext = submission.url.split(".")[-1]
 
+		image_url = None
 		if url_ext in ["gifv", "gif", "png", "jpg", "jpeg"]:
 			image_url = submission.url
 			if url_ext == "gifv":
 				image_url = image_url.replace(".gifv", ".gif")
 			embed.set_image(url=image_url)
 
-		await inter.send(embed=embed)
+		embeds = [ embed ]
+		
+		linked_comment_regex = f"/comments/{submission.id}/[^/]+/([^/]+)[?/]"
+		linked_comment_id = None
+		match = re.search(linked_comment_regex, post)
+		if match:
+			linked_comment_id = match.groups()[0]
+
+		thing = ""
+
+		comment_show_count = comments
+		# COMMENTS
+		submission.comments.replace_more(limit=0)
+		all_comments = submission.comments.list()
+		if linked_comment_id:
+			all_comments = [comment for comment in all_comments if comment.id == linked_comment_id]
+		top_comments = [comment for comment in all_comments if not comment.stickied][:comment_show_count]
+		if len(top_comments) > 0:
+			comments_title = "Top Comment"
+			if len(top_comments) > 1:
+				comments_title = "Top Comments"
+			if linked_comment_id:
+				comments_title = "Linked Comment"
+			
+			comment_embed = None
+			if image_url is None:
+				comment_embed = embed
+				comment_embed.description += f"\n\n__**{comments_title}:**__"
+			else:
+				comment_embed = disnake.Embed(description="", color=disnake.Color(int("ff4500", 16)))
+				comment_embed.description += f"__**{comments_title}:**__"
+				# comment_embed.title = comments_title
+				# if image_url:
+				# 	comment_embed.set_thumbnail(url=image_url)
+				embeds.append(comment_embed)
+
+			for i, comment in enumerate(top_comments, 0):
+				author = comment.author
+				author_name = author.name if author else "[deleted]"
+				if author_name == submission.author.name:
+					author_name += " [OP]"
+				
+				comment_body = comment.body
+				if len(comment_body) > character_limit:
+					comment_body = comment_body[0:character_limit]
+				thing += f"\n**{author_name}**\n- {comment_body}"
+				comment_embed.add_field(author_name, comment_body, inline=False)
+
+
+		embeds[-1].set_footer(text=f"/r/{submission.subreddit}   |   Posted by {submission.author.name}", icon_url="https://images-na.ssl-images-amazon.com/images/I/418PuxYS63L.png")
+
+		await inter.send(embeds=embeds)
 
 	@misc.sub_command(name="showerthought")
 	async def misc_showerthought(self, inter: disnake.CmdInter):

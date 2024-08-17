@@ -24,7 +24,6 @@ CLIPS_ITEMS_PER_PAGE = 20
 URL_CLIP_ERROR_MESSAGE = "Unfortunatley I'm removing the url clip feature for now. I've got plans to eventually implement some custom clips that will be even more flexible than this, but I'm not sure when that feature will arrive."
 
 intro_outro_length = 4.5
-voice_channel_culling_timeout_hours = 24 * 4 # 24 * 4 means after 4 days of inactivity, mango will disconnect from the voice channel
 
 class TtsChannelError(Exception):
 	def __init__(self, error):
@@ -275,16 +274,19 @@ class Audio(MangoCog):
 		if audioplayer is not None:
 			self.audioplayers.remove(audioplayer)
 
-	@tasks.loop(hours=12)
+	@tasks.loop(hours=1)
 	async def voice_channel_culler(self):
 		logger.info("task_triggered: voice_channel_culler()")
 		now = datetime.datetime.now()
-		culling_cutoff = voice_channel_culling_timeout_hours * 60 * 60
-		if (now - self.start_time).total_seconds() < culling_cutoff:
+		if (now - self.start_time).total_seconds() < 60 * 60:
 			return # Nothing to do yet, bot hasnt been up long enough to cull voice channels
 		
 		for guildinfo in botdata.guildinfo_list():
 			if guildinfo.voicechannel is not None:
+				culling_cutoff = 60 * 60 * guildinfo.afktimeout
+				if (now - self.start_time).total_seconds() < culling_cutoff:
+					continue # Nothing to do yet, bot hasnt been up long enough to cull this voice channel
+				
 				if (guildinfo.id not in self.last_played_audio) or ((now - self.last_played_audio[guildinfo.id]).total_seconds() > culling_cutoff):
 					# cull this voice channel
 					logger.info(f"culling voice from server {guildinfo.id}")
@@ -561,8 +563,12 @@ class Audio(MangoCog):
 				else:
 					if message.author.id not in guildinfo.allowedbots:
 						return # ignore bots unless theyre explicitly allowed
-			ttschannel = guildinfo.ttschannel
-			if ttschannel == message.channel.id:
+
+			# checks if this is our tts channel or if its the voice channel we're in and ttsvoicechannel is enabled
+			should_tts_message = guildinfo.ttschannel == message.channel.id or \
+				(guildinfo.ttsvoicechannel and guildinfo.voicechannel == message.channel.id)
+			
+			if should_tts_message:
 				if message.content.startswith("//") or message.content.startswith("#"):
 					return # commented out stuff should be ignored
 				try:

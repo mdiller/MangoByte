@@ -270,6 +270,20 @@ guildinfo_variables = [
 		"type": types.Boolean,
 		"description": "Whether or not the bot should restrict the usage of `/summon` and `/unsummon` to bot admins.",
 		"example": "disable"
+	},
+	{
+		"key": "afktimeout",
+		"default": 96,
+		"type": types.HoursInteger,
+		"description": "How many hours mangobyte should hang out in a voice channel without talking before leaving.",
+		"example": "4"
+	},
+	{
+		"key": "ttsvoicechannel",
+		"default": True,
+		"type": types.Boolean,
+		"description": "Treats the text channel for the voice channel mangobyte is currently in as a tts channel (will auto-tts the messages).",
+		"example": "disable"
 	}
 ]
 

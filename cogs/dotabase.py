@@ -1076,7 +1076,8 @@ class Dotabase(MangoCog):
 			if len(talent.ability.facet_strings) > 0:
 				affected_talents.append(talent)
 			
-		
+		embeds = []
+
 		for facet in facets:
 			embed = disnake.Embed()
 
@@ -1139,7 +1140,10 @@ class Dotabase(MangoCog):
 					description += f"\n[Level {talent.level}] {talent_text}"
 
 			embed.description = description
-			await inter.send(embed=embed)
+			embeds.append(embed)
+		
+		text = f"# {str(self.get_emoji(f'dota_hero_{hero.name}'))} {hero.localized_name}"
+		await inter.send(text, embeds=embeds)
 	
 	@commands.slash_command()
 	async def innate(self, inter: disnake.CmdInter, hero: Hero):
@@ -1400,6 +1404,8 @@ class Dotabase(MangoCog):
 		elif only_do_shard:
 			upgrade_types = [ "shard" ]
 
+		embeds = []
+
 		for upgrade_type in upgrade_types:
 			aghs_item = item_scepter
 			icon_url = f"{self.vpkurl}/panorama/images/hud/reborn/aghsstatus_scepter_on_psd.png"
@@ -1439,7 +1445,10 @@ class Dotabase(MangoCog):
 				title = f"{aghs_item.localized_name} ({ability.localized_name})"
 				embed.set_author(name=title, icon_url=icon_url)
 				embed.set_thumbnail(url=f"{self.vpkurl}{ability.icon}")
-				await inter.send(embed=embed)
+				embeds.append(embed)
+			
+		text = f"# {str(self.get_emoji(f'dota_hero_{hero.name}'))} {hero.localized_name}"
+		await inter.send(text, embeds=embeds)
 
 	@commands.slash_command()
 	async def recipe(self, inter: disnake.CmdInter, item: Item):
