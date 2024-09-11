@@ -252,7 +252,7 @@ class Dotabase(MangoCog):
 			wikiurl = obj.localized_name
 
 		wikiurl = wikiurl.replace(" ", "_").replace("'", "%27")
-		return f"http://dota2.gamepedia.com/{wikiurl}"
+		return f"https://liquipedia.net/dota2/{wikiurl}"
 	
 	# gets the patch a match took place in, else None
 	def get_match_patch(self, match):
@@ -1615,7 +1615,7 @@ class Dotabase(MangoCog):
 		if tier is not None:
 			title = f"Tier {tier} Neutral Items"
 		embed.title = title
-		embed.url = "https://dota2.gamepedia.com/Neutral_Items"
+		embed.url = "https://liquipedia.net/dota2/Neutral_Items"
 
 		all_neutral_items = session.query(Item).filter(Item.neutral_tier != None).filter(Item.recipe == None).order_by(Item.localized_name).all()
 		image = disnake.File(await drawdota.draw_neutralitems(tier, all_neutral_items), "neutralitems.png")
