@@ -401,7 +401,7 @@ async def draw_match_table_row(table, match, player, is_parsed, is_ability_draft
 	draw_bear_row = player["hero_id"] == 80 and len(player.get("additional_units") or []) > 0
 	
 	row = [
-		ColorCell(width=8, color=("green" if player["isRadiant"] else "red")),
+		ColorCell(width=8, color=("green" if is_player_radiant(player) else "red")),
 		create_party_cell(match, player, can_be_bottom=(not draw_bear_row)),
 		ImageCell(img=await get_hero_player_status_image(player), height=48),
 		ImageCell(img=await get_facet_image(player["hero_id"], player["hero_variant"]), height=48) if "hero_variant" in player else EmptyCell(),
@@ -444,7 +444,7 @@ async def draw_match_table_row(table, match, player, is_parsed, is_ability_draft
 		bear_unit = player["additional_units"][0]
 		bear_image = await get_url_image(vpkurl + "/panorama/images/heroes/npc_dota_hero_spirit_bear_png.png")
 		bear_row = [
-			ColorCell(width=8, color=("green" if player["isRadiant"] else "red")),
+			ColorCell(width=8, color=("green" if is_player_radiant(player) else "red")),
 			create_party_cell(match, player, can_be_top=False),
 			ImageCell(img=bear_image, height=48),
 		]
@@ -452,6 +452,10 @@ async def draw_match_table_row(table, match, player, is_parsed, is_ability_draft
 		bear_row.append(ImageCell(img=await get_item_images(bear_unit), height=48))
 		table.add_row(bear_row)
 
+def is_player_radiant(player_data):
+	if "isRadiant" in player_data:
+		return player_data["isRadiant"]
+	return player_data["player_slot"] < 128
 
 async def draw_match_table(match):
 	is_parsed = match.get("version")
@@ -492,11 +496,11 @@ async def draw_match_table(match):
 
 	# Do players
 	for player in match["players"]:
-		if player['isRadiant']:
+		if is_player_radiant(player):
 			await draw_match_table_row(table, match, player, is_parsed, is_ability_draft, has_talents)
 	table.add_row([ColorCell(color=discord_color1, height=5) for i in range(len(headers))])
 	for player in match["players"]:
-		if not player['isRadiant']:
+		if not is_player_radiant(player):
 			await draw_match_table_row(table, match, player, is_parsed, is_ability_draft, has_talents)
 	return table.render()
 
@@ -510,10 +514,10 @@ async def create_match_image(match):
 	draw.rectangle([0, 64, image.size[0], image.size[1]], fill=discord_color1)
 	image.paste(table_image, (table_border, 64))
 
-	title = TextCell(f"{'Radiant' if match['radiant_win'] else 'Dire'} Victory", font_size=48, color=("green" if match['radiant_win'] else "red"))
+	title = TextCell(f"{'Radiant' if match.get('radiant_win', False) else 'Dire'} Victory", font_size=48, color=("green" if match.get('radiant_win', False) else "red"))
 	title.render(draw, image, 64, 0, image.size[0] - 64, 64)
 
-	team_icon = Image.open(radiant_icon if match['radiant_win'] else dire_icon).resize((64, 64))
+	team_icon = Image.open(radiant_icon if match.get('radiant_win', False) else dire_icon).resize((64, 64))
 	temp_image = Image.new("RGBA", image.size)
 	temp_image.paste(team_icon, (0, 0))
 	image = Image.alpha_composite(image, temp_image)
@@ -903,7 +907,7 @@ async def draw_matches_table(matches, game_strings):
 	table.add_row([ColorCell(color=discord_color1, height=6) for i in range(len(headers))])
 	first = True
 	for match in matches:
-		won_match = bool(match["radiant_win"]) == bool(match["player_slot"] < 128)
+		won_match = bool(match.get('radiant_win', False)) == bool(match["player_slot"] < 128)
 		game_mode = game_strings.get(f"game_mode_{match['game_mode']}", "Unknown")
 		lobby_type = game_strings.get(f"lobby_type_{match['lobby_type']}", "Unknown")
 		if first:
@@ -1462,7 +1466,7 @@ async def add_player_ability_upgrades_row(table, player):
 	if abilities is None:
 		abilities = []
 	row = [
-		ColorCell(width=5, color=("green" if player["isRadiant"] else "red")),
+		ColorCell(width=5, color=("green" if is_player_radiant(player) else "red")),
 		ImageCell(img=await get_hero_image(player["hero_id"]), height=48),
 		TextCell(player.get("personaname", "Anonymous"))
 	]
@@ -1498,11 +1502,11 @@ async def draw_match_ability_upgrades(match):
 
 	# Do players
 	for player in match["players"]:
-		if player['isRadiant']:
+		if is_player_radiant(player):
 			await add_player_ability_upgrades_row(table, player)
 	table.add_row([ColorCell(color=discord_color1, height=5) for i in range(len(headers))])
 	for player in match["players"]:
-		if not player['isRadiant']:
+		if not is_player_radiant(player):
 			await add_player_ability_upgrades_row(table, player)
 	table_image = table.render()
 

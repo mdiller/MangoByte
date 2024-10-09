@@ -929,6 +929,9 @@ class Dotabase(MangoCog):
 					value = attribute.get("shard_value")
 				else:
 					continue
+			
+			if value == "0" or value == 0:
+				continue # skip attributes with a value of 0 (only exist for upgrading via facets/talents)
 
 			text = f"**{header}** {format_values(value)}"
 			if footer:
@@ -954,15 +957,28 @@ class Dotabase(MangoCog):
 				talent_rewrites[ability_string.ability_id] = ability_string.description
 
 		# talents
+		facet_talents = []
 		talent_query = query_filter_list(session.query(Talent), Talent.linked_abilities, ability.name)
 		talents = talent_query.order_by(Talent.slot).all()
 		if len(talents) > 0:
-			description += f"\n\n{self.get_emoji('talent_tree')} **Talents:**"
+			talent_list = []
 			for talent in talents:
-				talent_text = talent.localized_name
-				if talent.ability_id in talent_rewrites:
-					talent_text = talent_rewrites[talent.ability_id]
-				description += f"\n[Level {talent.level}] {talent_text}"
+				if len(talent.ability.facet_strings) > 0 and not ability.facet_grants:
+					facet_talents.append(talent)
+				else:
+					talent_text = talent.localized_name
+					if len(talent.ability.facet_strings) > 0 and ability.facet_grants:
+						for facet_string in talent.ability.facet_strings:
+							if facet_string.facet_id == ability.facet.id:
+								talent_text = facet_string.description
+
+					if talent.ability_id in talent_rewrites:
+						talent_text = talent_rewrites[talent.ability_id]
+					talent_list.append(f"[Level {talent.level}] {talent_text}")
+			if len(talent_list) > 0:
+				description += f"\n\n{self.get_emoji('talent_tree')} **Talents:**\n"
+				description += "\n".join(talent_list)
+
 
 		# aghs scepter
 		if ability.scepter_description:
@@ -1027,6 +1043,17 @@ class Dotabase(MangoCog):
 			if facet_desc != "":
 				emoji = self.get_emoji(f"dota_facet_icon_{facet.icon_name}")
 				description += f"\n\n{emoji} __**{facet.localized_name}**__ (Facet)\n{facet_desc}"
+
+				if len(facet_talents) > 0:
+					talent_list = []
+					for talent in facet_talents:
+						for facet_string in talent.ability.facet_strings:
+							if facet_string.facet_id == facet.id:
+								talent_text = facet_string.description
+								talent_list.append(f"[Level {talent.level}] {talent_text}")
+					if len(talent_list) > 0:
+						description += f"\n\n{self.get_emoji('talent_tree')} **Talents:**\n"
+						description += "\n".join(talent_list)
 
 
 		embed = disnake.Embed(description=description)
@@ -1134,9 +1161,9 @@ class Dotabase(MangoCog):
 				description += self.get_emoji('talent_tree') + " **Grants Talents:**"
 				for talent in affected_talents:
 					talent_text = talent.ability.localized_name
-					facet_string = talent.ability.facet_strings[0]
-					if facet_string.facet_id == facet.id:
-						talent_text = facet_string.description					
+					for facet_string in talent.ability.facet_strings:
+						if facet_string.facet_id == facet.id:
+							talent_text = facet_string.description					
 					description += f"\n[Level {talent.level}] {talent_text}"
 
 			embed.description = description

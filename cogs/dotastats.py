@@ -994,9 +994,12 @@ class DotaStats(MangoCog):
 			i = 0
 			while i < len(matches_info) and len(matches) < 20:
 				if matches_info[i].get('version', None) is not None:
-					match = await get_match(matches_info[i]['match_id'])
+					match_id = matches_info[i]['match_id']
+					match = await get_match(match_id)
+					match["match_id"] = match_id
 					player_match = next((p for p in match['players'] if p.get('account_id') == steam32), None)
 					if player_match is not None:
+						player_match["match_id"] = match_id
 						player_matches.append(player_match)
 						matches.append(match)
 				i += 1
@@ -1148,7 +1151,7 @@ class DotaStats(MangoCog):
 			longest_message = None
 			longest_message_match_id = None
 			for match in matches:
-				player = next((p for p in match['players'] if p['account_id'] == steam32), None)
+				player = next((p for p in match['players'] if p.get('account_id') == steam32), None)
 				match_chat = match.get('chat', None)
 				if match_chat:
 					for message in match_chat:

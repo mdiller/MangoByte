@@ -269,7 +269,8 @@ class Audio(MangoCog):
 			else:
 				logger.info("can't find voice to disconnect!\nvoices available:")
 				for v in self.bot.voice_clients:
-					logger.info(v.vcid)
+					if hasattr(v, "vcid"):
+						logger.info(v.vcid)
 		audioplayer = await self.audioplayer(guild, False)
 		if audioplayer is not None:
 			self.audioplayers.remove(audioplayer)
