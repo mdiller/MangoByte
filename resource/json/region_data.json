@@ -1,86 +1,86 @@
 {
 	"0": {
 		"name": "Automatic",
-		"UTC_offset": 0
+		"timezone": "UTC"
 	},
 	"1": {
 		"name": "US West",
-		"UTC_offset": -8
+		"timezone": "America/Los_Angeles"
 	},
 	"2": {
 		"name": "US East",
-		"UTC_offset": -5
+		"timezone": "America/New_York"
 	},
 	"3": {
 		"name": "Luxembourg",
-		"UTC_offset": 1
+		"timezone": "Europe/Luxembourg"
 	},
 	"5": {
 		"name": "Singapore",
-		"UTC_offset": 8
+		"timezone": "Asia/Singapore"
 	},
 	"6": {
 		"name": "Dubai",
-		"UTC_offset": 4
+		"timezone": "Asia/Dubai"
 	},
 	"7": {
 		"name": "Australia",
-		"UTC_offset": 10
+		"timezone": "Australia/Sydney"
 	},
 	"8": {
 		"name": "Stockholm",
-		"UTC_offset": 1
+		"timezone": "Europe/Stockholm"
 	},
 	"9": {
 		"name": "Austria",
-		"UTC_offset": 1
+		"timezone": "Europe/Vienna"
 	},
 	"10": {
 		"name": "Brazil",
-		"UTC_offset": -3
+		"timezone": "America/Sao_Paulo"
 	},
 	"11": {
 		"name": "South Africa",
-		"UTC_offset": 2
+		"timezone": "Africa/Johannesburg"
 	},
 	"12": {
 		"name": "China TC Shanghai",
-		"UTC_offset": 8
+		"timezone": "Asia/Shanghai"
 	},
 	"13": {
 		"name": "China UC",
-		"UTC_offset": 8
+		"timezone": "Asia/Shanghai"
 	},
 	"14": {
 		"name": "Chile",
-		"UTC_offset": -3
+		"timezone": "America/Santiago"
 	},
 	"15": {
 		"name": "Peru",
-		"UTC_offset": -5
+		"timezone": "America/Lima"
 	},
 	"16": {
 		"name": "India",
-		"UTC_offset": 5
+		"timezone": "Asia/Kolkata"
 	},
 	"17": {
 		"name": "China TC Guangdong",
-		"UTC_offset": 8
+		"timezone": "Asia/Shanghai"
 	},
 	"18": {
 		"name": "China TC Zhejiang",
-		"UTC_offset": 8
+		"timezone": "Asia/Shanghai"
 	},
 	"19": {
 		"name": "Japan",
-		"UTC_offset": 9
+		"timezone": "Asia/Tokyo"
 	},
 	"20": {
 		"name": "China TC Wuhan",
-		"UTC_offset": 8
+		"timezone": "Asia/Shanghai"
 	},
 	"25": {
 		"name": "China UC 2",
-		"UTC_offset": 8
+		"timezone": "Asia/Shanghai"
 	}
 }

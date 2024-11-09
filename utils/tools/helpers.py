@@ -190,7 +190,7 @@ class Thinker():
 			await asyncio.sleep(1)
 
 class SimpleTimer():
-	def __init__(self, message=None):
+	def __init__(self, message = None):
 		self.message = message
 		self.start = datetime.datetime.now()
 		self.end = None

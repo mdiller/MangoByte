@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 import typing
+import pytz
 
 from PIL import Image, ImageDraw, ImageFont
 from utils.tools.globals import httpgetter, logger, settings
@@ -837,7 +838,9 @@ def get_datetime_cell(match, region_data):
 	if region is None or region == "None":
 		region = "1" # Default to US West
 	if region in region_data:
-		match_date += timedelta(hours=region_data[region]["UTC_offset"])
+		tz_identifier = region_data[region]["timezone"]
+		tz = pytz.timezone(tz_identifier)
+		match_date = match_date.astimezone(tz)
 	# character for leading space is different on windows
 	lead_char = "#" if os.name == "nt" else "-"
 	str_date = match_date.strftime(f"%b %{lead_char}d %Y")
