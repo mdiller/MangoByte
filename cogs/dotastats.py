@@ -301,6 +301,11 @@ class DotaStats(MangoCog):
 		self.lookup_hero = dotabase.lookup_hero
 		self.chat_wheel_info = dotabase.get_chat_wheel_infos()
 		self.dota_gif_lock = asyncio.Lock()
+	
+	def get_hero_info(self, hero_id: int):
+		if hero_id in self.hero_info:
+			return self.hero_info[hero_id]
+		return self.hero_info[0]
 
 	async def get_meta_json(self): 
 		url = 'https://api.opendota.com/api/herostats'
@@ -324,11 +329,10 @@ class DotaStats(MangoCog):
 
 	def get_pretty_hero(self, player, use_icons=False):
 		dotabase = self.bot.get_cog("Dotabase")
-		if player["hero_id"] not in self.hero_info:
-			return "**Unknown**"
-		name = self.hero_info[player["hero_id"]]["name"]
+		hero_info = self.get_hero_info(player["hero_id"])
+		name = hero_info["name"]
 		if use_icons:
-			emoji = self.hero_info[player["hero_id"]]["emoji"]
+			emoji = hero_info["emoji"]
 			return f"{emoji}**{name}**"
 		return f"**{name}**"
 
@@ -419,8 +423,10 @@ class DotaStats(MangoCog):
 		if fb_log is None:
 			return "" # Can't find the kill log of when first blood happened
 		dotabase = self.bot.get_cog("Dotabase")
-		fb_victim_id = next(h for h in self.hero_info if self.hero_info[h]['full_name'] == fb_log['key'])
-		fb_victim = next(p for p in game['players'] if p['hero_id'] == fb_victim_id)
+		fb_victim_id = next((h for h in self.hero_info if self.get_hero_info(h)['full_name'] == fb_log['key']), None)
+		fb_victim = next((p for p in game['players'] if p['hero_id'] == fb_victim_id), None)
+		if fb_victim is None or fb_victim_id is None:
+			return "First blood involved a new hero. (oooo mysterious. I gotta update dotabase prolly)"
 
 		return "First blood was drawn when {} {} killed {} {} at {}\n\n".format(
 			"our" if (fb_killer['isRadiant'] == is_radiant) else "their",
@@ -505,7 +511,8 @@ class DotaStats(MangoCog):
 			await self.print_match_stats(inter, match)
 			return
 
-		hero_name = self.hero_info[player['hero_id']]['name']
+		hero_info = self.get_hero_info(player['hero_id'])
+		hero_name = hero_info['name']
 
 		duration = get_pretty_duration(match['duration'], postfix=False)
 		winstatus = "Won" if player["win"] != 0 else "Lost"
@@ -524,7 +531,7 @@ class DotaStats(MangoCog):
 
 		embed = disnake.Embed(description=description, color=self.embed_color)
 
-		embed.set_author(name=player.get('personaname') or "Anonymous", icon_url=self.hero_info[player['hero_id']]['icon'], url="https://www.opendota.com/players/{}".format(steamid))
+		embed.set_author(name=player.get('personaname') or "Anonymous", icon_url=hero_info['icon'], url="https://www.opendota.com/players/{}".format(steamid))
 
 		damage_format = "KDA: **{kills}**/**{deaths}**/**{assists}**\n"
 		if player.get("hero_damage") is not None:
@@ -855,7 +862,7 @@ class DotaStats(MangoCog):
 		favs = ""
 		for i in range(0,3):
 			if i < len(heroes):
-				favs += self.hero_info[heroes[i][0]]['emoji']
+				favs += self.get_hero_info(heroes[i][0])['emoji']
 
 		# Recent means 2 months / 60 days 
 		timecutoff = time.time() - (86400 * 60)
@@ -868,7 +875,7 @@ class DotaStats(MangoCog):
 		recent_favs = ""
 		for i in range(0,3):
 			if i < len(heroes):
-				recent_favs += self.hero_info[heroes[i][0]]['emoji']
+				recent_favs += self.get_hero_info(heroes[i][0])['emoji']
 
 		recent_count = 0
 		activity_delta = []
@@ -1029,9 +1036,10 @@ class DotaStats(MangoCog):
 		# if this is stats for playing as a specific hero
 		if matchfilter.has_value("hero_id"):
 			hero = self.lookup_hero(matchfilter.get_arg("hero_id"))
-			author_icon_url = self.hero_info[hero.id]["icon"]
-			embed.set_thumbnail(url=self.hero_info[hero.id]['portrait'])
-			embed.color = disnake.Color(int(hero.color[1:], 16))
+			if hero is not None:
+				author_icon_url = self.get_hero_info(hero.id)["icon"]
+				embed.set_thumbnail(url=self.get_hero_info(hero.id)['portrait'])
+				embed.color = disnake.Color(int(hero.color[1:], 16))
 
 		# if this is stats for playing with someone
 		if matchfilter.has_value("included_account_id"):
@@ -1077,7 +1085,7 @@ class DotaStats(MangoCog):
 		for match in player_matches:
 			heroes[match['hero_id']] = heroes.get(match['hero_id'], 0) + 1
 		heroes = sorted(heroes.items(), key=lambda x: x[1], reverse=True)
-		favorite_heroes = "".join(map(lambda h: self.hero_info[h[0]]['emoji'], heroes[0:3]))
+		favorite_heroes = "".join(map(lambda h: self.get_hero_info(h[0])['emoji'], heroes[0:3]))
 		zeropercent = "0%"
 
 		# laning postfix if needed
@@ -1122,10 +1130,10 @@ class DotaStats(MangoCog):
 				"caption": "Heroes",
 				"filter_key": "hero_id",
 				"stats": [
-					CoolStat(self.get_emoji('attr_strength'), percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'strength'), separator=" "),
-					CoolStat(self.get_emoji('attr_agility'), percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'agility'), separator=" "),
-					CoolStat(self.get_emoji('attr_intelligence'), percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'intelligence'), separator=" "),
-					CoolStat(self.get_emoji('attr_universal'), percent(lambda p: self.hero_info.get(p['hero_id'], {}).get('attr') == 'universal'), separator=" "),
+					CoolStat(self.get_emoji('attr_strength'), percent(lambda p: self.get_hero_info(p['hero_id']).get('attr') == 'strength'), separator=" "),
+					CoolStat(self.get_emoji('attr_agility'), percent(lambda p: self.get_hero_info(p['hero_id']).get('attr') == 'agility'), separator=" "),
+					CoolStat(self.get_emoji('attr_intelligence'), percent(lambda p: self.get_hero_info(p['hero_id']).get('attr') == 'intelligence'), separator=" "),
+					CoolStat(self.get_emoji('attr_universal'), percent(lambda p: self.get_hero_info(p['hero_id']).get('attr') == 'universal'), separator=" "),
 					CoolStat("Randomed", percent('randomed'), ignore_value=zeropercent),
 					CoolStat("__Favorites__", f"\n{favorite_heroes}")
 				]
@@ -1459,7 +1467,7 @@ class DotaStats(MangoCog):
 
 		dotabase = self.bot.get_cog("Dotabase")
 		for heroid in hero_ids:
-			hero_info = self.hero_info[heroid]
+			hero_info = self.get_hero_info(heroid)
 			for role, value in hero_info["roles"].items():
 				role_scores[role] += value
 
@@ -1560,7 +1568,7 @@ class DotaStats(MangoCog):
 			for player in match["players"]:
 				colors.append(playercolors[str(player["player_slot"])] if str(player["player_slot"]) else "#FF0000")
 				lines.append(player["gold_t"])
-				labels.append(self.hero_info[player["hero_id"]]["name"] if player["hero_id"] in self.hero_info else "Unknown")
+				labels.append(self.get_hero_info(player["hero_id"])["name"])
 		else:
 			raise UserError("oops, look like thats not implemented yet")
 

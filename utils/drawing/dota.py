@@ -98,33 +98,43 @@ def init_dota_info(hero_info, item_info, ability_info, facet_info, the_vpkurl):
 	facet_infos = facet_info
 	vpkurl = the_vpkurl
 
+def get_hero_info(hero_id: int):
+	if hero_id in hero_infos:
+		return hero_infos[hero_id]
+	return hero_infos[0]
+
+def get_item_info(item_id: int):
+	if item_id in item_infos:
+		return item_infos[item_id]
+	return item_infos[0]
+
 def get_hero_name(hero_id):
-	return hero_infos[hero_id]["name"]
+	return get_hero_info(hero_id)["name"]
 
 async def get_url_image(url):
 	return Image.open(await httpgetter.get(url, "bytes", cache_permanent=True))
 
 async def get_hero_image(hero_id):
 	try:
-		return await get_url_image(hero_infos[hero_id]["image"])
+		return await get_url_image(get_hero_info(hero_id)["image"])
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
 async def get_hero_icon(hero_id):
 	try:
-		return await get_url_image(hero_infos[hero_id]["icon"])
+		return await get_url_image(get_hero_info(hero_id)["icon"])
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
 async def get_hero_portrait(hero_id):
 	try:
-		return await get_url_image(hero_infos[hero_id]["portrait"])
+		return await get_url_image(get_hero_info(hero_id)["portrait"])
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
 async def get_item_image(item_id):
 	try:
-		return await get_url_image(item_infos[item_id]["icon"])
+		return await get_url_image(get_item_info(item_id)["icon"])
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
@@ -1035,8 +1045,8 @@ async def draw_hero_talents_single(hero, talent_rows, facet = None):
 	return fp
 
 async def fuse_hero_images(hero1, hero2):
-	file1 = await httpgetter.get(hero_infos[hero1.id]["image"], "filename", cache=True)
-	file2 = await httpgetter.get(hero_infos[hero2.id]["image"], "filename", cache=True)
+	file1 = await httpgetter.get(get_hero_info(hero1.id)["image"], "filename", cache=True)
+	file2 = await httpgetter.get(get_hero_info(hero2.id)["image"], "filename", cache=True)
 
 	fp = BytesIO()
 	colorize_image(file1, file2, fp)

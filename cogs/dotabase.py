@@ -455,13 +455,13 @@ class Dotabase(MangoCog):
 			# role_values = list(map(lambda x: x / rv_sum, role_values))
 			# result[hero.id]["roles"] = dict(zip(hero.roles.split("|"), role_values))
 		result[0] = {
-			"name": "Unknown",
+			"name": "New Hero?",
 			"full_name": "unknown_hero",
-			"icon": self.vpkurl + "/panorama/images/heroes/icons/npc_dota_hero_antimage_png.png",
+			"icon": self.vpkurl + "/panorama/images/heroes/icons/custom_imadethis_questionmark.png",
 			"attr": "strength",
 			"portrait": self.vpkurl + "/panorama/images/heroes/selection/npc_dota_hero_default_png.png",
 			"image": self.vpkurl + "/panorama/images/heroes/npc_dota_hero_default_png.png",
-			"emoji": "unknown_hero",
+			"emoji": str(self.get_emoji("unknown_hero")),
 			"roles": {}
 		}
 		return result
