@@ -50,6 +50,8 @@ class HttpGetter:
 				else:
 					raise ValueError(f"Invalid return type '{return_type}'")
 			else:
+				# text = await r.text()
+				# print(f"ERROR TEXT: {text}")
 				raise_error(url, r.status, errors)
 
 	async def post(self, url, return_type="json", errors={}, body={}, headers={}):

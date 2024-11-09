@@ -148,12 +148,15 @@ async def get_stratz_match(match_id):
 			await httpgetter.cache.remove(url)
 
 	try:
-		auth_header = { "Authorization": f"Bearer {settings.stratz}" }
+		headers = { 
+			"Authorization": f"Bearer {settings.stratz}",
+			"User-Agent": "STRATZ_API"
+		}
 		return await httpgetter.get(url, cache=True, errors={
 			500: "Looks like something wrong with the STRATZ api",
 			204: "STRATZ hasn't recieved this match yet. Try again a bit later",
 			403: "got some weird auth error"
-		}, headers=auth_header)
+		}, headers=headers)
 	except aiohttp.ClientConnectorError:
 		logger.info("ClientConnectorError on stratz api result")
 		raise StratzMatchNotParsedError(match_id)
