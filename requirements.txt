@@ -1,4 +1,4 @@
-disnake[voice]>=2.9.0
+disnake[voice]>=2.9.3
 beautifulsoup4>=4.6.3
 colorgram.py==1.1.0
 gTTS>=2.2.1
