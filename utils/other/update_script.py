@@ -126,6 +126,13 @@ async def update(bot: commands.Bot):
 		with open(filename, "w+") as f:
 			f.write(text)
 	
+	print("- Updating Minimap")
+	minimap_url = "https://dotabase.dillerm.io/vpk/panorama/images/minimap/dotamap_psd.png"
+	minimap_path = settings.resource("images/map/dota_map.png")
+	minimap_bytes = await httpgetter.get(minimap_url, "bytes")
+	with open(minimap_path, "wb+") as f:
+		f.write(minimap_bytes.getvalue())
+	
 	print("- Updating emoji...")
 	await update_emoji(bot)
 
@@ -191,7 +198,7 @@ async def update_emoji(bot: commands.Bot):
 	# check for any missing facet icons
 	for facet in dotabase.session.query(Facet):
 		facet: Facet
-		emoji_name =f"dota_facet_icon_{facet.icon_name}"
+		emoji_name =f"dota_facet_icon_{facet.icon_name}".lower()
 		if len(emoji_name) > 32:
 			emoji_name = emoji_name[:32]
 		if emoji_name not in emoji_json:

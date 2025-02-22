@@ -10,7 +10,7 @@ import utils.drawing.dota as drawdota
 import utils.drawing.imagetools as imagetools
 import utils.other.rsstools as rsstools
 from disnake.ext import commands, tasks
-from sqlalchemy import and_, desc, or_
+from sqlalchemy import and_, desc, or_, asc
 from sqlalchemy.sql.expression import func
 from sqlalchemy.orm.collections import InstrumentedList
 from utils.command.clip import *
@@ -1197,7 +1197,10 @@ class Dotabase(MangoCog):
 		description = ""
 
 		if item.neutral_tier is not None:
-			description += f"**Tier {item.neutral_tier}** Neutral Item\n\n"
+			item_type = "Item"
+			if item.is_neutral_enhancement:
+				item_type = "Enhancement"
+			description += f"**Tier {item.neutral_tier}** Neutral {item_type}\n\n"
 
 
 		def format_values(values, join_string="/", base_level=None):
@@ -1644,7 +1647,12 @@ class Dotabase(MangoCog):
 		embed.title = title
 		embed.url = "https://liquipedia.net/dota2/Neutral_Items"
 
-		all_neutral_items = session.query(Item).filter(Item.neutral_tier != None).filter(Item.recipe == None).order_by(Item.localized_name).all()
+		all_neutral_items = session.query(Item)\
+			.filter(Item.neutral_tier != None)\
+			.filter(Item.recipe == None)\
+			.order_by(asc(Item.is_neutral_enhancement), Item.localized_name)\
+			.all()
+		
 		image = disnake.File(await drawdota.draw_neutralitems(tier, all_neutral_items), "neutralitems.png")
 		embed.set_image(url=f"attachment://{image.filename}")
 		if tier is not None:
