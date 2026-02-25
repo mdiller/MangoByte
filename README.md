@@ -230,15 +230,14 @@ I would recommend simply inviting mangobyte to your server via the <!-- INVITE_L
 
 Before installing and running your own instance of mangobyte, you will first need to install the following:
 
-* Python 3.9
-* Pip
-* Dependencies: `python3.9 -m pip install -r requirements.txt`
+* Python 3.10
+* [uv](https://docs.astral.sh/uv/getting-started/installation/) (used for dependency management)
 * [ffmpeg](https://ffmpeg.org) (the tool used for playing audio)
 * [gifsicle](https://www.lcdf.org/gifsicle/) (the tool used for creating gifs)
 
-If you run `python3.9 mangobyte.py`, you will probably get an error message because the bot token isn't set. You'll have to [create a bot account](https://twentysix26.github.io/Red-Docs/red_guide_bot_accounts/) through discord in order to get one of these tokens. Note that the above link is for a different discord bot, and so the "Logging in with a token" section does not apply here. Now that you have a bot account, set the `token` field in the `settings.json` file to your new bot's token. After you have done this, and have invited your bot to your server, don't forget to add the ID of the voice channel you want to connect it to in the `defaultvoice` field in the `settings.json` file.
+If you run `uv run python mangobyte.py`, you will probably get an error message because the bot token isn't set. You'll have to [create a bot account](https://twentysix26.github.io/Red-Docs/red_guide_bot_accounts/) through discord in order to get one of these tokens. Note that the above link is for a different discord bot, and so the "Logging in with a token" section does not apply here. Now that you have a bot account, set the `token` field in the `settings.json` file to your new bot's token. After you have done this, and have invited your bot to your server, don't forget to add the ID of the voice channel you want to connect it to in the `defaultvoice` field in the `settings.json` file.
 
-You should now be done! You can run mangobyte by calling `python3.9 mangobyte.py`, and you should probably set up a virtual environment so that nothing bad has a chance of happening.
+You should now be done! You can run mangobyte by calling `uv run python mangobyte.py`. uv will automatically create a virtual environment and install all dependencies on first run.
 
 ### Example settings.json file
 

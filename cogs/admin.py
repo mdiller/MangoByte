@@ -27,7 +27,7 @@ class Admin(MangoCog):
 		cog = None
 		guildinfo = botdata.guildinfo(ctx_inter)
 		if isinstance(ctx_inter, disnake.Interaction):
-			if isinstance(ctx_inter, disnake.CommandInter):
+			if isinstance(ctx_inter, disnake.ApplicationCommandInteraction):
 				commandname = slash_command_name(ctx_inter)
 			# check cogs
 			cog = ctx_inter.application_command.cog
