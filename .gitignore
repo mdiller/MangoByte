@@ -106,3 +106,4 @@ resource/clips/*
 !resource/clips/dota/
 !resource/clips/spongebob/
 _scripts/
+deploy/
