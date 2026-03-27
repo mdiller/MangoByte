@@ -12,8 +12,8 @@
 		},
 		{
 			"name": "Dotabase",
-			"short_help": "For information about the game Dota 2 [Patch **7.38**]",
-			"help": "For information about the game Dota 2 [Patch **7.38**]\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see a website I built that interfaces with dotabase."
+			"short_help": "For information about the game Dota 2 [Patch **7.41**]",
+			"help": "For information about the game Dota 2 [Patch **7.41**]\n\nInterfaces with [dotabase](http://github.com/mdiller/dotabase). Check out [dotabase.dillerm.io](http://dotabase.dillerm.io) if you want to see a website I built that interfaces with dotabase."
 		},
 		{
 			"name": "DotaStats",
@@ -233,8 +233,8 @@
 		{
 			"name": "facets",
 			"signature": null,
-			"short_help": "Gets the facets for the given hero",
-			"help": "Gets the facets for the given hero",
+			"short_help": "Facets have been removed as of Dota 7.41",
+			"help": "Facets have been removed as of Dota 7.41",
 			"aliases": [],
 			"cog": "Dotabase",
 			"prefix": "/"
@@ -669,6 +669,15 @@
 			"help": "Gets the talents of a specific hero",
 			"aliases": [],
 			"cog": "Dotabase",
+			"prefix": "/"
+		},
+		{
+			"name": "time",
+			"signature": null,
+			"short_help": "Gets you the discord format for a time that you give",
+			"help": "Gets you the discord format for a time that you give",
+			"aliases": [],
+			"cog": "General",
 			"prefix": "/"
 		},
 		{

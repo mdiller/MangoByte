@@ -26,7 +26,7 @@ from cogs.mangocog import *
 
 CRITERIA_ALIASES = read_json(settings.resource("json/criteria_aliases.json"))
 DOTA_LANG_MAP = read_json(settings.resource("json/dota_lang_map.json"))
-FACET_COLORS = read_json(settings.resource("json/facet_colors.json"))
+# FACET_COLORS = read_json(settings.resource("json/facet_colors.json"))  # facets removed in 7.41
 
 session = dotabase_session()
 
@@ -155,7 +155,7 @@ class Dotabase(MangoCog):
 		self.patches_regex = ""
 		self.build_helpers()
 		self.vpkurl = "http://dotabase.dillerm.io/dota-vpk"
-		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos(), self.get_ability_infos(), self.get_facet_infos(), self.vpkurl)
+		drawdota.init_dota_info(self.get_hero_infos(), self.get_item_infos(), self.get_ability_infos(), self.vpkurl)
 	
 	@property
 	def description(self):
@@ -500,20 +500,7 @@ class Dotabase(MangoCog):
 			}
 		return result
 
-	def get_facet_infos(self):
-		result = {}
-		for facet in session.query(Facet):
-			if facet.icon is None:
-				continue
-			facet_identifier = f"{facet.hero_id}_{facet.slot + 1}"
-			result[facet_identifier] = {
-				"name": facet.localized_name,
-				"icon": self.vpkurl + facet.icon,
-				"icon_name": facet.icon_name,
-				"color": facet.color,
-				"gradient_id": facet.gradient_id
-			}
-		return result
+	# get_facet_infos removed in 7.41 (facets removed from the game)
 
 	def get_chat_wheel_infos(self):
 		result = {}
@@ -914,7 +901,6 @@ class Dotabase(MangoCog):
 		scepter_attributes = []
 		shard_attributes = []
 
-		facet_attr_info = {}
 		for attribute in ability_special:
 			header = attribute.get("header")
 			if not header:
@@ -922,11 +908,6 @@ class Dotabase(MangoCog):
 			header = format_pascal_case(header)
 			is_scepter_upgrade = attribute.get("scepter_upgrade")
 			is_shard_upgrade = attribute.get("shard_upgrade")
-			is_facet_upgrade = attribute.get("facet_upgrade")
-
-			facet_attr_info[attribute.get("key")] = {
-				"header": header
-			}
 
 			value = attribute.get("value")
 			footer = attribute.get("footer")
@@ -939,9 +920,9 @@ class Dotabase(MangoCog):
 					value = attribute.get("shard_value")
 				else:
 					continue
-			
+
 			if value == "0" or value == 0:
-				continue # skip attributes with a value of 0 (only exist for upgrading via facets/talents)
+				continue # skip attributes with a value of 0 (only exist for upgrading via talents)
 
 			text = f"**{header}** {format_values(value)}"
 			if footer:
@@ -951,40 +932,20 @@ class Dotabase(MangoCog):
 				scepter_attributes.append(text)
 			elif is_shard_upgrade and not ability.shard_grants:
 				shard_attributes.append(text)
-			elif is_facet_upgrade and not ability.facet_grants:
-				facet_attr_info[attribute.get("key")]["value"] = value
-				facet_attr_info[attribute.get("key")]["facet_name"] = is_facet_upgrade
 			else:
 				formatted_attributes.append(text)
 
 		if formatted_attributes:
 			description += "\n\n" + "\n".join(formatted_attributes)
 
-		# facet data retrieval
-		talent_rewrites = {} # dictionary of id => description rewrites that gets filled if this is changed by the given facet
-		if ability.facet_grants:
-			for ability_string in ability.facet.ability_strings:
-				talent_rewrites[ability_string.ability_id] = ability_string.description
-
 		# talents
-		facet_talents = []
 		talent_query = query_filter_list(session.query(Talent), Talent.linked_abilities, ability.name)
 		talents = talent_query.order_by(Talent.slot).all()
 		if len(talents) > 0:
 			talent_list = []
 			for talent in talents:
-				if len(talent.ability.facet_strings) > 0 and not ability.facet_grants:
-					facet_talents.append(talent)
-				else:
-					talent_text = talent.localized_name
-					if len(talent.ability.facet_strings) > 0 and ability.facet_grants:
-						for facet_string in talent.ability.facet_strings:
-							if facet_string.facet_id == ability.facet.id:
-								talent_text = facet_string.description
-
-					if talent.ability_id in talent_rewrites:
-						talent_text = talent_rewrites[talent.ability_id]
-					talent_list.append(f"[Level {talent.level}] {talent_text}")
+				talent_text = talent.localized_name
+				talent_list.append(f"[Level {talent.level}] {talent_text}")
 			if len(talent_list) > 0:
 				description += f"\n\n{self.get_emoji('talent_tree')} **Talents:**\n"
 				description += "\n".join(talent_list)
@@ -1014,57 +975,7 @@ class Dotabase(MangoCog):
 				for attribute in shard_attributes:
 					description += f"\n{attribute}"
 		
-		# facets
-		if ability.facet_grants:
-			emoji = self.get_emoji(f"dota_facet_icon_{ability.facet.icon_name}")
-			facet_name = ability.facet.localized_name
-			if facet_name == "":
-				facet_name = ability.localized_name
-			description += f"\n\n**Granted by Facet:** {emoji} {facet_name}"
-		
-		for facet in ability.hero.facets:
-			facet_desc = ""
-			for string in ability.facet_strings:
-				if string.facet_id == facet.id:
-					facet_desc += f"*{string.description}*"
-
-			ability_special = json.loads(facet.ability_special, object_pairs_hook=OrderedDict)
-			facet_desc_attrs = []
-			for key in facet_attr_info:
-				attr_info = facet_attr_info[key]
-				value = attr_info.get("value")
-				facet_name = attr_info.get("facet_name")
-				if facet_name and facet.name != facet_name:
-					continue
-				for attribute in ability_special:
-					f_key = attribute.get("key")
-					if f_key == key or f"bonus_{key}" == f_key:
-						value = attribute.get("value")
-				if value is not None:
-					header = attr_info["header"]
-					text = f"**{header}** {format_values(value)}"
-					facet_desc_attrs.append(text)
-			if len(facet_desc_attrs) > 0:
-				if facet_desc != "":
-					facet_desc += "\n"
-				for text in facet_desc_attrs:
-					facet_desc += f"\n{text}"
-			
-			if facet_desc != "":
-				emoji = self.get_emoji(f"dota_facet_icon_{facet.icon_name}")
-				description += f"\n\n{emoji} __**{facet.localized_name}**__ (Facet)\n{facet_desc}"
-
-				if len(facet_talents) > 0:
-					talent_list = []
-					for talent in facet_talents:
-						for facet_string in talent.ability.facet_strings:
-							if facet_string.facet_id == facet.id:
-								talent_text = facet_string.description
-								talent_list.append(f"[Level {talent.level}] {talent_text}")
-					if len(talent_list) > 0:
-						description += f"\n\n{self.get_emoji('talent_tree')} **Talents:**\n"
-						description += "\n".join(talent_list)
-
+		# facet ability info removed in 7.41 (facets removed from the game)
 
 		embed = disnake.Embed(description=description)
 
@@ -1094,93 +1005,10 @@ class Dotabase(MangoCog):
 		await inter.send(embed=embed)
 	
 	@commands.slash_command()
-	async def facets(self, inter: disnake.CmdInter, hero: Hero):
-		"""Gets the facets for the given hero
-
-		Parameters
-		----------
-		hero: The name of the hero
+	async def facets(self, inter: disnake.CmdInter):
+		"""Facets have been removed as of Dota 7.41
 		"""
-		await self.safe_defer(inter)
-
-		facets = session.query(Facet).filter(Facet.hero_id == hero.id).all()
-
-		if len(facets) == 0:
-			raise UserError("Can't find facets for that hero")
-		
-		affected_talents = []
-		for talent in hero.talents:
-			if len(talent.ability.facet_strings) > 0:
-				affected_talents.append(talent)
-			
-		embeds = []
-
-		for facet in facets:
-			embed = disnake.Embed()
-
-			description = ""
-			if facet.description != "":
-				description = facet.description
-			
-			facet_icon = f"{self.vpkurl}{facet.icon}"
-			color = FACET_COLORS["min"][facet.color + str(facet.gradient_id)]
-			
-			embed.color = disnake.Color(int(color[1:], 16))
-
-			localized_name = facet.localized_name
-
-			linked_ability: Ability
-			linked_ability = None
-			if len(facet.abilities) > 0:
-				linked_ability = facet.abilities[0]
-			
-			if linked_ability:
-				if localized_name == "":
-					localized_name = linked_ability.localized_name
-
-				if "hidden" in linked_ability.behavior:
-					if description == "":
-						description = linked_ability.description
-				else:
-					description += f"\n\nSee `/ability {linked_ability.localized_name}` for more info"
-				
-				if linked_ability.icon != "/panorama/images/spellicons/attribute_bonus_png.png":
-					embed.set_thumbnail(url=f"{self.vpkurl}{linked_ability.icon}")
-			
-			embed.set_author(name=localized_name, icon_url=facet_icon)
-
-			ability_strings = session.query(FacetAbilityString).filter(FacetAbilityString.facet_id == facet.id).all()
-
-			if len(ability_strings) < 0 and description != "":
-				description += "\n\n"
-
-			# granted_talents = []
-			for ability_string in ability_strings:
-				ability = session.query(Ability).filter(Ability.id == ability_string.ability_id).first()
-				if description != "" and not description.endswith("\n\n"):
-					description += "\n\n"
-				if ability.name.startswith("special_bonus_"):
-					# granted_talents.append(ability_string)
-					continue
-				description += f"**{ability.localized_name}**\n"
-				description += f"• {ability_string.description}"
-			
-			if len(affected_talents) > 0:
-				if not description.endswith("\n\n"):
-					description += "\n\n"
-				description += self.get_emoji('talent_tree') + " **Grants Talents:**"
-				for talent in affected_talents:
-					talent_text = talent.ability.localized_name
-					for facet_string in talent.ability.facet_strings:
-						if facet_string.facet_id == facet.id:
-							talent_text = facet_string.description					
-					description += f"\n[Level {talent.level}] {talent_text}"
-
-			embed.description = description
-			embeds.append(embed)
-		
-		text = f"# {str(self.get_emoji(f'dota_hero_{hero.name}'))} {hero.localized_name}"
-		await inter.send(text, embeds=embeds)
+		await inter.send("Dota 7.41 has dropped and facets have been removed! Read more about the update here:\n<https://www.dota2.com/patches/7.41>")
 	
 	@commands.slash_command()
 	async def innate(self, inter: disnake.CmdInter, hero: Hero):

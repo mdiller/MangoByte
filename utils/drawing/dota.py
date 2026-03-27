@@ -22,10 +22,7 @@ dire_icon = settings.resource("images/dire.png")
 
 STARS_PER_RANK = 5
 
-# mincolor and maxcolor dicts with keys like "Grey3" etc.
-# a script extracted this from vpk\panorama\styles\dotastyles.css
-with open(settings.resource("json/facet_colors.json"), "r") as f:
-	facet_colors = json.loads(f.read())
+# facet_colors removed in 7.41 (facets removed from the game)
 
 discord_color0 = "#6f7377" # much lighter, mostly unused color
 discord_color1 = "#2C2F33"
@@ -76,7 +73,7 @@ vpkurl = None
 hero_infos = {}
 item_infos = {}
 ability_infos = {}
-facet_infos = {}
+# facet_infos = {}  # facets removed in 7.41
 
 def get_text_size(font, text):
 	bbox = font.getbbox(text)
@@ -92,12 +89,11 @@ def get_item_color(item, default=None):
 	else:
 		return default
 
-def init_dota_info(hero_info, item_info, ability_info, facet_info, the_vpkurl):
-	global hero_infos, item_infos, ability_infos, facet_infos, vpkurl
+def init_dota_info(hero_info, item_info, ability_info, the_vpkurl):
+	global hero_infos, item_infos, ability_infos, vpkurl
 	hero_infos = hero_info
 	item_infos = item_info
 	ability_infos = ability_info
-	facet_infos = facet_info
 	vpkurl = the_vpkurl
 
 def get_hero_info(hero_id: int):
@@ -140,26 +136,7 @@ async def get_item_image(item_id):
 	except KeyError:
 		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
 
-async def get_facet_image(hero_id, facet_slot):
-	try:
-		# TODO: add caching of this
-		padding = 16
-		facet_info = facet_infos[f"{hero_id}_{facet_slot}"]
-		icon_cache_uri = f"facet_{facet_info['icon_name']}_{facet_info['color']}_{facet_info['gradient_id']}"
-		filename = await httpgetter.cache.get_filename(icon_cache_uri)
-		if filename:
-			return Image.open(filename)
-		color1 = Color(facet_colors["min"][facet_info["color"] + str(facet_info["gradient_id"])])
-		color2 = Color(facet_colors["max"][facet_info["color"] + str(facet_info["gradient_id"])])
-		icon_image = await get_url_image(facet_info["icon"])
-		gradient_image = create_gradient_square(color1, color2, icon_image.size[0] + (padding * 2))
-		image = paste_image(gradient_image, icon_image, padding, padding)
-
-		filename = await httpgetter.cache.new(icon_cache_uri, "png")
-		image.save(filename, format="PNG")
-		return image
-	except KeyError:
-		return Image.new('RGBA', (10, 10), (0, 0, 0, 0))
+# get_facet_image removed in 7.41 (facets removed from the game)
 
 
 async def get_level_image(level):
@@ -417,7 +394,7 @@ async def draw_match_table_row(table, match, player, is_parsed, is_ability_draft
 		ColorCell(width=8, color=("green" if is_player_radiant(player) else "red")),
 		create_party_cell(match, player, can_be_bottom=(not draw_bear_row)),
 		ImageCell(img=await get_hero_player_status_image(player), height=48),
-		ImageCell(img=await get_facet_image(player["hero_id"], player["hero_variant"]), height=48) if "hero_variant" in player else EmptyCell(),
+		# facet image cell removed in 7.41
 		ImageCell(img=await get_level_image(player.get("level", 1))),
 		TextCell(truncate(player.get("personaname", None) or "Anonymous", 25)),
 		TextCell(player.get("kills")),
@@ -935,7 +912,7 @@ async def draw_matches_table(matches, game_strings):
 		
 		table.add_row([
 			ImageCell(img=await get_hero_image(match["hero_id"]), height=48),
-			ImageCell(img=await get_facet_image(match["hero_id"], match["hero_variant"]), height=48) if "hero_variant" in match else EmptyCell(),
+			# facet image cell removed in 7.41
 			DoubleCell(
 				TextCell(get_hero_name(match["hero_id"]), font_size=24),
 				TextCell(match.get("match_id"), font_size=12, horizontal_align="left", color=grey_color)
@@ -972,23 +949,10 @@ async def draw_hero_talents(hero):
 		[ talents[3], talents[2] ],
 		[ talents[1], talents[0] ]
 	]
-
-	do_facets_change_talents = False
-	for row in talent_rows:
-		for talent in row:
-			if len(talent.ability.facet_strings) > 0:
-				do_facets_change_talents = True
-	
-	if not do_facets_change_talents:
-		return [ await draw_hero_talents_single(hero, talent_rows, None) ]
-	else:
-		images = []
-		for facet in hero.facets:
-			images.append(await draw_hero_talents_single(hero, talent_rows, facet))
-		return images
+	return [ await draw_hero_talents_single(hero, talent_rows) ]
 
 # given talents as they are stored in dotabase
-async def draw_hero_talents_single(hero, talent_rows, facet = None):
+async def draw_hero_talents_single(hero, talent_rows):
 	image = Image.open(settings.resource("images/talents.png"))
 	draw = ImageDraw.Draw(image)
 
@@ -998,22 +962,7 @@ async def draw_hero_talents_single(hero, talent_rows, facet = None):
 	header_height = 51
 
 	cell = TextCell(hero.localized_name, color="#cccccc", font_size=28, horizontal_align="center")
-	if facet is None:
-		cell.render(draw, image, header_x, header_y, header_width, header_height)
-	else:
-		cell.horizontal_align="right"
-		icon_size = 40
-		spacing = 6
-		text_width = int((header_width / 2) - (icon_size / 2) - spacing)
-		cell.render(draw, image, header_x, header_y, text_width, header_height)
-		cell = TextCell(facet.localized_name, color="#cccccc", font_size=28, horizontal_align="left")
-		right_text_x = int((header_width / 2) + (icon_size / 2) + spacing) + header_x
-		cell.render(draw, image, right_text_x, header_y, text_width, header_height)
-		
-		facet_icon = await get_facet_image(hero.id, facet.slot + 1)
-		facet_icon = facet_icon.resize((icon_size, icon_size), Image.LANCZOS)
-		image = paste_image(image, facet_icon, int((header_width - icon_size) / 2) + header_x, int((header_height - icon_size) / 2) + header_y)
-		draw = ImageDraw.Draw(image)
+	cell.render(draw, image, header_x, header_y, header_width, header_height)
 
 	box_width = 306
 	box_height = 73
@@ -1030,17 +979,8 @@ async def draw_hero_talents_single(hero, talent_rows, facet = None):
 			y = start_y + (i * (box_height + box_margin_y))
 			talent = talent_rows[i][j]
 
-			shadow_color = None
 			text = talent.ability.localized_name
-			if facet:
-				for string in facet.ability_strings:
-					if string.ability_id == talent.ability_id:
-						text = string.description
-				
-				if len(talent.ability.facet_strings) > 0:
-					shadow_color = facet_colors["min"][facet.color + str(facet.gradient_id)]
-
-			cell = TextCell(text, color="#cca770", font_size=20, wrap=True, padding=[ 0, 15, 0, 15 ], horizontal_align="center", shadow_color=shadow_color, shadow_amount=6)
+			cell = TextCell(text, color="#cca770", font_size=20, wrap=True, padding=[ 0, 15, 0, 15 ], horizontal_align="center", shadow_amount=6)
 			image, draw = cell.render(draw, image, x, y, box_width, box_height)
 
 	fp = BytesIO()
@@ -1464,10 +1404,7 @@ async def draw_heroabilities(abilities):
 			aghs_icon = await get_url_image(aghs_icon)
 			# aghs_icon = aghs_icon.resize(icon.size, Image.LANCZOS)
 			row[2] = ImageCell(img=aghs_icon, padding_top=20)
-		elif ability.facet_grants:
-			facet_image = await get_facet_image(ability.facet.hero_id, ability.facet.slot + 1)
-			facet_image = facet_image.resize((icon_size, icon_size), Image.LANCZOS)
-			row[2] = ImageCell(img=facet_image)
+		# facet_grants icon removed in 7.41 (facets removed from the game)
 
 		table.add_row(row)
 	image = table.render()

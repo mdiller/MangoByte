@@ -6,7 +6,7 @@ import typing
 import cogs.dotastats
 import utils.command.commandargs
 import utils.tools.botdata as botdata
-from dotabase import Hero, Facet
+from dotabase import Hero
 from disnake.ext import commands
 from utils.tools.globals import settings, logger, httpgetter
 from utils.tools.helpers import *
@@ -195,14 +195,7 @@ async def update_emoji(bot: commands.Bot):
 		if emoji_name not in emoji_json:
 			emojis_to_add.append((emoji_name, dotabase.vpkurl + hero.icon))
 
-	# check for any missing facet icons
-	for facet in dotabase.session.query(Facet):
-		facet: Facet
-		emoji_name =f"dota_facet_icon_{facet.icon_name}".lower()
-		if len(emoji_name) > 32:
-			emoji_name = emoji_name[:32]
-		if emoji_name not in emoji_json:
-			emojis_to_add.append((emoji_name, dotabase.vpkurl + facet.icon))
+	# facet emoji generation removed in 7.41 (facets removed from the game)
 
 	guild_index = 0
 	guild_slots_available = 0

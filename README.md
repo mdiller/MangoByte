@@ -28,7 +28,7 @@ Mangobyte has recently finished migrating to slash commands. If you are having i
 ## Commands
 
 <!-- COMMANDS_START -->
-Mangobyte currently has 76 commands, separated into 6 categories
+Mangobyte currently has 77 commands, separated into 6 categories
 
 #### General
 Commands that don't really fit into the other categories
@@ -53,6 +53,7 @@ Commands that don't really fit into the other categories
 /misc showerthought  | Gets a top post from the r/ShowerThoughts subreddit                                      
 /ping                | Pongs a number of times(within reason)                                                   
 /reddit              | Displays a formatted reddit post                                                         
+/time                | Gets you the discord format for a time that you give                                     
 /userconfig          | Configures the bot's user-specific settings                                              
 /wiki                | Looks up a thing on wikipedia                                                            
 ```
@@ -76,7 +77,7 @@ For playing audio in a voice channel
 ```
 
 #### Dotabase
-For information about the game Dota 2 [Patch **7.38**]
+For information about the game Dota 2 [Patch **7.41**]
 
 ```
 /abilities           | Shows all of the abilities/spells for that hero                                          
@@ -85,7 +86,7 @@ For information about the game Dota 2 [Patch **7.38**]
 /courage             | Generates a challenge build with a random hero and items                                 
 /emoticon add        | Adds a dota emoticon as an animated emoji to this server                                 
 /emoticon show       | Gets the gif of a dota emoticon                                                          
-/facets              | Gets the facets for the given hero                                                       
+/facets              | Facets have been removed as of Dota 7.41                                                 
 /fuseheroes          | Visually fuse together two heroes                                                        
 /hero                | Gets information about a specific hero                                                   
 /herostats           | Gets the stats for a hero at the specified level                                         
@@ -221,6 +222,7 @@ Mangobyte is customizable on a per-user and per-server level, via the `/userconf
 - introtts
 - outrotts
 - ignoremytts
+- timezone
 
 <!-- USERCONFIG_SETTINGS_END -->
 

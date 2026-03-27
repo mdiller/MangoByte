@@ -564,12 +564,12 @@ voice = [
 
 [[package]]
 name = "dotabase"
-version = "7.8.6"
+version = "7.8.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "sqlalchemy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/81/73/07f26e6aed34095a13b6ce15d599b461f2797e0fbdeb3a97e3154dd6064b/dotabase-7.8.6.tar.gz", hash = "sha256:6cd7fc6a2230d65d39afe546da390cc2927cc34660fb3f7ca3f98a15d388c941", size = 19560313, upload-time = "2026-02-25T05:55:21.042Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/93/d9/8051fb054d033441ca30fa260fab2c15e5ea3a6960ca5b0257dc2d8fa481/dotabase-7.8.7.tar.gz", hash = "sha256:06ceb9abce43eccc36a0df295459fd5f437039e54bab34be7948ee203a40f965", size = 18798108, upload-time = "2026-03-27T01:49:29.53Z" }
 
 [[package]]
 name = "feedparser"

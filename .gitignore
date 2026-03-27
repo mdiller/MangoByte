@@ -107,3 +107,4 @@ resource/clips/*
 !resource/clips/spongebob/
 _scripts/
 deploy/
+.claude/
