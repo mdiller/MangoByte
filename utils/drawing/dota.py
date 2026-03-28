@@ -460,7 +460,6 @@ async def draw_match_table(match):
 		EmptyCell(),
 		EmptyCell(),
 		EmptyCell(),
-		EmptyCell(),
 		TextCell("K", horizontal_align="center"),
 		TextCell("D", horizontal_align="center"),
 		TextCell("A", horizontal_align="center"),
@@ -885,7 +884,6 @@ async def draw_matches_table(matches, game_strings):
 	# Header
 	headers = [
 		TextCell("Hero", padding=0),
-		EmptyCell(),
 		TextCell(""),
 		TextCell("Result"),
 		TextCell("K", horizontal_align="center"),
