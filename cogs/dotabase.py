@@ -927,6 +927,9 @@ class Dotabase(MangoCog):
 			text = f"**{header}** {format_values(value)}"
 			if footer:
 				text += f" {footer}"
+			hero_levelup = attribute.get("hero_levelup")
+			if hero_levelup:
+				text += f" ({hero_levelup} per level)"
 
 			if is_scepter_upgrade and not ability.scepter_grants:
 				scepter_attributes.append(text)
