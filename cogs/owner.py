@@ -129,7 +129,24 @@ class Owner(MangoCog):
 	@commands.command(aliases=["botdata"])
 	async def getbotdata(self, ctx, selector, identifier : int):
 		"""Gets info about a user or a server"""
-		if selector in ["user", "player", "member"]:
+		if selector in ["steam"]:
+			steam_id = identifier
+			if steam_id > 76561197960265728:
+				steam_id -= 76561197960265728
+			match = next((u for u in botdata.userinfo_list() if u.steam == steam_id), None)
+			if match is None:
+				raise UserError(f"No user found with steam id {identifier}")
+			try:
+				user = await self.bot.fetch_user(match.discord)
+			except:
+				raise UserError("Found a botdata entry but couldn't fetch the Discord user")
+			embed = disnake.Embed(description=(user.mention + "\n```json\n" + json.dumps(match.json_data, indent='\t') + "\n```"))
+			embed.set_thumbnail(url=user.avatar.url)
+			embed.add_field(name="Profiles", value=(
+				f"[Steam](http://steamcommunity.com/id/{steam_id})\n"
+				f"[OpenDota](https://www.opendota.com/players/{steam_id})\n"))
+			await ctx.send(embed=embed)
+		elif selector in ["user", "player", "member"]:
 			data = botdata.userinfo(identifier)
 			try:
 				user = await self.bot.fetch_user(identifier)
