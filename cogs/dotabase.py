@@ -1110,7 +1110,7 @@ class Dotabase(MangoCog):
 
 	@commands.slash_command()
 	async def emoticon(self, inter: disnake.CmdInter):
-		"""Commands for dota 2 emotes"""
+		"""Get a dota2 emote"""
 		await self.safe_defer(inter)
 
 	@emoticon.sub_command(name="show")

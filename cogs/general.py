@@ -203,7 +203,7 @@ class General(MangoCog):
 	
 	@commands.slash_command()
 	async def bot(self, inter):
-		"""Gets information about mangobyte"""
+		"""Get information about mangobyte"""
 		pass # this is just a header for base commands
 
 	@commands.slash_command()

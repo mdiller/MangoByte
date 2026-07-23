@@ -670,6 +670,7 @@ class DotaStats(MangoCog):
 	# a header to be used for sub commands
 	@commands.slash_command()
 	async def match(self, inter: disnake.CmdInter):
+		"""Get information about a specific dota match"""
 		await self.safe_defer(inter)
 		pass
 	

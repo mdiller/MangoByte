@@ -298,7 +298,7 @@ class Audio(MangoCog):
     
     @commands.slash_command()
     async def play(self, inter: disnake.CmdInter):
-        """Root command for clip-controlling commands"""
+        """Play an audio clip in a voice channel"""
         await self.safe_defer(inter)
 
     @play.sub_command(name="local")
@@ -326,7 +326,7 @@ class Audio(MangoCog):
 
     @commands.slash_command()
     async def clips(self, inter: disnake.CmdInter):
-        """Root command for listing different kinds of clips"""
+        """Get info about audio clips"""
         await self.safe_defer(inter)
     
 
