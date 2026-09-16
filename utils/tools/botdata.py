@@ -22,10 +22,7 @@ class BotDataItem:
 
 	@property
 	def json_data(self):
-		for item in self._botdata.json_data[self._list_key]:
-			if all(item.get(key) == self._primary_keys[key] for key in self._primary_keys):
-				return item
-		return None
+		return self._botdata.get_indexed_item(self._list_key, self._primary_keys)
 
 	def __getattr__(self, key):
 		if key in self._primary_keys:
@@ -345,6 +342,7 @@ class BotData:
 			("dotapatch", None),
 			("dotablog",None)
 		])
+		self._indexes = {} # list_key -> { keyfields tuple -> { primary key values tuple -> item } }, rebuilt lazily after every write
 		if not os.path.exists(self.path):
 			self.json_data = self.defaults
 			self.save_data()
@@ -356,6 +354,19 @@ class BotData:
 						self.json_data[key] = self.defaults[key]
 						logger.info("Adding " + str(key) + " field to botdata.json")
 				self.save_data()
+
+	# looks up an item in json_data[list_key] by its primary keys in O(1) instead of scanning the whole list.
+	# the index is rebuilt lazily (see save_data) so it can never go stale after a write.
+	def get_indexed_item(self, list_key, primary_keys):
+		keyfields = tuple(sorted(primary_keys.keys()))
+		list_indexes = self._indexes.setdefault(list_key, {})
+		index = list_indexes.get(keyfields)
+		if index is None:
+			index = {}
+			for item in self.json_data[list_key]:
+				index[tuple(item.get(k) for k in keyfields)] = item
+			list_indexes[keyfields] = index
+		return index.get(tuple(primary_keys[k] for k in keyfields))
 
 	def __getitem__(self, key):
 		if key not in self.defaults:
@@ -369,6 +380,7 @@ class BotData:
 		self.save_data()
 
 	def save_data(self):
+		self._indexes = {} # data changed, so any cached lookups are stale
 		write_json(self.path, self.json_data)
 
 	def userinfo(self, userid) -> UserInfo:

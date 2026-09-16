@@ -4,6 +4,7 @@ import os
 import queue
 import re
 import shutil
+import traceback
 from typing import List
 import urllib.request
 from urllib.parse import urlparse
@@ -279,21 +280,31 @@ class Audio(MangoCog):
     @tasks.loop(hours=1)
     async def voice_channel_culler(self):
         logger.info("task_triggered: voice_channel_culler()")
+        try:
+            await self.cull_voice_channels()
+        except Exception:
+            # catch-all so a single bad iteration can never silently kill this loop forever
+            logger.error(f"voice_channel_culler failed:\n{traceback.format_exc()}")
+
+    async def cull_voice_channels(self):
         now = datetime.datetime.now()
         if (now - self.start_time).total_seconds() < 60 * 60:
             return # Nothing to do yet, bot hasnt been up long enough to cull voice channels
-        
+
         for guildinfo in botdata.guildinfo_list():
-            if guildinfo.voicechannel is not None:
-                culling_cutoff = 60 * 60 * guildinfo.afktimeout
-                if (now - self.start_time).total_seconds() < culling_cutoff:
-                    continue # Nothing to do yet, bot hasnt been up long enough to cull this voice channel
-                
-                if (guildinfo.id not in self.last_played_audio) or ((now - self.last_played_audio[guildinfo.id]).total_seconds() > culling_cutoff):
-                    # cull this voice channel
-                    logger.info(f"culling voice from server {guildinfo.id}")
-                    await self.disconnect(self.bot.get_guild(guildinfo.id))
-                    guildinfo.voicechannel = None
+            try:
+                if guildinfo.voicechannel is not None:
+                    culling_cutoff = 60 * 60 * guildinfo.afktimeout
+                    if (now - self.start_time).total_seconds() < culling_cutoff:
+                        continue # Nothing to do yet, bot hasnt been up long enough to cull this voice channel
+
+                    if (guildinfo.id not in self.last_played_audio) or ((now - self.last_played_audio[guildinfo.id]).total_seconds() > culling_cutoff):
+                        # cull this voice channel
+                        logger.info(f"culling voice from server {guildinfo.id}")
+                        await self.disconnect(self.bot.get_guild(guildinfo.id))
+                        guildinfo.voicechannel = None
+            except Exception:
+                logger.error(f"voice_channel_culler failed for guild {guildinfo.id}:\n{traceback.format_exc()}")
 
     
     @commands.slash_command()
