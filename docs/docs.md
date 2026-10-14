@@ -1,5 +1,6 @@
 <!-- Note that this file is consumed and used by the /docs command. Each h1 heading here is a separate docs command entry -->
 <!-- Note that parts of this file are auto-generated, which is why theres some html comment placeholders below -->
+<!-- Note a line of the form ![alt text](images/some_image.png) in an entry will be attached and shown as the embed's image. Path is relative to the resource/ directory -->
 # Argument: Match Filter
 
 Mangobyte has a feature to allow users to be very specific when requesting information about dota matches. This allows users to filter for matches that are exactly what they are looking for. See filter options below.
@@ -75,6 +76,14 @@ Note that this uses "Match Filter" behind the hood for parsing a dota player, so
 `/match info 6481413969`
 `/match graph lm`
 `/match skillbuild @SomeoneOnDiscord`
+
+# Expose Public Match Data
+
+If mangobyte can't find any matches for an account, it's usually one of two things: either dota hasn't been played on that account, or the matches played on it are hidden from public match data.
+
+If you've played matches on the account, try enabling the **Expose Public Match Data** option in dota's settings (see image below). Once that's turned on, head over to your opendota profile (use `/profile` to get a link) and click the **REFRESH** button under your name.
+
+![Expose Public Match Data](images/expose_match_data.png)
 
 # Slash Commands
 

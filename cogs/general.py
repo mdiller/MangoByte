@@ -100,7 +100,8 @@ def fill_word_template(template, words):
 
 	return re.sub(r"\{([^}]+)\}", replace, template)
 
-# loads a markdown file as a dictionary
+# loads a markdown file as a dictionary. Each entry is a dict with "description" and "image" (a
+# resource-relative path, or None), the latter set by a "![alt text](path/to/image.png)" line
 def load_md_as_dict(filename):
 	with open(filename, "r") as f:
 		text = f.read()
@@ -110,11 +111,18 @@ def load_md_as_dict(filename):
 	text = "\n" + text
 	result = {}
 	pattern = re.compile(r"\n# ([^\n]+)\n([\s\S]*?)(?=\n# |$)")
+	image_pattern = re.compile(r"^!\[[^\]]*\]\(([^)]+)\)$", re.MULTILINE)
 	for match in pattern.finditer(text):
 		name = match.group(1).strip()
 		description = match.group(2).strip()
 		description = re.sub("\n`", u"\n\u200b`", description)
-		result[name] = description
+		image = None
+		image_match = image_pattern.search(description)
+		if image_match:
+			image = image_match.group(1)
+			description = image_pattern.sub("", description).strip()
+			description = re.sub(r"\n{3,}", "\n\n", description)
+		result[name] = { "description": description, "image": image }
 	return result
 
 def get_docs_keys():
@@ -649,11 +657,18 @@ class General(MangoCog):
 		topic: The topic to get documentation for
 		"""
 		found_topic = topic
+		doc = self.docs_data[found_topic]
 
 		embed = disnake.Embed()
 		embed.title = found_topic
-		embed.description = self.docs_data[found_topic]
-		await inter.send(embed=embed)
+		embed.description = doc["description"]
+
+		if doc["image"]:
+			file = disnake.File(settings.resource(doc["image"]), os.path.basename(doc["image"]))
+			embed.set_image(url=f"attachment://{file.filename}")
+			await inter.send(embed=embed, file=file)
+		else:
+			await inter.send(embed=embed)
 	
 	@tasks.loop(hours=1)
 	async def update_botstats(self):
